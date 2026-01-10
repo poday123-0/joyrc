@@ -1,4 +1,5 @@
-import heroWoman from "@/assets/hero-woman.png";
+import { Link } from "react-router-dom";
+import rcCarRed from "@/assets/rc-car-red.png";
 
 const HeroBanner = () => {
   return (
@@ -7,24 +8,26 @@ const HeroBanner = () => {
         {/* Content */}
         <div className="flex-1 p-5 flex flex-col justify-center z-10">
           <h2 className="text-lg md:text-xl font-semibold text-foreground leading-tight">
-            A World of
+            Ultimate RC
             <br />
-            Living Colors
+            Experience
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Flat 20% Off on Selected Fish
+            Flat 20% Off on Selected Toys
           </p>
-          <button className="mt-3 bg-primary text-primary-foreground text-xs font-medium px-4 py-2 rounded-full w-fit shadow-soft hover:opacity-90 transition-opacity">
-            Shop Now
-          </button>
+          <Link to="/?category=all">
+            <button className="mt-3 bg-primary text-primary-foreground text-xs font-medium px-4 py-2 rounded-full w-fit shadow-soft hover:opacity-90 transition-opacity">
+              Shop Now
+            </button>
+          </Link>
         </div>
 
         {/* Image */}
-        <div className="relative w-40 md:w-52 flex-shrink-0">
+        <div className="relative w-44 md:w-56 flex-shrink-0 flex items-center justify-center">
           <img
-            src={heroWoman}
-            alt="Woman with fishbowl"
-            className="absolute bottom-0 right-0 h-full object-cover object-bottom"
+            src={rcCarRed}
+            alt="RC Car"
+            className="w-36 h-36 md:w-44 md:h-44 object-contain animate-float"
           />
         </div>
       </div>

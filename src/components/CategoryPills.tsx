@@ -1,8 +1,39 @@
-import { useState } from "react";
-import { categories } from "@/data/products";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { staticCategories } from "@/data/products";
 
-const CategoryPills = () => {
-  const [activeCategory, setActiveCategory] = useState("all");
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+interface CategoryPillsProps {
+  activeCategory: string;
+  onCategoryChange: (categoryId: string) => void;
+}
+
+const CategoryPills = ({ activeCategory, onCategoryChange }: CategoryPillsProps) => {
+  const [categories, setCategories] = useState<Category[]>(staticCategories);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("sort_order");
+      
+      if (data && !error) {
+        setCategories(data.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          icon: cat.icon || "🎮"
+        })));
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <div className="mt-6">
@@ -17,7 +48,7 @@ const CategoryPills = () => {
         {categories.map((category) => (
           <button
             key={category.id}
-            onClick={() => setActiveCategory(category.id)}
+            onClick={() => onCategoryChange(category.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-full whitespace-nowrap transition-all duration-300 ${
               activeCategory === category.id
                 ? "bg-primary text-primary-foreground shadow-soft"

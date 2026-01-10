@@ -1,76 +1,100 @@
+// Static fallback data - will be replaced by database
 export interface Product {
   id: string;
   name: string;
   category: string;
+  category_id?: string;
   price: number;
   rating: number;
   image: string;
+  image_url?: string;
   description: string;
-  weight: string;
-  age: string;
-  size: string;
-  temperature: string;
+  specifications?: { name: string; value: string }[];
 }
 
-export const products: Product[] = [
+export const staticProducts: Product[] = [
   {
     id: "1",
-    name: "Oranda Goldfish",
-    category: "Aquarium fish",
-    price: 29.99,
+    name: "Speed Racer Pro",
+    category: "RC Cars",
+    price: 89.99,
     rating: 4.5,
-    image: "oranda-goldfish",
-    description: "Oranda Goldfish is a calm freshwater fish admired for its rounded body and distinctive head growth (wen). Its bright golden color and elegant movement bring charm to any aquarium, while its easy care suits all experience levels.",
-    weight: "5.0 oz",
-    age: "3 years",
-    size: "4.78 Inch",
-    temperature: "17-20°C"
+    image: "rc-car-red",
+    description: "High-performance RC racing car with advanced suspension system. Reaches speeds up to 45 km/h with precision steering control. Perfect for racing enthusiasts.",
+    specifications: [
+      { name: "Speed", value: "45 km/h" },
+      { name: "Battery", value: "2200mAh" },
+      { name: "Range", value: "150m" },
+      { name: "Scale", value: "1:16" }
+    ]
   },
   {
     id: "2",
-    name: "Betta Fish",
-    category: "Tropical fish",
-    price: 24.99,
+    name: "Wave Runner X",
+    category: "Boats",
+    price: 129.99,
     rating: 4.8,
-    image: "betta-fish",
-    description: "The Betta Fish, also known as Siamese Fighting Fish, is renowned for its vibrant colors and flowing fins. These beautiful fish are perfect for beginners and make stunning centerpieces in any aquarium.",
-    weight: "0.8 oz",
-    age: "2 years",
-    size: "2.5 Inch",
-    temperature: "24-27°C"
+    image: "rc-speedboat",
+    description: "High-speed RC speedboat with waterproof design. Self-righting hull technology ensures it always stays afloat. Perfect for pool and lake adventures.",
+    specifications: [
+      { name: "Speed", value: "35 km/h" },
+      { name: "Battery", value: "1800mAh" },
+      { name: "Range", value: "120m" },
+      { name: "Size", value: "45cm" }
+    ]
   },
   {
     id: "3",
-    name: "Guppy Fish",
-    category: "Tropical fish",
-    price: 12.99,
-    rating: 4.3,
-    image: "guppy-fish",
-    description: "Guppies are colorful, peaceful fish perfect for community tanks. Known for their vibrant tails and easy breeding, they're ideal for beginners wanting a lively aquarium.",
-    weight: "0.2 oz",
-    age: "1 year",
-    size: "1.5 Inch",
-    temperature: "22-28°C"
+    name: "Sky Explorer Drone",
+    category: "Drones",
+    price: 199.99,
+    rating: 4.6,
+    image: "rc-drone",
+    description: "Professional-grade drone with 4K camera and GPS. Features auto-return home, altitude hold, and 25-minute flight time. Capture stunning aerial footage.",
+    specifications: [
+      { name: "Flight Time", value: "25 min" },
+      { name: "Camera", value: "4K HD" },
+      { name: "Range", value: "500m" },
+      { name: "GPS", value: "Yes" }
+    ]
   },
   {
     id: "4",
-    name: "Neon Tetra",
-    category: "Tropical fish",
-    price: 8.99,
-    rating: 4.6,
-    image: "neon-tetra",
-    description: "Neon Tetras are small, schooling fish famous for their iridescent blue stripe and red tail. They create a stunning visual display when kept in groups.",
-    weight: "0.1 oz",
-    age: "1 year",
-    size: "1.2 Inch",
-    temperature: "20-26°C"
+    name: "Monster Crusher",
+    category: "Trucks",
+    price: 149.99,
+    rating: 4.7,
+    image: "rc-monster-truck",
+    description: "Powerful off-road monster truck with oversized tires and 4WD. Handles any terrain with ease. Built for extreme durability and performance.",
+    specifications: [
+      { name: "Speed", value: "40 km/h" },
+      { name: "Battery", value: "2400mAh" },
+      { name: "Scale", value: "1:12" },
+      { name: "4WD", value: "Yes" }
+    ]
+  },
+  {
+    id: "5",
+    name: "Falcon Heli Pro",
+    category: "Helicopters",
+    price: 79.99,
+    rating: 4.3,
+    image: "rc-helicopter",
+    description: "Stable and easy-to-fly RC helicopter with 6-axis gyro stabilization. Great for beginners and indoor flying. LED lights for night flights.",
+    specifications: [
+      { name: "Flight Time", value: "12 min" },
+      { name: "Channels", value: "6-axis" },
+      { name: "Range", value: "80m" },
+      { name: "LED", value: "Yes" }
+    ]
   }
 ];
 
-export const categories = [
-  { id: "all", name: "All Fish", icon: "🐠" },
-  { id: "small-tank", name: "Small Tank", icon: "🐟" },
-  { id: "substrate", name: "Substrate", icon: "🪸" },
-  { id: "plants", name: "Plants", icon: "🌿" },
-  { id: "filters", name: "Filters", icon: "💧" }
+export const staticCategories = [
+  { id: "all", name: "All", icon: "🎮" },
+  { id: "rc-cars", name: "RC Cars", icon: "🏎️" },
+  { id: "boats", name: "Boats", icon: "🚤" },
+  { id: "drones", name: "Drones", icon: "🚁" },
+  { id: "trucks", name: "Trucks", icon: "🚚" },
+  { id: "helicopters", name: "Helicopters", icon: "🚁" }
 ];
