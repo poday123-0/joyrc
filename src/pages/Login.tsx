@@ -1,11 +1,61 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Check } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast({
+            title: "Login failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully logged in.",
+          });
+          navigate("/");
+        }
+      } else {
+        const { error } = await signUp(email, password, fullName);
+        if (error) {
+          toast({
+            title: "Sign up failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Account created!",
+            description: "Welcome to RC Joy!",
+          });
+          navigate("/");
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -13,13 +63,13 @@ const Login = () => {
         {/* Header with logo */}
         <div className="gradient-auth-dark rounded-3xl p-8 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-cta flex items-center justify-center">
-            <span className="text-2xl">🐠</span>
+            <span className="text-2xl">🏎️</span>
           </div>
           <h1 className="text-2xl font-bold text-white">
-            {isLogin ? "Welcome Back !" : "Join Living Colors"}
+            {isLogin ? "Welcome Back !" : "Join RC Joy"}
           </h1>
           <p className="text-white/60 text-sm mt-2">
-            {isLogin ? "Your world of living colors awaits" : "Everything you need for a beautiful aquarium"}
+            {isLogin ? "Your world of RC toys awaits" : "Everything you need for ultimate RC fun"}
           </p>
         </div>
 
@@ -48,19 +98,20 @@ const Login = () => {
         </div>
 
         {/* Form */}
-        <form className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {!isLogin && (
             <div>
               <label className="text-sm text-muted-foreground">Full Name</label>
               <div className="mt-1 relative">
                 <input
                   type="text"
-                  placeholder="David Williamson"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your full name"
                   className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  required={!isLogin}
                 />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  👤
-                </span>
+                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
             </div>
           )}
@@ -70,8 +121,11 @@ const Login = () => {
             <div className="mt-1 relative">
               <input
                 type="email"
-                placeholder="davidjonson@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
                 className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                required
               />
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             </div>
@@ -84,8 +138,11 @@ const Login = () => {
             <div className="mt-1 relative">
               <input
                 type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password.."
                 className="w-full px-4 py-3 pl-10 pr-10 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                required
               />
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <button
@@ -142,14 +199,13 @@ const Login = () => {
             </label>
           )}
 
-          <Link to="/">
-            <button
-              type="submit"
-              className="w-full py-4 rounded-full gradient-primary text-white font-semibold shadow-elevated hover:opacity-90 transition-opacity mt-4"
-            >
-              {isLogin ? "Log In" : "Create Account"}
-            </button>
-          </Link>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 rounded-full gradient-primary text-white font-semibold shadow-elevated hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {loading ? "Please wait..." : isLogin ? "Log In" : "Create Account"}
+          </button>
         </form>
 
         {/* Divider */}
@@ -188,6 +244,12 @@ const Login = () => {
             </svg>
             <span className="font-medium text-foreground">Facebook</span>
           </button>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+            Continue as Guest →
+          </Link>
         </div>
       </div>
     </div>
