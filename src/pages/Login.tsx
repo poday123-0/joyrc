@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,9 +13,28 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({ title: "Enter your email", description: "Please enter your email address first.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Reset Email Sent", description: "Check your email for the password reset link." });
+      setShowForgotPassword(false);
+    }
+    setLoading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,7 +194,12 @@ const Login = () => {
                 </div>
                 <span className="text-sm text-muted-foreground">Remember me</span>
               </label>
-              <button type="button" className="text-sm text-coral font-medium">
+              <button 
+                type="button" 
+                onClick={handleForgotPassword}
+                disabled={loading}
+                className="text-sm text-coral font-medium hover:underline"
+              >
                 Forgot Password?
               </button>
             </div>

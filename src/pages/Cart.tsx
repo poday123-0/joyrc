@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
+import { formatMVR } from "@/lib/currency";
 
 const Cart = () => {
   const { items, updateQuantity, removeFromCart, totalPrice, clearCart } = useCart();
@@ -65,17 +66,17 @@ const Cart = () => {
               key={item.id}
               className="glass-card rounded-2xl p-4 flex gap-4 shadow-soft"
             >
-              <div className="w-20 h-20 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center">
+              <div className="w-20 h-20 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center overflow-hidden">
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-16 h-16 object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-foreground">{item.name}</h3>
                 <p className="text-lg font-bold text-foreground mt-1">
-                  ${item.price.toFixed(2)}
+                  {formatMVR(item.price)}
                 </p>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-2">
@@ -112,7 +113,7 @@ const Cart = () => {
           <div className="flex items-center justify-between mb-4">
             <span className="text-muted-foreground">Total</span>
             <span className="text-2xl font-bold text-foreground">
-              ${totalPrice.toFixed(2)}
+              {formatMVR(totalPrice)}
             </span>
           </div>
           <Link

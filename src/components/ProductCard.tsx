@@ -1,18 +1,6 @@
 import { Heart, ArrowUpRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import rcCarRed from "@/assets/rc-car-red.png";
-import rcSpeedboat from "@/assets/rc-speedboat.png";
-import rcDrone from "@/assets/rc-drone.png";
-import rcMonsterTruck from "@/assets/rc-monster-truck.png";
-import rcHelicopter from "@/assets/rc-helicopter.png";
-
-const imageMap: Record<string, string> = {
-  "rc-car-red": rcCarRed,
-  "rc-speedboat": rcSpeedboat,
-  "rc-drone": rcDrone,
-  "rc-monster-truck": rcMonsterTruck,
-  "rc-helicopter": rcHelicopter,
-};
+import { formatMVR } from "@/lib/currency";
 
 interface ProductCardProps {
   product: {
@@ -29,7 +17,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
   const isLarge = size === "large";
-  const imageSrc = product.image_url || imageMap[product.image || ""] || rcCarRed;
+  const imageSrc = product.image_url || product.image || "/placeholder.svg";
 
   return (
     <Link
@@ -56,7 +44,7 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
         {/* Price */}
         <div className="absolute top-12 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-soft">
           <span className="text-sm font-semibold text-foreground">
-            ${product.price.toFixed(2)}
+            {formatMVR(product.price)}
           </span>
         </div>
 

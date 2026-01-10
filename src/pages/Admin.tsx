@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,9 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import AdminDashboard from "@/components/AdminDashboard";
 import BankSettingsTab from "@/components/BankSettingsTab";
 import PaymentOrdersTab from "@/components/PaymentOrdersTab";
+import SupportContentTab from "@/components/SupportContentTab";
+import ContactMessagesTab from "@/components/ContactMessagesTab";
+import AdminManagementTab from "@/components/AdminManagementTab";
 
 interface Product {
   id: string;
@@ -58,7 +61,7 @@ interface SystemSettings {
   hero_subtitle: string;
 }
 
-type Tab = "dashboard" | "products" | "categories" | "orders" | "bank" | "settings";
+type Tab = "dashboard" | "products" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "settings";
 
 const Admin = () => {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -134,7 +137,10 @@ const Admin = () => {
             { id: "products", label: "Products", icon: Package },
             { id: "categories", label: "Categories", icon: Grid3X3 },
             { id: "orders", label: "Orders", icon: CreditCard },
+            { id: "messages", label: "Messages", icon: MessageSquare },
             { id: "bank", label: "Bank", icon: Building2 },
+            { id: "support", label: "Support", icon: HelpCircle },
+            { id: "admins", label: "Admins", icon: Users },
             { id: "settings", label: "Settings", icon: Settings },
           ].map((tab) => (
             <button
@@ -168,7 +174,10 @@ const Admin = () => {
           />
         )}
         {activeTab === "orders" && <PaymentOrdersTab />}
+        {activeTab === "messages" && <ContactMessagesTab />}
         {activeTab === "bank" && <BankSettingsTab />}
+        {activeTab === "support" && <SupportContentTab />}
+        {activeTab === "admins" && <AdminManagementTab />}
         {activeTab === "settings" && settings && (
           <SettingsTab 
             settings={settings} 
