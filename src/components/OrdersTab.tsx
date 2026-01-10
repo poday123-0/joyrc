@@ -178,7 +178,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {orders.map((order) => {
         const statusConfig = statusColors[order.status] || statusColors.pending;
         const StatusIcon = statusConfig.icon;
@@ -190,13 +190,13 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
           (order.payment_status === "pending" || order.payment_status === "rejected");
 
         return (
-          <div key={order.id} className="glass-card rounded-2xl shadow-soft overflow-hidden">
+          <div key={order.id} className={`glass-card rounded-2xl shadow-soft overflow-hidden ${isExpanded ? 'md:col-span-2 xl:col-span-3' : ''}`}>
             {/* Order header */}
             <button
               onClick={() => handleToggleExpand(order.id)}
               className="w-full p-4 flex items-center gap-3 text-left"
             >
-              <div className={`w-10 h-10 rounded-full ${statusConfig.bg} flex items-center justify-center`}>
+              <div className={`w-10 h-10 rounded-full ${statusConfig.bg} flex items-center justify-center flex-shrink-0`}>
                 <StatusIcon className={`w-5 h-5 ${statusConfig.text}`} />
               </div>
               <div className="flex-1 min-w-0">
@@ -218,7 +218,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                   })}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-right flex-shrink-0">
                 <p className="font-bold text-foreground">{formatMVR(order.total_amount)}</p>
                 {isExpanded ? (
                   <ChevronUp className="w-4 h-4 text-muted-foreground ml-auto" />
@@ -231,118 +231,122 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
             {/* Order details (expanded) */}
             {isExpanded && (
               <div className="border-t border-border px-4 pb-4">
-                {/* Payment Status Section */}
-                <div className="mt-3 p-3 rounded-xl bg-muted/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="w-4 h-4 text-muted-foreground" />
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Payment Status</h4>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-full ${paymentConfig.bg} flex items-center justify-center`}>
-                      <PaymentIcon className={`w-4 h-4 ${paymentConfig.text}`} />
+                <div className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+                  {/* Payment Status Section */}
+                  <div className="mt-3 p-3 rounded-xl bg-muted/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="w-4 h-4 text-muted-foreground" />
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase">Payment Status</h4>
                     </div>
-                    <div>
-                      <p className={`text-sm font-medium ${paymentConfig.text}`}>{paymentConfig.label}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {order.payment_method === "bank_transfer" ? "Bank Transfer" : order.payment_method || "Unknown"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Receipt Upload Section for Customers */}
-                  {canUploadReceipt && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <div className="flex items-start gap-2 mb-2">
-                        <AlertCircle className="w-4 h-4 text-gold mt-0.5" />
-                        <p className="text-xs text-muted-foreground">
-                          {order.payment_status === "rejected" 
-                            ? "Your previous receipt was rejected. Please upload a new one."
-                            : "Please upload your payment receipt to confirm your order."}
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-full ${paymentConfig.bg} flex items-center justify-center flex-shrink-0`}>
+                        <PaymentIcon className={`w-4 h-4 ${paymentConfig.text}`} />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${paymentConfig.text}`}>{paymentConfig.label}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {order.payment_method === "bank_transfer" ? "Bank Transfer" : order.payment_method || "Unknown"}
                         </p>
                       </div>
-                      <label className="block">
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleReceiptUpload(order.id, file);
-                          }}
-                          className="hidden"
-                          disabled={uploading === order.id}
-                        />
-                        <div className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 border-dashed border-primary/30 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all ${uploading === order.id ? 'opacity-50 cursor-wait' : ''}`}>
-                          {uploading === order.id ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                              <span className="text-sm text-muted-foreground">Uploading...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-4 h-4 text-primary" />
-                              <span className="text-sm text-primary font-medium">Upload Receipt</span>
-                            </>
-                          )}
+                    </div>
+
+                    {/* Receipt Upload Section for Customers */}
+                    {canUploadReceipt && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <div className="flex items-start gap-2 mb-2">
+                          <AlertCircle className="w-4 h-4 text-gold mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-muted-foreground">
+                            {order.payment_status === "rejected" 
+                              ? "Your previous receipt was rejected. Please upload a new one."
+                              : "Please upload your payment receipt to confirm your order."}
+                          </p>
                         </div>
-                      </label>
-                    </div>
-                  )}
-
-                  {/* Show uploaded receipt */}
-                  {order.receipt_url && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-xs text-muted-foreground mb-2">Receipt uploaded:</p>
-                      <a 
-                        href={order.receipt_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary underline hover:no-underline"
-                      >
-                        View Receipt
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* Order items */}
-                <div className="mt-3">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h4>
-                  <div className="space-y-2">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span className="text-foreground">
-                          {item.product_name} <span className="text-muted-foreground">x{item.quantity}</span>
-                        </span>
-                        <span className="font-medium">{formatMVR(item.product_price * item.quantity)}</span>
+                        <label className="block">
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleReceiptUpload(order.id, file);
+                            }}
+                            className="hidden"
+                            disabled={uploading === order.id}
+                          />
+                          <div className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 border-dashed border-primary/30 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all ${uploading === order.id ? 'opacity-50 cursor-wait' : ''}`}>
+                            {uploading === order.id ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                <span className="text-sm text-muted-foreground">Uploading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4 text-primary" />
+                                <span className="text-sm text-primary font-medium">Upload Receipt</span>
+                              </>
+                            )}
+                          </div>
+                        </label>
                       </div>
-                    ))}
-                    {items.length === 0 && (
-                      <p className="text-sm text-muted-foreground">Loading items...</p>
+                    )}
+
+                    {/* Show uploaded receipt */}
+                    {order.receipt_url && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground mb-2">Receipt uploaded:</p>
+                        <a 
+                          href={order.receipt_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary underline hover:no-underline"
+                        >
+                          View Receipt
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Order items */}
+                  <div className="mt-3 md:mt-0 p-3 rounded-xl bg-muted/30">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h4>
+                    <div className="space-y-2">
+                      {items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-sm">
+                          <span className="text-foreground">
+                            {item.product_name} <span className="text-muted-foreground">x{item.quantity}</span>
+                          </span>
+                          <span className="font-medium">{formatMVR(item.product_price * item.quantity)}</span>
+                        </div>
+                      ))}
+                      {items.length === 0 && (
+                        <p className="text-sm text-muted-foreground">Loading items...</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Shipping & Contact info */}
+                  <div className="mt-3 md:mt-0 p-3 rounded-xl bg-muted/30">
+                    {order.shipping_address && (
+                      <div className="mb-3">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Shipping Address</h4>
+                        <p className="text-sm text-foreground">{order.shipping_address}</p>
+                      </div>
+                    )}
+
+                    {order.phone && (
+                      <div className="mb-3">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Phone</h4>
+                        <p className="text-sm text-foreground">{order.phone}</p>
+                      </div>
+                    )}
+
+                    {order.notes && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Notes</h4>
+                        <p className="text-sm text-foreground">{order.notes}</p>
+                      </div>
                     )}
                   </div>
                 </div>
-
-                {/* Shipping info */}
-                {order.shipping_address && (
-                  <div className="mt-3">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Shipping Address</h4>
-                    <p className="text-sm text-foreground">{order.shipping_address}</p>
-                  </div>
-                )}
-
-                {order.phone && (
-                  <div className="mt-2">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Phone</h4>
-                    <p className="text-sm text-foreground">{order.phone}</p>
-                  </div>
-                )}
-
-                {order.notes && (
-                  <div className="mt-2">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Notes</h4>
-                    <p className="text-sm text-foreground">{order.notes}</p>
-                  </div>
-                )}
 
                 {/* Admin status controls */}
                 {isAdmin && (

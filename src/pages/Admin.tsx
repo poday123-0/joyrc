@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +63,18 @@ interface SystemSettings {
 
 type Tab = "dashboard" | "products" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "settings";
 
+const tabs = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "products", label: "Products", icon: Package },
+  { id: "categories", label: "Categories", icon: Grid3X3 },
+  { id: "orders", label: "Orders", icon: CreditCard },
+  { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "bank", label: "Bank", icon: Building2 },
+  { id: "support", label: "Support", icon: HelpCircle },
+  { id: "admins", label: "Admins", icon: Users },
+  { id: "settings", label: "Settings", icon: Settings },
+];
+
 const Admin = () => {
   const { isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -71,6 +83,7 @@ const Admin = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -116,10 +129,10 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-hero pb-8">
-      <div className="container max-w-4xl mx-auto px-4 pt-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen gradient-hero pb-8 lg:pb-0">
+      {/* Mobile Header */}
+      <div className="lg:hidden container max-w-6xl mx-auto px-4 pt-4">
+        <div className="flex items-center justify-between mb-4">
           <Link
             to="/"
             className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
@@ -127,22 +140,17 @@ const Admin = () => {
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </Link>
           <h1 className="font-bold text-xl text-foreground">Admin Panel</h1>
-          <div className="w-10" />
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors lg:hidden"
+          >
+            <Menu className="w-5 h-5 text-foreground" />
+          </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          {[
-            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-            { id: "products", label: "Products", icon: Package },
-            { id: "categories", label: "Categories", icon: Grid3X3 },
-            { id: "orders", label: "Orders", icon: CreditCard },
-            { id: "messages", label: "Messages", icon: MessageSquare },
-            { id: "bank", label: "Bank", icon: Building2 },
-            { id: "support", label: "Support", icon: HelpCircle },
-            { id: "admins", label: "Admins", icon: Users },
-            { id: "settings", label: "Settings", icon: Settings },
-          ].map((tab) => (
+        {/* Mobile Tabs */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as Tab)}
@@ -157,33 +165,76 @@ const Admin = () => {
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Content */}
-        {activeTab === "dashboard" && <AdminDashboard />}
-        {activeTab === "products" && (
-          <ProductsTab 
-            products={products} 
-            categories={categories}
-            onRefresh={fetchData} 
-          />
-        )}
-        {activeTab === "categories" && (
-          <CategoriesTab 
-            categories={categories} 
-            onRefresh={fetchData} 
-          />
-        )}
-        {activeTab === "orders" && <PaymentOrdersTab />}
-        {activeTab === "messages" && <ContactMessagesTab />}
-        {activeTab === "bank" && <BankSettingsTab />}
-        {activeTab === "support" && <SupportContentTab />}
-        {activeTab === "admins" && <AdminManagementTab />}
-        {activeTab === "settings" && settings && (
-          <SettingsTab 
-            settings={settings} 
-            onRefresh={fetchData} 
-          />
-        )}
+      {/* Desktop Layout */}
+      <div className="lg:flex lg:min-h-screen">
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:block w-64 xl:w-72 bg-white/80 backdrop-blur-sm border-r border-border p-6 sticky top-0 h-screen overflow-y-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <Link
+              to="/"
+              className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-primary" />
+            </Link>
+            <h1 className="font-bold text-xl text-foreground">Admin Panel</h1>
+          </div>
+
+          <nav className="space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as Tab)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-soft"
+                    : "text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span className="font-medium">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 lg:p-8">
+          <div className="container max-w-6xl mx-auto px-4 lg:px-0">
+            {/* Desktop Header */}
+            <div className="hidden lg:flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-foreground capitalize">{activeTab}</h2>
+            </div>
+
+            {/* Content */}
+            {activeTab === "dashboard" && <AdminDashboard />}
+            {activeTab === "products" && (
+              <ProductsTab 
+                products={products} 
+                categories={categories}
+                onRefresh={fetchData} 
+              />
+            )}
+            {activeTab === "categories" && (
+              <CategoriesTab 
+                categories={categories} 
+                onRefresh={fetchData} 
+              />
+            )}
+            {activeTab === "orders" && <PaymentOrdersTab />}
+            {activeTab === "messages" && <ContactMessagesTab />}
+            {activeTab === "bank" && <BankSettingsTab />}
+            {activeTab === "support" && <SupportContentTab />}
+            {activeTab === "admins" && <AdminManagementTab />}
+            {activeTab === "settings" && settings && (
+              <SettingsTab 
+                settings={settings} 
+                onRefresh={fetchData} 
+              />
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );
@@ -493,8 +544,8 @@ const ProductsTab = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-foreground">Products ({products.length})</h2>
+      <div className="flex items-center justify-between mb-4 lg:mb-6">
+        <h2 className="font-semibold text-foreground lg:text-lg">Products ({products.length})</h2>
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-cta text-white text-sm font-medium shadow-soft"
@@ -504,50 +555,54 @@ const ProductsTab = ({
       </div>
 
       {showForm && (
-        <div className="glass-card rounded-2xl p-4 mb-4 shadow-soft">
+        <div className="glass-card rounded-2xl p-4 md:p-6 mb-4 shadow-soft">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">{editingProduct ? "Edit Product" : "New Product"}</h3>
+            <h3 className="font-semibold text-lg">{editingProduct ? "Edit Product" : "New Product"}</h3>
             <button onClick={resetForm}>
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <input
-              type="text"
-              placeholder="Product name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              required
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="md:grid md:grid-cols-2 md:gap-4 space-y-4 md:space-y-0">
+              <input
+                type="text"
+                placeholder="Product name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                required
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Price (MVR)"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  required
+                />
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
             <textarea
               placeholder="Description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent resize-none h-20"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
             />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Price (MVR)"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-                required
-              />
-              <select
-                value={formData.category_id}
-                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                className="px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-4">
+            
+            <div className="flex flex-wrap items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -557,7 +612,7 @@ const ProductsTab = ({
                 />
                 <span className="text-sm">In Stock</span>
               </label>
-              <div className="flex-1">
+              <div className="flex-1 min-w-[200px]">
                 <input
                   type="file"
                   accept="image/*"
@@ -579,7 +634,7 @@ const ProductsTab = ({
                   <p className="text-sm text-muted-foreground">Loading specifications...</p>
                 ) : (
                   <>
-                    <div className="space-y-2 mb-3">
+                    <div className="grid gap-2 mb-3 md:grid-cols-2">
                       {specifications.map((spec) => (
                         <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
                           <span className="font-medium text-sm flex-1">{spec.spec_name}</span>
@@ -594,11 +649,11 @@ const ProductsTab = ({
                         </div>
                       ))}
                       {specifications.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No specifications yet.</p>
+                        <p className="text-sm text-muted-foreground col-span-2">No specifications yet.</p>
                       )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
                         placeholder="Spec name (e.g., Speed)"
@@ -616,7 +671,7 @@ const ProductsTab = ({
                       <button
                         type="button"
                         onClick={handleAddSpec}
-                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
                       >
                         Add
                       </button>
@@ -638,7 +693,7 @@ const ProductsTab = ({
                   <p className="text-sm text-muted-foreground">Loading gallery...</p>
                 ) : (
                   <>
-                    <div className="grid grid-cols-4 gap-2 mb-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 mb-3">
                       {galleryImages.map((img) => (
                         <div key={img.id} className="relative group">
                           <img 
@@ -662,13 +717,13 @@ const ProductsTab = ({
                         </div>
                       ))}
                       {galleryImages.length === 0 && (
-                        <div className="col-span-4 text-sm text-muted-foreground text-center py-4">
+                        <div className="col-span-full text-sm text-muted-foreground text-center py-4">
                           No gallery images yet
                         </div>
                       )}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
                         <Upload className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">
@@ -719,10 +774,10 @@ const ProductsTab = ({
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <div key={product.id} className="glass-card rounded-2xl p-4 flex items-center gap-4 shadow-soft">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center overflow-hidden">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center overflow-hidden flex-shrink-0">
               {product.image_url ? (
                 <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
               ) : (
@@ -733,7 +788,7 @@ const ProductsTab = ({
               <h4 className="font-semibold text-foreground truncate">{product.name}</h4>
               <p className="text-sm text-muted-foreground">{formatMVR(product.price)}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <button
                 onClick={() => handleEdit(product)}
                 className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
@@ -750,7 +805,7 @@ const ProductsTab = ({
           </div>
         ))}
         {products.length === 0 && (
-          <div className="text-center py-12">
+          <div className="col-span-full text-center py-12">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <Package className="w-8 h-8 text-muted-foreground" />
             </div>
@@ -876,8 +931,8 @@ const CategoriesTab = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-foreground">Categories ({categories.length})</h2>
+      <div className="flex items-center justify-between mb-4 lg:mb-6">
+        <h2 className="font-semibold text-foreground lg:text-lg">Categories ({categories.length})</h2>
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-cta text-white text-sm font-medium shadow-soft"
@@ -887,20 +942,20 @@ const CategoriesTab = ({
       </div>
 
       {showForm && (
-        <div className="glass-card rounded-2xl p-4 mb-4 shadow-soft">
+        <div className="glass-card rounded-2xl p-4 md:p-6 mb-4 shadow-soft">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">{editingCategory ? "Edit Category" : "New Category"}</h3>
+            <h3 className="font-semibold text-lg">{editingCategory ? "Edit Category" : "New Category"}</h3>
             <button onClick={resetForm}>
               <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               placeholder="Category name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
             <div className="grid grid-cols-2 gap-3">
@@ -909,39 +964,38 @@ const CategoriesTab = ({
                 placeholder="Icon (emoji)"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
               />
               <input
                 type="number"
                 placeholder="Sort order"
                 value={formData.sort_order}
                 onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                className="px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50"
             >
-              <CheckCircle2 className="w-4 h-4" />
               {saving ? "Saving..." : editingCategory ? "Update Category" : "Create Category"}
             </button>
           </form>
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {categories.map((category) => (
           <div key={category.id} className="glass-card rounded-2xl p-4 flex items-center gap-4 shadow-soft">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center text-2xl">
               {category.icon}
             </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-foreground">{category.name}</h4>
-              <p className="text-xs text-muted-foreground">Sort: {category.sort_order}</p>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-foreground truncate">{category.name}</h4>
+              <p className="text-xs text-muted-foreground">Order: {category.sort_order}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <button
                 onClick={() => handleEdit(category)}
                 className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
@@ -958,7 +1012,7 @@ const CategoriesTab = ({
           </div>
         ))}
         {categories.length === 0 && (
-          <div className="text-center py-12">
+          <div className="col-span-full text-center py-12">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <Grid3X3 className="w-8 h-8 text-muted-foreground" />
             </div>
@@ -971,7 +1025,7 @@ const CategoriesTab = ({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title="Delete Category?"
-        description="Products in this category will become uncategorized."
+        description="This will permanently remove this category. Products in this category will become uncategorized."
         confirmText="Delete Category"
         variant="destructive"
         onConfirm={handleConfirmDelete}
@@ -1066,141 +1120,143 @@ const SettingsTab = ({
   };
 
   return (
-    <div>
-      <h2 className="font-semibold text-foreground mb-4">System Settings</h2>
+    <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+      <div>
+        <h2 className="font-semibold text-foreground mb-4 lg:text-lg">System Settings</h2>
 
-      <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 shadow-soft space-y-4">
-        {/* Logo Section */}
-        <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Site Logo</label>
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border">
-              {formData.logo_url ? (
-                <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain" />
-              ) : (
-                <Image className="w-8 h-8 text-muted-foreground" />
-              )}
+        <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 md:p-6 shadow-soft space-y-4">
+          {/* Logo Section */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Site Logo</label>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border flex-shrink-0">
+                {formData.logo_url ? (
+                  <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <Image className="w-6 h-6 md:w-8 md:h-8 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                  <Upload className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {uploadingLogo ? "Uploading..." : "Upload new logo"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleLogoUpload(e.target.files?.[0] || null)}
+                    className="hidden"
+                    disabled={uploadingLogo}
+                  />
+                </label>
+                {formData.logo_url && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, logo_url: "" })}
+                    className="text-sm text-destructive mt-2 hover:underline"
+                  >
+                    Remove logo
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
-                <Upload className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {uploadingLogo ? "Uploading..." : "Upload new logo"}
-                </span>
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Site Name</label>
+            <input
+              type="text"
+              value={formData.site_name}
+              onChange={(e) => setFormData({ ...formData, site_name: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Primary Color</label>
+              <div className="flex gap-2">
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleLogoUpload(e.target.files?.[0] || null)}
-                  className="hidden"
-                  disabled={uploadingLogo}
+                  type="color"
+                  value={formData.primary_color}
+                  onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                  className="w-12 h-10 rounded-lg border border-border cursor-pointer"
                 />
-              </label>
-              {formData.logo_url && (
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, logo_url: "" })}
-                  className="text-sm text-destructive mt-2 hover:underline"
-                >
-                  Remove logo
-                </button>
-              )}
+                <input
+                  type="text"
+                  value={formData.primary_color}
+                  onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                  className="flex-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Secondary Color</label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={formData.secondary_color}
+                  onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
+                  className="w-12 h-10 rounded-lg border border-border cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={formData.secondary_color}
+                  onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
+                  className="flex-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <label className="text-sm text-muted-foreground mb-1 block">Site Name</label>
-          <input
-            type="text"
-            value={formData.site_name}
-            onChange={(e) => setFormData({ ...formData, site_name: e.target.value })}
-            className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Primary Color</label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={formData.primary_color}
-                onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                className="w-12 h-10 rounded-lg border border-border cursor-pointer"
-              />
-              <input
-                type="text"
-                value={formData.primary_color}
-                onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                className="flex-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
+            <label className="text-sm text-muted-foreground mb-1 block">Hero Title</label>
+            <input
+              type="text"
+              value={formData.hero_title}
+              onChange={(e) => setFormData({ ...formData, hero_title: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+            />
           </div>
+
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Secondary Color</label>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={formData.secondary_color}
-                onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                className="w-12 h-10 rounded-lg border border-border cursor-pointer"
-              />
-              <input
-                type="text"
-                value={formData.secondary_color}
-                onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                className="flex-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
+            <label className="text-sm text-muted-foreground mb-1 block">Hero Subtitle</label>
+            <input
+              type="text"
+              value={formData.hero_subtitle}
+              onChange={(e) => setFormData({ ...formData, hero_subtitle: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+            />
           </div>
-        </div>
 
-        <div>
-          <label className="text-sm text-muted-foreground mb-1 block">Hero Title</label>
-          <input
-            type="text"
-            value={formData.hero_title}
-            onChange={(e) => setFormData({ ...formData, hero_title: e.target.value })}
-            className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-muted-foreground mb-1 block">Hero Subtitle</label>
-          <input
-            type="text"
-            value={formData.hero_subtitle}
-            onChange={(e) => setFormData({ ...formData, hero_subtitle: e.target.value })}
-            className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full py-3 rounded-full gradient-cta text-white font-medium shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? "Saving..." : "Save Settings"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full py-3 rounded-full gradient-cta text-white font-medium shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? "Saving..." : "Save Settings"}
+          </button>
+        </form>
+      </div>
 
       {/* Preview */}
-      <div className="mt-6">
-        <h3 className="font-semibold text-foreground mb-3">Preview</h3>
+      <div className="mt-6 lg:mt-0">
+        <h3 className="font-semibold text-foreground mb-4 lg:text-lg">Preview</h3>
         <div 
-          className="rounded-2xl p-6 text-white"
+          className="rounded-2xl p-6 text-white sticky top-8"
           style={{ background: `linear-gradient(135deg, ${formData.primary_color}, ${formData.secondary_color})` }}
         >
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-4">
             {formData.logo_url && (
-              <img src={formData.logo_url} alt="Logo" className="w-10 h-10 object-contain rounded-lg bg-white/20 p-1" />
+              <img src={formData.logo_url} alt="Logo" className="w-12 h-12 object-contain rounded-lg bg-white/20 p-1" />
             )}
-            <span className="font-bold">{formData.site_name}</span>
+            <span className="font-bold text-lg">{formData.site_name}</span>
           </div>
-          <h4 className="text-xl font-bold">{formData.hero_title}</h4>
-          <p className="text-white/80 text-sm mt-1">{formData.hero_subtitle}</p>
+          <h4 className="text-2xl font-bold">{formData.hero_title}</h4>
+          <p className="text-white/80 mt-2">{formData.hero_subtitle}</p>
         </div>
       </div>
     </div>
