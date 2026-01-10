@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, LogOut, User, Settings, ShoppingBag, Mail, Save } from "lucide-react";
+import { ChevronLeft, LogOut, User, Settings, ShoppingBag, Mail, Save, Package } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import OrdersTab from "@/components/OrdersTab";
 
 interface Profile {
   id: string;
@@ -19,6 +20,7 @@ const Profile = () => {
   const [fullName, setFullName] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"profile" | "orders">("profile");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -115,76 +117,107 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Edit Profile */}
-        <div className="glass-card rounded-2xl p-4 shadow-soft mb-4">
-          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-            <User className="w-4 h-4" /> Edit Profile
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm text-muted-foreground">Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full mt-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground">Email</label>
-              <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-xl border border-border bg-muted/50">
-                <Mail className="w-4 h-4 text-muted-foreground" />
-                <span className="text-foreground">{user.email}</span>
-              </div>
-            </div>
-            <button
-              onClick={handleSaveProfile}
-              disabled={saving}
-              className="w-full py-3 rounded-full gradient-cta text-white font-medium shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="space-y-3">
-          <Link to="/cart" className="glass-card rounded-2xl p-4 shadow-soft flex items-center gap-4 hover:bg-white/80 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-cyan-light/50 flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5 text-teal" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-foreground">My Cart</h4>
-              <p className="text-xs text-muted-foreground">View your shopping cart</p>
-            </div>
-          </Link>
-
-          {isAdmin && (
-            <Link to="/admin" className="glass-card rounded-2xl p-4 shadow-soft flex items-center gap-4 hover:bg-white/80 transition-colors">
-              <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
-                <Settings className="w-5 h-5 text-gold" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-foreground">Admin Panel</h4>
-                <p className="text-xs text-muted-foreground">Manage products & settings</p>
-              </div>
-            </Link>
-          )}
-
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4">
           <button
-            onClick={handleSignOut}
-            className="w-full glass-card rounded-2xl p-4 shadow-soft flex items-center gap-4 hover:bg-coral/10 transition-colors"
+            onClick={() => setActiveTab("profile")}
+            className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-all ${
+              activeTab === "profile"
+                ? "bg-primary text-primary-foreground shadow-soft"
+                : "glass-card text-foreground hover:bg-white/80"
+            }`}
           >
-            <div className="w-10 h-10 rounded-full bg-coral/20 flex items-center justify-center">
-              <LogOut className="w-5 h-5 text-coral" />
-            </div>
-            <div className="flex-1 text-left">
-              <h4 className="font-medium text-foreground">Sign Out</h4>
-              <p className="text-xs text-muted-foreground">Log out of your account</p>
-            </div>
+            Profile
+          </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+              activeTab === "orders"
+                ? "bg-primary text-primary-foreground shadow-soft"
+                : "glass-card text-foreground hover:bg-white/80"
+            }`}
+          >
+            <Package className="w-4 h-4" />
+            My Orders
           </button>
         </div>
+
+        {activeTab === "profile" ? (
+          <>
+            {/* Edit Profile */}
+            <div className="glass-card rounded-2xl p-4 shadow-soft mb-4">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <User className="w-4 h-4" /> Edit Profile
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground">Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full mt-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground">Email</label>
+                  <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-xl border border-border bg-muted/50">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-foreground">{user.email}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="w-full py-3 rounded-full gradient-cta text-white font-medium shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="space-y-3">
+              <Link to="/cart" className="glass-card rounded-2xl p-4 shadow-soft flex items-center gap-4 hover:bg-white/80 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-cyan-light/50 flex items-center justify-center">
+                  <ShoppingBag className="w-5 h-5 text-teal" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-foreground">My Cart</h4>
+                  <p className="text-xs text-muted-foreground">View your shopping cart</p>
+                </div>
+              </Link>
+
+              {isAdmin && (
+                <Link to="/admin" className="glass-card rounded-2xl p-4 shadow-soft flex items-center gap-4 hover:bg-white/80 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                    <Settings className="w-5 h-5 text-gold" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-foreground">Admin Panel</h4>
+                    <p className="text-xs text-muted-foreground">Manage products & settings</p>
+                  </div>
+                </Link>
+              )}
+
+              <button
+                onClick={handleSignOut}
+                className="w-full glass-card rounded-2xl p-4 shadow-soft flex items-center gap-4 hover:bg-coral/10 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-coral/20 flex items-center justify-center">
+                  <LogOut className="w-5 h-5 text-coral" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h4 className="font-medium text-foreground">Sign Out</h4>
+                  <p className="text-xs text-muted-foreground">Log out of your account</p>
+                </div>
+              </button>
+            </div>
+          </>
+        ) : (
+          <OrdersTab />
+        )}
       </div>
     </div>
   );

@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
-  Save, X, ListPlus 
+  Save, X, ListPlus, ShoppingCart, Image 
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import OrdersTab from "@/components/OrdersTab";
 
 interface Product {
   id: string;
@@ -27,6 +28,13 @@ interface ProductSpecification {
   sort_order: number | null;
 }
 
+interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  sort_order: number | null;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -44,7 +52,7 @@ interface SystemSettings {
   hero_subtitle: string;
 }
 
-type Tab = "products" | "categories" | "settings";
+type Tab = "products" | "categories" | "orders" | "settings";
 
 const Admin = () => {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -114,10 +122,11 @@ const Admin = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {[
             { id: "products", label: "Products", icon: Package },
             { id: "categories", label: "Categories", icon: Grid3X3 },
+            { id: "orders", label: "Orders", icon: ShoppingCart },
             { id: "settings", label: "Settings", icon: Settings },
           ].map((tab) => (
             <button
@@ -148,6 +157,12 @@ const Admin = () => {
             categories={categories} 
             onRefresh={fetchData} 
           />
+        )}
+        {activeTab === "orders" && (
+          <div>
+            <h2 className="font-semibold text-foreground mb-4">Order Management</h2>
+            <OrdersTab isAdmin={true} />
+          </div>
         )}
         {activeTab === "settings" && settings && (
           <SettingsTab 
