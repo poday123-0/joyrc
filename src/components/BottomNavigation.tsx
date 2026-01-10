@@ -14,7 +14,7 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm">
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm lg:hidden">
       <div className="glass-card rounded-full px-6 py-3 flex items-center justify-around shadow-elevated">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;

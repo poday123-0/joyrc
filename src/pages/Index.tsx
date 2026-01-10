@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import HeroBanner from "@/components/HeroBanner";
 import CategoryPills from "@/components/CategoryPills";
@@ -73,8 +74,8 @@ const Index = () => {
       });
 
   return (
-    <div className="min-h-screen gradient-hero pb-24">
-      <div className="container max-w-md mx-auto px-4">
+    <div className="min-h-screen gradient-hero pb-24 lg:pb-8">
+      <div className="container max-w-7xl mx-auto px-4 lg:px-8">
         <Header />
         <HeroBanner />
         <CategoryPills 
@@ -85,34 +86,24 @@ const Index = () => {
         {/* Products Section */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">Popular RC Toys</h3>
-            <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <h3 className="font-semibold text-foreground text-lg lg:text-xl">Popular RC Toys</h3>
+            <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               See All
-            </button>
+            </Link>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-2 gap-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-64 rounded-3xl bg-white/50 animate-pulse" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-64 lg:h-80 rounded-3xl bg-white/50 animate-pulse" />
               ))}
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                {filteredProducts.slice(0, 2).map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-
-              {filteredProducts.length > 2 && (
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  {filteredProducts.slice(2, 4).map((product) => (
-                    <ProductCard key={product.id} product={product} size="small" />
-                  ))}
-                </div>
-              )}
-            </>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           )}
         </div>
       </div>
