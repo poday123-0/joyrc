@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { ChevronLeft, Minus, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 
 const Cart = () => {
   const { items, updateQuantity, removeFromCart, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
 
   if (items.length === 0) {
     return (
@@ -113,9 +115,13 @@ const Cart = () => {
               ${totalPrice.toFixed(2)}
             </span>
           </div>
-          <button className="w-full py-4 rounded-full gradient-cta text-white font-semibold shadow-elevated hover:opacity-90 transition-opacity">
-            Proceed to Checkout
-          </button>
+          <Link
+            to={user ? "/checkout" : "/login"}
+            className="w-full py-4 rounded-full gradient-cta text-white font-semibold shadow-elevated hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          >
+            {user ? "Proceed to Checkout" : "Sign in to Checkout"}
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </div>
       </div>
     </div>
