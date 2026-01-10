@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Star, ShoppingBag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
+import { formatMVR } from "@/lib/currency";
 
 interface Product {
   id: string;
@@ -290,7 +291,7 @@ const ProductDetail = () => {
         <div className="mt-6 bg-white rounded-t-3xl p-6 shadow-elevated -mx-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
-            <p className="text-xl font-bold text-primary">${product.price.toFixed(2)}</p>
+            <p className="text-xl font-bold text-primary">{formatMVR(product.price)}</p>
           </div>
 
           {/* Rating and category */}

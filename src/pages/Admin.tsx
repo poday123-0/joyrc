@@ -2,13 +2,17 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
-  Save, X, ListPlus, ShoppingCart, Image, Upload, CheckCircle2
+  Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
+  Building2, CreditCard, RotateCcw
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import OrdersTab from "@/components/OrdersTab";
+import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import AdminDashboard from "@/components/AdminDashboard";
+import BankSettingsTab from "@/components/BankSettingsTab";
+import PaymentOrdersTab from "@/components/PaymentOrdersTab";
 
 interface Product {
   id: string;
@@ -34,6 +38,7 @@ interface ProductImage {
   product_id: string;
   image_url: string;
   sort_order: number | null;
+  is_360: boolean;
 }
 
 interface Category {
@@ -53,12 +58,12 @@ interface SystemSettings {
   hero_subtitle: string;
 }
 
-type Tab = "products" | "categories" | "orders" | "settings";
+type Tab = "dashboard" | "products" | "categories" | "orders" | "bank" | "settings";
 
 const Admin = () => {
   const { isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>("products");
+  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -125,9 +130,11 @@ const Admin = () => {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {[
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
             { id: "products", label: "Products", icon: Package },
             { id: "categories", label: "Categories", icon: Grid3X3 },
-            { id: "orders", label: "Orders", icon: ShoppingCart },
+            { id: "orders", label: "Orders", icon: CreditCard },
+            { id: "bank", label: "Bank", icon: Building2 },
             { id: "settings", label: "Settings", icon: Settings },
           ].map((tab) => (
             <button
@@ -146,6 +153,7 @@ const Admin = () => {
         </div>
 
         {/* Content */}
+        {activeTab === "dashboard" && <AdminDashboard />}
         {activeTab === "products" && (
           <ProductsTab 
             products={products} 
@@ -159,12 +167,8 @@ const Admin = () => {
             onRefresh={fetchData} 
           />
         )}
-        {activeTab === "orders" && (
-          <div>
-            <h2 className="font-semibold text-foreground mb-4">Order Management</h2>
-            <OrdersTab isAdmin={true} />
-          </div>
-        )}
+        {activeTab === "orders" && <PaymentOrdersTab />}
+        {activeTab === "bank" && <BankSettingsTab />}
         {activeTab === "settings" && settings && (
           <SettingsTab 
             settings={settings} 
@@ -239,7 +243,7 @@ const ProductsTab = ({
       .select("*")
       .eq("product_id", productId)
       .order("sort_order");
-    if (data) setGalleryImages(data);
+    if (data) setGalleryImages(data as ProductImage[]);
     setLoadingGallery(false);
   };
 
@@ -311,7 +315,7 @@ const ProductsTab = ({
     }
   };
 
-  const handleGalleryUpload = async (files: FileList | null) => {
+  const handleGalleryUpload = async (files: FileList | null, is360: boolean = false) => {
     if (!files || !editingProduct) return;
     
     setUploadingGallery(true);
@@ -342,19 +346,20 @@ const ProductsTab = ({
           product_id: editingProduct.id,
           image_url: urlData.publicUrl,
           sort_order: galleryImages.length + uploadedImages.length,
+          is_360: is360,
         })
         .select()
         .single();
 
       if (!insertError && imageData) {
-        uploadedImages.push(imageData);
+        uploadedImages.push(imageData as ProductImage);
       }
     }
 
     if (uploadedImages.length > 0) {
       setGalleryImages([...galleryImages, ...uploadedImages]);
       toast({ 
-        title: "Images Uploaded",
+        title: is360 ? "360° Images Uploaded" : "Images Uploaded",
         description: `${uploadedImages.length} image(s) added to gallery.`,
       });
     }
@@ -456,7 +461,6 @@ const ProductsTab = ({
   const handleConfirmDelete = async () => {
     if (!productToDelete) return;
 
-    // Delete gallery images, specifications, then product
     await supabase.from("product_images").delete().eq("product_id", productToDelete);
     await supabase.from("product_specifications").delete().eq("product_id", productToDelete);
     
@@ -517,7 +521,7 @@ const ProductsTab = ({
               <input
                 type="number"
                 step="0.01"
-                placeholder="Price"
+                placeholder="Price (MVR)"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 className="px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
@@ -554,7 +558,7 @@ const ProductsTab = ({
               </div>
             </div>
 
-            {/* Specifications Section - Only show when editing */}
+            {/* Specifications Section */}
             {editingProduct && (
               <div className="border-t border-border pt-4 mt-4">
                 <div className="flex items-center gap-2 mb-3">
@@ -566,7 +570,6 @@ const ProductsTab = ({
                   <p className="text-sm text-muted-foreground">Loading specifications...</p>
                 ) : (
                   <>
-                    {/* Existing specifications */}
                     <div className="space-y-2 mb-3">
                       {specifications.map((spec) => (
                         <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
@@ -582,11 +585,10 @@ const ProductsTab = ({
                         </div>
                       ))}
                       {specifications.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No specifications yet. Add some below.</p>
+                        <p className="text-sm text-muted-foreground">No specifications yet.</p>
                       )}
                     </div>
 
-                    {/* Add new specification */}
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -615,7 +617,7 @@ const ProductsTab = ({
               </div>
             )}
 
-            {/* Gallery Images Section - Only show when editing */}
+            {/* Gallery Images Section */}
             {editingProduct && (
               <div className="border-t border-border pt-4 mt-4">
                 <div className="flex items-center gap-2 mb-3">
@@ -627,7 +629,6 @@ const ProductsTab = ({
                   <p className="text-sm text-muted-foreground">Loading gallery...</p>
                 ) : (
                   <>
-                    {/* Gallery images grid */}
                     <div className="grid grid-cols-4 gap-2 mb-3">
                       {galleryImages.map((img) => (
                         <div key={img.id} className="relative group">
@@ -636,6 +637,12 @@ const ProductsTab = ({
                             alt="Gallery" 
                             className="w-full aspect-square object-cover rounded-lg"
                           />
+                          {img.is_360 && (
+                            <div className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                              <RotateCcw className="w-2.5 h-2.5" />
+                              360°
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleDeleteGalleryImage(img.id)}
@@ -652,21 +659,36 @@ const ProductsTab = ({
                       )}
                     </div>
 
-                    {/* Upload gallery images */}
-                    <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
-                      <Upload className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {uploadingGallery ? "Uploading..." : "Upload gallery images"}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleGalleryUpload(e.target.files)}
-                        className="hidden"
-                        disabled={uploadingGallery}
-                      />
-                    </label>
+                    <div className="flex gap-2">
+                      <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                        <Upload className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {uploadingGallery ? "Uploading..." : "Regular Images"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => handleGalleryUpload(e.target.files, false)}
+                          className="hidden"
+                          disabled={uploadingGallery}
+                        />
+                      </label>
+                      <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
+                        <RotateCcw className="w-4 h-4 text-primary" />
+                        <span className="text-sm text-primary">
+                          360° Images
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => handleGalleryUpload(e.target.files, true)}
+                          className="hidden"
+                          disabled={uploadingGallery}
+                        />
+                      </label>
+                    </div>
                   </>
                 )}
               </div>
@@ -677,9 +699,7 @@ const ProductsTab = ({
               disabled={saving}
               className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {saving ? (
-                "Saving..."
-              ) : (
+              {saving ? "Saving..." : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
                   {editingProduct ? "Update Product" : "Create Product"}
@@ -695,14 +715,14 @@ const ProductsTab = ({
           <div key={product.id} className="glass-card rounded-2xl p-4 flex items-center gap-4 shadow-soft">
             <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center overflow-hidden">
               {product.image_url ? (
-                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
               ) : (
                 <span className="text-2xl">📦</span>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-foreground truncate">{product.name}</h4>
-              <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">{formatMVR(product.price)}</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -734,7 +754,7 @@ const ProductsTab = ({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title="Delete Product?"
-        description="This will permanently remove this product, including all its specifications and gallery images. This action cannot be undone."
+        description="This will permanently remove this product, including all its specifications and gallery images."
         confirmText="Delete Product"
         variant="destructive"
         onConfirm={handleConfirmDelete}
@@ -942,7 +962,7 @@ const CategoriesTab = ({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title="Delete Category?"
-        description="This will remove this category. Products in this category will become uncategorized."
+        description="Products in this category will become uncategorized."
         confirmText="Delete Category"
         variant="destructive"
         onConfirm={handleConfirmDelete}
