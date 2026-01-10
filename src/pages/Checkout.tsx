@@ -76,8 +76,8 @@ const Checkout = () => {
       // Clear the cart and redirect
       clearCart();
       toast({
-        title: "Order placed successfully!",
-        description: "We'll process your order soon.",
+        title: "🎉 Order Placed Successfully!",
+        description: "Thank you for your purchase. We'll process your order soon.",
       });
       navigate("/profile");
     } catch (error: any) {

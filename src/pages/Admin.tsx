@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
-  Save, X, ListPlus, ShoppingCart, Image 
+  Save, X, ListPlus, ShoppingCart, Image, Upload, CheckCircle2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import OrdersTab from "@/components/OrdersTab";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Product {
   id: string;
@@ -197,17 +198,25 @@ const ProductsTab = ({
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
   
   // Specifications state
   const [specifications, setSpecifications] = useState<ProductSpecification[]>([]);
   const [newSpec, setNewSpec] = useState({ name: "", value: "" });
   const [loadingSpecs, setLoadingSpecs] = useState(false);
 
+  // Gallery images state
+  const [galleryImages, setGalleryImages] = useState<ProductImage[]>([]);
+  const [loadingGallery, setLoadingGallery] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+
   const resetForm = () => {
     setFormData({ name: "", description: "", price: "", category_id: "", rating: "4.5", in_stock: true });
     setImageFile(null);
     setEditingProduct(null);
     setSpecifications([]);
+    setGalleryImages([]);
     setNewSpec({ name: "", value: "" });
     setShowForm(false);
   };
@@ -223,6 +232,17 @@ const ProductsTab = ({
     setLoadingSpecs(false);
   };
 
+  const fetchGalleryImages = async (productId: string) => {
+    setLoadingGallery(true);
+    const { data } = await supabase
+      .from("product_images")
+      .select("*")
+      .eq("product_id", productId)
+      .order("sort_order");
+    if (data) setGalleryImages(data);
+    setLoadingGallery(false);
+  };
+
   const handleEdit = async (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -234,7 +254,10 @@ const ProductsTab = ({
       in_stock: product.in_stock ?? true,
     });
     setShowForm(true);
-    await fetchSpecifications(product.id);
+    await Promise.all([
+      fetchSpecifications(product.id),
+      fetchGalleryImages(product.id),
+    ]);
   };
 
   const handleAddSpec = async () => {
@@ -252,25 +275,110 @@ const ProductsTab = ({
       .single();
     
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Failed to add specification", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } else if (data) {
       setSpecifications([...specifications, data]);
       setNewSpec({ name: "", value: "" });
-      toast({ title: "Specification added!" });
+      toast({ 
+        title: "Specification Added",
+        description: `${data.spec_name} has been added successfully.`,
+      });
     }
   };
 
-  const handleDeleteSpec = async (specId: string) => {
+  const handleDeleteSpec = async (specId: string, specName: string) => {
     const { error } = await supabase
       .from("product_specifications")
       .delete()
       .eq("id", specId);
     
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Failed to delete specification", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } else {
       setSpecifications(specifications.filter(s => s.id !== specId));
-      toast({ title: "Specification deleted!" });
+      toast({ 
+        title: "Specification Removed",
+        description: `${specName} has been removed.`,
+      });
+    }
+  };
+
+  const handleGalleryUpload = async (files: FileList | null) => {
+    if (!files || !editingProduct) return;
+    
+    setUploadingGallery(true);
+    const uploadedImages: ProductImage[] = [];
+
+    for (const file of Array.from(files)) {
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        toast({ 
+          title: "Upload Failed", 
+          description: `Failed to upload ${file.name}`, 
+          variant: "destructive" 
+        });
+        continue;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      const { data: imageData, error: insertError } = await supabase
+        .from("product_images")
+        .insert({
+          product_id: editingProduct.id,
+          image_url: urlData.publicUrl,
+          sort_order: galleryImages.length + uploadedImages.length,
+        })
+        .select()
+        .single();
+
+      if (!insertError && imageData) {
+        uploadedImages.push(imageData);
+      }
+    }
+
+    if (uploadedImages.length > 0) {
+      setGalleryImages([...galleryImages, ...uploadedImages]);
+      toast({ 
+        title: "Images Uploaded",
+        description: `${uploadedImages.length} image(s) added to gallery.`,
+      });
+    }
+    setUploadingGallery(false);
+  };
+
+  const handleDeleteGalleryImage = async (imageId: string) => {
+    const { error } = await supabase
+      .from("product_images")
+      .delete()
+      .eq("id", imageId);
+    
+    if (error) {
+      toast({ 
+        title: "Failed to delete image", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } else {
+      setGalleryImages(galleryImages.filter(img => img.id !== imageId));
+      toast({ 
+        title: "Image Removed",
+        description: "Gallery image has been removed.",
+      });
     }
   };
 
@@ -312,37 +420,62 @@ const ProductsTab = ({
           .update(productData)
           .eq("id", editingProduct.id);
         if (error) throw error;
-        toast({ title: "Product updated!" });
+        toast({ 
+          title: "Product Updated",
+          description: `${formData.name} has been updated successfully.`,
+        });
       } else {
         const { error } = await supabase
           .from("products")
           .insert(productData);
         if (error) throw error;
-        toast({ title: "Product created!" });
+        toast({ 
+          title: "Product Created",
+          description: `${formData.name} has been added to your catalog.`,
+        });
       }
 
       resetForm();
       onRefresh();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+  const handleDeleteClick = (id: string) => {
+    setProductToDelete(id);
+    setDeleteDialogOpen(true);
+  };
 
-    // Delete specifications first
-    await supabase.from("product_specifications").delete().eq("product_id", id);
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+
+    // Delete gallery images, specifications, then product
+    await supabase.from("product_images").delete().eq("product_id", productToDelete);
+    await supabase.from("product_specifications").delete().eq("product_id", productToDelete);
     
-    const { error } = await supabase.from("products").delete().eq("id", id);
+    const { error } = await supabase.from("products").delete().eq("id", productToDelete);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Failed to delete product", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } else {
-      toast({ title: "Product deleted!" });
+      toast({ 
+        title: "Product Deleted",
+        description: "The product has been permanently removed.",
+      });
       onRefresh();
     }
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
   };
 
   return (
@@ -411,12 +544,14 @@ const ProductsTab = ({
                 />
                 <span className="text-sm">In Stock</span>
               </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                className="text-sm"
-              />
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                  className="text-sm"
+                />
+              </div>
             </div>
 
             {/* Specifications Section - Only show when editing */}
@@ -439,15 +574,15 @@ const ProductsTab = ({
                           <span className="text-sm text-muted-foreground flex-1">{spec.spec_value}</span>
                           <button
                             type="button"
-                            onClick={() => handleDeleteSpec(spec.id)}
-                            className="w-6 h-6 rounded-full bg-coral/10 flex items-center justify-center hover:bg-coral/20"
+                            onClick={() => handleDeleteSpec(spec.id, spec.spec_name)}
+                            className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
                           >
-                            <X className="w-3 h-3 text-coral" />
+                            <X className="w-3 h-3 text-destructive" />
                           </button>
                         </div>
                       ))}
                       {specifications.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No specifications yet.</p>
+                        <p className="text-sm text-muted-foreground">No specifications yet. Add some below.</p>
                       )}
                     </div>
 
@@ -455,14 +590,14 @@ const ProductsTab = ({
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="Spec name (e.g., Weight)"
+                        placeholder="Spec name (e.g., Speed)"
                         value={newSpec.name}
                         onChange={(e) => setNewSpec({ ...newSpec, name: e.target.value })}
                         className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                       />
                       <input
                         type="text"
-                        placeholder="Value (e.g., 1.5 kg)"
+                        placeholder="Value (e.g., 45 km/h)"
                         value={newSpec.value}
                         onChange={(e) => setNewSpec({ ...newSpec, value: e.target.value })}
                         className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
@@ -480,12 +615,76 @@ const ProductsTab = ({
               </div>
             )}
 
+            {/* Gallery Images Section - Only show when editing */}
+            {editingProduct && (
+              <div className="border-t border-border pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Image className="w-4 h-4 text-primary" />
+                  <h4 className="font-medium text-sm">Product Gallery</h4>
+                </div>
+                
+                {loadingGallery ? (
+                  <p className="text-sm text-muted-foreground">Loading gallery...</p>
+                ) : (
+                  <>
+                    {/* Gallery images grid */}
+                    <div className="grid grid-cols-4 gap-2 mb-3">
+                      {galleryImages.map((img) => (
+                        <div key={img.id} className="relative group">
+                          <img 
+                            src={img.image_url} 
+                            alt="Gallery" 
+                            className="w-full aspect-square object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGalleryImage(img.id)}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {galleryImages.length === 0 && (
+                        <div className="col-span-4 text-sm text-muted-foreground text-center py-4">
+                          No gallery images yet
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload gallery images */}
+                    <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <Upload className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {uploadingGallery ? "Uploading..." : "Upload gallery images"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleGalleryUpload(e.target.files)}
+                        className="hidden"
+                        disabled={uploadingGallery}
+                      />
+                    </label>
+                  </>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50"
+              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {saving ? "Saving..." : editingProduct ? "Update Product" : "Create Product"}
+              {saving ? (
+                "Saving..."
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  {editingProduct ? "Update Product" : "Create Product"}
+                </>
+              )}
             </button>
           </form>
         </div>
@@ -513,18 +712,33 @@ const ProductsTab = ({
                 <Pencil className="w-4 h-4" />
               </button>
               <button
-                onClick={() => handleDelete(product.id)}
-                className="w-8 h-8 rounded-full bg-coral/10 flex items-center justify-center hover:bg-coral/20"
+                onClick={() => handleDeleteClick(product.id)}
+                className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
               >
-                <Trash2 className="w-4 h-4 text-coral" />
+                <Trash2 className="w-4 h-4 text-destructive" />
               </button>
             </div>
           </div>
         ))}
         {products.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No products yet. Add your first product!</p>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Package className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">No products yet. Add your first product!</p>
+          </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Product?"
+        description="This will permanently remove this product, including all its specifications and gallery images. This action cannot be undone."
+        confirmText="Delete Product"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };
@@ -541,6 +755,8 @@ const CategoriesTab = ({
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: "", icon: "🎮", sort_order: "0" });
   const [saving, setSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   const resetForm = () => {
     setFormData({ name: "", icon: "🎮", sort_order: "0" });
@@ -575,34 +791,58 @@ const CategoriesTab = ({
           .update(categoryData)
           .eq("id", editingCategory.id);
         if (error) throw error;
-        toast({ title: "Category updated!" });
+        toast({ 
+          title: "Category Updated",
+          description: `${formData.name} has been updated successfully.`,
+        });
       } else {
         const { error } = await supabase
           .from("categories")
           .insert(categoryData);
         if (error) throw error;
-        toast({ title: "Category created!" });
+        toast({ 
+          title: "Category Created",
+          description: `${formData.name} has been added.`,
+        });
       }
 
       resetForm();
       onRefresh();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+  const handleDeleteClick = (id: string) => {
+    setCategoryToDelete(id);
+    setDeleteDialogOpen(true);
+  };
 
-    const { error } = await supabase.from("categories").delete().eq("id", id);
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+
+    const { error } = await supabase.from("categories").delete().eq("id", categoryToDelete);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Failed to delete category", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } else {
-      toast({ title: "Category deleted!" });
+      toast({ 
+        title: "Category Deleted",
+        description: "The category has been removed.",
+      });
       onRefresh();
     }
+    setDeleteDialogOpen(false);
+    setCategoryToDelete(null);
   };
 
   return (
@@ -653,8 +893,9 @@ const CategoriesTab = ({
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50"
+              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
+              <CheckCircle2 className="w-4 h-4" />
               {saving ? "Saving..." : editingCategory ? "Update Category" : "Create Category"}
             </button>
           </form>
@@ -679,15 +920,33 @@ const CategoriesTab = ({
                 <Pencil className="w-4 h-4" />
               </button>
               <button
-                onClick={() => handleDelete(category.id)}
-                className="w-8 h-8 rounded-full bg-coral/10 flex items-center justify-center hover:bg-coral/20"
+                onClick={() => handleDeleteClick(category.id)}
+                className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
               >
-                <Trash2 className="w-4 h-4 text-coral" />
+                <Trash2 className="w-4 h-4 text-destructive" />
               </button>
             </div>
           </div>
         ))}
+        {categories.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Grid3X3 className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">No categories yet. Add your first category!</p>
+          </div>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Category?"
+        description="This will remove this category. Products in this category will become uncategorized."
+        confirmText="Delete Category"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };
@@ -702,12 +961,46 @@ const SettingsTab = ({
 }) => {
   const [formData, setFormData] = useState({
     site_name: settings.site_name,
+    logo_url: settings.logo_url || "",
     primary_color: settings.primary_color,
     secondary_color: settings.secondary_color,
     hero_title: settings.hero_title,
     hero_subtitle: settings.hero_subtitle,
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (file: File | null) => {
+    if (!file) return;
+    
+    setUploadingLogo(true);
+    try {
+      const fileName = `logo-${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, logo_url: urlData.publicUrl });
+      toast({ 
+        title: "Logo Uploaded",
+        description: "Your new logo has been uploaded. Save settings to apply.",
+      });
+    } catch (error: any) {
+      toast({ 
+        title: "Upload Failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -718,6 +1011,7 @@ const SettingsTab = ({
         .from("system_settings")
         .update({
           site_name: formData.site_name.trim(),
+          logo_url: formData.logo_url || null,
           primary_color: formData.primary_color,
           secondary_color: formData.secondary_color,
           hero_title: formData.hero_title.trim(),
@@ -726,10 +1020,17 @@ const SettingsTab = ({
         .eq("id", settings.id);
 
       if (error) throw error;
-      toast({ title: "Settings saved!" });
+      toast({ 
+        title: "Settings Saved",
+        description: "Your system settings have been updated successfully.",
+      });
       onRefresh();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } finally {
       setSaving(false);
     }
@@ -740,6 +1041,44 @@ const SettingsTab = ({
       <h2 className="font-semibold text-foreground mb-4">System Settings</h2>
 
       <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 shadow-soft space-y-4">
+        {/* Logo Section */}
+        <div>
+          <label className="text-sm text-muted-foreground mb-2 block">Site Logo</label>
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border">
+              {formData.logo_url ? (
+                <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain" />
+              ) : (
+                <Image className="w-8 h-8 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex-1">
+              <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                <Upload className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {uploadingLogo ? "Uploading..." : "Upload new logo"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleLogoUpload(e.target.files?.[0] || null)}
+                  className="hidden"
+                  disabled={uploadingLogo}
+                />
+              </label>
+              {formData.logo_url && (
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, logo_url: "" })}
+                  className="text-sm text-destructive mt-2 hover:underline"
+                >
+                  Remove logo
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="text-sm text-muted-foreground mb-1 block">Site Name</label>
           <input
@@ -825,6 +1164,12 @@ const SettingsTab = ({
           className="rounded-2xl p-6 text-white"
           style={{ background: `linear-gradient(135deg, ${formData.primary_color}, ${formData.secondary_color})` }}
         >
+          <div className="flex items-center gap-3 mb-3">
+            {formData.logo_url && (
+              <img src={formData.logo_url} alt="Logo" className="w-10 h-10 object-contain rounded-lg bg-white/20 p-1" />
+            )}
+            <span className="font-bold">{formData.site_name}</span>
+          </div>
           <h4 className="text-xl font-bold">{formData.hero_title}</h4>
           <p className="text-white/80 text-sm mt-1">{formData.hero_subtitle}</p>
         </div>
