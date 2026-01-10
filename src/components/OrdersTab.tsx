@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Package, Eye, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { formatMVR } from "@/lib/currency";
 
 interface Order {
   id: string;
@@ -12,6 +13,9 @@ interface Order {
   phone: string | null;
   notes: string | null;
   created_at: string;
+  payment_status: string | null;
+  payment_method: string | null;
+  receipt_url: string | null;
 }
 
 interface OrderItem {
@@ -24,6 +28,13 @@ interface OrderItem {
 interface OrdersTabProps {
   isAdmin?: boolean;
 }
+
+const paymentStatusColors: Record<string, { bg: string; text: string; icon: any; label: string }> = {
+  pending: { bg: "bg-gold/20", text: "text-gold", icon: Clock, label: "Awaiting Payment" },
+  uploaded: { bg: "bg-cyan-light/50", text: "text-teal", icon: Upload, label: "Receipt Uploaded" },
+  confirmed: { bg: "bg-primary/20", text: "text-primary", icon: CheckCircle2, label: "Payment Confirmed" },
+  rejected: { bg: "bg-coral/20", text: "text-coral", icon: XCircle, label: "Payment Rejected" },
+};
 
 const statusColors: Record<string, { bg: string; text: string; icon: any }> = {
   pending: { bg: "bg-gold/20", text: "text-gold", icon: Clock },
@@ -38,6 +49,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
+  const [uploading, setUploading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -101,6 +113,48 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     }
   };
 
+  const handleReceiptUpload = async (orderId: string, file: File) => {
+    setUploading(orderId);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `receipts/${orderId}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ 
+          receipt_url: publicUrl.publicUrl,
+          payment_status: "uploaded"
+        })
+        .eq("id", orderId);
+
+      if (updateError) throw updateError;
+
+      toast({ 
+        title: "Receipt Uploaded",
+        description: "Your payment receipt has been uploaded. Awaiting confirmation.",
+      });
+      fetchOrders();
+    } catch (error: any) {
+      toast({ 
+        title: "Upload Failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } finally {
+      setUploading(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -128,8 +182,12 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       {orders.map((order) => {
         const statusConfig = statusColors[order.status] || statusColors.pending;
         const StatusIcon = statusConfig.icon;
+        const paymentConfig = paymentStatusColors[order.payment_status || "pending"] || paymentStatusColors.pending;
+        const PaymentIcon = paymentConfig.icon;
         const isExpanded = expandedOrder === order.id;
         const items = orderItems[order.id] || [];
+        const canUploadReceipt = !isAdmin && order.payment_method === "bank_transfer" && 
+          (order.payment_status === "pending" || order.payment_status === "rejected");
 
         return (
           <div key={order.id} className="glass-card rounded-2xl shadow-soft overflow-hidden">
@@ -142,7 +200,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                 <StatusIcon className={`w-5 h-5 ${statusConfig.text}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-foreground">
                     #{order.id.slice(0, 8).toUpperCase()}
                   </span>
@@ -161,7 +219,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-foreground">${order.total_amount.toFixed(2)}</p>
+                <p className="font-bold text-foreground">{formatMVR(order.total_amount)}</p>
                 {isExpanded ? (
                   <ChevronUp className="w-4 h-4 text-muted-foreground ml-auto" />
                 ) : (
@@ -173,6 +231,79 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
             {/* Order details (expanded) */}
             {isExpanded && (
               <div className="border-t border-border px-4 pb-4">
+                {/* Payment Status Section */}
+                <div className="mt-3 p-3 rounded-xl bg-muted/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CreditCard className="w-4 h-4 text-muted-foreground" />
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Payment Status</h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-full ${paymentConfig.bg} flex items-center justify-center`}>
+                      <PaymentIcon className={`w-4 h-4 ${paymentConfig.text}`} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-medium ${paymentConfig.text}`}>{paymentConfig.label}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {order.payment_method === "bank_transfer" ? "Bank Transfer" : order.payment_method || "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Receipt Upload Section for Customers */}
+                  {canUploadReceipt && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <div className="flex items-start gap-2 mb-2">
+                        <AlertCircle className="w-4 h-4 text-gold mt-0.5" />
+                        <p className="text-xs text-muted-foreground">
+                          {order.payment_status === "rejected" 
+                            ? "Your previous receipt was rejected. Please upload a new one."
+                            : "Please upload your payment receipt to confirm your order."}
+                        </p>
+                      </div>
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleReceiptUpload(order.id, file);
+                          }}
+                          className="hidden"
+                          disabled={uploading === order.id}
+                        />
+                        <div className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 border-dashed border-primary/30 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all ${uploading === order.id ? 'opacity-50 cursor-wait' : ''}`}>
+                          {uploading === order.id ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                              <span className="text-sm text-muted-foreground">Uploading...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 text-primary" />
+                              <span className="text-sm text-primary font-medium">Upload Receipt</span>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Show uploaded receipt */}
+                  {order.receipt_url && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-2">Receipt uploaded:</p>
+                      <a 
+                        href={order.receipt_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary underline hover:no-underline"
+                      >
+                        View Receipt
+                      </a>
+                    </div>
+                  )}
+                </div>
+
                 {/* Order items */}
                 <div className="mt-3">
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h4>
@@ -182,7 +313,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                         <span className="text-foreground">
                           {item.product_name} <span className="text-muted-foreground">x{item.quantity}</span>
                         </span>
-                        <span className="font-medium">${(item.product_price * item.quantity).toFixed(2)}</span>
+                        <span className="font-medium">{formatMVR(item.product_price * item.quantity)}</span>
                       </div>
                     ))}
                     {items.length === 0 && (
