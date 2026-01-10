@@ -4,7 +4,7 @@ import HeroBanner from "@/components/HeroBanner";
 import CategoryPills from "@/components/CategoryPills";
 import ProductCard from "@/components/ProductCard";
 import BottomNavigation from "@/components/BottomNavigation";
-import { staticProducts, staticCategories } from "@/data/products";
+import { staticProducts } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
@@ -60,11 +60,16 @@ const Index = () => {
     fetchProducts();
   }, []);
 
+  // Filter products based on active category
   const filteredProducts = activeCategory === "all" 
     ? products 
     : products.filter(p => {
-        const category = staticCategories.find(c => c.id === activeCategory);
-        return category && p.category?.toLowerCase() === category.name.toLowerCase();
+        // Match by category_id if it exists, otherwise match by name
+        if (activeCategory.length > 10) {
+          // UUID-like ID from database
+          return p.category_id === activeCategory;
+        }
+        return false;
       });
 
   return (

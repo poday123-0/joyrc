@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { staticCategories } from "@/data/products";
 
 interface Category {
   id: string;
@@ -14,7 +13,9 @@ interface CategoryPillsProps {
 }
 
 const CategoryPills = ({ activeCategory, onCategoryChange }: CategoryPillsProps) => {
-  const [categories, setCategories] = useState<Category[]>(staticCategories);
+  const [categories, setCategories] = useState<Category[]>([
+    { id: "all", name: "All", icon: "🎮" }
+  ]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -23,12 +24,17 @@ const CategoryPills = ({ activeCategory, onCategoryChange }: CategoryPillsProps)
         .select("*")
         .order("sort_order");
       
-      if (data && !error) {
-        setCategories(data.map(cat => ({
-          id: cat.id,
-          name: cat.name,
-          icon: cat.icon || "🎮"
-        })));
+      if (data && !error && data.length > 0) {
+        // Filter out the "All" category from DB if it exists, we add our own
+        const filteredCats = data.filter(cat => cat.name.toLowerCase() !== "all");
+        setCategories([
+          { id: "all", name: "All", icon: "🎮" },
+          ...filteredCats.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            icon: cat.icon || "🎮"
+          }))
+        ]);
       }
     };
 
