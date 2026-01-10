@@ -87,9 +87,16 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       .eq("id", orderId);
 
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Update Failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } else {
-      toast({ title: "Order status updated!" });
+      toast({ 
+        title: "Order Status Updated",
+        description: `Order has been marked as ${newStatus}.`,
+      });
       fetchOrders();
     }
   };

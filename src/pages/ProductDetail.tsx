@@ -1,23 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Star, ShoppingBag } from "lucide-react";
-import { staticProducts } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
-import rcCarRed from "@/assets/rc-car-red.png";
-import rcSpeedboat from "@/assets/rc-speedboat.png";
-import rcDrone from "@/assets/rc-drone.png";
-import rcMonsterTruck from "@/assets/rc-monster-truck.png";
-import rcHelicopter from "@/assets/rc-helicopter.png";
-
-const imageMap: Record<string, string> = {
-  "rc-car-red": rcCarRed,
-  "rc-speedboat": rcSpeedboat,
-  "rc-drone": rcDrone,
-  "rc-monster-truck": rcMonsterTruck,
-  "rc-helicopter": rcHelicopter,
-};
 
 interface Product {
   id: string;
@@ -27,15 +13,20 @@ interface Product {
   image_url: string | null;
   rating: number | null;
   category?: string;
-  image?: string;
-  specifications?: { name: string; value: string }[];
+}
+
+interface SimilarProduct {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
 }
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
-  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [specs, setSpecs] = useState<{ name: string; value: string }[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
@@ -43,7 +34,9 @@ const ProductDetail = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      // Try fetching from database first
+      if (!id) return;
+
+      // Fetch product from database
       const { data: dbProduct, error } = await supabase
         .from("products")
         .select(`
@@ -68,14 +61,6 @@ const ProductDetail = () => {
 
         if (specsData && specsData.length > 0) {
           setSpecs(specsData.map(s => ({ name: s.spec_name, value: s.spec_value })));
-        } else {
-          // Default specs for RC products
-          setSpecs([
-            { name: "Speed", value: "45 km/h" },
-            { name: "Battery", value: "2200mAh" },
-            { name: "Range", value: "150m" },
-            { name: "Scale", value: "1:16" },
-          ]);
         }
 
         // Fetch gallery images
@@ -97,61 +82,31 @@ const ProductDetail = () => {
           });
         }
         setGalleryImages(images);
-      } else {
-        // Fallback to static data
-        const staticProduct = staticProducts.find((p) => p.id === id);
-        if (staticProduct) {
-          setProduct({
-            id: staticProduct.id,
-            name: staticProduct.name,
-            description: staticProduct.description,
-            price: staticProduct.price,
-            image_url: null,
-            rating: staticProduct.rating,
-            category: staticProduct.category,
-            image: staticProduct.image
-          });
-          // Use static specs or defaults
-          if (staticProduct.specifications && staticProduct.specifications.length > 0) {
-            setSpecs(staticProduct.specifications);
-          } else {
-            setSpecs([
-              { name: "Speed", value: "45 km/h" },
-              { name: "Battery", value: "2200mAh" },
-              { name: "Range", value: "150m" },
-              { name: "Scale", value: "1:16" },
-            ]);
+
+        // Fetch similar products from same category
+        if (dbProduct.category_id) {
+          const { data: similar } = await supabase
+            .from("products")
+            .select("id, name, price, image_url")
+            .eq("category_id", dbProduct.category_id)
+            .neq("id", id)
+            .limit(3);
+          
+          if (similar) {
+            setSimilarProducts(similar);
           }
-          const staticImage = imageMap[staticProduct.image] || rcCarRed;
-          setGalleryImages([staticImage]);
         }
       }
-
-      // Get similar products
-      setSimilarProducts(
-        staticProducts.filter((p) => p.id !== id).slice(0, 3).map(p => ({
-          id: p.id,
-          name: p.name,
-          description: p.description,
-          price: p.price,
-          image_url: null,
-          rating: p.rating,
-          category: p.category,
-          image: p.image
-        }))
-      );
 
       setLoading(false);
     };
 
-    if (id) {
-      fetchProduct();
-    }
+    fetchProduct();
   }, [id]);
 
   const handleAddToCart = () => {
     if (product) {
-      const imageSrc = galleryImages[0] || imageMap[product.image || ""] || rcCarRed;
+      const imageSrc = galleryImages[0] || product.image_url || "";
       addToCart({
         id: product.id,
         name: product.name,
@@ -159,7 +114,7 @@ const ProductDetail = () => {
         image: imageSrc,
       });
       toast({
-        title: "Added to cart!",
+        title: "Added to Cart!",
         description: `${product.name} has been added to your cart.`,
       });
     }
@@ -183,13 +138,25 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Product not found</p>
+      <div className="min-h-screen gradient-detail-bg flex flex-col items-center justify-center px-4">
+        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+          <ShoppingBag className="w-10 h-10 text-muted-foreground" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground mb-2">Product Not Found</h2>
+        <p className="text-muted-foreground text-center mb-6">
+          This product doesn't exist or has been removed.
+        </p>
+        <Link
+          to="/"
+          className="px-6 py-3 rounded-full gradient-cta text-white font-medium"
+        >
+          Browse Products
+        </Link>
       </div>
     );
   }
 
-  const currentImage = galleryImages[currentImageIndex] || imageMap[product.image || ""] || rcCarRed;
+  const currentImage = galleryImages[currentImageIndex] || product.image_url;
   const leftSpecs = specs.slice(0, 2);
   const rightSpecs = specs.slice(2, 4);
 
@@ -219,44 +186,54 @@ const ProductDetail = () => {
           </div>
 
           {/* Left side specs */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
-            {leftSpecs.map((spec, index) => (
-              <SpecBubble 
-                key={index} 
-                label={spec.name} 
-                value={spec.value} 
-                delay={index * 100}
-              />
-            ))}
-          </div>
+          {leftSpecs.length > 0 && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
+              {leftSpecs.map((spec, index) => (
+                <SpecBubble 
+                  key={index} 
+                  label={spec.name} 
+                  value={spec.value} 
+                  delay={index * 100}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Right side specs */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
-            {rightSpecs.map((spec, index) => (
-              <SpecBubble 
-                key={index} 
-                label={spec.name} 
-                value={spec.value} 
-                align="right"
-                delay={(index + 2) * 100}
-              />
-            ))}
-          </div>
+          {rightSpecs.length > 0 && (
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
+              {rightSpecs.map((spec, index) => (
+                <SpecBubble 
+                  key={index} 
+                  label={spec.name} 
+                  value={spec.value} 
+                  align="right"
+                  delay={(index + 2) * 100}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Product image with rating - round organic shape */}
           <div className="relative z-20">
             <div className="w-40 h-40 rounded-[50%_50%_45%_55%/55%_45%_55%_45%] overflow-hidden shadow-elevated bg-white/40 backdrop-blur-md flex items-center justify-center border-4 border-white/50">
-              <img
-                src={currentImage}
-                alt={product.name}
-                className="w-32 h-32 object-contain"
-              />
+              {currentImage ? (
+                <img
+                  src={currentImage}
+                  alt={product.name}
+                  className="w-32 h-32 object-contain"
+                />
+              ) : (
+                <div className="w-32 h-32 flex items-center justify-center text-4xl">📦</div>
+              )}
             </div>
             {/* Rating badge */}
-            <div className="absolute -top-1 -left-1 flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-soft">
-              <Star className="w-3.5 h-3.5 fill-gold text-gold" />
-              <span className="text-xs font-bold">{product.rating || 4.5}</span>
-            </div>
+            {product.rating && (
+              <div className="absolute -top-1 -left-1 flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-soft">
+                <Star className="w-3.5 h-3.5 fill-gold text-gold" />
+                <span className="text-xs font-bold">{product.rating}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -318,17 +295,25 @@ const ProductDetail = () => {
 
           {/* Rating and category */}
           <div className="flex items-center gap-1 mt-2">
-            <Star className="w-4 h-4 fill-gold text-gold" />
-            <span className="font-medium">{product.rating || 4.5}</span>
-            <span className="text-muted-foreground text-sm ml-1">• {product.category}</span>
+            {product.rating && (
+              <>
+                <Star className="w-4 h-4 fill-gold text-gold" />
+                <span className="font-medium">{product.rating}</span>
+              </>
+            )}
+            {product.category && (
+              <span className="text-muted-foreground text-sm ml-1">• {product.category}</span>
+            )}
           </div>
 
-          <div className="mt-4">
-            <h3 className="font-semibold text-foreground">Description</h3>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              {product.description}
-            </p>
-          </div>
+          {product.description && (
+            <div className="mt-4">
+              <h3 className="font-semibold text-foreground">Description</h3>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+          )}
 
           {/* All specifications in a nice grid */}
           {specs.length > 0 && (
@@ -349,29 +334,35 @@ const ProductDetail = () => {
           )}
 
           {/* Similar products */}
-          <div className="mt-6">
-            <h3 className="font-semibold text-foreground mb-3">Similar products</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {similarProducts.map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/product/${p.id}`}
-                  className="rounded-2xl overflow-hidden shadow-soft group bg-gradient-to-b from-cyan-light/30 to-white"
-                >
-                  <div className="aspect-square relative p-2">
-                    <img
-                      src={p.image_url || imageMap[p.image || ""] || rcCarRed}
-                      alt={p.name}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform"
-                    />
-                  </div>
-                  <p className="text-xs font-medium text-foreground p-2 text-center truncate">
-                    {p.name}
-                  </p>
-                </Link>
-              ))}
+          {similarProducts.length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-semibold text-foreground mb-3">Similar products</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {similarProducts.map((p) => (
+                  <Link
+                    key={p.id}
+                    to={`/product/${p.id}`}
+                    className="rounded-2xl overflow-hidden shadow-soft group bg-gradient-to-b from-cyan-light/30 to-white"
+                  >
+                    <div className="aspect-square relative p-2">
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          alt={p.name}
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
+                      )}
+                    </div>
+                    <p className="text-xs font-medium text-foreground p-2 text-center truncate">
+                      {p.name}
+                    </p>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
