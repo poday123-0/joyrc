@@ -5,7 +5,6 @@ import { staticProducts } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
-import ImageGallery from "@/components/ImageGallery";
 import rcCarRed from "@/assets/rc-car-red.png";
 import rcSpeedboat from "@/assets/rc-speedboat.png";
 import rcDrone from "@/assets/rc-drone.png";
@@ -40,6 +39,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [specs, setSpecs] = useState<{ name: string; value: string }[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -66,8 +66,16 @@ const ProductDetail = () => {
           .eq("product_id", id)
           .order("sort_order");
 
-        if (specsData) {
+        if (specsData && specsData.length > 0) {
           setSpecs(specsData.map(s => ({ name: s.spec_name, value: s.spec_value })));
+        } else {
+          // Default specs for RC products
+          setSpecs([
+            { name: "Speed", value: "45 km/h" },
+            { name: "Battery", value: "2200mAh" },
+            { name: "Range", value: "150m" },
+            { name: "Scale", value: "1:16" },
+          ]);
         }
 
         // Fetch gallery images
@@ -78,11 +86,9 @@ const ProductDetail = () => {
           .order("sort_order");
 
         const images: string[] = [];
-        // Add main image first
         if (dbProduct.image_url) {
           images.push(dbProduct.image_url);
         }
-        // Add gallery images
         if (imagesData) {
           imagesData.forEach(img => {
             if (!images.includes(img.image_url)) {
@@ -105,8 +111,17 @@ const ProductDetail = () => {
             category: staticProduct.category,
             image: staticProduct.image
           });
-          setSpecs(staticProduct.specifications || []);
-          // For static products, use the mapped image
+          // Use static specs or defaults
+          if (staticProduct.specifications && staticProduct.specifications.length > 0) {
+            setSpecs(staticProduct.specifications);
+          } else {
+            setSpecs([
+              { name: "Speed", value: "45 km/h" },
+              { name: "Battery", value: "2200mAh" },
+              { name: "Range", value: "150m" },
+              { name: "Scale", value: "1:16" },
+            ]);
+          }
           const staticImage = imageMap[staticProduct.image] || rcCarRed;
           setGalleryImages([staticImage]);
         }
@@ -150,6 +165,14 @@ const ProductDetail = () => {
     }
   };
 
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen gradient-detail-bg flex items-center justify-center">
@@ -166,7 +189,9 @@ const ProductDetail = () => {
     );
   }
 
-  const mainImage = galleryImages[0] || imageMap[product.image || ""] || rcCarRed;
+  const currentImage = galleryImages[currentImageIndex] || imageMap[product.image || ""] || rcCarRed;
+  const leftSpecs = specs.slice(0, 2);
+  const rightSpecs = specs.slice(2, 4);
 
   return (
     <div className="min-h-screen gradient-detail-bg pb-28">
@@ -185,71 +210,113 @@ const ProductDetail = () => {
       </div>
 
       {/* Main content */}
-      <div className="container max-w-md mx-auto px-4 mt-6">
-        {/* Image gallery or single image with blob */}
-        {galleryImages.length > 1 ? (
-          <div className="glass-card rounded-3xl p-4 shadow-soft">
-            <ImageGallery images={galleryImages} productName={product.name} />
+      <div className="container max-w-md mx-auto px-4 mt-4">
+        {/* Round blob style image section with specs */}
+        <div className="relative flex items-center justify-center h-80">
+          {/* Blob background shape */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-56 h-56 rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-gradient-to-br from-cyan-light/70 via-pink-light/50 to-mint-light/70 animate-pulse-soft" />
           </div>
-        ) : (
-          /* Specs and Image section with blob effect for single image */
-          <div className="relative flex items-center justify-center h-72">
-            {/* Blob background shape */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-64 h-64 rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-gradient-to-br from-cyan-light/60 via-pink-light/40 to-mint-light/60 animate-pulse-soft" />
-            </div>
 
-            {/* Left side specs */}
-            <div className="absolute left-0 top-8 space-y-3 z-10">
-              {specs.slice(0, 4).map((spec, index) => (
-                <SpecBubble key={index} label={spec.name} value={spec.value} />
-              ))}
-            </div>
-
-            {/* Product image with rating */}
-            <div className="relative z-20">
-              <div className="w-44 h-44 rounded-[50%_50%_50%_50%/60%_60%_40%_40%] overflow-hidden shadow-elevated bg-white/30 backdrop-blur-sm flex items-center justify-center">
-                <img
-                  src={mainImage}
-                  alt={product.name}
-                  className="w-36 h-36 object-contain"
-                />
-              </div>
-              {/* Rating badge */}
-              <div className="absolute top-0 left-0 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-soft">
-                <Star className="w-3 h-3 fill-gold text-gold" />
-                <span className="text-xs font-medium">{product.rating || 4.5}</span>
-              </div>
-              {/* Name overlay */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <p className="text-foreground text-sm font-semibold bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full shadow-soft">
-                  {product.name}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Specs grid for multi-image products */}
-        {galleryImages.length > 1 && specs.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            {specs.slice(0, 4).map((spec, index) => (
-              <div key={index} className="glass-card rounded-xl px-3 py-2 shadow-soft">
-                <p className="text-[10px] text-muted-foreground">{spec.name}</p>
-                <p className="text-sm font-semibold text-foreground">{spec.value}</p>
-              </div>
+          {/* Left side specs */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
+            {leftSpecs.map((spec, index) => (
+              <SpecBubble 
+                key={index} 
+                label={spec.name} 
+                value={spec.value} 
+                delay={index * 100}
+              />
             ))}
           </div>
+
+          {/* Right side specs */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
+            {rightSpecs.map((spec, index) => (
+              <SpecBubble 
+                key={index} 
+                label={spec.name} 
+                value={spec.value} 
+                align="right"
+                delay={(index + 2) * 100}
+              />
+            ))}
+          </div>
+
+          {/* Product image with rating - round organic shape */}
+          <div className="relative z-20">
+            <div className="w-40 h-40 rounded-[50%_50%_45%_55%/55%_45%_55%_45%] overflow-hidden shadow-elevated bg-white/40 backdrop-blur-md flex items-center justify-center border-4 border-white/50">
+              <img
+                src={currentImage}
+                alt={product.name}
+                className="w-32 h-32 object-contain"
+              />
+            </div>
+            {/* Rating badge */}
+            <div className="absolute -top-1 -left-1 flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-soft">
+              <Star className="w-3.5 h-3.5 fill-gold text-gold" />
+              <span className="text-xs font-bold">{product.rating || 4.5}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Product name below image */}
+        <div className="text-center -mt-2">
+          <p className="inline-block text-foreground font-semibold bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-soft">
+            {product.name}
+          </p>
+        </div>
+
+        {/* Navigation dots and arrows */}
+        {galleryImages.length > 1 && (
+          <div className="flex items-center justify-center gap-4 mt-4">
+            <button 
+              onClick={handlePrevImage}
+              className="w-8 h-8 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-foreground" />
+            </button>
+            
+            <div className="flex gap-1.5">
+              {galleryImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === currentImageIndex
+                      ? "w-5 bg-primary"
+                      : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  }`}
+                />
+              ))}
+            </div>
+            
+            <button 
+              onClick={handleNextImage}
+              className="w-8 h-8 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4 text-foreground" />
+            </button>
+          </div>
         )}
 
-        {/* Product info */}
+        {/* Single image indicator dots */}
+        {galleryImages.length <= 1 && (
+          <div className="flex justify-center gap-1.5 mt-4">
+            <div className="w-5 h-1.5 rounded-full bg-primary"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
+          </div>
+        )}
+
+        {/* Product info card */}
         <div className="mt-6 bg-white rounded-t-3xl p-6 shadow-elevated -mx-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
-            <p className="text-xl font-bold text-foreground">${product.price.toFixed(2)}</p>
+            <p className="text-xl font-bold text-primary">${product.price.toFixed(2)}</p>
           </div>
 
-          {/* Rating */}
+          {/* Rating and category */}
           <div className="flex items-center gap-1 mt-2">
             <Star className="w-4 h-4 fill-gold text-gold" />
             <span className="font-medium">{product.rating || 4.5}</span>
@@ -263,15 +330,18 @@ const ProductDetail = () => {
             </p>
           </div>
 
-          {/* All specifications */}
+          {/* All specifications in a nice grid */}
           {specs.length > 0 && (
             <div className="mt-4">
-              <h3 className="font-semibold text-foreground mb-2">Specifications</h3>
-              <div className="space-y-2">
+              <h3 className="font-semibold text-foreground mb-3">Specifications</h3>
+              <div className="grid grid-cols-2 gap-2">
                 {specs.map((spec, index) => (
-                  <div key={index} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
-                    <span className="text-muted-foreground">{spec.name}</span>
-                    <span className="font-medium text-foreground">{spec.value}</span>
+                  <div 
+                    key={index} 
+                    className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl px-3 py-2"
+                  >
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{spec.name}</p>
+                    <p className="text-sm font-bold text-foreground">{spec.value}</p>
                   </div>
                 ))}
               </div>
@@ -331,10 +401,26 @@ const ProductDetail = () => {
   );
 };
 
-const SpecBubble = ({ label, value }: { label: string; value: string }) => (
-  <div className="glass-card rounded-2xl px-3 py-2 animate-slide-up shadow-soft">
-    <p className="text-[10px] text-muted-foreground">{label}</p>
-    <p className="text-sm font-semibold text-foreground">{value}</p>
+// Spec bubble component with round glass-morphism style
+const SpecBubble = ({ 
+  label, 
+  value, 
+  align = "left",
+  delay = 0
+}: { 
+  label: string; 
+  value: string; 
+  align?: "left" | "right";
+  delay?: number;
+}) => (
+  <div 
+    className={`glass-card rounded-2xl px-3 py-2.5 shadow-soft animate-slide-up ${
+      align === "right" ? "text-right" : "text-left"
+    }`}
+    style={{ animationDelay: `${delay}ms` }}
+  >
+    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
+    <p className="text-sm font-bold text-foreground">{value}</p>
   </div>
 );
 
