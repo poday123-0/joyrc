@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
-  Save, Upload, X 
+  Save, X, ListPlus 
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,14 @@ interface Product {
   category_id: string | null;
   rating: number | null;
   in_stock: boolean | null;
+}
+
+interface ProductSpecification {
+  id: string;
+  product_id: string;
+  spec_name: string;
+  spec_value: string;
+  sort_order: number | null;
 }
 
 interface Category {
@@ -174,15 +182,33 @@ const ProductsTab = ({
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  
+  // Specifications state
+  const [specifications, setSpecifications] = useState<ProductSpecification[]>([]);
+  const [newSpec, setNewSpec] = useState({ name: "", value: "" });
+  const [loadingSpecs, setLoadingSpecs] = useState(false);
 
   const resetForm = () => {
     setFormData({ name: "", description: "", price: "", category_id: "", rating: "4.5", in_stock: true });
     setImageFile(null);
     setEditingProduct(null);
+    setSpecifications([]);
+    setNewSpec({ name: "", value: "" });
     setShowForm(false);
   };
 
-  const handleEdit = (product: Product) => {
+  const fetchSpecifications = async (productId: string) => {
+    setLoadingSpecs(true);
+    const { data } = await supabase
+      .from("product_specifications")
+      .select("*")
+      .eq("product_id", productId)
+      .order("sort_order");
+    if (data) setSpecifications(data);
+    setLoadingSpecs(false);
+  };
+
+  const handleEdit = async (product: Product) => {
     setEditingProduct(product);
     setFormData({
       name: product.name,
@@ -193,6 +219,44 @@ const ProductsTab = ({
       in_stock: product.in_stock ?? true,
     });
     setShowForm(true);
+    await fetchSpecifications(product.id);
+  };
+
+  const handleAddSpec = async () => {
+    if (!editingProduct || !newSpec.name.trim() || !newSpec.value.trim()) return;
+    
+    const { data, error } = await supabase
+      .from("product_specifications")
+      .insert({
+        product_id: editingProduct.id,
+        spec_name: newSpec.name.trim(),
+        spec_value: newSpec.value.trim(),
+        sort_order: specifications.length,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else if (data) {
+      setSpecifications([...specifications, data]);
+      setNewSpec({ name: "", value: "" });
+      toast({ title: "Specification added!" });
+    }
+  };
+
+  const handleDeleteSpec = async (specId: string) => {
+    const { error } = await supabase
+      .from("product_specifications")
+      .delete()
+      .eq("id", specId);
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSpecifications(specifications.filter(s => s.id !== specId));
+      toast({ title: "Specification deleted!" });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,6 +318,9 @@ const ProductsTab = ({
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
+    // Delete specifications first
+    await supabase.from("product_specifications").delete().eq("product_id", id);
+    
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -336,6 +403,68 @@ const ProductsTab = ({
                 className="text-sm"
               />
             </div>
+
+            {/* Specifications Section - Only show when editing */}
+            {editingProduct && (
+              <div className="border-t border-border pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ListPlus className="w-4 h-4 text-primary" />
+                  <h4 className="font-medium text-sm">Product Specifications</h4>
+                </div>
+                
+                {loadingSpecs ? (
+                  <p className="text-sm text-muted-foreground">Loading specifications...</p>
+                ) : (
+                  <>
+                    {/* Existing specifications */}
+                    <div className="space-y-2 mb-3">
+                      {specifications.map((spec) => (
+                        <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                          <span className="font-medium text-sm flex-1">{spec.spec_name}</span>
+                          <span className="text-sm text-muted-foreground flex-1">{spec.spec_value}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSpec(spec.id)}
+                            className="w-6 h-6 rounded-full bg-coral/10 flex items-center justify-center hover:bg-coral/20"
+                          >
+                            <X className="w-3 h-3 text-coral" />
+                          </button>
+                        </div>
+                      ))}
+                      {specifications.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No specifications yet.</p>
+                      )}
+                    </div>
+
+                    {/* Add new specification */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Spec name (e.g., Weight)"
+                        value={newSpec.name}
+                        onChange={(e) => setNewSpec({ ...newSpec, name: e.target.value })}
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Value (e.g., 1.5 kg)"
+                        value={newSpec.value}
+                        onChange={(e) => setNewSpec({ ...newSpec, value: e.target.value })}
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddSpec}
+                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={saving}
