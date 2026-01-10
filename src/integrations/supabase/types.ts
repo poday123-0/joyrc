@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_settings: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          branch: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          swift_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank_name?: string
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -35,6 +71,39 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          link: string | null
+          message: string
+          read: boolean | null
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message: string
+          read?: boolean | null
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -88,7 +157,11 @@ export type Database = {
           created_at: string
           id: string
           notes: string | null
+          payment_confirmed_at: string | null
+          payment_method: string | null
+          payment_status: string | null
           phone: string | null
+          receipt_url: string | null
           shipping_address: string | null
           status: string
           total_amount: number
@@ -99,7 +172,11 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          payment_confirmed_at?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
           phone?: string | null
+          receipt_url?: string | null
           shipping_address?: string | null
           status?: string
           total_amount?: number
@@ -110,7 +187,11 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          payment_confirmed_at?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
           phone?: string | null
+          receipt_url?: string | null
           shipping_address?: string | null
           status?: string
           total_amount?: number
@@ -124,6 +205,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          is_360: boolean | null
           product_id: string
           sort_order: number | null
         }
@@ -131,6 +213,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url: string
+          is_360?: boolean | null
           product_id: string
           sort_order?: number | null
         }
@@ -138,6 +221,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string
+          is_360?: boolean | null
           product_id?: string
           sort_order?: number | null
         }
@@ -292,6 +376,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
