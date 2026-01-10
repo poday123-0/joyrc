@@ -1,4 +1,4 @@
-import { Home, Grid3X3, MessageCircle, User } from "lucide-react";
+import { Home, Grid3X3, HelpCircle, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -9,7 +9,7 @@ const BottomNavigation = () => {
   const navItems = [
     { icon: Home, path: "/", label: "Home" },
     { icon: Grid3X3, path: "/categories", label: "Categories" },
-    { icon: MessageCircle, path: "/chat", label: "Chat" },
+    { icon: HelpCircle, path: "/support", label: "Support" },
     { icon: User, path: user ? "/profile" : "/login", label: "Profile" },
   ];
 

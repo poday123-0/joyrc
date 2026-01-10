@@ -12,6 +12,7 @@ import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Categories from "./pages/Categories";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/categories" element={<Categories />} />
+              <Route path="/support" element={<Support />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
