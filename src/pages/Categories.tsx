@@ -254,10 +254,10 @@ const Categories = () => {
 
             {/* Mobile Filters Panel */}
             {showFilters && (
-              <div className="lg:hidden glass-card rounded-2xl p-4 mb-4 shadow-soft animate-slide-up">
+              <div className="lg:hidden glass-card rounded-2xl p-4 mb-4 shadow-soft">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-foreground">Filters</h3>
-                  <button onClick={clearFilters} className="text-xs text-coral">
+                  <button onClick={clearFilters} className="text-xs text-primary hover:text-primary/80 transition-colors">
                     Clear all
                   </button>
                 </div>
@@ -271,14 +271,14 @@ const Categories = () => {
                         placeholder="Min"
                         value={priceRange.min}
                         onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-sm"
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={priceRange.max}
                         onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-sm"
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                   </div>
@@ -288,7 +288,7 @@ const Categories = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-white text-sm"
+                      className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       <option value="newest">Newest</option>
                       <option value="price-low">Price: Low to High</option>
