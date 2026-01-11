@@ -236,6 +236,44 @@ export type Database = {
         }
         Relationships: []
       }
+      product_colors: {
+        Row: {
+          color_hex: string
+          color_name: string
+          created_at: string
+          id: string
+          image_url: string | null
+          product_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          color_hex: string
+          color_name: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          product_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          color_hex?: string
+          color_name?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          product_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_colors_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_images: {
         Row: {
           created_at: string
