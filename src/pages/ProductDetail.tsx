@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Star, ShoppingBag } from "lucide-react";
+import { ChevronLeft, Star, ShoppingBag, Heart, Check, Minus, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
+import Header from "@/components/Header";
+import BottomNavigation from "@/components/BottomNavigation";
 
 interface Product {
   id: string;
@@ -23,6 +25,14 @@ interface SimilarProduct {
   image_url: string | null;
 }
 
+// Color options for products
+const colorOptions = [
+  { id: "black", name: "Black", color: "bg-foreground" },
+  { id: "red", name: "Racing Red", color: "bg-red-500" },
+  { id: "blue", name: "Ocean Blue", color: "bg-blue-500" },
+  { id: "green", name: "Forest Green", color: "bg-green-500" },
+];
+
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
@@ -32,12 +42,14 @@ const ProductDetail = () => {
   const [specs, setSpecs] = useState<{ name: string; value: string }[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(colorOptions[0].id);
+  const [quantity, setQuantity] = useState(1);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
 
-      // Fetch product from database
       const { data: dbProduct, error } = await supabase
         .from("products")
         .select(`
@@ -53,7 +65,6 @@ const ProductDetail = () => {
           category: dbProduct.categories?.name || "RC Toy"
         });
 
-        // Fetch specifications
         const { data: specsData } = await supabase
           .from("product_specifications")
           .select("*")
@@ -64,7 +75,6 @@ const ProductDetail = () => {
           setSpecs(specsData.map(s => ({ name: s.spec_name, value: s.spec_value })));
         }
 
-        // Fetch gallery images
         const { data: imagesData } = await supabase
           .from("product_images")
           .select("*")
@@ -84,14 +94,13 @@ const ProductDetail = () => {
         }
         setGalleryImages(images);
 
-        // Fetch similar products from same category
         if (dbProduct.category_id) {
           const { data: similar } = await supabase
             .from("products")
             .select("id, name, price, image_url")
             .eq("category_id", dbProduct.category_id)
             .neq("id", id)
-            .limit(3);
+            .limit(4);
           
           if (similar) {
             setSimilarProducts(similar);
@@ -108,30 +117,24 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (product) {
       const imageSrc = galleryImages[0] || product.image_url || "";
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: imageSrc,
-      });
+      for (let i = 0; i < quantity; i++) {
+        addToCart({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: imageSrc,
+        });
+      }
       toast({
-        title: "Added to Cart!",
-        description: `${product.name} has been added to your cart.`,
+        title: "Added to Cart",
+        description: `${quantity}x ${product.name} has been added to your cart.`,
       });
     }
   };
 
-  const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
-  };
-
-  const handleNextImage = () => {
-    setCurrentImageIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen gradient-detail-bg flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -139,7 +142,7 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen gradient-detail-bg flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
           <ShoppingBag className="w-10 h-10 text-muted-foreground" />
         </div>
@@ -149,7 +152,7 @@ const ProductDetail = () => {
         </p>
         <Link
           to="/"
-          className="px-6 py-3 rounded-full gradient-cta text-white font-medium"
+          className="px-6 py-3 rounded-full bg-foreground text-background font-medium"
         >
           Browse Products
         </Link>
@@ -158,262 +161,273 @@ const ProductDetail = () => {
   }
 
   const currentImage = galleryImages[currentImageIndex] || product.image_url;
-  const leftSpecs = specs.slice(0, 2);
-  const rightSpecs = specs.slice(2, 4);
 
   return (
-    <div className="min-h-screen gradient-detail-bg pb-28">
-      {/* Header */}
-      <div className="container max-w-md mx-auto px-4 pt-4">
-        <div className="flex items-center justify-between">
-          <Link
-            to="/"
-            className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </Link>
-          <h1 className="font-semibold text-foreground">Product Details</h1>
-          <div className="w-10" />
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+      {/* Sticky Header - Desktop */}
+      <div className="hidden lg:block sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="container max-w-7xl mx-auto px-4 lg:px-8">
+          <Header />
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="container max-w-md mx-auto px-4 mt-4">
-        {/* Round blob style image section with specs */}
-        <div className="relative flex items-center justify-center h-80">
-          {/* Blob background shape */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-56 h-56 rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-gradient-to-br from-cyan-light/70 via-pink-light/50 to-mint-light/70 animate-pulse-soft" />
-          </div>
+      {/* Mobile Header */}
+      <div className="lg:hidden sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="container max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+          <Link
+            to="/"
+            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </Link>
+          <h1 className="font-medium text-foreground">Details</h1>
+          <button 
+            onClick={() => setIsFavorite(!isFavorite)}
+            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+          >
+            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-pink text-pink' : 'text-foreground'}`} />
+          </button>
+        </div>
+      </div>
 
-          {/* Left side specs */}
-          {leftSpecs.length > 0 && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
-              {leftSpecs.map((spec, index) => (
-                <SpecBubble 
-                  key={index} 
-                  label={spec.name} 
-                  value={spec.value} 
-                  delay={index * 100}
-                />
-              ))}
-            </div>
-          )}
+      {/* Main Content */}
+      <div className="container max-w-7xl mx-auto px-4 lg:px-8 py-6 lg:py-12">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-24">
+          {/* Image Gallery Section */}
+          <div className="lg:sticky lg:top-32 lg:self-start">
+            {/* Main Image */}
+            <div className="relative aspect-square bg-muted/30 rounded-3xl overflow-hidden mb-4">
+              {/* Favorite button - Desktop */}
+              <button 
+                onClick={() => setIsFavorite(!isFavorite)}
+                className="hidden lg:flex absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm items-center justify-center hover:bg-background transition-colors"
+              >
+                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-pink text-pink' : 'text-foreground'}`} />
+              </button>
 
-          {/* Right side specs */}
-          {rightSpecs.length > 0 && (
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 space-y-4 z-10">
-              {rightSpecs.map((spec, index) => (
-                <SpecBubble 
-                  key={index} 
-                  label={spec.name} 
-                  value={spec.value} 
-                  align="right"
-                  delay={(index + 2) * 100}
-                />
-              ))}
+              {/* Image */}
+              <div className="absolute inset-0 flex items-center justify-center p-8 lg:p-16">
+                {currentImage ? (
+                  <img
+                    src={currentImage}
+                    alt={product.name}
+                    className="max-w-full max-h-full object-contain animate-fade-in"
+                  />
+                ) : (
+                  <div className="text-6xl">📦</div>
+                )}
+              </div>
             </div>
-          )}
 
-          {/* Product image with rating - round organic shape */}
-          <div className="relative z-20">
-            <div className="w-40 h-40 rounded-[50%_50%_45%_55%/55%_45%_55%_45%] overflow-hidden shadow-elevated bg-white/40 backdrop-blur-md flex items-center justify-center border-4 border-white/50">
-              {currentImage ? (
-                <img
-                  src={currentImage}
-                  alt={product.name}
-                  className="w-32 h-32 object-contain"
-                />
-              ) : (
-                <div className="w-32 h-32 flex items-center justify-center text-4xl">📦</div>
-              )}
-            </div>
-            {/* Rating badge */}
-            {product.rating && (
-              <div className="absolute -top-1 -left-1 flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-soft">
-                <Star className="w-3.5 h-3.5 fill-gold text-gold" />
-                <span className="text-xs font-bold">{product.rating}</span>
+            {/* Thumbnail Gallery */}
+            {galleryImages.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {galleryImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-16 lg:w-20 lg:h-20 rounded-xl lg:rounded-2xl overflow-hidden bg-muted/30 transition-all duration-300 ${
+                      index === currentImageIndex
+                        ? "ring-2 ring-foreground ring-offset-2"
+                        : "opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} thumbnail ${index + 1}`}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  </button>
+                ))}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Product name below image */}
-        <div className="text-center -mt-2">
-          <p className="inline-block text-foreground font-semibold bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-soft">
-            {product.name}
-          </p>
-        </div>
-
-        {/* Navigation dots and arrows */}
-        {galleryImages.length > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <button 
-              onClick={handlePrevImage}
-              className="w-8 h-8 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4 text-foreground" />
-            </button>
-            
-            <div className="flex gap-1.5">
-              {galleryImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    index === currentImageIndex
-                      ? "w-5 bg-primary"
-                      : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                  }`}
-                />
-              ))}
+          {/* Product Info Section */}
+          <div className="mt-8 lg:mt-0 space-y-8">
+            {/* Category & Rating */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                {product.category}
+              </span>
+              {product.rating && (
+                <div className="flex items-center gap-1">
+                  <Star className="w-4 h-4 fill-foreground text-foreground" />
+                  <span className="text-sm font-medium">{product.rating}</span>
+                </div>
+              )}
             </div>
-            
-            <button 
-              onClick={handleNextImage}
-              className="w-8 h-8 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4 text-foreground" />
-            </button>
-          </div>
-        )}
 
-        {/* Single image indicator dots */}
-        {galleryImages.length <= 1 && (
-          <div className="flex justify-center gap-1.5 mt-4">
-            <div className="w-5 h-1.5 rounded-full bg-primary"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
-          </div>
-        )}
+            {/* Product Name */}
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-tight">
+              {product.name}
+            </h1>
 
-        {/* Product info card */}
-        <div className="mt-6 bg-white rounded-t-3xl p-6 shadow-elevated -mx-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
-            <p className="text-xl font-bold text-primary">{formatMVR(product.price)}</p>
-          </div>
+            {/* Price */}
+            <p className="text-2xl lg:text-3xl font-semibold text-foreground">
+              {formatMVR(product.price)}
+            </p>
 
-          {/* Rating and category */}
-          <div className="flex items-center gap-1 mt-2">
-            {product.rating && (
-              <>
-                <Star className="w-4 h-4 fill-gold text-gold" />
-                <span className="font-medium">{product.rating}</span>
-              </>
-            )}
-            {product.category && (
-              <span className="text-muted-foreground text-sm ml-1">• {product.category}</span>
-            )}
-          </div>
-
-          {product.description && (
-            <div className="mt-4">
-              <h3 className="font-semibold text-foreground">Description</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            {/* Description */}
+            {product.description && (
+              <p className="text-muted-foreground leading-relaxed text-base lg:text-lg">
                 {product.description}
               </p>
-            </div>
-          )}
+            )}
 
-          {/* All specifications in a nice grid */}
-          {specs.length > 0 && (
-            <div className="mt-4">
-              <h3 className="font-semibold text-foreground mb-3">Specifications</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {specs.map((spec, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl px-3 py-2"
+            {/* Color Selection */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-foreground">Color</h3>
+                <span className="text-sm text-muted-foreground">
+                  {colorOptions.find(c => c.id === selectedColor)?.name}
+                </span>
+              </div>
+              <div className="flex gap-3">
+                {colorOptions.map((color) => (
+                  <button
+                    key={color.id}
+                    onClick={() => setSelectedColor(color.id)}
+                    className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full ${color.color} flex items-center justify-center transition-all duration-300 ${
+                      selectedColor === color.id
+                        ? "ring-2 ring-offset-2 ring-foreground"
+                        : "opacity-60 hover:opacity-100"
+                    }`}
                   >
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{spec.name}</p>
-                    <p className="text-sm font-bold text-foreground">{spec.value}</p>
-                  </div>
+                    {selectedColor === color.id && (
+                      <Check className="w-4 h-4 text-background" />
+                    )}
+                  </button>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Similar products */}
-          {similarProducts.length > 0 && (
-            <div className="mt-6">
-              <h3 className="font-semibold text-foreground mb-3">Similar products</h3>
-              <div className="grid grid-cols-3 gap-3">
-                {similarProducts.map((p) => (
-                  <Link
-                    key={p.id}
-                    to={`/product/${p.id}`}
-                    className="rounded-2xl overflow-hidden shadow-soft group bg-gradient-to-b from-cyan-light/30 to-white"
-                  >
-                    <div className="aspect-square relative p-2">
+            {/* Quantity */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-foreground">Quantity</h3>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="text-xl font-semibold w-12 text-center">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Add to Cart Button */}
+            <div className="flex gap-4 pt-4">
+              <button 
+                onClick={handleAddToCart}
+                className="flex-1 h-14 lg:h-16 rounded-full bg-foreground text-background font-medium text-base lg:text-lg hover:bg-foreground/90 transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                Add to Cart — {formatMVR(product.price * quantity)}
+              </button>
+            </div>
+
+            {/* Specifications */}
+            {specs.length > 0 && (
+              <div className="pt-8 border-t border-border">
+                <h3 className="font-medium text-foreground mb-4">Specifications</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {specs.map((spec, index) => (
+                    <div key={index} className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{spec.name}</p>
+                      <p className="font-medium text-foreground">{spec.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Features */}
+            <div className="pt-8 border-t border-border">
+              <h3 className="font-medium text-foreground mb-4">What's Included</h3>
+              <ul className="space-y-3 text-muted-foreground">
+                <li className="flex items-center gap-3">
+                  <Check className="w-5 h-5 text-primary" />
+                  <span>Remote Controller</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Check className="w-5 h-5 text-primary" />
+                  <span>Rechargeable Battery</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Check className="w-5 h-5 text-primary" />
+                  <span>USB Charging Cable</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Check className="w-5 h-5 text-primary" />
+                  <span>User Manual</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Similar Products */}
+        {similarProducts.length > 0 && (
+          <div className="mt-16 lg:mt-24 pt-8 border-t border-border">
+            <div className="text-center mb-8 lg:mb-12">
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground">You might also like</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-8">
+              {similarProducts.map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/product/${p.id}`}
+                  className="group block"
+                >
+                  <div className="aspect-square bg-muted/30 rounded-2xl lg:rounded-3xl overflow-hidden mb-4 transition-all duration-500 group-hover:bg-muted">
+                    <div className="w-full h-full flex items-center justify-center p-6">
                       {p.image_url ? (
                         <img
                           src={p.image_url}
                           alt={p.name}
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                          className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
+                        <div className="text-4xl">📦</div>
                       )}
                     </div>
-                    <p className="text-xs font-medium text-foreground p-2 text-center truncate">
-                      {p.name}
-                    </p>
-                  </Link>
-                ))}
-              </div>
+                  </div>
+                  <h4 className="font-medium text-foreground text-sm lg:text-base group-hover:text-primary transition-colors">
+                    {p.name}
+                  </h4>
+                  <p className="font-semibold text-foreground text-sm lg:text-base mt-1">
+                    {formatMVR(p.price)}
+                  </p>
+                </Link>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl">
-        <div className="container max-w-md mx-auto flex items-center gap-4">
-          <Link 
-            to="/cart"
-            className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-soft"
-          >
-            <ShoppingBag className="w-6 h-6 text-primary-foreground" />
-          </Link>
-          <button 
-            onClick={handleAddToCart}
-            className="flex-1 h-14 rounded-full gradient-cta flex items-center justify-center gap-2 shadow-elevated hover:opacity-90 transition-opacity"
-          >
-            <span className="text-white font-semibold">Add to cart</span>
-            <div className="flex">
-              <ChevronRight className="w-4 h-4 text-white/70" />
-              <ChevronRight className="w-4 h-4 text-white/90 -ml-2" />
-              <ChevronRight className="w-4 h-4 text-white -ml-2" />
-            </div>
-          </button>
-        </div>
+      {/* Mobile Bottom Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border">
+        <button 
+          onClick={handleAddToCart}
+          className="w-full h-14 rounded-full bg-foreground text-background font-medium flex items-center justify-center gap-2"
+        >
+          <ShoppingBag className="w-5 h-5" />
+          Add to Cart — {formatMVR(product.price * quantity)}
+        </button>
+      </div>
+
+      <div className="hidden lg:block">
+        <BottomNavigation />
       </div>
     </div>
   );
 };
-
-// Spec bubble component with round glass-morphism style
-const SpecBubble = ({ 
-  label, 
-  value, 
-  align = "left",
-  delay = 0
-}: { 
-  label: string; 
-  value: string; 
-  align?: "left" | "right";
-  delay?: number;
-}) => (
-  <div 
-    className={`glass-card rounded-2xl px-3 py-2.5 shadow-soft animate-slide-up ${
-      align === "right" ? "text-right" : "text-left"
-    }`}
-    style={{ animationDelay: `${delay}ms` }}
-  >
-    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
-    <p className="text-sm font-bold text-foreground">{value}</p>
-  </div>
-);
 
 export default ProductDetail;
