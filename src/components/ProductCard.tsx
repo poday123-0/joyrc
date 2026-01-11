@@ -1,4 +1,4 @@
-import { Heart, ArrowUpRight, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatMVR } from "@/lib/currency";
 
@@ -16,57 +16,49 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
-  const isLarge = size === "large";
   const imageSrc = product.image_url || product.image || "/placeholder.svg";
 
   return (
     <Link
       to={`/product/${product.id}`}
-      className={`block rounded-3xl gradient-card overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 group ${
-        isLarge ? "h-64" : "h-48"
-      }`}
+      className="group block"
     >
-      <div className="relative h-full p-4 flex flex-col">
-        {/* Rating badge */}
-        <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 shadow-soft">
-          <Star className="w-3 h-3 fill-gold text-gold" />
-          <span className="text-xs font-medium">{product.rating || 4.5}</span>
-        </div>
-
+      <div className="relative overflow-hidden rounded-2xl lg:rounded-3xl bg-muted/50 aspect-square mb-4 transition-all duration-500 group-hover:bg-muted">
         {/* Favorite button */}
         <button 
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-soft hover:bg-white transition-colors"
+          className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-background"
           onClick={(e) => e.preventDefault()}
         >
-          <Heart className="w-4 h-4 text-pink" />
+          <Heart className="w-4 h-4 text-muted-foreground hover:text-pink transition-colors" />
         </button>
 
-        {/* Price */}
-        <div className="absolute top-12 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-soft">
-          <span className="text-sm font-semibold text-foreground">
-            {formatMVR(product.price)}
-          </span>
-        </div>
-
         {/* Product image */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center p-6 lg:p-8">
           <img
             src={imageSrc}
             alt={product.name}
-            className="w-28 h-28 object-contain group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
           />
         </div>
+      </div>
 
-        {/* Info bar */}
-        <div className="flex items-end justify-between mt-auto">
-          <div>
-            <h4 className="font-semibold text-foreground text-sm">{product.name}</h4>
-            <p className="text-xs text-muted-foreground">{product.category || "RC Toy"}</p>
-          </div>
-          <div className="w-8 h-8 rounded-full gradient-cta flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
-            <ArrowUpRight className="w-4 h-4 text-white" />
+      {/* Product info */}
+      <div className="space-y-1">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="font-medium text-foreground text-sm lg:text-base leading-tight group-hover:text-primary transition-colors">
+            {product.name}
+          </h4>
+          <div className="flex items-center gap-1 shrink-0">
+            <Star className="w-3.5 h-3.5 fill-foreground text-foreground" />
+            <span className="text-xs lg:text-sm font-medium text-foreground">
+              {product.rating || 4.5}
+            </span>
           </div>
         </div>
+        <p className="text-xs lg:text-sm text-muted-foreground">{product.category || "RC Toy"}</p>
+        <p className="font-semibold text-foreground text-sm lg:text-base pt-1">
+          {formatMVR(product.price)}
+        </p>
       </div>
     </Link>
   );

@@ -1,44 +1,86 @@
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import rcCarRed from "@/assets/rc-car-red.png";
 
 const HeroBanner = () => {
   return (
-    <div className="relative rounded-3xl overflow-hidden gradient-card h-44 md:h-56 lg:h-72">
-      <div className="absolute inset-0 flex">
+    <section className="relative overflow-hidden">
+      {/* Main Hero */}
+      <div className="min-h-[60vh] lg:min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-12 lg:py-20">
+        {/* Subtle background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-muted/30" />
+        
         {/* Content */}
-        <div className="flex-1 p-5 lg:p-8 flex flex-col justify-center z-10">
-          <h2 className="text-lg md:text-xl lg:text-3xl font-semibold text-foreground leading-tight">
+        <div className="relative z-10 max-w-4xl mx-auto space-y-6 lg:space-y-8 animate-fade-in">
+          {/* Eyebrow */}
+          <p className="text-sm lg:text-base font-medium text-primary tracking-wide uppercase">
+            New Collection
+          </p>
+          
+          {/* Main headline */}
+          <h1 className="text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bold text-foreground tracking-tight leading-[1.1]">
             Ultimate RC
             <br />
-            Experience
-          </h2>
-          <p className="text-xs md:text-sm lg:text-base text-muted-foreground mt-1 lg:mt-2">
-            Flat 20% Off on Selected Toys
+            <span className="text-gradient-primary">Experience</span>
+          </h1>
+          
+          {/* Subheadline */}
+          <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Discover the joy of remote control. Premium toys designed for thrill-seekers of all ages.
           </p>
-          <Link to="/categories">
-            <button className="mt-3 lg:mt-4 bg-primary text-primary-foreground text-xs lg:text-sm font-medium px-4 lg:px-6 py-2 lg:py-2.5 rounded-full w-fit shadow-soft hover:opacity-90 transition-opacity">
-              Shop Now
-            </button>
-          </Link>
+          
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Link to="/categories">
+              <button className="group bg-foreground text-background font-medium px-8 py-4 rounded-full text-base lg:text-lg hover:bg-foreground/90 transition-all duration-300 flex items-center gap-2">
+                Shop Now
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </Link>
+            <Link to="/categories" className="text-foreground font-medium hover:text-primary transition-colors text-base lg:text-lg">
+              Learn more →
+            </Link>
+          </div>
         </div>
-
-        {/* Image */}
-        <div className="relative w-44 md:w-56 lg:w-80 flex-shrink-0 flex items-center justify-center">
-          <img
-            src={rcCarRed}
-            alt="RC Car"
-            className="w-36 h-36 md:w-44 md:h-44 lg:w-64 lg:h-64 object-contain animate-float"
-          />
+        
+        {/* Hero Product Image */}
+        <div className="relative z-10 mt-8 lg:mt-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="relative">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-75" />
+            <img
+              src={rcCarRed}
+              alt="RC Car"
+              className="relative w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96 object-contain animate-float"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Pagination dots */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-        <div className="w-5 h-1.5 rounded-full bg-primary"></div>
-        <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
-        <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"></div>
+      {/* Feature Strip */}
+      <div className="relative z-10 border-t border-border/50 bg-background/80 backdrop-blur-sm">
+        <div className="container max-w-7xl mx-auto px-4 py-6 lg:py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 text-center">
+            <div className="space-y-1">
+              <p className="text-2xl lg:text-3xl font-bold text-foreground">20%</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Off Selected Items</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl lg:text-3xl font-bold text-foreground">Free</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Delivery Over MVR 500</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl lg:text-3xl font-bold text-foreground">24/7</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Customer Support</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl lg:text-3xl font-bold text-foreground">100%</p>
+              <p className="text-xs lg:text-sm text-muted-foreground">Quality Guaranteed</p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 
