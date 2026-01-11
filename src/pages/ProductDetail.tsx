@@ -25,13 +25,12 @@ interface SimilarProduct {
   image_url: string | null;
 }
 
-// Color options for products
-const colorOptions = [
-  { id: "black", name: "Black", color: "bg-foreground" },
-  { id: "red", name: "Racing Red", color: "bg-red-500" },
-  { id: "blue", name: "Ocean Blue", color: "bg-blue-500" },
-  { id: "green", name: "Forest Green", color: "bg-green-500" },
-];
+interface ProductColor {
+  id: string;
+  color_name: string;
+  color_hex: string;
+  image_url: string | null;
+}
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -42,7 +41,8 @@ const ProductDetail = () => {
   const [specs, setSpecs] = useState<{ name: string; value: string }[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(colorOptions[0].id);
+  const [productColors, setProductColors] = useState<ProductColor[]>([]);
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -93,6 +93,18 @@ const ProductDetail = () => {
           });
         }
         setGalleryImages(images);
+
+        // Fetch product colors
+        const { data: colorsData } = await supabase
+          .from("product_colors")
+          .select("*")
+          .eq("product_id", id)
+          .order("sort_order");
+
+        if (colorsData && colorsData.length > 0) {
+          setProductColors(colorsData);
+          setSelectedColorId(colorsData[0].id);
+        }
 
         if (dbProduct.category_id) {
           const { data: similar } = await supabase
@@ -160,7 +172,9 @@ const ProductDetail = () => {
     );
   }
 
-  const currentImage = galleryImages[currentImageIndex] || product.image_url;
+  // Get current image - prioritize selected color's image, then gallery, then default
+  const selectedColor = productColors.find(c => c.id === selectedColorId);
+  const currentImage = selectedColor?.image_url || galleryImages[currentImageIndex] || product.image_url;
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-8">
@@ -276,31 +290,34 @@ const ProductDetail = () => {
             )}
 
             {/* Color Selection */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-foreground">Color</h3>
-                <span className="text-sm text-muted-foreground">
-                  {colorOptions.find(c => c.id === selectedColor)?.name}
-                </span>
+            {productColors.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-foreground">Color</h3>
+                  <span className="text-sm text-muted-foreground">
+                    {productColors.find(c => c.id === selectedColorId)?.color_name}
+                  </span>
+                </div>
+                <div className="flex gap-3">
+                  {productColors.map((color) => (
+                    <button
+                      key={color.id}
+                      onClick={() => setSelectedColorId(color.id)}
+                      className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        selectedColorId === color.id
+                          ? "ring-2 ring-offset-2 ring-foreground"
+                          : "opacity-60 hover:opacity-100"
+                      }`}
+                      style={{ backgroundColor: color.color_hex }}
+                    >
+                      {selectedColorId === color.id && (
+                        <Check className="w-4 h-4 text-white drop-shadow-md" />
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-3">
-                {colorOptions.map((color) => (
-                  <button
-                    key={color.id}
-                    onClick={() => setSelectedColor(color.id)}
-                    className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full ${color.color} flex items-center justify-center transition-all duration-300 ${
-                      selectedColor === color.id
-                        ? "ring-2 ring-offset-2 ring-foreground"
-                        : "opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    {selectedColor === color.id && (
-                      <Check className="w-4 h-4 text-background" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
 
             {/* Quantity */}
             <div className="space-y-4">
