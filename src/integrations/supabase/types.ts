@@ -110,6 +110,42 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_backgrounds: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          media_type: string
+          media_url: string
+          sort_order: number | null
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          media_url: string
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          media_url?: string
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

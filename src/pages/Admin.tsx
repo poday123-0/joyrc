@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import PaymentOrdersTab from "@/components/PaymentOrdersTab";
 import SupportContentTab from "@/components/SupportContentTab";
 import ContactMessagesTab from "@/components/ContactMessagesTab";
 import AdminManagementTab from "@/components/AdminManagementTab";
+import HeroBackgroundsTab from "@/components/HeroBackgroundsTab";
 
 interface Product {
   id: string;
@@ -61,7 +62,7 @@ interface SystemSettings {
   hero_subtitle: string;
 }
 
-type Tab = "dashboard" | "products" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "settings";
+type Tab = "dashboard" | "products" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "hero" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -72,6 +73,7 @@ const tabs = [
   { id: "bank", label: "Bank", icon: Building2 },
   { id: "support", label: "Support", icon: HelpCircle },
   { id: "admins", label: "Admins", icon: Users },
+  { id: "hero", label: "Hero", icon: ImageIcon },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -227,6 +229,7 @@ const Admin = () => {
             {activeTab === "bank" && <BankSettingsTab />}
             {activeTab === "support" && <SupportContentTab />}
             {activeTab === "admins" && <AdminManagementTab />}
+            {activeTab === "hero" && <HeroBackgroundsTab />}
             {activeTab === "settings" && settings && (
               <SettingsTab 
                 settings={settings} 
