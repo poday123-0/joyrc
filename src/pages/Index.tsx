@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
-import HeroBanner from "@/components/HeroBanner";
 import CategoryPills from "@/components/CategoryPills";
 import ProductCard from "@/components/ProductCard";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -82,9 +81,6 @@ const Index = () => {
           <Header />
         </div>
       </div>
-
-      {/* Hero Section - Full width */}
-      <HeroBanner />
 
       {/* Products Section */}
       <section className="py-16 lg:py-24">

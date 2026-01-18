@@ -7,7 +7,7 @@ const BottomNavigation = () => {
   const { user } = useAuth();
 
   const navItems = [
-    { icon: Home, path: "/", label: "Home" },
+    { icon: Home, path: "/home", label: "Home" },
     { icon: Grid3X3, path: "/categories", label: "Categories" },
     { icon: HelpCircle, path: "/support", label: "Support" },
     { icon: User, path: user ? "/profile" : "/login", label: "Profile" },

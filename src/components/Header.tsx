@@ -16,7 +16,7 @@ const Header = ({ userName }: HeaderProps) => {
   const greeting = new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening";
 
   const navItems = [
-    { icon: Home, path: "/", label: "Home" },
+    { icon: Home, path: "/home", label: "Home" },
     { icon: Grid3X3, path: "/categories", label: "Categories" },
     { icon: HelpCircle, path: "/support", label: "Support" },
   ];
