@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { Bell, ShoppingCart, Home, Grid3X3, HelpCircle, User, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HeaderProps {
   userName?: string;
@@ -11,6 +13,23 @@ const Header = ({ userName }: HeaderProps) => {
   const { totalItems } = useCart();
   const { user, isAdmin } = useAuth();
   const location = useLocation();
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("logo_url")
+        .limit(1)
+        .maybeSingle();
+      
+      if (data?.logo_url) {
+        setLogoUrl(data.logo_url);
+      }
+    };
+
+    fetchLogo();
+  }, []);
 
   const displayName = userName || user?.user_metadata?.full_name || "Guest";
   const greeting = new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening";
@@ -24,10 +43,18 @@ const Header = ({ userName }: HeaderProps) => {
   return (
     <header className="flex items-center justify-between py-4">
       <div className="flex items-center gap-3">
-        <Link to={user ? "/profile" : "/login"}>
-          <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full gradient-cta flex items-center justify-center text-white font-semibold text-lg">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
+        <Link to="/">
+          {logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt="Logo" 
+              className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover shadow-md"
+            />
+          ) : (
+            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full gradient-cta flex items-center justify-center text-white font-semibold text-lg">
+              🎮
+            </div>
+          )}
         </Link>
         <div>
           <p className="text-xs lg:text-sm text-muted-foreground">{greeting}</p>

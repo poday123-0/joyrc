@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, GripVertical, Image, Video } from "lucide-react";
+import { Plus, Trash2, Image, Video, Upload, Loader2 } from "lucide-react";
 
 interface HeroBackground {
   id: string;
@@ -22,12 +22,14 @@ interface HeroBackground {
 const HeroBackgroundsTab = () => {
   const [backgrounds, setBackgrounds] = useState<HeroBackground[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [newBackground, setNewBackground] = useState({
     media_url: '',
     media_type: 'image' as 'image' | 'video',
     title: '',
     subtitle: ''
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBackgrounds = async () => {
     const { data, error } = await supabase
@@ -51,9 +53,41 @@ const HeroBackgroundsTab = () => {
     fetchBackgrounds();
   }, []);
 
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+    
+    setUploading(true);
+    try {
+      const isVideo = file.type.startsWith('video/');
+      const fileName = `hero-${Date.now()}-${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      setNewBackground(prev => ({
+        ...prev,
+        media_url: urlData.publicUrl,
+        media_type: isVideo ? 'video' : 'image'
+      }));
+
+      toast.success("File uploaded successfully");
+    } catch (error: any) {
+      toast.error("Upload failed: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleAddBackground = async () => {
     if (!newBackground.media_url) {
-      toast.error("Please enter a media URL");
+      toast.error("Please upload a file or enter a media URL");
       return;
     }
 
@@ -125,6 +159,48 @@ const HeroBackgroundsTab = () => {
     );
   };
 
+  const handleReplaceMedia = async (id: string, file: File) => {
+    setUploading(true);
+    try {
+      const isVideo = file.type.startsWith('video/');
+      const fileName = `hero-${Date.now()}-${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      const { error } = await supabase
+        .from('hero_backgrounds')
+        .update({ 
+          media_url: urlData.publicUrl,
+          media_type: isVideo ? 'video' : 'image'
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setBackgrounds(prev =>
+        prev.map(bg => bg.id === id ? { 
+          ...bg, 
+          media_url: urlData.publicUrl,
+          media_type: isVideo ? 'video' : 'image'
+        } : bg)
+      );
+
+      toast.success("Media replaced successfully");
+    } catch (error: any) {
+      toast.error("Replace failed: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="p-4">Loading...</div>;
   }
@@ -140,6 +216,52 @@ const HeroBackgroundsTab = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* File Upload Section */}
+          <div className="space-y-2">
+            <Label>Upload Image or Video</Label>
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file);
+                }}
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex-1"
+              >
+                {uploading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                {uploading ? "Uploading..." : "Choose File"}
+              </Button>
+            </div>
+            {newBackground.media_url && (
+              <div className="mt-2 p-2 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground truncate">
+                  ✓ {newBackground.media_type === 'video' ? 'Video' : 'Image'} ready
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or enter URL</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Media URL</Label>
@@ -183,7 +305,7 @@ const HeroBackgroundsTab = () => {
               />
             </div>
           </div>
-          <Button onClick={handleAddBackground}>
+          <Button onClick={handleAddBackground} disabled={uploading}>
             <Plus className="w-4 h-4 mr-2" />
             Add Background
           </Button>
@@ -203,17 +325,19 @@ const HeroBackgroundsTab = () => {
               No backgrounds added yet
             </p>
           ) : (
-            backgrounds.map((bg, index) => (
+            backgrounds.map((bg) => (
               <div
                 key={bg.id}
-                className="flex items-start gap-4 p-4 border rounded-lg bg-card"
+                className="flex flex-col md:flex-row items-start gap-4 p-4 border rounded-lg bg-card"
               >
-                {/* Preview */}
-                <div className="w-24 h-16 md:w-32 md:h-20 rounded overflow-hidden bg-muted flex-shrink-0">
+                {/* Preview with replace option */}
+                <div className="relative w-full md:w-32 h-24 rounded overflow-hidden bg-muted flex-shrink-0 group">
                   {bg.media_type === 'video' ? (
-                    <div className="w-full h-full flex items-center justify-center bg-muted">
-                      <Video className="w-8 h-8 text-muted-foreground" />
-                    </div>
+                    <video
+                      src={bg.media_url}
+                      className="w-full h-full object-cover"
+                      muted
+                    />
                   ) : (
                     <img
                       src={bg.media_url}
@@ -221,10 +345,23 @@ const HeroBackgroundsTab = () => {
                       className="w-full h-full object-cover"
                     />
                   )}
+                  {/* Replace overlay */}
+                  <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleReplaceMedia(bg.id, file);
+                      }}
+                    />
+                    <Upload className="w-6 h-6 text-white" />
+                  </label>
                 </div>
 
                 {/* Details */}
-                <div className="flex-1 space-y-2 min-w-0">
+                <div className="flex-1 space-y-2 min-w-0 w-full">
                   <div className="flex items-center gap-2">
                     {bg.media_type === 'image' ? (
                       <Image className="w-4 h-4 text-muted-foreground" />
@@ -249,17 +386,10 @@ const HeroBackgroundsTab = () => {
                     onChange={(e) => handleUpdateField(bg.id, 'subtitle', e.target.value)}
                     className="h-8 text-sm"
                   />
-                  
-                  <Input
-                    placeholder="Media URL"
-                    value={bg.media_url}
-                    onChange={(e) => handleUpdateField(bg.id, 'media_url', e.target.value)}
-                    className="h-8 text-sm font-mono text-xs"
-                  />
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex md:flex-col items-center gap-2 w-full md:w-auto justify-between md:justify-start">
                   <div className="flex items-center gap-2">
                     <Label className="text-sm">Active</Label>
                     <Switch
