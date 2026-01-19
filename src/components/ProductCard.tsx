@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, RotateCcw } from "lucide-react";
+import { formatMVR } from "@/lib/currency";
 
 interface ProductCardProps {
   product: {
@@ -29,72 +31,100 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
     navigate(`/product/${product.id}`);
   };
 
+  const handleFlipBack = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsFlipped(false);
+  };
+
   return (
     <div 
-      className="group block cursor-pointer perspective-1000"
+      className="group block cursor-pointer"
       onClick={handleClick}
+      style={{ perspective: '1000px' }}
     >
       <div 
-        className={`relative w-full transition-transform duration-500 transform-style-preserve-3d ${
-          isFlipped ? 'rotate-y-180' : ''
-        }`}
+        className="relative w-full h-full"
         style={{ 
           transformStyle: 'preserve-3d',
           transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          transition: 'transform 0.5s ease-in-out'
+          transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         {/* Front of card - Product Image & Name */}
         <div 
-          className="relative overflow-hidden rounded-2xl lg:rounded-3xl bg-muted/50 aspect-[3/4] transition-all duration-300"
+          className="relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-b from-muted/80 to-muted aspect-[3/4] shadow-lg"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          {/* Product image - larger and fitted */}
-          <div className="absolute inset-0 flex items-center justify-center p-4">
+          {/* Product image - full cover */}
+          <div className="absolute inset-0">
             <img
               src={imageSrc}
               alt={product.name}
-              className="w-full h-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
+            {/* Gradient overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
           </div>
           
           {/* Product name overlay at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12">
-            <h4 className="font-semibold text-white text-sm lg:text-base leading-tight line-clamp-2">
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h4 className="font-semibold text-white text-base lg:text-lg leading-tight line-clamp-2 drop-shadow-lg">
               {product.name}
             </h4>
           </div>
 
-          {/* Flip indicator */}
-          <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <svg className="w-4 h-4 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+          {/* Flip indicator - always visible */}
+          <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110">
+            <RotateCcw className="w-4 h-4 text-white" />
           </div>
         </div>
 
         {/* Back of card - Product Description */}
         <div 
-          className="absolute inset-0 overflow-hidden rounded-2xl lg:rounded-3xl bg-card border border-border aspect-[3/4] p-4 flex flex-col"
+          className="absolute inset-0 overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-br from-primary/10 via-background to-muted border border-border shadow-xl aspect-[3/4]"
           style={{ 
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)'
           }}
         >
-          <h4 className="font-semibold text-foreground text-sm lg:text-base leading-tight mb-3 line-clamp-2">
-            {product.name}
-          </h4>
-          
-          <p className="text-muted-foreground text-xs lg:text-sm flex-1 overflow-y-auto leading-relaxed">
-            {product.description || "Experience the thrill of RC with this amazing product. High quality build and responsive controls for hours of fun."}
-          </p>
+          <div className="h-full flex flex-col p-5">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1 pr-2">
+                <h4 className="font-bold text-foreground text-base lg:text-lg leading-tight line-clamp-2">
+                  {product.name}
+                </h4>
+                <p className="text-primary font-semibold text-lg mt-1">
+                  {formatMVR(product.price)}
+                </p>
+              </div>
+              <button
+                onClick={handleFlipBack}
+                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors flex-shrink-0"
+              >
+                <RotateCcw className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
 
-          <button
-            onClick={handleNavigate}
-            className="mt-4 w-full py-2.5 bg-primary text-primary-foreground rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors"
-          >
-            View Details
-          </button>
+            {/* Divider */}
+            <div className="w-full h-px bg-border mb-3" />
+            
+            {/* Description */}
+            <div className="flex-1 overflow-y-auto">
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {product.description || "Discover the thrill of RC with this amazing product. Built with premium materials for durability and performance. Perfect for enthusiasts of all skill levels."}
+              </p>
+            </div>
+
+            {/* Action button */}
+            <button
+              onClick={handleNavigate}
+              className="mt-4 w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
+              View Details
+              <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
