@@ -17,6 +17,7 @@ const Header = ({ userName }: HeaderProps) => {
   const { user, isAdmin } = useAuth();
   const location = useLocation();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -31,6 +32,7 @@ const Header = ({ userName }: HeaderProps) => {
       if (data?.logo_url) {
         setLogoUrl(data.logo_url);
       }
+      setLogoLoaded(true);
     };
 
     fetchLogo();
@@ -57,15 +59,19 @@ const Header = ({ userName }: HeaderProps) => {
       <header className="sticky top-0 z-50 w-full bg-background/40 backdrop-saturate-150 backdrop-blur-2xl border-b border-white/5 shadow-sm">
         <nav className="h-11 flex items-center justify-between px-4 sm:px-6 max-w-[980px] mx-auto">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
-            <img 
-              src={logoUrl || rcJoyLogo} 
-              alt="RC Joy" 
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-              className="h-7 sm:h-8 w-auto object-contain"
-            />
+          <Link to="/" className="flex-shrink-0 h-8 flex items-center">
+            {!logoLoaded ? (
+              <div className="h-8 w-20 bg-muted/30 rounded animate-pulse" />
+            ) : (
+              <img 
+                src={logoUrl || rcJoyLogo} 
+                alt="RC Joy" 
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                className="h-8 w-auto max-w-[120px] object-contain"
+              />
+            )}
           </Link>
 
           {/* Center Navigation - desktop only */}
@@ -124,7 +130,7 @@ const Header = ({ userName }: HeaderProps) => {
                       alt="RC Joy" 
                       loading="lazy"
                       decoding="async"
-                      className="h-8 w-auto object-contain"
+                      className="h-8 w-auto max-w-[120px] object-contain"
                     />
                   </div>
 
