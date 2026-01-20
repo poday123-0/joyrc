@@ -21,6 +21,34 @@ interface FeaturedProduct {
   };
 }
 
+const ImageWithSkeleton = ({ src, alt, className, priority = false }: { 
+  src: string; 
+  alt: string; 
+  className?: string;
+  priority?: boolean;
+}) => {
+  const [loaded, setLoaded] = useState(false);
+  
+  return (
+    <div className="relative w-full h-full">
+      {!loaded && (
+        <div className="absolute inset-0 bg-muted animate-pulse rounded-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={priority ? "high" : "auto"}
+        onLoad={() => setLoaded(true)}
+        className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+    </div>
+  );
+};
+
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,12 +149,10 @@ const Index = () => {
                     {/* Product Image */}
                     <div className="aspect-square p-8 lg:p-12 flex items-center justify-center">
                       {featured.product.image_url ? (
-                        <img
+                        <ImageWithSkeleton
                           src={featured.product.image_url}
                           alt={featured.product.name}
-                          loading={index === 0 ? "eager" : "lazy"}
-                          decoding="async"
-                          fetchPriority={index === 0 ? "high" : "auto"}
+                          priority={index === 0}
                           className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (

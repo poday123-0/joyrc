@@ -20,6 +20,7 @@ interface ProductCardProps {
 const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const imageSrc = product.image_url || product.image || "/placeholder.svg";
 
   const handleClick = () => {
@@ -55,6 +56,13 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
           className="relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-b from-muted/80 to-muted aspect-[3/4] shadow-lg"
           style={{ backfaceVisibility: 'hidden' }}
         >
+          {/* Skeleton loader */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-muted animate-pulse">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skeleton-shimmer" />
+            </div>
+          )}
+          
           {/* Product image - full cover */}
           <div className="absolute inset-0">
             <img
@@ -63,7 +71,10 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
               loading="lazy"
               decoding="async"
               fetchPriority="auto"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
+              onLoad={() => setImageLoaded(true)}
+              className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 will-change-transform ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             />
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -74,11 +85,6 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
             <h4 className="font-semibold text-white text-base lg:text-lg leading-tight line-clamp-2 drop-shadow-lg">
               {product.name}
             </h4>
-          </div>
-
-          {/* Flip indicator - always visible */}
-          <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110">
-            <RotateCcw className="w-4 h-4 text-white" />
           </div>
         </div>
 

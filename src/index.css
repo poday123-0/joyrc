@@ -140,4 +140,18 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Skeleton loading shimmer animation */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
 }
