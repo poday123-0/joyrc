@@ -381,15 +381,15 @@ const UsersManagementTab = () => {
           {filteredUsers.map((user) => (
             <div
               key={user.id}
-              className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50 gap-3"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-primary" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-foreground">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium text-foreground truncate">
                       {user.full_name || "No name"}
                     </p>
                     {user.is_admin && (
@@ -404,7 +404,7 @@ const UsersManagementTab = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-auto sm:ml-0">
                 <button
                   onClick={() => setResetPasswordUserId(user.user_id)}
                   className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"

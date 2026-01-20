@@ -135,7 +135,7 @@ const ContactMessagesTab = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">Name</p>
                 <p className="font-medium">{selectedMessage.name}</p>
@@ -198,47 +198,49 @@ const ContactMessagesTab = () => {
             key={msg.id}
             className="glass-card rounded-xl p-3 shadow-soft"
           >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-foreground text-sm">{msg.name}</h4>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(msg.status)}`}>
-                    {msg.status}
-                  </span>
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-5 h-5 text-primary" />
                 </div>
-                <p className="text-xs text-muted-foreground mb-1">{msg.subject}</p>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Phone className="w-3 h-3" />
-                    {msg.mobile}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {format(new Date(msg.created_at), "MMM d, h:mm a")}
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h4 className="font-medium text-foreground text-sm">{msg.name}</h4>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(msg.status)}`}>
+                      {msg.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-1 truncate">{msg.subject}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Phone className="w-3 h-3" />
+                      {msg.mobile}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {format(new Date(msg.created_at), "MMM d, h:mm a")}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 ml-auto sm:ml-0">
                 <button
                   onClick={() => handleViewMessage(msg)}
-                  className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
                 >
-                  <Eye className="w-3 h-3" />
+                  <Eye className="w-4 h-4 sm:w-3 sm:h-3" />
                 </button>
                 <a
                   href={`tel:${msg.mobile}`}
-                  className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200"
                 >
-                  <Phone className="w-3 h-3 text-green-600" />
+                  <Phone className="w-4 h-4 sm:w-3 sm:h-3 text-green-600" />
                 </a>
                 <button
                   onClick={() => handleDeleteClick(msg.id)}
-                  className="w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
                 >
-                  <Trash2 className="w-3 h-3 text-destructive" />
+                  <Trash2 className="w-4 h-4 sm:w-3 sm:h-3 text-destructive" />
                 </button>
               </div>
             </div>

@@ -205,7 +205,7 @@ const BankSettingsTab = () => {
               className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="text"
                 placeholder="Branch (optional)"
@@ -245,26 +245,26 @@ const BankSettingsTab = () => {
       <div className="space-y-3">
         {banks.map((bank) => (
           <div key={bank.id} className="glass-card rounded-2xl p-4 shadow-soft">
-            <div className="flex items-start gap-3">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 bank.is_active ? "bg-mint/20" : "bg-muted"
               }`}>
                 <Building2 className={`w-6 h-6 ${bank.is_active ? "text-mint" : "text-muted-foreground"}`} />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="font-semibold text-foreground">{bank.bank_name}</h4>
                   {bank.is_active && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-mint/20 text-mint">Active</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">{bank.account_name}</p>
-                <p className="text-sm font-mono text-foreground mt-1">{bank.account_number}</p>
+                <p className="text-sm text-muted-foreground truncate">{bank.account_name}</p>
+                <p className="text-sm font-mono text-foreground mt-1 break-all">{bank.account_number}</p>
                 {bank.branch && (
                   <p className="text-xs text-muted-foreground">Branch: {bank.branch}</p>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 ml-auto sm:ml-0">
                 <button
                   onClick={() => handleEdit(bank)}
                   className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
