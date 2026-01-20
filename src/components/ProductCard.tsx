@@ -64,7 +64,7 @@ const ProductCard = memo(({ product, size = "large", priority = false }: Product
               alt={product.name}
               priority={priority}
               fill
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 will-change-transform"
             />
             {/* Gradient overlay for text readability - only at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
