@@ -147,7 +147,7 @@ const Login = () => {
         <button 
           onClick={handleGoogleLogin}
           disabled={googleLoading}
-          className="w-full mt-6 py-3.5 rounded-xl border border-border bg-white flex items-center justify-center gap-3 hover:bg-secondary transition-colors disabled:opacity-50"
+          className="w-full mt-6 py-3.5 rounded-2xl glass-card border border-border flex items-center justify-center gap-3 hover:bg-white/80 transition-colors disabled:opacity-50"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -175,7 +175,7 @@ const Login = () => {
         {/* Divider */}
         <div className="flex items-center gap-4 my-6">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-sm text-muted-foreground">or with email</span>
+          <span className="text-sm text-muted-foreground">or continue with email</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
@@ -185,14 +185,14 @@ const Login = () => {
             <div>
               <label className="text-sm text-muted-foreground">Full Name</label>
               <div className="mt-1 relative">
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Your full name"
-                  className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-                  required={!isLogin}
-                />
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your full name"
+                className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
+                required={!isLogin}
+              />
                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
             </div>
@@ -206,7 +206,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
                 required
               />
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -223,7 +223,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password.."
-                className="w-full px-4 py-3 pl-10 pr-10 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full px-4 py-3 pl-10 pr-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
                 required
               />
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

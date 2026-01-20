@@ -132,7 +132,7 @@ const Cart = () => {
               </div>
               <Link
                 to={user ? "/checkout" : "/login"}
-                className="w-full py-4 rounded-full gradient-cta text-white font-semibold shadow-elevated hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-full gradient-primary text-primary-foreground font-semibold shadow-elevated hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 {user ? "Proceed to Checkout" : "Sign in to Checkout"}
                 <ArrowRight className="w-5 h-5" />
@@ -143,7 +143,7 @@ const Cart = () => {
       </div>
 
       {/* Mobile Bottom checkout bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 glass-card border-t border-border">
         <div className="container max-w-md mx-auto">
           <div className="flex items-center justify-between mb-4">
             <span className="text-muted-foreground">Total</span>
@@ -153,7 +153,7 @@ const Cart = () => {
           </div>
           <Link
             to={user ? "/checkout" : "/login"}
-            className="w-full py-4 rounded-full gradient-cta text-white font-semibold shadow-elevated hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-full gradient-primary text-primary-foreground font-semibold shadow-elevated hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
           >
             {user ? "Proceed to Checkout" : "Sign in to Checkout"}
             <ArrowRight className="w-5 h-5" />

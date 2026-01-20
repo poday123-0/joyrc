@@ -193,14 +193,14 @@ const Categories = () => {
                         placeholder="Min"
                         value={priceRange.min}
                         onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-sm"
+                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={priceRange.max}
                         onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-sm"
+                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                       />
                     </div>
                   </div>
@@ -210,7 +210,7 @@ const Categories = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full mt-2 px-3 py-2 rounded-lg border border-border bg-white text-sm"
+                      className="w-full mt-2 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                     >
                       <option value="newest">Newest</option>
                       <option value="price-low">Price: Low to High</option>
