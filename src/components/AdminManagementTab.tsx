@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Shield, Trash2, UserPlus, Users } from "lucide-react";
+import { Shield, Trash2, UserPlus, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -18,7 +18,9 @@ const AdminManagementTab = () => {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [email, setEmail] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPassword, setNewPassword] = useState("12345");
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
@@ -59,60 +61,40 @@ const AdminManagementTab = () => {
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!newEmail.trim()) {
+      toast({ title: "Email is required", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
 
     try {
-      // First, we need to find the user by email
-      // Since we can't query auth.users directly, we'll check if there's a profile with that email
-      // The user would need to already have an account
-      
-      toast({
-        title: "Note",
-        description: "To add an admin, the user must first create an account. After they sign up, you can promote them to admin using their user ID.",
+      const response = await supabase.functions.invoke("create-user", {
+        body: {
+          email: newEmail.trim(),
+          full_name: newName.trim() || null,
+          password: newPassword || "12345",
+          make_admin: true,
+        },
       });
-      
-      // For now, we'll prompt for user_id directly
-      const userId = prompt("Enter the User ID to make admin (they must already have an account):");
-      
-      if (!userId) {
-        setSaving(false);
-        return;
+
+      if (response.error) {
+        throw new Error(response.error.message);
       }
 
-      // Check if already admin
-      const { data: existing } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .single();
-
-      if (existing) {
-        toast({ 
-          title: "Already Admin", 
-          description: "This user is already an admin.",
-          variant: "destructive" 
-        });
-        setSaving(false);
-        return;
+      if (response.data?.error) {
+        throw new Error(response.data.error);
       }
-
-      // Add admin role
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: userId,
-          role: "admin",
-        });
-
-      if (error) throw error;
 
       toast({ 
-        title: "Admin Added", 
-        description: "User has been granted admin privileges." 
+        title: "Admin Created", 
+        description: `${newEmail} has been added as admin with password: ${newPassword || "12345"}` 
       });
       setShowForm(false);
-      setEmail("");
+      setNewEmail("");
+      setNewName("");
+      setNewPassword("12345");
       fetchAdmins();
     } catch (error: any) {
       toast({ 
@@ -177,20 +159,77 @@ const AdminManagementTab = () => {
       </div>
 
       {showForm && (
-        <div className="glass-card rounded-2xl p-4 mb-4 shadow-soft">
-          <h3 className="font-semibold mb-3">Add New Admin</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            To add a new admin, the user must first create an account. Then click the button below 
-            and enter their User ID (found in the database).
-          </p>
-          <button
-            onClick={handleAddAdmin}
-            disabled={saving}
-            className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Shield className="w-4 h-4" />
-            {saving ? "Processing..." : "Grant Admin Access"}
-          </button>
+        <div className="glass-card rounded-2xl p-4 mb-4 shadow-soft space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-foreground">Add New Admin</h3>
+            <button
+              onClick={() => setShowForm(false)}
+              className="p-1 hover:bg-muted rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <form onSubmit={handleAddAdmin} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Admin Name"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Password
+                </label>
+                <input
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="12345"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Default: 12345</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !newEmail.trim()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <Shield className="w-4 h-4" />
+                {saving ? "Creating..." : "Create Admin"}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
