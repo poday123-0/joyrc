@@ -1,77 +1,59 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import Header from "@/components/Header";
-import CategoryPills from "@/components/CategoryPills";
-import ProductCard from "@/components/ProductCard";
 import BottomNavigation from "@/components/BottomNavigation";
-import { staticProducts } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMVR } from "@/lib/currency";
 
-interface Product {
+interface FeaturedProduct {
   id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  image_url: string | null;
-  category_id: string | null;
-  rating: number | null;
-  in_stock: boolean | null;
-  category?: string;
-  image?: string;
+  product_id: string;
+  title: string | null;
+  subtitle: string | null;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image_url: string | null;
+    rating: number | null;
+    description: string | null;
+  };
 }
 
 const Index = () => {
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchFeaturedProducts = async () => {
       const { data, error } = await supabase
-        .from("products")
+        .from("featured_products")
         .select(`
-          *,
-          categories (name)
-        `);
+          id,
+          product_id,
+          title,
+          subtitle,
+          product:products (
+            id,
+            name,
+            price,
+            image_url,
+            rating,
+            description
+          )
+        `)
+        .eq("is_active", true)
+        .order("sort_order");
 
-      if (data && !error && data.length > 0) {
-        setProducts(data.map(p => ({
-          ...p,
-          category: p.categories?.name || "RC Toy"
-        })));
-      } else {
-        // Use static products as fallback
-        setProducts(staticProducts.map(p => ({
-          id: p.id,
-          name: p.name,
-          description: p.description,
-          price: p.price,
-          image_url: null,
-          category_id: null,
-          rating: p.rating,
-          in_stock: true,
-          category: p.category,
-          image: p.image
-        })));
+      if (data && !error) {
+        setFeaturedProducts(data as unknown as FeaturedProduct[]);
       }
       setLoading(false);
     };
 
-    fetchProducts();
+    fetchFeaturedProducts();
   }, []);
-
-  // Filter products based on active category
-  const filteredProducts = activeCategory === "all" 
-    ? products 
-    : products.filter(p => {
-        // Match by category_id if it exists, otherwise match by name
-        if (activeCategory.length > 10) {
-          // UUID-like ID from database
-          return p.category_id === activeCategory;
-        }
-        return false;
-      });
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-8">
@@ -82,61 +64,123 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Products Section */}
-      <section className="py-16 lg:py-24">
+      {/* Hero Section */}
+      <section className="py-12 lg:py-20">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          {/* Section Header */}
-          <div className="text-center mb-12 lg:mb-16 space-y-4">
-            <p className="text-sm lg:text-base font-medium text-primary tracking-wide uppercase">
-              Explore
+          <div className="text-center space-y-4 mb-12">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
+              Ultimate RC Experience
+            </h1>
+            <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto">
+              Discover premium remote control toys that bring excitement to every adventure.
             </p>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-              Popular RC Toys
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Hand-picked favorites that bring excitement to every adventure.
-            </p>
+            <div className="pt-4">
+              <Link to="/categories">
+                <button className="group bg-primary text-primary-foreground font-medium px-8 py-3 rounded-full text-base hover:bg-primary/90 transition-all inline-flex items-center gap-2">
+                  Shop All Products
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Products Section */}
+      <section className="py-8 lg:py-16">
+        <div className="container max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <p className="text-sm font-medium text-primary tracking-wide uppercase mb-1">
+                Featured
+              </p>
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
+                Top Picks
+              </h2>
+            </div>
+            <Link 
+              to="/categories" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              View all
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
-          {/* Category Pills */}
-          <div className="flex justify-center mb-10 lg:mb-12">
-            <CategoryPills 
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-            />
-          </div>
-
-          {/* Products Grid */}
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="aspect-square rounded-3xl bg-muted animate-pulse" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="aspect-[4/5] rounded-3xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredProducts.map((featured, index) => (
+                <Link
+                  key={featured.id}
+                  to={`/product/${featured.product.id}`}
+                  className="group block animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="relative bg-gradient-to-br from-muted/50 to-muted rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl">
+                    {/* Product Image */}
+                    <div className="aspect-square p-8 lg:p-12 flex items-center justify-center">
+                      {featured.product.image_url ? (
+                        <img
+                          src={featured.product.image_url}
+                          alt={featured.product.name}
+                          className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="text-6xl">📦</div>
+                      )}
+                    </div>
+
+                    {/* Content Overlay */}
+                    <div className="p-6 pt-0">
+                      {/* Custom title from admin or product name */}
+                      <h3 className="font-semibold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">
+                        {featured.title || featured.product.name}
+                      </h3>
+                      
+                      {/* Custom subtitle or description */}
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {featured.subtitle || featured.product.description || "Premium RC toy"}
+                      </p>
+
+                      {/* Price and Rating */}
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold text-foreground">
+                          {formatMVR(featured.product.price)}
+                        </p>
+                        {featured.product.rating && (
+                          <div className="flex items-center gap-1 text-sm">
+                            <Star className="w-4 h-4 fill-foreground text-foreground" />
+                            <span className="font-medium">{featured.product.rating}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
-              {filteredProducts.map((product, index) => (
-                <div 
-                  key={product.id} 
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <ProductCard product={product} />
-                </div>
-              ))}
+            <div className="text-center py-16 bg-muted/30 rounded-3xl">
+              <div className="text-6xl mb-4">🎮</div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No Featured Products Yet
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Admin can add featured products from the dashboard.
+              </p>
+              <Link to="/categories">
+                <button className="bg-primary text-primary-foreground font-medium px-6 py-3 rounded-full hover:bg-primary/90 transition-all">
+                  Browse All Products
+                </button>
+              </Link>
             </div>
           )}
-
-          {/* View All Link */}
-          <div className="text-center mt-12 lg:mt-16">
-            <Link 
-              to="/categories" 
-              className="group inline-flex items-center gap-2 text-foreground font-medium text-lg hover:text-primary transition-colors"
-            >
-              View all products
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -181,7 +225,7 @@ const Index = () => {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
             Ready to start your
             <br />
-            <span className="text-gradient-primary">RC adventure?</span>
+            <span className="text-primary">RC adventure?</span>
           </h2>
           <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto">
             Join thousands of happy customers who've discovered the thrill of remote control.
