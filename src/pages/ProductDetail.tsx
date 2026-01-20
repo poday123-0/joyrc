@@ -188,9 +188,9 @@ const ProductDetail = () => {
       <div className="container max-w-lg lg:max-w-4xl mx-auto px-4 lg:px-8">
 
         {/* Product Image */}
-        <div className="py-8 lg:py-12">
-          <div className="relative mx-auto">
-            <div className="aspect-square max-w-md mx-auto bg-gradient-to-br from-muted/30 to-muted/10 rounded-3xl p-4 lg:p-8 flex items-center justify-center overflow-hidden">
+        <div className="py-6 lg:py-10">
+          <div className="relative mx-auto max-w-md">
+            <div className="aspect-square w-full bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
               {currentImage ? (
                 <img
                   src={currentImage}
@@ -198,10 +198,10 @@ const ProductDetail = () => {
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  className="w-full h-full object-contain rounded-2xl animate-fade-in transition-transform duration-300 hover:scale-105"
+                  className="w-full h-full object-cover rounded-3xl animate-fade-in transition-transform duration-300 hover:scale-105"
                 />
               ) : (
-                <div className="text-8xl">📦</div>
+                <div className="w-full h-full flex items-center justify-center text-8xl">📦</div>
               )}
             </div>
           </div>
