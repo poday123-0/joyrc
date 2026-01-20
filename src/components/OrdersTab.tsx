@@ -93,6 +93,9 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
     const { error } = await supabase
       .from("orders")
       .update({ status: newStatus })
@@ -104,13 +107,74 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
         description: error.message, 
         variant: "destructive" 
       });
-    } else {
-      toast({ 
-        title: "Order Status Updated",
-        description: `Order has been marked as ${newStatus}.`,
-      });
-      fetchOrders();
+      return;
     }
+
+    // Send notification to customer based on status change
+    const notificationMessages: Record<string, { title: string; message: string; type: string }> = {
+      processing: {
+        title: "Order Processing 📦",
+        message: `Your order #${orderId.slice(0, 8).toUpperCase()} is now being processed and will be shipped soon.`,
+        type: "info",
+      },
+      shipped: {
+        title: "Order Shipped! 🚚",
+        message: `Great news! Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way to you.`,
+        type: "success",
+      },
+      delivered: {
+        title: "Order Delivered! 🎉",
+        message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered. Enjoy your purchase!`,
+        type: "success",
+      },
+      cancelled: {
+        title: "Order Cancelled",
+        message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been cancelled. Contact support if you have questions.`,
+        type: "error",
+      },
+    };
+
+    const notificationData = notificationMessages[newStatus];
+    if (notificationData) {
+      await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: notificationData.title,
+        message: notificationData.message,
+        type: notificationData.type,
+        link: "/profile",
+      });
+
+      // Also try to send email notification via edge function
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", order.user_id)
+          .single();
+
+        // Get user email from auth (we'll use the edge function for this)
+        const emailType = newStatus === "shipped" ? "order_shipped" : 
+                          newStatus === "delivered" ? "order_delivered" : null;
+        
+        if (emailType) {
+          await supabase.functions.invoke("send-order-notification", {
+            body: {
+              orderId,
+              type: emailType,
+              customerName: profile?.full_name || "Customer",
+            },
+          });
+        }
+      } catch (emailError) {
+        console.log("Email notification skipped:", emailError);
+      }
+    }
+
+    toast({ 
+      title: "Order Status Updated",
+      description: `Order has been marked as ${newStatus}. Customer has been notified.`,
+    });
+    fetchOrders();
   };
 
   const handleReceiptUpload = async (orderId: string, file: File) => {
