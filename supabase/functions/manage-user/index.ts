@@ -43,15 +43,16 @@ serve(async (req) => {
       );
     }
 
-    // Check if caller is admin
-    const { data: adminRole } = await supabaseAdmin
+    // Check caller's role (admin or super_admin)
+    const { data: callerRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
-      .eq("user_id", callerUser.id)
-      .eq("role", "admin")
-      .single();
+      .eq("user_id", callerUser.id);
 
-    if (!adminRole) {
+    const callerIsSuperAdmin = callerRoles?.some(r => r.role === "super_admin");
+    const callerIsAdmin = callerRoles?.some(r => r.role === "admin" || r.role === "super_admin");
+
+    if (!callerIsAdmin) {
       return new Response(
         JSON.stringify({ error: "Only admins can manage users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -68,11 +69,36 @@ serve(async (req) => {
       );
     }
 
+    // Check target user's role
+    const { data: targetRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user_id);
+
+    const targetIsSuperAdmin = targetRoles?.some(r => r.role === "super_admin");
+    const targetIsAdmin = targetRoles?.some(r => r.role === "admin");
+
     // Prevent admin from deleting themselves
     if (action === "delete" && user_id === callerUser.id) {
       return new Response(
         JSON.stringify({ error: "You cannot delete your own account" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Super admin protection: no one can delete super admin
+    if (action === "delete" && targetIsSuperAdmin) {
+      return new Response(
+        JSON.stringify({ error: "Super admin cannot be deleted" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Only super admin can delete other admins
+    if (action === "delete" && targetIsAdmin && !callerIsSuperAdmin) {
+      return new Response(
+        JSON.stringify({ error: "Only super admin can delete other admins" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -119,8 +145,123 @@ serve(async (req) => {
       );
     }
 
+    // Promote admin to super_admin (only super_admin can do this)
+    if (action === "promote_to_super_admin") {
+      if (!callerIsSuperAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Only super admin can promote others to super admin" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Remove existing admin role and add super_admin
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id).eq("role", "admin");
+      
+      const { error: insertError } = await supabaseAdmin.from("user_roles").upsert({
+        user_id: user_id,
+        role: "super_admin",
+      }, { onConflict: "user_id,role" });
+
+      if (insertError) {
+        return new Response(
+          JSON.stringify({ error: insertError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "User promoted to super admin" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Demote self from super_admin to admin (super_admin can demote themselves)
+    if (action === "demote_self") {
+      if (!callerIsSuperAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Only super admin can demote themselves" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (user_id !== callerUser.id) {
+        return new Response(
+          JSON.stringify({ error: "You can only demote yourself" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check if there's at least one other super_admin
+      const { data: allSuperAdmins } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "super_admin");
+
+      if (!allSuperAdmins || allSuperAdmins.length <= 1) {
+        return new Response(
+          JSON.stringify({ error: "Cannot demote: You must promote another admin to super admin first" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Remove super_admin role and add admin role
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id).eq("role", "super_admin");
+      
+      const { error: insertError } = await supabaseAdmin.from("user_roles").insert({
+        user_id: user_id,
+        role: "admin",
+      });
+
+      if (insertError) {
+        return new Response(
+          JSON.stringify({ error: insertError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "You have been demoted to admin" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Remove admin role (only super_admin can do this)
+    if (action === "remove_admin") {
+      if (!callerIsSuperAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Only super admin can remove admin privileges" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (targetIsSuperAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Cannot remove super admin privileges this way. Super admin must demote themselves first." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("role", "admin");
+
+      if (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Admin privileges removed" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use 'delete' or 'reset_password'" }),
+      JSON.stringify({ error: "Invalid action. Use 'delete', 'reset_password', 'promote_to_super_admin', 'demote_self', or 'remove_admin'" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
