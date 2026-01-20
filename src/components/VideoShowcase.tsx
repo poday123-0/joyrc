@@ -108,12 +108,22 @@ const VideoShowcase = () => {
             src={currentVideo?.video_url}
             poster={currentVideo?.thumbnail_url || undefined}
             className="w-full h-full object-cover"
-            muted={isMuted}
+            muted
             playsInline
             autoPlay
             loop
+            preload="auto"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
+            onCanPlay={() => {
+              // Try to play when video is ready
+              if (videoRef.current) {
+                videoRef.current.play().catch(() => {});
+              }
+            }}
+            onError={(e) => {
+              console.log("Video error:", e);
+            }}
           />
 
           {/* Play overlay - show when not playing */}
@@ -154,7 +164,11 @@ const VideoShowcase = () => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setIsMuted(!isMuted);
+              const newMuted = !isMuted;
+              setIsMuted(newMuted);
+              if (videoRef.current) {
+                videoRef.current.muted = newMuted;
+              }
             }}
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
           >
