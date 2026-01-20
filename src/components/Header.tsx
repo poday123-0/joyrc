@@ -63,6 +63,26 @@ const Header = ({ userName }: HeaderProps) => {
         </div>
       </div>
 
+      {/* Mobile Navigation - Compact pills */}
+      <nav className="flex lg:hidden items-center gap-1">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <item.icon className="w-4 h-4" />
+            </Link>
+          );
+        })}
+      </nav>
+
       {/* Desktop Navigation */}
       <nav className="hidden lg:flex items-center gap-1">
         {navItems.map((item) => {
