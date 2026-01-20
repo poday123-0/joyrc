@@ -180,34 +180,54 @@ const VideoShowcase = () => {
       />
 
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10 pointer-events-none" />
 
-      {/* Bottom content bar with scrolling titles */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+      {/* Bottom content bar with vertical scrolling titles */}
+      <div className={`absolute bottom-0 left-0 right-0 pointer-events-none transition-opacity duration-300 ${
+        isTransitioning ? 'opacity-0' : 'opacity-100'
+      }`}>
         {/* Compact info bar */}
-        <div className="flex items-end justify-between px-4 sm:px-6 lg:px-8 pb-16 sm:pb-20">
-          {/* Left - Scrolling titles (compact) */}
-          <div className="flex-1 max-w-md">
-            <div className="relative h-14 sm:h-16 overflow-hidden">
-              {videos.map((video, index) => (
-                <div
-                  key={video.id}
-                  className={`absolute inset-0 flex flex-col justify-end transition-all duration-500 ease-out ${
-                    index === currentIndex 
-                      ? 'opacity-100 translate-y-0' 
-                      : index < currentIndex 
-                        ? 'opacity-0 -translate-y-full' 
-                        : 'opacity-0 translate-y-full'
-                  }`}
-                >
-                  <p className="text-xs sm:text-sm text-white/60 uppercase tracking-wider mb-0.5">
-                    {videos.length > 1 ? `0${index + 1} / 0${videos.length}` : 'Featured'}
-                  </p>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white leading-tight truncate">
-                    {video.title || 'Featured Video'}
-                  </h3>
-                </div>
-              ))}
+        <div className="flex items-end justify-between px-4 sm:px-6 lg:px-8 pb-14 sm:pb-16">
+          {/* Left - Vertical scrolling titles */}
+          <div className="flex-1 max-w-sm">
+            <div className="relative h-20 sm:h-24 overflow-hidden">
+              {/* Title list that scrolls */}
+              <div 
+                className="transition-transform duration-500 ease-out"
+                style={{ transform: `translateY(-${currentIndex * 28}px)` }}
+              >
+                {videos.map((video, index) => {
+                  const isCurrent = index === currentIndex;
+                  const isPrev = index === currentIndex - 1;
+                  const isNext = index === currentIndex + 1;
+                  const isVisible = isCurrent || isPrev || isNext;
+                  
+                  return (
+                    <div
+                      key={video.id}
+                      className={`h-7 flex items-center transition-all duration-500 ${
+                        isCurrent 
+                          ? 'opacity-100' 
+                          : isVisible 
+                            ? 'opacity-40' 
+                            : 'opacity-0'
+                      }`}
+                    >
+                      <h3 className={`text-sm sm:text-base font-medium leading-tight truncate transition-all duration-500 ${
+                        isCurrent 
+                          ? 'text-white text-base sm:text-lg' 
+                          : 'text-white/60 text-sm'
+                      }`}>
+                        {video.title || 'Featured Video'}
+                      </h3>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Fade masks */}
+              <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
             </div>
           </div>
 
@@ -218,9 +238,7 @@ const VideoShowcase = () => {
                 e.stopPropagation();
                 navigate(`/product/${currentVideo.product_id}`);
               }}
-              className={`pointer-events-auto flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-medium rounded-full hover:bg-white hover:text-foreground active:scale-95 transition-all duration-300 group ${
-                isTransitioning ? 'opacity-0' : 'opacity-100'
-              }`}
+              className="pointer-events-auto flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-medium rounded-full hover:bg-white hover:text-foreground active:scale-95 transition-all duration-300 group"
             >
               <span className="hidden sm:inline">Learn More</span>
               <span className="sm:hidden">View</span>
@@ -237,12 +255,8 @@ const VideoShowcase = () => {
           />
         </div>
 
-        {/* Controls bar */}
-        <div 
-          className={`flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
-            showControls || !isPlaying ? 'opacity-100' : 'opacity-60'
-          }`}
-        >
+        {/* Controls bar - hidden during transition */}
+        <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-black/40 backdrop-blur-sm">
           {/* Left controls */}
           <div className="flex items-center gap-2">
             {/* Play/Pause button */}
