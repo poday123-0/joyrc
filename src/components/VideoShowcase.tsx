@@ -140,7 +140,7 @@ const VideoShowcase = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-[60vh] sm:h-[70vh] lg:h-[80vh] bg-foreground/5 animate-pulse flex items-center justify-center">
+      <div className="w-full h-[45vh] sm:h-[50vh] lg:h-[60vh] bg-foreground/5 animate-pulse flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-muted-foreground/20 border-t-foreground/60 rounded-full animate-spin" />
       </div>
     );
@@ -153,7 +153,7 @@ const VideoShowcase = () => {
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[60vh] sm:h-[70vh] lg:h-[80vh] bg-foreground overflow-hidden"
+      className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[60vh] bg-foreground overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
