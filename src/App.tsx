@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { CartProvider } from "@/hooks/useCart";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useEffect, useState, ReactNode } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
@@ -17,6 +18,19 @@ import Admin from "./pages/Admin";
 import Categories from "./pages/Categories";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
+
+// Redirect desktop users from landing to home
+const LandingOrHome = () => {
+  const isMobile = useIsMobile();
+  
+  // On desktop, go directly to home
+  if (isMobile === false) {
+    return <Navigate to="/home" replace />;
+  }
+  
+  // On mobile or while detecting, show landing
+  return <Landing />;
+};
 
 const queryClient = new QueryClient();
 
@@ -49,7 +63,7 @@ const PageTransition = ({ children }: { children: ReactNode }) => {
 const AppRoutes = () => (
   <PageTransition>
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<LandingOrHome />} />
       <Route path="/home" element={<Index />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/login" element={<Login />} />
