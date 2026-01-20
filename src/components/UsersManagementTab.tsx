@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Trash2, Search, RefreshCw, Shield, ShieldOff, UserPlus, X } from "lucide-react";
+import { User, Trash2, Search, RefreshCw, Shield, ShieldOff, UserPlus, X, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "./ConfirmDialog";
@@ -18,12 +18,14 @@ const UsersManagementTab = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("123456");
   const [makeAdmin, setMakeAdmin] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -101,30 +103,68 @@ const UsersManagementTab = () => {
 
   const handleDeleteUser = async () => {
     if (!deleteUserId) return;
+    setDeleting(true);
     
     try {
-      // Delete user profile (cascade should handle related data)
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", deleteUserId);
+      const response = await supabase.functions.invoke("manage-user", {
+        body: {
+          action: "delete",
+          user_id: deleteUserId,
+        },
+      });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
-      // Also delete user roles
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", deleteUserId);
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
-      toast({ title: "User profile deleted" });
+      toast({ title: "User deleted successfully" });
       setDeleteUserId(null);
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting user:", error);
       toast({
         title: "Error",
-        description: "Failed to delete user. Note: Full account deletion requires backend admin access.",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    }
+    setDeleting(false);
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordUserId) return;
+    
+    try {
+      const response = await supabase.functions.invoke("manage-user", {
+        body: {
+          action: "reset_password",
+          user_id: resetPasswordUserId,
+          new_password: "123456",
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      toast({ 
+        title: "Password Reset", 
+        description: "New password: 123456" 
+      });
+      setResetPasswordUserId(null);
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset password",
         variant: "destructive",
       });
     }
@@ -366,6 +406,13 @@ const UsersManagementTab = () => {
               
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setResetPasswordUserId(user.user_id)}
+                  className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
+                  title="Reset password to 123456"
+                >
+                  <KeyRound className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => handleToggleAdmin(user.user_id, user.is_admin || false)}
                   className={`p-2 rounded-lg transition-colors ${
                     user.is_admin
@@ -383,7 +430,7 @@ const UsersManagementTab = () => {
                 <button
                   onClick={() => setDeleteUserId(user.user_id)}
                   className="p-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
-                  title="Delete user profile"
+                  title="Delete user completely"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -397,10 +444,19 @@ const UsersManagementTab = () => {
         open={!!deleteUserId}
         onOpenChange={(open) => !open && setDeleteUserId(null)}
         onConfirm={handleDeleteUser}
-        title="Delete User Profile"
-        description="This will delete the user's profile and roles. The user's auth account will remain but they won't be able to access protected features. Are you sure?"
+        title="Delete User Completely"
+        description="This will permanently delete the user's account, profile, and all associated data. This action cannot be undone. Are you sure?"
         variant="destructive"
-        confirmText="Delete"
+        confirmText={deleting ? "Deleting..." : "Delete"}
+      />
+
+      <ConfirmDialog
+        open={!!resetPasswordUserId}
+        onOpenChange={(open) => !open && setResetPasswordUserId(null)}
+        onConfirm={handleResetPassword}
+        title="Reset Password"
+        description="This will reset the user's password to '123456'. They can change it after logging in."
+        confirmText="Reset Password"
       />
     </div>
   );
