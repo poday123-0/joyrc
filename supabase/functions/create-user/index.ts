@@ -68,6 +68,42 @@ serve(async (req) => {
       );
     }
 
+    // First check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === email);
+
+    if (existingUser) {
+      // User already exists - just add admin role if requested
+      if (make_admin) {
+        // Check if already admin
+        const { data: existingRole } = await supabaseAdmin
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", existingUser.id)
+          .eq("role", "admin")
+          .single();
+
+        if (!existingRole) {
+          await supabaseAdmin
+            .from("user_roles")
+            .insert({ user_id: existingUser.id, role: "admin" });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "User already exists - admin role added",
+          user: { 
+            id: existingUser.id, 
+            email: existingUser.email,
+            full_name: existingUser.user_metadata?.full_name || full_name
+          } 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Create the user using admin API
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
