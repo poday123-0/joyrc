@@ -188,43 +188,47 @@ const VideoShowcase = () => {
       }`}>
         {/* Content area */}
         <div className="flex items-end justify-between px-4 sm:px-6 lg:px-8 pb-14 sm:pb-16">
-          {/* Left - Clean vertical scrolling titles */}
-          <div className="flex-1 max-w-md space-y-1">
-            {/* Previous title */}
-            <div className="h-5 overflow-hidden">
-              <p 
-                className="text-xs sm:text-sm text-white/30 truncate transition-all duration-500"
-                style={{ 
-                  transform: `translateY(${currentIndex === 0 ? '100%' : '0'})`,
-                  opacity: currentIndex === 0 ? 0 : 1 
-                }}
-              >
+          {/* Left - Vertical scrolling titles with details */}
+          <div className="flex-1 max-w-md space-y-2">
+            {/* Previous video */}
+            <div 
+              className="transition-all duration-500"
+              style={{ 
+                opacity: currentIndex === 0 ? 0 : 0.4,
+                transform: `translateY(${currentIndex === 0 ? '20px' : '0'})`
+              }}
+            >
+              <p className="text-xs sm:text-sm text-white/50 truncate">
                 {videos[currentIndex - 1]?.title || ''}
+              </p>
+              <p className="text-[10px] sm:text-xs text-white/30 truncate">
+                {videos[currentIndex - 1]?.description || ''}
               </p>
             </div>
             
-            {/* Current title + description */}
-            <div className="space-y-0.5">
+            {/* Current video - Center */}
+            <div className="py-1">
               <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white truncate">
                 {currentVideo?.title || 'Featured Video'}
               </h3>
-              {currentVideo?.description && (
-                <p className="text-xs sm:text-sm text-white/60 line-clamp-1">
-                  {currentVideo.description}
-                </p>
-              )}
+              <p className="text-xs sm:text-sm text-white/60 truncate">
+                {currentVideo?.description || ''}
+              </p>
             </div>
             
-            {/* Next title */}
-            <div className="h-5 overflow-hidden">
-              <p 
-                className="text-xs sm:text-sm text-white/30 truncate transition-all duration-500"
-                style={{ 
-                  transform: `translateY(${currentIndex === videos.length - 1 ? '-100%' : '0'})`,
-                  opacity: currentIndex === videos.length - 1 ? 0 : 1 
-                }}
-              >
+            {/* Next video */}
+            <div 
+              className="transition-all duration-500"
+              style={{ 
+                opacity: currentIndex === videos.length - 1 ? 0 : 0.4,
+                transform: `translateY(${currentIndex === videos.length - 1 ? '-20px' : '0'})`
+              }}
+            >
+              <p className="text-xs sm:text-sm text-white/50 truncate">
                 {videos[currentIndex + 1]?.title || ''}
+              </p>
+              <p className="text-[10px] sm:text-xs text-white/30 truncate">
+                {videos[currentIndex + 1]?.description || ''}
               </p>
             </div>
           </div>
