@@ -198,7 +198,7 @@ const ProductDetail = () => {
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
-                  className="w-full h-full object-contain animate-fade-in transition-transform duration-300 hover:scale-105"
+                  className="w-full h-full object-contain rounded-2xl animate-fade-in transition-transform duration-300 hover:scale-105"
                 />
               ) : (
                 <div className="text-8xl">📦</div>
@@ -356,7 +356,7 @@ const ProductDetail = () => {
                           alt={p.name}
                           loading="lazy"
                           decoding="async"
-                          className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
+                          className="max-w-full max-h-full object-contain rounded-xl transition-transform group-hover:scale-105"
                         />
                       ) : (
                         <div className="text-4xl">📦</div>
