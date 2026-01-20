@@ -107,13 +107,13 @@ const Landing = () => {
       </div>
 
       {/* Content - Centered */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 py-8">
         {/* Main headline */}
-        <div className="text-center space-y-4 mb-16 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white tracking-tight leading-tight drop-shadow-2xl">
+        <div className="text-center space-y-2 sm:space-y-4 mb-8 sm:mb-12 md:mb-16 animate-fade-in">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white tracking-tight leading-tight drop-shadow-2xl px-2">
             {currentBackground?.title || 'Ultimate RC Experience'}
           </h1>
-          <p className="text-lg md:text-xl lg:text-2xl text-white/80 font-light drop-shadow-lg max-w-xl mx-auto">
+          <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-white/80 font-light drop-shadow-lg max-w-xs sm:max-w-md md:max-w-xl mx-auto px-4">
             {currentBackground?.subtitle || 'Discover the joy of remote control'}
           </p>
         </div>
@@ -124,7 +124,7 @@ const Landing = () => {
             onClick={handleJoystickClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="group relative focus:outline-none transform transition-transform duration-300 hover:scale-105"
+            className="group relative focus:outline-none transform transition-transform duration-300 hover:scale-105 active:scale-95"
           >
             {/* Glow effect on hover */}
             <div className={`absolute inset-0 rounded-3xl transition-opacity duration-500 blur-2xl ${
@@ -132,7 +132,7 @@ const Landing = () => {
             }`} style={{ background: 'radial-gradient(circle, rgba(239,68,68,0.4) 0%, transparent 70%)' }} />
 
             {/* Joystick Base - Dark rounded square */}
-            <div className="relative w-40 h-40 md:w-48 md:h-48">
+            <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48">
               {/* Base shadow */}
               <div className="absolute inset-0 translate-y-3 bg-black/60 rounded-[2rem] blur-xl" />
               
@@ -148,22 +148,22 @@ const Landing = () => {
                 <div className="absolute inset-3 rounded-[1.5rem] border border-zinc-600/40" />
                 
                 {/* Orange ring around joystick hole */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-b from-orange-400 via-orange-500 to-orange-700 shadow-lg p-1">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-b from-orange-400 via-orange-500 to-orange-700 shadow-lg p-1">
                   {/* Orange ring highlight */}
-                  <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-3 bg-orange-300/40 rounded-full blur-sm" />
+                  <div className="absolute top-1 left-1/2 -translate-x-1/2 w-8 sm:w-12 h-2 sm:h-3 bg-orange-300/40 rounded-full blur-sm" />
                   {/* Inner dark circle (joystick hole) */}
                   <div className="w-full h-full rounded-full bg-gradient-to-b from-zinc-700 to-zinc-900 shadow-inner border border-zinc-600/50" />
                 </div>
                 
                 {/* Yellow action buttons */}
-                <div className="absolute bottom-5 right-5 flex gap-2.5">
-                  <div className="relative w-6 h-6 md:w-7 md:h-7 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-yellow-600 shadow-lg">
-                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-3 h-1.5 bg-yellow-100/70 rounded-full blur-[1px]" />
-                    <div className="absolute inset-1 rounded-full border border-yellow-500/30" />
+                <div className="absolute bottom-3 sm:bottom-5 right-3 sm:right-5 flex gap-1.5 sm:gap-2.5">
+                  <div className="relative w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-yellow-600 shadow-lg">
+                    <div className="absolute top-0.5 sm:top-1 left-1/2 -translate-x-1/2 w-2 sm:w-3 h-1 sm:h-1.5 bg-yellow-100/70 rounded-full blur-[1px]" />
+                    <div className="absolute inset-0.5 sm:inset-1 rounded-full border border-yellow-500/30" />
                   </div>
-                  <div className="relative w-6 h-6 md:w-7 md:h-7 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-yellow-600 shadow-lg">
-                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-3 h-1.5 bg-yellow-100/70 rounded-full blur-[1px]" />
-                    <div className="absolute inset-1 rounded-full border border-yellow-500/30" />
+                  <div className="relative w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-gradient-to-b from-yellow-300 via-yellow-400 to-yellow-600 shadow-lg">
+                    <div className="absolute top-0.5 sm:top-1 left-1/2 -translate-x-1/2 w-2 sm:w-3 h-1 sm:h-1.5 bg-yellow-100/70 rounded-full blur-[1px]" />
+                    <div className="absolute inset-0.5 sm:inset-1 rounded-full border border-yellow-500/30" />
                   </div>
                 </div>
               </div>
@@ -178,16 +178,16 @@ const Landing = () => {
                 <div className="absolute top-full left-1/2 -translate-x-1/2 w-10 h-5 bg-black/50 rounded-full blur-md" />
                 
                 {/* Stick shaft */}
-                <div className="w-5 h-12 md:w-6 md:h-14 bg-gradient-to-r from-zinc-600 via-zinc-500 to-zinc-600 rounded-sm mx-auto relative shadow-lg">
+                <div className="w-4 h-10 sm:w-5 sm:h-12 md:w-6 md:h-14 bg-gradient-to-r from-zinc-600 via-zinc-500 to-zinc-600 rounded-sm mx-auto relative shadow-lg">
                   {/* Shaft highlight */}
-                  <div className="absolute inset-y-0 left-1.5 w-1 bg-zinc-400/50 rounded-full" />
+                  <div className="absolute inset-y-0 left-1 sm:left-1.5 w-0.5 sm:w-1 bg-zinc-400/50 rounded-full" />
                   {/* Shaft shadow */}
-                  <div className="absolute inset-y-0 right-1 w-0.5 bg-zinc-700/50 rounded-full" />
+                  <div className="absolute inset-y-0 right-0.5 sm:right-1 w-0.5 bg-zinc-700/50 rounded-full" />
                 </div>
                 
                 {/* Red ball top */}
                 <div className={`
-                  relative -mt-3 w-16 h-16 md:w-20 md:h-20 mx-auto cursor-pointer
+                  relative -mt-2 sm:-mt-3 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto cursor-pointer
                   transition-all duration-200
                   ${isPressed ? 'scale-90' : ''}
                   ${isHovered && !isPressed ? 'scale-110' : ''}
@@ -223,14 +223,14 @@ const Landing = () => {
 
         {/* Background indicators */}
         {backgrounds.length > 1 && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2">
             {backgrounds.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex 
-                    ? 'bg-white w-6' 
+                    ? 'bg-white w-4 sm:w-6' 
                     : 'bg-white/40 hover:bg-white/60'
                 }`}
               />
