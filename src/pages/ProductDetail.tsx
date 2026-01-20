@@ -222,6 +222,9 @@ const ProductDetail = () => {
               <img
                 src={currentImage}
                 alt={product.name}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 className="max-w-full max-h-full object-contain animate-fade-in"
               />
             ) : (
@@ -371,6 +374,8 @@ const ProductDetail = () => {
                         <img
                           src={p.image_url}
                           alt={p.name}
+                          loading="lazy"
+                          decoding="async"
                           className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
                         />
                       ) : (
