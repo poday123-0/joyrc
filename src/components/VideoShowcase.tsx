@@ -250,7 +250,9 @@ const VideoShowcase = () => {
         </div>
 
         {/* Progress bar */}
-        <div className="h-0.5 bg-white/20 w-full">
+        <div className={`h-0.5 bg-white/20 w-full transition-opacity duration-300 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}>
           <div 
             className="h-full bg-white transition-all duration-100"
             style={{ width: `${progress}%` }}
