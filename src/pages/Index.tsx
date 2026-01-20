@@ -124,8 +124,9 @@ const Index = () => {
                         <img
                           src={featured.product.image_url}
                           alt={featured.product.name}
-                          loading="lazy"
+                          loading={index === 0 ? "eager" : "lazy"}
                           decoding="async"
+                          fetchPriority={index === 0 ? "high" : "auto"}
                           className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (
