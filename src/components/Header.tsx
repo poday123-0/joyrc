@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User, X } from "lucide-react";
+import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import SearchOverlay from "@/components/SearchOverlay";
+import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 
 interface HeaderProps {
   userName?: string;
@@ -57,15 +58,11 @@ const Header = ({ userName }: HeaderProps) => {
         <nav className="h-11 flex items-center justify-between px-4 sm:px-6 max-w-[980px] mx-auto">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            {logoUrl ? (
-              <img 
-                src={logoUrl} 
-                alt="Logo" 
-                className="w-5 h-5 object-contain"
-              />
-            ) : (
-              <span className="text-lg">🎮</span>
-            )}
+            <img 
+              src={logoUrl || rcJoyLogo} 
+              alt="RC Joy" 
+              className="h-7 sm:h-8 w-auto object-contain"
+            />
           </Link>
 
           {/* Center Navigation - visible on all screens */}
@@ -119,20 +116,11 @@ const Header = ({ userName }: HeaderProps) => {
                 <div className="flex flex-col h-full bg-background">
                   {/* Menu Header */}
                   <div className="flex items-center justify-between p-5 border-b border-border/50">
-                    <div className="flex items-center gap-3">
-                      {logoUrl ? (
-                        <img 
-                          src={logoUrl} 
-                          alt="Logo" 
-                          className="w-8 h-8 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-lg gradient-cta flex items-center justify-center text-white">
-                          🎮
-                        </div>
-                      )}
-                      <span className="font-semibold text-foreground">RC Joy</span>
-                    </div>
+                    <img 
+                      src={logoUrl || rcJoyLogo} 
+                      alt="RC Joy" 
+                      className="h-8 w-auto object-contain"
+                    />
                   </div>
 
                   {/* Navigation Links */}
