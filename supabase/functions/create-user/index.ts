@@ -59,7 +59,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { email, full_name, password = "12345", make_admin = false } = await req.json();
+    const { email, full_name, password = "123456", make_admin = false } = await req.json();
 
     if (!email) {
       return new Response(
