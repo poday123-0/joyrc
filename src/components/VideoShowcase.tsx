@@ -258,7 +258,9 @@ const VideoShowcase = () => {
         </div>
 
         {/* Controls bar - hidden during transition */}
-        <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-black/40 backdrop-blur-sm">
+        <div className={`flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}>
           {/* Left controls */}
           <div className="flex items-center gap-2">
             {/* Play/Pause button */}
