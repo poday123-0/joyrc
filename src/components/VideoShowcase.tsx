@@ -180,54 +180,52 @@ const VideoShowcase = () => {
       />
 
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
       {/* Bottom content bar with vertical scrolling titles */}
       <div className={`absolute bottom-0 left-0 right-0 pointer-events-none transition-opacity duration-300 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}>
-        {/* Compact info bar */}
+        {/* Content area */}
         <div className="flex items-end justify-between px-4 sm:px-6 lg:px-8 pb-14 sm:pb-16">
-          {/* Left - Vertical scrolling titles */}
-          <div className="flex-1 max-w-sm">
-            <div className="relative h-20 sm:h-24 overflow-hidden">
-              {/* Title list that scrolls */}
-              <div 
-                className="transition-transform duration-500 ease-out"
-                style={{ transform: `translateY(-${currentIndex * 28}px)` }}
+          {/* Left - Clean vertical scrolling titles */}
+          <div className="flex-1 max-w-md space-y-1">
+            {/* Previous title */}
+            <div className="h-5 overflow-hidden">
+              <p 
+                className="text-xs sm:text-sm text-white/30 truncate transition-all duration-500"
+                style={{ 
+                  transform: `translateY(${currentIndex === 0 ? '100%' : '0'})`,
+                  opacity: currentIndex === 0 ? 0 : 1 
+                }}
               >
-                {videos.map((video, index) => {
-                  const isCurrent = index === currentIndex;
-                  const isPrev = index === currentIndex - 1;
-                  const isNext = index === currentIndex + 1;
-                  const isVisible = isCurrent || isPrev || isNext;
-                  
-                  return (
-                    <div
-                      key={video.id}
-                      className={`h-7 flex items-center transition-all duration-500 ${
-                        isCurrent 
-                          ? 'opacity-100' 
-                          : isVisible 
-                            ? 'opacity-40' 
-                            : 'opacity-0'
-                      }`}
-                    >
-                      <h3 className={`text-sm sm:text-base font-medium leading-tight truncate transition-all duration-500 ${
-                        isCurrent 
-                          ? 'text-white text-base sm:text-lg' 
-                          : 'text-white/60 text-sm'
-                      }`}>
-                        {video.title || 'Featured Video'}
-                      </h3>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Fade masks */}
-              <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
-              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                {videos[currentIndex - 1]?.title || ''}
+              </p>
+            </div>
+            
+            {/* Current title + description */}
+            <div className="space-y-0.5">
+              <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white truncate">
+                {currentVideo?.title || 'Featured Video'}
+              </h3>
+              {currentVideo?.description && (
+                <p className="text-xs sm:text-sm text-white/60 line-clamp-1">
+                  {currentVideo.description}
+                </p>
+              )}
+            </div>
+            
+            {/* Next title */}
+            <div className="h-5 overflow-hidden">
+              <p 
+                className="text-xs sm:text-sm text-white/30 truncate transition-all duration-500"
+                style={{ 
+                  transform: `translateY(${currentIndex === videos.length - 1 ? '-100%' : '0'})`,
+                  opacity: currentIndex === videos.length - 1 ? 0 : 1 
+                }}
+              >
+                {videos[currentIndex + 1]?.title || ''}
+              </p>
             </div>
           </div>
 
