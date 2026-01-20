@@ -54,7 +54,7 @@ const Header = ({ userName }: HeaderProps) => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-background/60 backdrop-saturate-150 backdrop-blur-2xl border-b border-white/10 shadow-sm">
+      <header className="sticky top-0 z-50 w-full bg-background/40 backdrop-saturate-150 backdrop-blur-2xl border-b border-white/5 shadow-sm">
         <nav className="h-11 flex items-center justify-between px-4 sm:px-6 max-w-[980px] mx-auto">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">

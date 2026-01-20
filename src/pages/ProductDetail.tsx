@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, ShoppingBag, Heart, Check, Zap, Battery, Gauge, Radio, Box } from "lucide-react";
+import { ShoppingBag, Zap, Battery, Gauge, Radio, Box } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
@@ -41,7 +41,7 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [productColors, setProductColors] = useState<ProductColor[]>([]);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
+  
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -181,39 +181,11 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-8">
-      {/* Desktop Header */}
-      <div className="hidden lg:block sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          <Header />
-        </div>
-      </div>
-
-      {/* Mobile Header */}
-      <div className="lg:hidden sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
-        <div className="container max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/home" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </Link>
-          <button
-            onClick={() => setIsFavorite(!isFavorite)}
-            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
-          >
-            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-pink text-pink' : 'text-foreground'}`} />
-          </button>
-        </div>
-      </div>
+      {/* Header - Same as home page */}
+      <Header />
 
       {/* Main Content - Apple Style */}
       <div className="container max-w-lg lg:max-w-4xl mx-auto px-4 lg:px-8">
-        {/* Buy Button - Fixed at top for mobile */}
-        <div className="sticky top-14 lg:top-20 z-40 py-3 bg-background/80 backdrop-blur-lg">
-          <button
-            onClick={handleAddToCart}
-            className="w-full max-w-xs mx-auto block py-3 px-8 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
-          >
-            Buy
-          </button>
-        </div>
 
         {/* Product Image */}
         <div className="py-8 lg:py-12">
@@ -347,14 +319,20 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {/* Price */}
+        {/* Price and Buy Button */}
         <div className="py-8 text-center border-t border-border">
           <p className="text-3xl font-semibold text-foreground">
             {formatMVR(product.price)}
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground mt-2 mb-5">
             Free shipping on orders over MVR 500
           </p>
+          <button
+            onClick={handleAddToCart}
+            className="px-8 py-2.5 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all"
+          >
+            Buy Now
+          </button>
         </div>
 
         {/* Similar Products */}
