@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, RotateCcw } from "lucide-react";
 import { formatMVR } from "@/lib/currency";
+import OptimizedImage from "./OptimizedImage";
 
 interface ProductCardProps {
   product: {
@@ -15,12 +16,12 @@ interface ProductCardProps {
     description?: string | null;
   };
   size?: "large" | "small";
+  priority?: boolean;
 }
 
-const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
+const ProductCard = memo(({ product, size = "large", priority = false }: ProductCardProps) => {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const imageSrc = product.image_url || product.image || "/placeholder.svg";
 
   const handleClick = () => {
@@ -56,25 +57,14 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
           className="relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-b from-muted/80 to-muted aspect-[3/4] shadow-lg"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          {/* Skeleton loader */}
-          {!imageLoaded && (
-            <div className="absolute inset-0 bg-muted animate-pulse">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skeleton-shimmer" />
-            </div>
-          )}
-          
           {/* Product image - full cover */}
           <div className="absolute inset-0">
-            <img
+            <OptimizedImage
               src={imageSrc}
               alt={product.name}
-              loading="lazy"
-              decoding="async"
-              fetchPriority="auto"
-              onLoad={() => setImageLoaded(true)}
-              className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 will-change-transform ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
+              priority={priority}
+              fill
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
             />
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -138,6 +128,8 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
       </div>
     </div>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;
