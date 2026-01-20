@@ -262,14 +262,14 @@ const Support = () => {
                 <Phone className="w-5 h-5 text-primary" />
                 <h2 className="font-bold text-lg lg:text-xl text-foreground">Contact Us</h2>
               </div>
-              <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 lg:p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 lg:p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder="Your Name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="px-4 py-3 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                    className="px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                     required
                   />
                   <input
@@ -277,7 +277,7 @@ const Support = () => {
                     placeholder="Mobile Number"
                     value={formData.mobile}
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    className="px-4 py-3 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                    className="px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                     required
                   />
                 </div>
@@ -286,20 +286,20 @@ const Support = () => {
                   placeholder="Subject"
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                   required
                 />
                 <textarea
                   placeholder="Your Message"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-32"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-32"
                   required
                 />
                 <button
                   type="submit"
                   disabled={sending}
-                  className="w-full py-3 rounded-full gradient-cta text-white font-medium shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-full gradient-primary text-primary-foreground font-semibold shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Send className="w-4 h-4" />
                   {sending ? "Sending..." : "Send Message"}
