@@ -56,13 +56,8 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          <Header />
-        </div>
-      </div>
+    <div className="min-h-screen bg-background pb-20 lg:pb-8">
+      <Header />
 
       {/* Hero Section */}
       <section className="py-12 lg:py-20">
