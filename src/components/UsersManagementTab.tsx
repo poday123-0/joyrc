@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Trash2, Search, RefreshCw, Shield, ShieldOff } from "lucide-react";
+import { User, Trash2, Search, RefreshCw, Shield, ShieldOff, UserPlus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "./ConfirmDialog";
@@ -18,6 +18,12 @@ const UsersManagementTab = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("12345");
+  const [makeAdmin, setMakeAdmin] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -137,6 +143,51 @@ const UsersManagementTab = () => {
     });
   };
 
+  const handleCreateUser = async () => {
+    if (!newUserEmail.trim()) {
+      toast({ title: "Email is required", variant: "destructive" });
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("create-user", {
+        body: {
+          email: newUserEmail.trim(),
+          full_name: newUserName.trim() || null,
+          password: newUserPassword || "12345",
+          make_admin: makeAdmin,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      toast({ title: "User created successfully!" });
+      setShowAddUser(false);
+      setNewUserEmail("");
+      setNewUserName("");
+      setNewUserPassword("12345");
+      setMakeAdmin(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      toast({
+        title: "Error creating user",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    }
+    setCreating(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -146,14 +197,106 @@ const UsersManagementTab = () => {
             Manage registered users and their roles
           </p>
         </div>
-        <button
-          onClick={fetchUsers}
-          className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddUser(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add User
+          </button>
+          <button
+            onClick={fetchUsers}
+            className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {/* Add User Form */}
+      {showAddUser && (
+        <div className="p-4 bg-muted/50 rounded-xl border border-border space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-foreground">Add New User</h3>
+            <button
+              onClick={() => setShowAddUser(false)}
+              className="p-1 hover:bg-muted rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Email *
+              </label>
+              <input
+                type="email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                placeholder="user@example.com"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Password
+              </label>
+              <input
+                type="text"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                placeholder="12345"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Default: 12345</p>
+            </div>
+            <div className="flex items-center gap-2 pt-6">
+              <input
+                type="checkbox"
+                id="makeAdmin"
+                checked={makeAdmin}
+                onChange={(e) => setMakeAdmin(e.target.checked)}
+                className="w-4 h-4 rounded border-border"
+              />
+              <label htmlFor="makeAdmin" className="text-sm text-foreground">
+                Make this user an admin
+              </label>
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowAddUser(false)}
+              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateUser}
+              disabled={creating || !newUserEmail.trim()}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {creating ? "Creating..." : "Create User"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
