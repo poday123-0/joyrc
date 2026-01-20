@@ -217,19 +217,21 @@ const ProductDetail = () => {
 
         {/* Product Image */}
         <div className="py-8 lg:py-12">
-          <div className="aspect-square max-w-sm mx-auto flex items-center justify-center">
-            {currentImage ? (
-              <img
-                src={currentImage}
-                alt={product.name}
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-                className="max-w-full max-h-full object-contain animate-fade-in"
-              />
-            ) : (
-              <div className="text-8xl">📦</div>
-            )}
+          <div className="relative mx-auto">
+            <div className="aspect-square max-w-md mx-auto bg-gradient-to-br from-muted/30 to-muted/10 rounded-3xl p-4 lg:p-8 flex items-center justify-center overflow-hidden">
+              {currentImage ? (
+                <img
+                  src={currentImage}
+                  alt={product.name}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  className="w-full h-full object-contain animate-fade-in transition-transform duration-300 hover:scale-105"
+                />
+              ) : (
+                <div className="text-8xl">📦</div>
+              )}
+            </div>
           </div>
         </div>
 

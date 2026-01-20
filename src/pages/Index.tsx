@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
+import VideoShowcase from "@/components/VideoShowcase";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMVR } from "@/lib/currency";
 
@@ -116,21 +117,27 @@ const Index = () => {
       {/* Hero Section */}
       <section className="py-12 lg:py-20">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center space-y-4 mb-12">
+          <div className="text-center space-y-4 mb-8">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
               Ultimate RC Experience
             </h1>
             <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto">
               Discover premium remote control toys that bring excitement to every adventure.
             </p>
-            <div className="pt-4">
-              <Link to="/categories">
-                <button className="group bg-primary text-primary-foreground font-medium px-8 py-3 rounded-full text-base hover:bg-primary/90 transition-all inline-flex items-center gap-2">
-                  Shop All Products
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </Link>
-            </div>
+          </div>
+
+          {/* Video Showcase */}
+          <div className="mb-10">
+            <VideoShowcase />
+          </div>
+
+          <div className="text-center">
+            <Link to="/categories">
+              <button className="group bg-primary text-primary-foreground font-medium px-8 py-3 rounded-full text-base hover:bg-primary/90 transition-all inline-flex items-center gap-2">
+                Shop All Products
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </Link>
           </div>
         </div>
       </section>
