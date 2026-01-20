@@ -61,6 +61,9 @@ const Header = ({ userName }: HeaderProps) => {
             <img 
               src={logoUrl || rcJoyLogo} 
               alt="RC Joy" 
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
               className="h-7 sm:h-8 w-auto object-contain"
             />
           </Link>
@@ -119,6 +122,8 @@ const Header = ({ userName }: HeaderProps) => {
                     <img 
                       src={logoUrl || rcJoyLogo} 
                       alt="RC Joy" 
+                      loading="lazy"
+                      decoding="async"
                       className="h-8 w-auto object-contain"
                     />
                   </div>

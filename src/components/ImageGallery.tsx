@@ -82,6 +82,9 @@ const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
               <img
                 src={image}
                 alt={`${productName} - Image ${index + 1}`}
+                loading={index === 0 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={index === 0 ? "high" : "auto"}
                 className="max-w-full max-h-full object-contain"
               />
             </div>
@@ -140,6 +143,8 @@ const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
               <img
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             </button>
