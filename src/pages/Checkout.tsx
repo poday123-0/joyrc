@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, Phone, FileText, Building2, Upload, Clock, CheckCircle } from "lucide-react";
+import { ChevronLeft, MapPin, Phone, FileText, Building2, Upload, Clock, CheckCircle, ShoppingCart, Truck, CreditCard, PartyPopper } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,27 @@ interface BankSetting {
   branch: string | null;
 }
 
+const steps = [
+  { id: 1, name: "Cart", icon: ShoppingCart },
+  { id: 2, name: "Shipping", icon: Truck },
+  { id: 3, name: "Payment", icon: CreditCard },
+  { id: 4, name: "Done", icon: PartyPopper },
+];
+
+// Haptic feedback helper
+const triggerHaptic = (type: 'light' | 'medium' | 'heavy' | 'success' | 'error' = 'light') => {
+  if ('vibrate' in navigator) {
+    const patterns: Record<string, number | number[]> = {
+      light: 10,
+      medium: 20,
+      heavy: 30,
+      success: [10, 50, 20, 50, 30],
+      error: [50, 30, 50],
+    };
+    navigator.vibrate(patterns[type]);
+  }
+};
+
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
@@ -24,10 +45,23 @@ const Checkout = () => {
   const [placing, setPlacing] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(2); // Start at Shipping step
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   useEffect(() => {
     fetchBankSettings();
   }, []);
+
+  // Update step based on form state
+  useEffect(() => {
+    if (receiptFile) {
+      setCurrentStep(3);
+    } else if (formData.address && formData.phone) {
+      setCurrentStep(3);
+    } else {
+      setCurrentStep(2);
+    }
+  }, [formData.address, formData.phone, receiptFile]);
 
   const fetchBankSettings = async () => {
     const { data } = await supabase.from("bank_settings").select("*").eq("is_active", true);
@@ -37,9 +71,15 @@ const Checkout = () => {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { navigate("/login"); return; }
-    if (items.length === 0) { toast({ title: "Cart is empty", variant: "destructive" }); return; }
+    if (items.length === 0) { 
+      triggerHaptic('error');
+      toast({ title: "Cart is empty", variant: "destructive" }); 
+      return; 
+    }
 
+    triggerHaptic('medium');
     setPlacing(true);
+    
     try {
       let receiptUrl = null;
       if (receiptFile) {
@@ -76,15 +116,69 @@ const Checkout = () => {
 
       await supabase.from("order_items").insert(orderItems);
 
-      clearCart();
-      toast({ title: "🎉 Order Placed!", description: receiptUrl ? "We'll confirm your payment soon." : "Please complete payment and upload receipt." });
-      navigate("/profile");
+      // Success!
+      setCurrentStep(4);
+      setOrderSuccess(true);
+      triggerHaptic('success');
+      
+      // Show success animation for a moment
+      setTimeout(() => {
+        clearCart();
+        toast({ 
+          title: "🎉 Order Placed!", 
+          description: receiptUrl ? "We'll confirm your payment soon." : "Please complete payment and upload receipt." 
+        });
+        navigate("/profile");
+      }, 2500);
+
     } catch (error: any) {
+      triggerHaptic('error');
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
       setPlacing(false);
     }
   };
+
+  // Success animation overlay
+  if (orderSuccess) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+        <div className="relative">
+          {/* Animated circles */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-32 h-32 rounded-full bg-accent/20 animate-ping" />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full bg-accent/30 animate-pulse" />
+          </div>
+          
+          {/* Success icon */}
+          <div className="relative w-20 h-20 rounded-full bg-accent flex items-center justify-center animate-scale-in">
+            <CheckCircle className="w-10 h-10 text-white" />
+          </div>
+        </div>
+        
+        <h2 className="text-2xl font-bold text-foreground mt-8 animate-fade-in">Order Placed!</h2>
+        <p className="text-muted-foreground mt-2 animate-fade-in">Redirecting to your orders...</p>
+        
+        {/* Confetti effect */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 rounded-full animate-bounce"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                backgroundColor: ['#14b8a6', '#f472b6', '#fbbf24', '#60a5fa'][Math.floor(Math.random() * 4)],
+                animationDelay: `${Math.random() * 0.5}s`,
+                animationDuration: `${0.5 + Math.random() * 0.5}s`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -97,14 +191,63 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-background pb-40 sm:pb-32 lg:pb-8">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
-        <div className="container max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/cart" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center">
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </Link>
-          <h1 className="font-semibold text-foreground text-base sm:text-lg">Checkout</h1>
-          <div className="w-9 sm:w-10" />
+      {/* Sticky Header with Progress */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border">
+        <div className="container max-w-5xl mx-auto px-4 py-3">
+          {/* Top row */}
+          <div className="flex items-center justify-between mb-3">
+            <Link 
+              to="/cart" 
+              className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center active:scale-95 transition-transform"
+              onClick={() => triggerHaptic('light')}
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+            </Link>
+            <h1 className="font-semibold text-foreground text-base sm:text-lg">Checkout</h1>
+            <div className="w-9" />
+          </div>
+          
+          {/* Progress Steps */}
+          <div className="flex items-center justify-between relative">
+            {/* Progress line background */}
+            <div className="absolute top-4 left-0 right-0 h-0.5 bg-border" />
+            {/* Progress line filled */}
+            <div 
+              className="absolute top-4 left-0 h-0.5 bg-accent transition-all duration-500"
+              style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+            />
+            
+            {steps.map((step) => {
+              const Icon = step.icon;
+              const isCompleted = currentStep > step.id;
+              const isCurrent = currentStep === step.id;
+              
+              return (
+                <div key={step.id} className="flex flex-col items-center relative z-10">
+                  <div 
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      isCompleted 
+                        ? 'bg-accent text-white' 
+                        : isCurrent 
+                          ? 'bg-accent text-white ring-4 ring-accent/20' 
+                          : 'bg-secondary text-muted-foreground'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      <Icon className="w-4 h-4" />
+                    )}
+                  </div>
+                  <span className={`text-xs mt-1.5 font-medium transition-colors ${
+                    isCompleted || isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                  }`}>
+                    {step.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -149,15 +292,28 @@ const Checkout = () => {
                 </div>
                 
                 {/* Receipt Upload */}
-                <label className="mt-3 flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-accent/50 bg-accent/5 cursor-pointer hover:bg-accent/10 transition-colors">
+                <label 
+                  className="mt-3 flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-accent/50 bg-accent/5 cursor-pointer hover:bg-accent/10 active:scale-[0.98] transition-all"
+                  onClick={() => triggerHaptic('light')}
+                >
                   <Upload className="w-4 h-4 text-accent" />
                   <span className="text-xs sm:text-sm text-accent truncate">
                     {receiptFile ? receiptFile.name : "Upload Payment Receipt"}
                   </span>
-                  <input type="file" accept="image/*" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} className="hidden" />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => {
+                      setReceiptFile(e.target.files?.[0] || null);
+                      if (e.target.files?.[0]) {
+                        triggerHaptic('success');
+                      }
+                    }} 
+                    className="hidden" 
+                  />
                 </label>
                 {receiptFile && (
-                  <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm text-accent">
+                  <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm text-accent animate-fade-in">
                     <CheckCircle className="w-4 h-4" /> Receipt ready to upload
                   </div>
                 )}
@@ -210,9 +366,14 @@ const Checkout = () => {
               <button 
                 type="submit" 
                 disabled={placing || uploading} 
-                className="hidden lg:flex w-full py-4 rounded-full gradient-cta text-white font-semibold shadow-elevated disabled:opacity-50 items-center justify-center gap-2 mt-6"
+                className="hidden lg:flex w-full py-4 rounded-full gradient-cta text-white font-semibold shadow-elevated disabled:opacity-50 items-center justify-center gap-2 mt-6 hover:scale-[1.02] active:scale-[0.98] transition-transform"
               >
-                {placing ? "Placing Order..." : (
+                {placing ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Placing Order...
+                  </>
+                ) : (
                   <>
                     <Clock className="w-5 h-5" />
                     Place Order - {formatMVR(totalPrice)}
@@ -224,7 +385,7 @@ const Checkout = () => {
 
           {/* Desktop Sidebar Summary */}
           <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-            <div className="bg-card rounded-2xl p-6 shadow-soft border border-border sticky top-20">
+            <div className="bg-card rounded-2xl p-6 shadow-soft border border-border sticky top-36">
               <h2 className="font-semibold text-lg text-foreground mb-4">Payment Summary</h2>
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
@@ -262,9 +423,14 @@ const Checkout = () => {
           <button 
             onClick={handlePlaceOrder} 
             disabled={placing || uploading} 
-            className="w-full py-3 sm:py-4 rounded-full gradient-cta text-white text-sm sm:text-base font-semibold shadow-elevated disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 sm:py-4 rounded-full gradient-cta text-white text-sm sm:text-base font-semibold shadow-elevated disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
           >
-            {placing ? "Placing Order..." : (
+            {placing ? (
+              <>
+                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Placing Order...
+              </>
+            ) : (
               <>
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
                 Place Order
