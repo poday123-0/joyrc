@@ -170,80 +170,73 @@ const Landing = () => {
           </p>
         </div>
 
-        {/* Mobile: Premium Swipe Up Button */}
+        {/* Mobile: Premium Swipe Up Button - positioned at bottom */}
         {isMobile && (
-          <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="flex flex-col items-center gap-4">
-              {/* Swipe indicator text */}
-              <p className="text-white/60 text-xs font-medium tracking-widest uppercase">
-                Swipe up to explore
-              </p>
-              
+          <div 
+            className="absolute bottom-20 left-1/2 -translate-x-1/2 animate-fade-in z-20" 
+            style={{ animationDelay: '0.3s' }}
+          >
+            <div className="flex flex-col items-center gap-3">
               {/* Premium pill track */}
               <div 
-                className="relative w-14 h-24 rounded-full overflow-hidden"
+                className="relative w-16 h-28 rounded-full overflow-hidden"
                 style={{
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -1px 1px rgba(0,0,0,0.2), 0 8px 32px rgba(0,0,0,0.4)',
-                  border: '1px solid rgba(255,255,255,0.1)'
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                  boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.15), inset 0 -1px 2px rgba(0,0,0,0.2), 0 8px 40px rgba(0,0,0,0.5)',
+                  border: '1px solid rgba(255,255,255,0.08)'
                 }}
               >
                 {/* Track groove */}
                 <div 
-                  className="absolute inset-1 rounded-full"
+                  className="absolute inset-1.5 rounded-full"
                   style={{
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)',
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.08) 100%)',
+                    boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.25)'
                   }}
                 />
                 
                 {/* Animated arrow indicators */}
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 flex flex-col items-center z-10">
                   <ChevronUp 
-                    className="w-4 h-4 text-white/40"
-                    style={{ 
-                      animation: 'pulse 2s ease-in-out infinite',
-                      animationDelay: '0.4s'
-                    }}
+                    className="w-5 h-5 text-white/30"
+                    style={{ animation: 'pulse 2s ease-in-out infinite', animationDelay: '0.4s' }}
                   />
                   <ChevronUp 
-                    className="w-4 h-4 text-white/60 -mt-2"
-                    style={{ 
-                      animation: 'pulse 2s ease-in-out infinite',
-                      animationDelay: '0.2s'
-                    }}
+                    className="w-5 h-5 text-white/50 -mt-3"
+                    style={{ animation: 'pulse 2s ease-in-out infinite', animationDelay: '0.2s' }}
                   />
                   <ChevronUp 
-                    className="w-4 h-4 text-white/80 -mt-2"
-                    style={{ 
-                      animation: 'pulse 2s ease-in-out infinite'
-                    }}
+                    className="w-5 h-5 text-white/70 -mt-3"
+                    style={{ animation: 'pulse 2s ease-in-out infinite' }}
                   />
                 </div>
                 
                 {/* Draggable ball button */}
                 <button
                   onClick={() => navigate('/home')}
-                  className="absolute bottom-1.5 left-1/2 w-11 h-11 rounded-full flex items-center justify-center z-20 active:scale-90 transition-all duration-150"
+                  className="absolute bottom-2 left-1/2 w-12 h-12 rounded-full flex items-center justify-center z-20 active:scale-90 transition-all duration-150"
                   style={{
-                    background: 'linear-gradient(145deg, #ffffff 0%, #e8e8e8 50%, #d4d4d4 100%)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,1), inset 0 -1px 3px rgba(0,0,0,0.15)',
-                    transform: `translate(-50%, ${-swipeProgress * 56}px) scale(${1 + swipeProgress * 0.1})`,
-                    transition: swipeProgress === 0 || swipeProgress === 1 ? 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
+                    background: 'linear-gradient(145deg, #ffffff 0%, #f0f0f0 40%, #e0e0e0 100%)',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.45), inset 0 2px 6px rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                    transform: `translate(-50%, ${-swipeProgress * 64}px) scale(${1 + swipeProgress * 0.15})`,
+                    transition: swipeProgress === 0 || swipeProgress === 1 ? 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
                   }}
                 >
-                  {/* Inner glow */}
+                  {/* Inner highlight */}
                   <div 
-                    className="absolute inset-1 rounded-full"
-                    style={{
-                      background: 'linear-gradient(145deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%)'
-                    }}
+                    className="absolute inset-1 rounded-full pointer-events-none"
+                    style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%)' }}
                   />
-                  <ChevronUp className="w-5 h-5 text-zinc-600 relative z-10" strokeWidth={2.5} />
+                  <ChevronUp className="w-6 h-6 text-zinc-600 relative z-10" strokeWidth={2.5} />
                 </button>
               </div>
+              
+              {/* Swipe hint text */}
+              <p className="text-white/50 text-[10px] font-medium tracking-[0.2em] uppercase">
+                Swipe up
+              </p>
             </div>
           </div>
         )}
