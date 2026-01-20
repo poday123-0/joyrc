@@ -114,31 +114,29 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-20 lg:pb-8">
       <Header />
 
-      {/* Hero Section */}
-      <section className="py-12 lg:py-20">
-        <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center space-y-4 mb-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
+      {/* Video Showcase - Full Width */}
+      <section className="w-full">
+        <VideoShowcase />
+      </section>
+
+      {/* Hero Text Section */}
+      <section className="py-10 lg:py-16">
+        <div className="container max-w-7xl mx-auto px-4 lg:px-8 text-center">
+          <div className="space-y-4 mb-6">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
               Ultimate RC Experience
             </h1>
-            <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover premium remote control toys that bring excitement to every adventure.
             </p>
           </div>
 
-          {/* Video Showcase */}
-          <div className="mb-10">
-            <VideoShowcase />
-          </div>
-
-          <div className="text-center">
-            <Link to="/categories">
-              <button className="group bg-primary text-primary-foreground font-medium px-8 py-3 rounded-full text-base hover:bg-primary/90 transition-all inline-flex items-center gap-2">
-                Shop All Products
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </Link>
-          </div>
+          <Link to="/categories">
+            <button className="group bg-primary text-primary-foreground font-medium px-8 py-3 rounded-full text-base hover:bg-primary/90 transition-all inline-flex items-center gap-2">
+              Shop All Products
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </Link>
         </div>
       </section>
 
