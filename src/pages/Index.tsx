@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import Header from "@/components/Header";
@@ -21,33 +21,59 @@ interface FeaturedProduct {
   };
 }
 
-const ImageWithSkeleton = ({ src, alt, className, priority = false }: { 
+const ImageWithSkeleton = memo(({ src, alt, className, priority = false }: { 
   src: string; 
   alt: string; 
   className?: string;
   priority?: boolean;
 }) => {
   const [loaded, setLoaded] = useState(false);
+  const [inView, setInView] = useState(priority);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (priority) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '100px', threshold: 0.01 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [priority]);
   
   return (
-    <div className="relative w-full h-full">
+    <div ref={containerRef} className="relative w-full h-full">
       {!loaded && (
         <div className="absolute inset-0 bg-muted animate-pulse rounded-lg">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
         </div>
       )}
-      <img
-        src={src}
-        alt={alt}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
-        fetchPriority={priority ? "high" : "auto"}
-        onLoad={() => setLoaded(true)}
-        className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-      />
+      {inView && (
+        <img
+          src={src}
+          alt={alt}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
+          onLoad={() => setLoaded(true)}
+          className={`${className} transition-opacity duration-200 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        />
+      )}
     </div>
   );
-};
+});
+
+ImageWithSkeleton.displayName = 'ImageWithSkeleton';
 
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
