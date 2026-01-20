@@ -984,32 +984,36 @@ const ProductsTab = ({
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
-          <div key={product.id} className="glass-card rounded-2xl p-4 flex items-center gap-4 shadow-soft">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center overflow-hidden flex-shrink-0">
-              {product.image_url ? (
-                <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
-              ) : (
-                <span className="text-2xl">📦</span>
-              )}
+          <div key={product.id} className="glass-card rounded-2xl p-3 sm:p-4 shadow-soft">
+            <div className="flex items-start gap-3">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                {product.image_url ? (
+                  <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-xl sm:text-2xl">📦</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-foreground text-sm sm:text-base line-clamp-2">{product.name}</h4>
+                <p className="text-primary font-medium text-sm">{formatMVR(product.price)}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-foreground truncate">{product.name}</h4>
-              <p className="text-sm text-muted-foreground">{formatMVR(product.price)}</p>
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
+            <div className="flex gap-2 mt-3 pt-3 border-t border-border">
               <button
                 onClick={() => handleEdit(product)}
-                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium"
               >
                 <Pencil className="w-4 h-4" />
+                <span className="sm:hidden">Edit</span>
               </button>
               <button
                 onClick={() => handleDeleteClick(product.id)}
-                className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive text-sm font-medium"
               >
-                <Trash2 className="w-4 h-4 text-destructive" />
+                <Trash2 className="w-4 h-4" />
+                <span className="sm:hidden">Delete</span>
               </button>
             </div>
           </div>
@@ -1330,23 +1334,23 @@ const SettingsTab = ({
   };
 
   return (
-    <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+    <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
       <div>
-        <h2 className="font-semibold text-foreground mb-4 lg:text-lg">System Settings</h2>
+        <h2 className="font-semibold text-foreground mb-4 text-base lg:text-lg">System Settings</h2>
 
         <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 md:p-6 shadow-soft space-y-4">
           {/* Logo Section */}
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Site Logo</label>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border flex-shrink-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border flex-shrink-0">
                 {formData.logo_url ? (
                   <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
-                  <Image className="w-6 h-6 md:w-8 md:h-8 text-muted-foreground" />
+                  <Image className="w-6 h-6 text-muted-foreground" />
                 )}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 w-full sm:w-auto">
                 <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
                   <Upload className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
@@ -1384,7 +1388,7 @@ const SettingsTab = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Primary Color</label>
               <div className="flex gap-2">
@@ -1392,13 +1396,13 @@ const SettingsTab = ({
                   type="color"
                   value={formData.primary_color}
                   onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                  className="w-12 h-10 rounded-lg border border-border cursor-pointer"
+                  className="w-12 h-10 rounded-lg border border-border cursor-pointer flex-shrink-0"
                 />
                 <input
                   type="text"
                   value={formData.primary_color}
                   onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                  className="flex-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
             </div>
@@ -1409,13 +1413,13 @@ const SettingsTab = ({
                   type="color"
                   value={formData.secondary_color}
                   onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                  className="w-12 h-10 rounded-lg border border-border cursor-pointer"
+                  className="w-12 h-10 rounded-lg border border-border cursor-pointer flex-shrink-0"
                 />
                 <input
                   type="text"
                   value={formData.secondary_color}
                   onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                  className="flex-1 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
             </div>
@@ -1453,20 +1457,20 @@ const SettingsTab = ({
       </div>
 
       {/* Preview */}
-      <div className="mt-6 lg:mt-0">
-        <h3 className="font-semibold text-foreground mb-4 lg:text-lg">Preview</h3>
+      <div className="hidden sm:block">
+        <h3 className="font-semibold text-foreground mb-4 text-base lg:text-lg">Preview</h3>
         <div 
-          className="rounded-2xl p-6 text-white sticky top-8"
+          className="rounded-2xl p-4 sm:p-6 text-white lg:sticky lg:top-8"
           style={{ background: `linear-gradient(135deg, ${formData.primary_color}, ${formData.secondary_color})` }}
         >
           <div className="flex items-center gap-3 mb-4">
             {formData.logo_url && (
-              <img src={formData.logo_url} alt="Logo" className="w-12 h-12 object-contain rounded-lg bg-white/20 p-1" />
+              <img src={formData.logo_url} alt="Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-lg bg-white/20 p-1" />
             )}
-            <span className="font-bold text-lg">{formData.site_name}</span>
+            <span className="font-bold text-base sm:text-lg">{formData.site_name}</span>
           </div>
-          <h4 className="text-2xl font-bold">{formData.hero_title}</h4>
-          <p className="text-white/80 mt-2">{formData.hero_subtitle}</p>
+          <h4 className="text-xl sm:text-2xl font-bold">{formData.hero_title}</h4>
+          <p className="text-white/80 mt-2 text-sm sm:text-base">{formData.hero_subtitle}</p>
         </div>
       </div>
     </div>
