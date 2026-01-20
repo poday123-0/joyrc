@@ -88,21 +88,13 @@ const ProductCard = memo(({ product, size = "large", priority = false }: Product
         >
           <div className="h-full flex flex-col p-5">
             {/* Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 pr-2">
-                <h4 className="font-bold text-foreground text-base lg:text-lg leading-tight line-clamp-2">
-                  {product.name}
-                </h4>
-                <p className="text-primary font-semibold text-lg mt-1">
-                  {formatMVR(product.price)}
-                </p>
-              </div>
-              <button
-                onClick={handleFlipBack}
-                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors flex-shrink-0"
-              >
-                <RotateCcw className="w-4 h-4 text-muted-foreground" />
-              </button>
+            <div className="mb-3">
+              <h4 className="font-bold text-foreground text-base lg:text-lg leading-tight line-clamp-2">
+                {product.name}
+              </h4>
+              <p className="text-primary font-semibold text-lg mt-1">
+                {formatMVR(product.price)}
+              </p>
             </div>
 
             {/* Divider */}
