@@ -21,7 +21,7 @@ const UsersManagementTab = () => {
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
-  const [newUserPassword, setNewUserPassword] = useState("12345");
+  const [newUserPassword, setNewUserPassword] = useState("123456");
   const [makeAdmin, setMakeAdmin] = useState(false);
   const [creating, setCreating] = useState(false);
 
@@ -170,11 +170,11 @@ const UsersManagementTab = () => {
         throw new Error(response.data.error);
       }
 
-      toast({ title: "User created successfully!" });
+      toast({ title: "User created successfully!", description: `Password: ${newUserPassword || "123456"}` });
       setShowAddUser(false);
       setNewUserEmail("");
       setNewUserName("");
-      setNewUserPassword("12345");
+      setNewUserPassword("123456");
       setMakeAdmin(false);
       fetchUsers();
     } catch (error: any) {

@@ -20,7 +20,7 @@ const AdminManagementTab = () => {
   const [showForm, setShowForm] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
-  const [newPassword, setNewPassword] = useState("12345");
+  const [newPassword, setNewPassword] = useState("123456");
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
