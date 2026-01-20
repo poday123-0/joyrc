@@ -169,45 +169,50 @@ const Landing = () => {
           </p>
         </div>
 
-        {/* Mobile: Swipe Up Indicator */}
+        {/* Mobile: Pill-style Swipe Up Button */}
         {isMobile && (
           <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="flex flex-col items-center gap-3">
-              {/* Swipe indicator with animation */}
+            <div className="flex flex-col items-center">
+              {/* Pill-shaped track container */}
               <div 
-                className="relative w-16 h-24 rounded-full border-2 border-white/40 flex items-start justify-center pt-2 overflow-hidden"
+                className="relative w-16 h-28 rounded-full overflow-hidden"
                 style={{
-                  background: `linear-gradient(to top, rgba(255,255,255,${0.1 + swipeProgress * 0.3}) ${swipeProgress * 100}%, transparent ${swipeProgress * 100}%)`
+                  background: 'linear-gradient(to bottom, rgba(120,120,120,0.6) 0%, rgba(80,80,80,0.8) 50%, rgba(60,60,60,0.9) 100%)',
+                  boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.3)'
                 }}
               >
+                {/* Inner gradient overlay */}
                 <div 
-                  className="w-2 h-6 rounded-full bg-white/80 animate-bounce"
-                  style={{ 
-                    animationDuration: '1.5s',
-                    transform: `translateY(${swipeProgress * 30}px)`
-                  }} 
+                  className="absolute inset-0.5 rounded-full"
+                  style={{
+                    background: 'linear-gradient(to bottom, rgba(180,180,180,0.3) 0%, rgba(100,100,100,0.4) 40%, rgba(70,70,70,0.6) 100%)'
+                  }}
                 />
+                
+                {/* Animated chevron at top */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+                  <ChevronUp 
+                    className="w-6 h-6 text-zinc-800/80"
+                    style={{ 
+                      animation: 'bounce 1.5s ease-in-out infinite',
+                      filter: 'drop-shadow(0 1px 1px rgba(255,255,255,0.3))'
+                    }}
+                  />
+                </div>
+                
+                {/* Go button circle */}
+                <button
+                  onClick={() => navigate('/home')}
+                  className="absolute bottom-2 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-gradient-to-b from-white via-gray-50 to-gray-200 shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform"
+                  style={{
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.8), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                    transform: `translate(-50%, ${-swipeProgress * 60}px)`,
+                    transition: swipeProgress === 0 || swipeProgress === 1 ? 'transform 0.3s ease-out' : 'none'
+                  }}
+                >
+                  <span className="text-zinc-800 font-semibold text-sm tracking-wide">Go</span>
+                </button>
               </div>
-              
-              {/* Animated chevrons */}
-              <div className="flex flex-col items-center -mt-2">
-                <ChevronUp 
-                  className="w-6 h-6 text-white/60 animate-pulse" 
-                  style={{ animationDelay: '0s', animationDuration: '1.5s' }}
-                />
-                <ChevronUp 
-                  className="w-6 h-6 text-white/40 -mt-3 animate-pulse" 
-                  style={{ animationDelay: '0.2s', animationDuration: '1.5s' }}
-                />
-                <ChevronUp 
-                  className="w-6 h-6 text-white/20 -mt-3 animate-pulse" 
-                  style={{ animationDelay: '0.4s', animationDuration: '1.5s' }}
-                />
-              </div>
-              
-              <p className="text-white/70 text-sm font-light tracking-wide mt-2">
-                Swipe up to enter
-              </p>
             </div>
           </div>
         )}
