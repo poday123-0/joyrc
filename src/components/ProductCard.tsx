@@ -62,7 +62,8 @@ const ProductCard = ({ product, size = "large" }: ProductCardProps) => {
               alt={product.name}
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              fetchPriority="auto"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
             />
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />

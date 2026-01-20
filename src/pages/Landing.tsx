@@ -133,7 +133,7 @@ const Landing = () => {
                 loop
                 playsInline
                 className="w-full h-full object-cover"
-                preload="metadata"
+                preload="auto"
               />
             ) : (
               <img
@@ -142,6 +142,7 @@ const Landing = () => {
                 className="w-full h-full object-cover"
                 loading="eager"
                 decoding="async"
+                fetchPriority="high"
               />
             )}
           </div>
@@ -169,48 +170,78 @@ const Landing = () => {
           </p>
         </div>
 
-        {/* Mobile: Pill-style Swipe Up Button */}
+        {/* Mobile: Premium Swipe Up Button */}
         {isMobile && (
           <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="flex flex-col items-center">
-              {/* Pill-shaped track container */}
+            <div className="flex flex-col items-center gap-4">
+              {/* Swipe indicator text */}
+              <p className="text-white/60 text-xs font-medium tracking-widest uppercase">
+                Swipe up to explore
+              </p>
+              
+              {/* Premium pill track */}
               <div 
-                className="relative w-16 h-28 rounded-full overflow-hidden"
+                className="relative w-14 h-24 rounded-full overflow-hidden"
                 style={{
-                  background: 'linear-gradient(to bottom, rgba(120,120,120,0.6) 0%, rgba(80,80,80,0.8) 50%, rgba(60,60,60,0.9) 100%)',
-                  boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.3)'
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -1px 1px rgba(0,0,0,0.2), 0 8px 32px rgba(0,0,0,0.4)',
+                  border: '1px solid rgba(255,255,255,0.1)'
                 }}
               >
-                {/* Inner gradient overlay */}
+                {/* Track groove */}
                 <div 
-                  className="absolute inset-0.5 rounded-full"
+                  className="absolute inset-1 rounded-full"
                   style={{
-                    background: 'linear-gradient(to bottom, rgba(180,180,180,0.3) 0%, rgba(100,100,100,0.4) 40%, rgba(70,70,70,0.6) 100%)'
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
                   }}
                 />
                 
-                {/* Animated chevron at top */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+                {/* Animated arrow indicators */}
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-10">
                   <ChevronUp 
-                    className="w-6 h-6 text-zinc-800/80"
+                    className="w-4 h-4 text-white/40"
                     style={{ 
-                      animation: 'bounce 1.5s ease-in-out infinite',
-                      filter: 'drop-shadow(0 1px 1px rgba(255,255,255,0.3))'
+                      animation: 'pulse 2s ease-in-out infinite',
+                      animationDelay: '0.4s'
+                    }}
+                  />
+                  <ChevronUp 
+                    className="w-4 h-4 text-white/60 -mt-2"
+                    style={{ 
+                      animation: 'pulse 2s ease-in-out infinite',
+                      animationDelay: '0.2s'
+                    }}
+                  />
+                  <ChevronUp 
+                    className="w-4 h-4 text-white/80 -mt-2"
+                    style={{ 
+                      animation: 'pulse 2s ease-in-out infinite'
                     }}
                   />
                 </div>
                 
-                {/* Go button circle */}
+                {/* Draggable ball button */}
                 <button
                   onClick={() => navigate('/home')}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-gradient-to-b from-white via-gray-50 to-gray-200 shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform"
+                  className="absolute bottom-1.5 left-1/2 w-11 h-11 rounded-full flex items-center justify-center z-20 active:scale-90 transition-all duration-150"
                   style={{
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.8), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                    transform: `translate(-50%, ${-swipeProgress * 60}px)`,
-                    transition: swipeProgress === 0 || swipeProgress === 1 ? 'transform 0.3s ease-out' : 'none'
+                    background: 'linear-gradient(145deg, #ffffff 0%, #e8e8e8 50%, #d4d4d4 100%)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,1), inset 0 -1px 3px rgba(0,0,0,0.15)',
+                    transform: `translate(-50%, ${-swipeProgress * 56}px) scale(${1 + swipeProgress * 0.1})`,
+                    transition: swipeProgress === 0 || swipeProgress === 1 ? 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none'
                   }}
                 >
-                  <span className="text-zinc-800 font-semibold text-sm tracking-wide">Go</span>
+                  {/* Inner glow */}
+                  <div 
+                    className="absolute inset-1 rounded-full"
+                    style={{
+                      background: 'linear-gradient(145deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%)'
+                    }}
+                  />
+                  <ChevronUp className="w-5 h-5 text-zinc-600 relative z-10" strokeWidth={2.5} />
                 </button>
               </div>
             </div>
