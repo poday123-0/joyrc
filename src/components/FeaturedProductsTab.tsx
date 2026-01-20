@@ -236,16 +236,16 @@ const FeaturedProductsTab = () => {
             {featuredProducts.map((featured) => (
               <div
                 key={featured.id}
-                className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${
+                className={`flex flex-col sm:flex-row items-start gap-4 p-4 rounded-xl border transition-all ${
                   featured.is_active ? 'bg-background border-border' : 'bg-muted/30 border-transparent opacity-60'
                 }`}
               >
-                <div className="flex-shrink-0 cursor-grab text-muted-foreground">
+                <div className="hidden sm:flex flex-shrink-0 cursor-grab text-muted-foreground">
                   <GripVertical className="w-5 h-5" />
                 </div>
 
                 {/* Product Image */}
-                <div className="w-16 h-16 rounded-lg bg-muted/50 flex-shrink-0 overflow-hidden">
+                <div className="w-full sm:w-16 h-32 sm:h-16 rounded-lg bg-muted/50 flex-shrink-0 overflow-hidden">
                   {featured.product.image_url ? (
                     <img
                       src={featured.product.image_url}
@@ -258,8 +258,8 @@ const FeaturedProductsTab = () => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 space-y-3">
-                  <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0 space-y-3 w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <p className="font-medium text-foreground truncate">
                         {featured.product.name}
@@ -269,7 +269,7 @@ const FeaturedProductsTab = () => {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
                       <div className="flex items-center gap-2">
                         <Switch
                           checked={featured.is_active}
@@ -292,7 +292,7 @@ const FeaturedProductsTab = () => {
                   </div>
 
                   {/* Editable fields */}
-                  <div className="grid gap-2 md:grid-cols-2">
+                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
                     <Input
                       value={featured.title || ""}
                       onChange={(e) => handleUpdateField(featured.id, 'title', e.target.value)}

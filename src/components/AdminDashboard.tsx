@@ -274,9 +274,9 @@ const AdminDashboard = () => {
 
       {/* Quick Stats Bar */}
       <div className="glass-card rounded-2xl p-4 shadow-soft">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-mint to-teal flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-mint to-teal flex items-center justify-center flex-shrink-0">
               <PieChart className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -286,7 +286,7 @@ const AdminDashboard = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-4 text-sm">
+          <div className="flex gap-6 text-sm w-full sm:w-auto justify-around sm:justify-end">
             <div className="text-center">
               <p className="text-muted-foreground">Income</p>
               <p className="font-semibold text-mint">{formatMVRCompact(stats.monthlyRevenue)}</p>
@@ -390,40 +390,42 @@ const AdminDashboard = () => {
 
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {transactions.slice(0, 20).map((tx) => (
-            <div key={tx.id} className="glass-card rounded-xl p-3 flex items-center gap-3 shadow-soft">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                tx.type === "income" ? "bg-mint/20" : "bg-coral/20"
-              }`}>
-                {tx.type === "income" ? (
-                  <ArrowUpRight className="w-5 h-5 text-mint" />
-                ) : (
-                  <ArrowDownRight className="w-5 h-5 text-coral" />
-                )}
+            <div key={tx.id} className="glass-card rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-soft">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  tx.type === "income" ? "bg-mint/20" : "bg-coral/20"
+                }`}>
+                  {tx.type === "income" ? (
+                    <ArrowUpRight className="w-5 h-5 text-mint" />
+                  ) : (
+                    <ArrowDownRight className="w-5 h-5 text-coral" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground text-sm">{tx.category}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {tx.description || new Date(tx.created_at).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground text-sm">{tx.category}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {tx.description || new Date(tx.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="text-right">
+              <div className="flex items-center justify-between sm:justify-end gap-3 ml-13 sm:ml-0">
                 <p className={`font-bold text-sm ${tx.type === "income" ? "text-mint" : "text-coral"}`}>
                   {tx.type === "income" ? "+" : "-"}{formatMVR(tx.amount)}
                 </p>
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => handleEdit(tx)}
-                  className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
-                >
-                  <Edit2 className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleDeleteClick(tx.id)}
-                  className="w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
-                >
-                  <Trash2 className="w-3 h-3 text-destructive" />
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleEdit(tx)}
+                    className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(tx.id)}
+                    className="w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                  >
+                    <Trash2 className="w-3 h-3 text-destructive" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
