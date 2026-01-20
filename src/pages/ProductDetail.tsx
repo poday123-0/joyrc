@@ -41,7 +41,6 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [productColors, setProductColors] = useState<ProductColor[]>([]);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
-  
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -181,167 +180,172 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-8">
-      {/* Header - Same as home page */}
       <Header />
 
-      {/* Main Content - Apple Style */}
-      <div className="container max-w-lg lg:max-w-4xl mx-auto px-4 lg:px-8">
-
-        {/* Product Image */}
-        <div className="py-6 lg:py-10">
-          <div className="relative mx-auto max-w-md">
-            <div className="aspect-square w-full bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
-              {currentImage ? (
-                <img
-                  src={currentImage}
-                  alt={product.name}
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority="high"
-                  className="w-full h-full object-cover rounded-3xl animate-fade-in transition-transform duration-300 hover:scale-105"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-8xl">📦</div>
+      {/* Main Content - Responsive Layout */}
+      <div className="container max-w-6xl mx-auto px-4 lg:px-8">
+        
+        {/* Desktop: Two-column layout, Mobile: Single column */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-12 lg:py-12">
+          
+          {/* Left Column - Product Image */}
+          <div className="py-6 lg:py-0">
+            <div className="lg:sticky lg:top-20">
+              <div className="aspect-square w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
+                {currentImage ? (
+                  <img
+                    src={currentImage}
+                    alt={product.name}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    className="w-full h-full object-cover rounded-3xl animate-fade-in transition-transform duration-300 hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-8xl">📦</div>
+                )}
+              </div>
+              
+              {/* Image Dots */}
+              {galleryImages.length > 1 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  {galleryImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentImageIndex
+                          ? 'bg-foreground w-4'
+                          : 'bg-muted-foreground/40 hover:bg-muted-foreground/60'
+                      }`}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Image Dots */}
-        {galleryImages.length > 1 && (
-          <div className="flex justify-center gap-2 pb-6">
-            {galleryImages.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentImageIndex
-                    ? 'bg-foreground w-4'
-                    : 'bg-muted-foreground/40 hover:bg-muted-foreground/60'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Color Options */}
-        {productColors.length > 0 && (
-          <div className="text-center pb-8 border-b border-border">
-            <p className="text-sm text-muted-foreground mb-3">
-              Available in {productColors.length} colors
-            </p>
-            <div className="flex justify-center gap-3">
-              {productColors.map(color => (
-                <button
-                  key={color.id}
-                  onClick={() => setSelectedColorId(color.id)}
-                  className={`w-6 h-6 rounded-full transition-all ${
-                    selectedColorId === color.id
-                      ? 'ring-2 ring-offset-2 ring-foreground'
-                      : 'opacity-70 hover:opacity-100'
-                  }`}
-                  style={{ backgroundColor: color.color_hex }}
-                  title={color.color_name}
-                />
-              ))}
+          {/* Right Column - Product Info */}
+          <div className="lg:py-0">
+            {/* Product Title - Desktop */}
+            <div className="hidden lg:block mb-6">
+              <h1 className="text-3xl font-bold text-foreground mb-2">{product.name}</h1>
+              <p className="text-2xl font-semibold text-primary">{formatMVR(product.price)}</p>
             </div>
-          </div>
-        )}
 
-        {/* Specifications as Feature List */}
-        <div className="py-6 space-y-0">
-          {specs.length > 0 ? (
-            specs.map((spec, index) => {
-              const IconComponent = getSpecIcon(spec.name);
-              return (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 py-5 border-b border-border last:border-b-0"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
-                    <IconComponent className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
+            {/* Color Options */}
+            {productColors.length > 0 && (
+              <div className="text-center lg:text-left pb-6 border-b border-border">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Available in {productColors.length} colors
+                </p>
+                <div className="flex justify-center lg:justify-start gap-3">
+                  {productColors.map(color => (
+                    <button
+                      key={color.id}
+                      onClick={() => setSelectedColorId(color.id)}
+                      className={`w-8 h-8 rounded-full transition-all ${
+                        selectedColorId === color.id
+                          ? 'ring-2 ring-offset-2 ring-foreground'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                      style={{ backgroundColor: color.color_hex }}
+                      title={color.color_name}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Specifications as Feature List */}
+            <div className="py-6 space-y-0">
+              {specs.length > 0 ? (
+                specs.map((spec, index) => {
+                  const IconComponent = getSpecIcon(spec.name);
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-start gap-4 py-4 border-b border-border last:border-b-0"
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-foreground text-base leading-relaxed">
+                          <span className="font-medium">{spec.value}</span>
+                          {spec.name && (
+                            <span className="text-muted-foreground"> — {spec.name}</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <>
+                  <div className="flex items-start gap-4 py-4 border-b border-border">
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
+                      <Zap className="w-5 h-5" />
+                    </div>
                     <p className="text-foreground text-base leading-relaxed">
-                      <span className="font-medium">{spec.value}</span>
-                      {spec.name && (
-                        <span className="text-muted-foreground"> — {spec.name}</span>
-                      )}
+                      <span className="font-medium">{product.name}</span> — High-performance RC toy
                     </p>
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            <>
-              <div className="flex items-start gap-4 py-5 border-b border-border">
-                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <p className="text-foreground text-base leading-relaxed">
-                  <span className="font-medium">{product.name}</span> — High-performance RC toy built for excitement and adventure
-                </p>
-              </div>
-              <div className="flex items-start gap-4 py-5 border-b border-border">
-                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
-                  <Battery className="w-5 h-5" />
-                </div>
-                <p className="text-foreground text-base leading-relaxed">
-                  Extended battery life keeps the fun going for hours
-                </p>
-              </div>
-              <div className="flex items-start gap-4 py-5 border-b border-border">
-                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
-                  <Radio className="w-5 h-5" />
-                </div>
-                <p className="text-foreground text-base leading-relaxed">
-                  Precise remote control with long-range connectivity
-                </p>
-              </div>
-              <div className="flex items-start gap-4 py-5 border-b border-border">
-                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
-                  <Box className="w-5 h-5" />
-                </div>
-                <p className="text-foreground text-base leading-relaxed">
-                  Complete package includes controller, battery, and charger
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+                  <div className="flex items-start gap-4 py-4 border-b border-border">
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
+                      <Battery className="w-5 h-5" />
+                    </div>
+                    <p className="text-foreground text-base leading-relaxed">
+                      Extended battery life for hours of fun
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-4 py-4">
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-muted-foreground">
+                      <Radio className="w-5 h-5" />
+                    </div>
+                    <p className="text-foreground text-base leading-relaxed">
+                      Precise remote control with long-range connectivity
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
 
-        {/* Product Description */}
-        {product.description && (
-          <div className="py-6 border-t border-border">
-            <p className="text-muted-foreground leading-relaxed text-center">
-              {product.description}
-            </p>
+            {/* Product Description */}
+            {product.description && (
+              <div className="py-6 border-t border-border">
+                <p className="text-muted-foreground leading-relaxed">
+                  {product.description}
+                </p>
+              </div>
+            )}
+
+            {/* Price and Buy Button */}
+            <div className="py-6 lg:py-8 text-center lg:text-left border-t border-border">
+              {/* Mobile price display */}
+              <p className="text-3xl font-semibold text-foreground lg:hidden">
+                {formatMVR(product.price)}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2 mb-5">
+                Free shipping on orders over MVR 500
+              </p>
+              <button
+                onClick={handleAddToCart}
+                className="w-full lg:w-auto px-12 py-3 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
+              >
+                Add to Cart
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Price and Buy Button */}
-        <div className="py-8 text-center border-t border-border">
-          <p className="text-3xl font-semibold text-foreground">
-            {formatMVR(product.price)}
-          </p>
-          <p className="text-sm text-muted-foreground mt-2 mb-5">
-            Free shipping on orders over MVR 500
-          </p>
-          <button
-            onClick={handleAddToCart}
-            className="px-8 py-2.5 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all"
-          >
-            Buy Now
-          </button>
         </div>
 
-        {/* Similar Products */}
+        {/* Similar Products - Full Width */}
         {similarProducts.length > 0 && (
           <div className="py-12 border-t border-border">
-            <h2 className="text-xl font-semibold text-foreground text-center mb-8">
+            <h2 className="text-xl font-semibold text-foreground text-center lg:text-left mb-8">
               You might also like
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               {similarProducts.map(p => (
                 <Link
                   key={p.id}
@@ -356,7 +360,7 @@ const ProductDetail = () => {
                           alt={p.name}
                           loading="lazy"
                           decoding="async"
-                          className="max-w-full max-h-full object-contain rounded-xl transition-transform group-hover:scale-105"
+                          className="w-full h-full object-cover rounded-xl transition-transform group-hover:scale-105"
                         />
                       ) : (
                         <div className="text-4xl">📦</div>
