@@ -65,15 +65,15 @@ const Header = ({ userName }: HeaderProps) => {
             />
           </Link>
 
-          {/* Center Navigation - visible on all screens */}
-          <div className="flex items-center justify-center gap-4 sm:gap-7">
+          {/* Center Navigation - desktop only */}
+          <div className="hidden sm:flex items-center justify-center gap-7">
             {allNavItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`text-[11px] sm:text-xs font-normal transition-colors ${
+                  className={`text-xs font-normal transition-colors ${
                     isActive
                       ? "text-foreground"
                       : "text-foreground/80 hover:text-foreground"
