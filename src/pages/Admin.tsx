@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
+import { compressImage } from "@/lib/imageCompression";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import AdminDashboard from "@/components/AdminDashboard";
 import BankSettingsTab from "@/components/BankSettingsTab";
@@ -422,10 +423,13 @@ const ProductsTab = ({
     const uploadedImages: ProductImage[] = [];
 
     for (const file of Array.from(files)) {
-      const fileName = `${Date.now()}-${file.name}`;
+      // Compress image before upload
+      const compressedFile = await compressImage(file, 1200, 0.8);
+      const fileName = `${Date.now()}-${compressedFile.name}`;
+      
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(fileName, file);
+        .upload(fileName, compressedFile);
 
       if (uploadError) {
         toast({ 
@@ -495,10 +499,13 @@ const ProductsTab = ({
 
     // Upload color image if provided
     if (colorImageFile) {
-      const fileName = `color-${Date.now()}-${colorImageFile.name}`;
+      // Compress image before upload
+      const compressedFile = await compressImage(colorImageFile, 1200, 0.8);
+      const fileName = `color-${Date.now()}-${compressedFile.name}`;
+      
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(fileName, colorImageFile);
+        .upload(fileName, compressedFile);
 
       if (!uploadError) {
         const { data: urlData } = supabase.storage
@@ -567,10 +574,13 @@ const ProductsTab = ({
       let imageUrl = editingProduct?.image_url || null;
 
       if (imageFile) {
-        const fileName = `${Date.now()}-${imageFile.name}`;
+        // Compress image before upload
+        const compressedFile = await compressImage(imageFile, 1200, 0.8);
+        const fileName = `${Date.now()}-${compressedFile.name}`;
+        
         const { error: uploadError } = await supabase.storage
           .from("product-images")
-          .upload(fileName, imageFile);
+          .upload(fileName, compressedFile);
 
         if (uploadError) throw uploadError;
 
