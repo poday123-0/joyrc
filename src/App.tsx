@@ -22,13 +22,25 @@ import NotFound from "./pages/NotFound";
 // Redirect desktop users from landing to home
 const LandingOrHome = () => {
   const isMobile = useIsMobile();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Wait a tick for isMobile to be determined
+    const timer = setTimeout(() => setIsReady(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show nothing briefly while detecting device
+  if (!isReady || isMobile === undefined) {
+    return <div className="min-h-screen bg-background" />;
+  }
   
   // On desktop, go directly to home
   if (isMobile === false) {
     return <Navigate to="/home" replace />;
   }
   
-  // On mobile or while detecting, show landing
+  // On mobile, show landing with swipe
   return <Landing />;
 };
 
