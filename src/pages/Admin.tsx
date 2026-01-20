@@ -46,6 +46,15 @@ interface ProductImage {
   is_360: boolean;
 }
 
+interface ProductColor {
+  id: string;
+  product_id: string;
+  color_name: string;
+  color_hex: string;
+  image_url: string | null;
+  sort_order: number | null;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -281,13 +290,23 @@ const ProductsTab = ({
   const [loadingGallery, setLoadingGallery] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
 
+  // Product colors state
+  const [productColors, setProductColors] = useState<ProductColor[]>([]);
+  const [loadingColors, setLoadingColors] = useState(false);
+  const [newColor, setNewColor] = useState({ name: "", hex: "#000000" });
+  const [colorImageFile, setColorImageFile] = useState<File | null>(null);
+  const [uploadingColor, setUploadingColor] = useState(false);
+
   const resetForm = () => {
     setFormData({ name: "", description: "", price: "", category_id: "", rating: "4.5", in_stock: true });
     setImageFile(null);
     setEditingProduct(null);
     setSpecifications([]);
     setGalleryImages([]);
+    setProductColors([]);
     setNewSpec({ name: "", value: "" });
+    setNewColor({ name: "", hex: "#000000" });
+    setColorImageFile(null);
     setShowForm(false);
   };
 
@@ -313,6 +332,17 @@ const ProductsTab = ({
     setLoadingGallery(false);
   };
 
+  const fetchProductColors = async (productId: string) => {
+    setLoadingColors(true);
+    const { data } = await supabase
+      .from("product_colors")
+      .select("*")
+      .eq("product_id", productId)
+      .order("sort_order");
+    if (data) setProductColors(data as ProductColor[]);
+    setLoadingColors(false);
+  };
+
   const handleEdit = async (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -327,6 +357,7 @@ const ProductsTab = ({
     await Promise.all([
       fetchSpecifications(product.id),
       fetchGalleryImages(product.id),
+      fetchProductColors(product.id),
     ]);
   };
 
@@ -453,6 +484,78 @@ const ProductsTab = ({
     }
   };
 
+  const handleAddColor = async () => {
+    if (!editingProduct || !newColor.name.trim()) return;
+    
+    setUploadingColor(true);
+    let colorImageUrl: string | null = null;
+
+    // Upload color image if provided
+    if (colorImageFile) {
+      const fileName = `color-${Date.now()}-${colorImageFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, colorImageFile);
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(fileName);
+        colorImageUrl = urlData.publicUrl;
+      }
+    }
+
+    const { data, error } = await supabase
+      .from("product_colors")
+      .insert({
+        product_id: editingProduct.id,
+        color_name: newColor.name.trim(),
+        color_hex: newColor.hex,
+        image_url: colorImageUrl,
+        sort_order: productColors.length,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      toast({ 
+        title: "Failed to add color", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } else if (data) {
+      setProductColors([...productColors, data as ProductColor]);
+      setNewColor({ name: "", hex: "#000000" });
+      setColorImageFile(null);
+      toast({ 
+        title: "Color Added",
+        description: `${data.color_name} has been added.`,
+      });
+    }
+    setUploadingColor(false);
+  };
+
+  const handleDeleteColor = async (colorId: string, colorName: string) => {
+    const { error } = await supabase
+      .from("product_colors")
+      .delete()
+      .eq("id", colorId);
+    
+    if (error) {
+      toast({ 
+        title: "Failed to delete color", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } else {
+      setProductColors(productColors.filter(c => c.id !== colorId));
+      toast({ 
+        title: "Color Removed",
+        description: `${colorName} has been removed.`,
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -529,6 +632,7 @@ const ProductsTab = ({
 
     await supabase.from("product_images").delete().eq("product_id", productToDelete);
     await supabase.from("product_specifications").delete().eq("product_id", productToDelete);
+    await supabase.from("product_colors").delete().eq("product_id", productToDelete);
     
     const { error } = await supabase.from("products").delete().eq("id", productToDelete);
     if (error) {
@@ -758,6 +862,90 @@ const ProductsTab = ({
                           disabled={uploadingGallery}
                         />
                       </label>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Product Colors Section */}
+            {editingProduct && (
+              <div className="border-t border-border pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-green-500 to-blue-500" />
+                  <h4 className="font-medium text-sm">Product Colors</h4>
+                </div>
+                
+                {loadingColors ? (
+                  <p className="text-sm text-muted-foreground">Loading colors...</p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {productColors.map((color) => (
+                        <div 
+                          key={color.id} 
+                          className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 group"
+                        >
+                          <div 
+                            className="w-5 h-5 rounded-full border border-border flex-shrink-0"
+                            style={{ backgroundColor: color.color_hex }}
+                          />
+                          <span className="text-sm font-medium">{color.color_name}</span>
+                          {color.image_url && (
+                            <img 
+                              src={color.image_url} 
+                              alt={color.color_name}
+                              className="w-6 h-6 rounded object-cover"
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteColor(color.id, color.color_name)}
+                            className="w-5 h-5 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                          >
+                            <X className="w-3 h-3 text-destructive" />
+                          </button>
+                        </div>
+                      ))}
+                      {productColors.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No colors yet.</p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        placeholder="Color name (e.g., Red)"
+                        value={newColor.name}
+                        onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={newColor.hex}
+                          onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                          className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                        />
+                        <label className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 text-xs text-muted-foreground">
+                          <Upload className="w-3 h-3" />
+                          {colorImageFile ? colorImageFile.name.slice(0, 10) + '...' : 'Image'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setColorImageFile(e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddColor}
+                        disabled={uploadingColor || !newColor.name.trim()}
+                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap disabled:opacity-50"
+                      >
+                        {uploadingColor ? "Adding..." : "Add"}
+                      </button>
                     </div>
                   </>
                 )}
