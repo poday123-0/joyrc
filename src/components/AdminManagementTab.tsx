@@ -34,36 +34,53 @@ const AdminManagementTab = () => {
   const fetchAdmins = async () => {
     setLoading(true);
     
-    // Get all admin and super_admin roles
-    const { data: roles, error } = await supabase
-      .from("user_roles")
-      .select("*")
-      .or("role.eq.admin,role.eq.super_admin");
+    try {
+      // Use edge function to get admin users with emails
+      const response = await supabase.functions.invoke("get-admin-users");
+      
+      if (response.error) {
+        console.error("Error fetching admins:", response.error);
+        // Fallback to direct query without emails
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("*")
+          .or("role.eq.admin,role.eq.super_admin");
 
-    if (roles) {
-      // Get profiles for these users
-      const userIds = roles.map(r => r.user_id);
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name")
-        .in("user_id", userIds);
+        if (roles) {
+          const userIds = roles.map(r => r.user_id);
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("user_id, full_name")
+            .in("user_id", userIds);
 
-      const adminsWithInfo = roles.map(role => {
-        const profile = profiles?.find(p => p.user_id === role.user_id);
-        return {
-          ...role,
-          full_name: profile?.full_name || "Unknown",
-        };
-      });
-
-      setAdmins(adminsWithInfo);
-
-      // Check if current user is super_admin
-      if (user) {
-        const isSuperAdmin = roles.some(r => r.user_id === user.id && (r.role as string) === "super_admin");
-        setCurrentUserIsSuperAdmin(isSuperAdmin);
+          const adminsWithInfo = roles.map(role => {
+            const profile = profiles?.find(p => p.user_id === role.user_id);
+            return {
+              ...role,
+              full_name: profile?.full_name || "Unknown",
+            };
+          });
+          setAdmins(adminsWithInfo);
+          
+          if (user) {
+            const isSuperAdmin = roles.some(r => r.user_id === user.id && (r.role as string) === "super_admin");
+            setCurrentUserIsSuperAdmin(isSuperAdmin);
+          }
+        }
+      } else if (response.data?.admins) {
+        setAdmins(response.data.admins);
+        
+        if (user) {
+          const isSuperAdmin = response.data.admins.some(
+            (a: AdminUser) => a.user_id === user.id && (a.role as string) === "super_admin"
+          );
+          setCurrentUserIsSuperAdmin(isSuperAdmin);
+        }
       }
+    } catch (error) {
+      console.error("Error fetching admins:", error);
     }
+    
     setLoading(false);
   };
 
@@ -363,6 +380,9 @@ const AdminManagementTab = () => {
                       <span className="text-xs bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded-full">You</span>
                     )}
                   </h4>
+                  {admin.email && (
+                    <p className="text-xs text-muted-foreground truncate">{admin.email}</p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     Super Admin since {format(new Date(admin.created_at), "MMM d, yyyy")}
                   </p>
@@ -390,11 +410,11 @@ const AdminManagementTab = () => {
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-foreground text-sm">{admin.full_name}</h4>
+              {admin.email && (
+                <p className="text-xs text-muted-foreground truncate">{admin.email}</p>
+              )}
               <p className="text-xs text-muted-foreground">
                 Admin since {format(new Date(admin.created_at), "MMM d, yyyy")}
-              </p>
-              <p className="text-[10px] text-muted-foreground font-mono">
-                ID: {admin.user_id.slice(0, 8)}...
               </p>
             </div>
             {currentUserIsSuperAdmin && (
