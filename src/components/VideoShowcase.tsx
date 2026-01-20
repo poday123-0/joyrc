@@ -69,13 +69,21 @@ const VideoShowcase = () => {
     setIsPlaying(false);
   };
 
+  // Auto-play video when component mounts or video changes
   useEffect(() => {
-    // Reset video when switching
-    if (videoRef.current) {
+    if (videoRef.current && videos.length > 0) {
       videoRef.current.load();
-      setIsPlaying(false);
+      // Auto-play muted (required by browsers)
+      videoRef.current.muted = true;
+      setIsMuted(true);
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        // Autoplay was prevented, show play button
+        setIsPlaying(false);
+      });
     }
-  }, [currentIndex]);
+  }, [currentIndex, videos.length]);
 
   if (loading) {
     return (
@@ -102,6 +110,7 @@ const VideoShowcase = () => {
             className="w-full h-full object-cover"
             muted={isMuted}
             playsInline
+            autoPlay
             loop
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
