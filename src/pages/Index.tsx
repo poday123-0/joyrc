@@ -180,16 +180,18 @@ const Index = () => {
                 >
                   <div className="relative bg-gradient-to-br from-muted/50 to-muted rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
                     {/* Product Image */}
-                    <div className="aspect-square p-6 lg:p-8 flex items-center justify-center">
+                    <div className="aspect-square p-4 sm:p-5 lg:p-6">
                       {featured.product.image_url ? (
-                        <ImageWithSkeleton
-                          src={featured.product.image_url}
-                          alt={featured.product.name}
-                          priority={index === 0}
-                          className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110"
-                        />
+                        <div className="w-full h-full rounded-2xl overflow-hidden bg-background/50">
+                          <ImageWithSkeleton
+                            src={featured.product.image_url}
+                            alt={featured.product.name}
+                            priority={index === 0}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 rounded-2xl"
+                          />
+                        </div>
                       ) : (
-                        <div className="text-6xl">📦</div>
+                        <div className="w-full h-full rounded-2xl bg-background/50 flex items-center justify-center text-6xl">📦</div>
                       )}
                     </div>
 
