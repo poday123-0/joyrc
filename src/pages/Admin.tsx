@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import ContactMessagesTab from "@/components/ContactMessagesTab";
 import AdminManagementTab from "@/components/AdminManagementTab";
 import HeroBackgroundsTab from "@/components/HeroBackgroundsTab";
 import FeaturedProductsTab from "@/components/FeaturedProductsTab";
+import VideoShowcasesTab from "@/components/VideoShowcasesTab";
 
 interface Product {
   id: string;
@@ -72,12 +73,13 @@ interface SystemSettings {
   hero_subtitle: string;
 }
 
-type Tab = "dashboard" | "products" | "featured" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "hero" | "settings";
+type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "hero" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "products", label: "Products", icon: Package },
   { id: "featured", label: "Featured", icon: Star },
+  { id: "videos", label: "Videos", icon: Video },
   { id: "categories", label: "Categories", icon: Grid3X3 },
   { id: "orders", label: "Orders", icon: CreditCard },
   { id: "messages", label: "Messages", icon: MessageSquare },
@@ -230,6 +232,7 @@ const Admin = () => {
               />
             )}
             {activeTab === "featured" && <FeaturedProductsTab />}
+            {activeTab === "videos" && <VideoShowcasesTab />}
             {activeTab === "categories" && (
               <CategoriesTab 
                 categories={categories} 

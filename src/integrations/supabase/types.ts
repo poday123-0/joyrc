@@ -623,6 +623,53 @@ export type Database = {
         }
         Relationships: []
       }
+      video_showcases: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          product_id: string | null
+          sort_order: number | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id?: string | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id?: string | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_showcases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
