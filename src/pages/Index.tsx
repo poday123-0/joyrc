@@ -164,13 +164,13 @@ const Index = () => {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="aspect-[4/5] rounded-3xl bg-muted animate-pulse" />
               ))}
             </div>
           ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {featuredProducts.map((featured, index) => (
                 <Link
                   key={featured.id}
@@ -178,9 +178,9 @@ const Index = () => {
                   className="group block animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className="relative bg-gradient-to-br from-muted/50 to-muted rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl">
+                  <div className="relative bg-gradient-to-br from-muted/50 to-muted rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
                     {/* Product Image */}
-                    <div className="aspect-square p-8 lg:p-12 flex items-center justify-center">
+                    <div className="aspect-square p-6 lg:p-8 flex items-center justify-center">
                       {featured.product.image_url ? (
                         <ImageWithSkeleton
                           src={featured.product.image_url}

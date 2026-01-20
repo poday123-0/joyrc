@@ -87,7 +87,7 @@ const VideoShowcase = () => {
 
   if (loading) {
     return (
-      <div className="w-full aspect-video max-w-lg mx-auto rounded-3xl bg-muted animate-pulse" />
+      <div className="w-full aspect-video max-w-4xl mx-auto rounded-3xl bg-muted animate-pulse" />
     );
   }
 
@@ -96,7 +96,7 @@ const VideoShowcase = () => {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       <div className="relative rounded-3xl overflow-hidden shadow-elevated bg-foreground/5">
         {/* Video Container */}
         <div 
