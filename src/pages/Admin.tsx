@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ import HeroBackgroundsTab from "@/components/HeroBackgroundsTab";
 import FeaturedProductsTab from "@/components/FeaturedProductsTab";
 import VideoShowcasesTab from "@/components/VideoShowcasesTab";
 import UsersManagementTab from "@/components/UsersManagementTab";
+import ExistingImagesDialog from "@/components/ExistingImagesDialog";
 
 interface Product {
   id: string;
@@ -304,6 +305,11 @@ const ProductsTab = ({
   const [colorImageFile, setColorImageFile] = useState<File | null>(null);
   const [uploadingColor, setUploadingColor] = useState(false);
 
+  // Existing images dialog state
+  const [showExistingImagesDialog, setShowExistingImagesDialog] = useState(false);
+  const [existingImagesMode, setExistingImagesMode] = useState<"gallery" | "gallery360" | "color">("gallery");
+  const [colorImageUrl, setColorImageUrl] = useState<string | null>(null);
+
   const resetForm = () => {
     setFormData({ name: "", description: "", price: "", category_id: "", rating: "4.5", in_stock: true });
     setImageFile(null);
@@ -314,7 +320,45 @@ const ProductsTab = ({
     setNewSpec({ name: "", value: "" });
     setNewColor({ name: "", hex: "#000000" });
     setColorImageFile(null);
+    setColorImageUrl(null);
     setShowForm(false);
+  };
+
+  const handleSelectExistingImages = async (imageUrls: string[]) => {
+    if (!editingProduct) return;
+    
+    const is360 = existingImagesMode === "gallery360";
+    const uploadedImages: ProductImage[] = [];
+
+    for (const url of imageUrls) {
+      const { data: imageData, error: insertError } = await supabase
+        .from("product_images")
+        .insert({
+          product_id: editingProduct.id,
+          image_url: url,
+          sort_order: galleryImages.length + uploadedImages.length,
+          is_360: is360,
+        })
+        .select()
+        .single();
+
+      if (!insertError && imageData) {
+        uploadedImages.push(imageData as ProductImage);
+      }
+    }
+
+    if (uploadedImages.length > 0) {
+      setGalleryImages([...galleryImages, ...uploadedImages]);
+      toast({ 
+        title: is360 ? "360° Images Added" : "Images Added",
+        description: `${uploadedImages.length} image(s) added from gallery.`,
+      });
+    }
+  };
+
+  const handleSelectExistingColorImage = (imageUrl: string) => {
+    setColorImageUrl(imageUrl);
+    setColorImageFile(null);
   };
 
   const fetchSpecifications = async (productId: string) => {
@@ -498,11 +542,10 @@ const ProductsTab = ({
     if (!editingProduct || !newColor.name.trim()) return;
     
     setUploadingColor(true);
-    let colorImageUrl: string | null = null;
+    let finalColorImageUrl: string | null = colorImageUrl; // Use existing selected URL
 
-    // Upload color image if provided
+    // Upload color image if file provided (takes priority)
     if (colorImageFile) {
-      // Compress image before upload
       const compressedFile = await compressImage(colorImageFile, 1200, 0.8);
       const fileName = `color-${Date.now()}-${compressedFile.name}`;
       
@@ -514,7 +557,7 @@ const ProductsTab = ({
         const { data: urlData } = supabase.storage
           .from("product-images")
           .getPublicUrl(fileName);
-        colorImageUrl = urlData.publicUrl;
+        finalColorImageUrl = urlData.publicUrl;
       }
     }
 
@@ -524,7 +567,7 @@ const ProductsTab = ({
         product_id: editingProduct.id,
         color_name: newColor.name.trim(),
         color_hex: newColor.hex,
-        image_url: colorImageUrl,
+        image_url: finalColorImageUrl,
         sort_order: productColors.length,
       })
       .select()
@@ -540,6 +583,7 @@ const ProductsTab = ({
       setProductColors([...productColors, data as ProductColor]);
       setNewColor({ name: "", hex: "#000000" });
       setColorImageFile(null);
+      setColorImageUrl(null);
       toast({ 
         title: "Color Added",
         description: `${data.color_name} has been added.`,
@@ -849,11 +893,11 @@ const ProductsTab = ({
                       )}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
                         <Upload className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          {uploadingGallery ? "Uploading..." : "Regular Images"}
+                        <span className="text-xs text-muted-foreground">
+                          {uploadingGallery ? "..." : "Upload"}
                         </span>
                         <input
                           type="file"
@@ -864,11 +908,20 @@ const ProductsTab = ({
                           disabled={uploadingGallery}
                         />
                       </label>
-                      <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExistingImagesMode("gallery");
+                          setShowExistingImagesDialog(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl border-2 border-dashed border-accent/50 bg-accent/5 hover:bg-accent/10 transition-colors"
+                      >
+                        <FolderOpen className="w-4 h-4 text-accent-foreground" />
+                        <span className="text-xs text-accent-foreground">Gallery</span>
+                      </button>
+                      <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
                         <RotateCcw className="w-4 h-4 text-primary" />
-                        <span className="text-sm text-primary">
-                          360° Images
-                        </span>
+                        <span className="text-xs text-primary">360°</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -878,6 +931,17 @@ const ProductsTab = ({
                           disabled={uploadingGallery}
                         />
                       </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExistingImagesMode("gallery360");
+                          setShowExistingImagesDialog(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
+                      >
+                        <FolderOpen className="w-4 h-4 text-primary" />
+                        <span className="text-xs text-primary">360° Gallery</span>
+                      </button>
                     </div>
                   </>
                 )}
@@ -945,14 +1009,28 @@ const ProductsTab = ({
                         />
                         <label className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 text-xs text-muted-foreground">
                           <Upload className="w-3 h-3" />
-                          {colorImageFile ? colorImageFile.name.slice(0, 10) + '...' : 'Image'}
+                          {colorImageFile ? colorImageFile.name.slice(0, 8) + '...' : 'Upload'}
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => setColorImageFile(e.target.files?.[0] || null)}
+                            onChange={(e) => {
+                              setColorImageFile(e.target.files?.[0] || null);
+                              setColorImageUrl(null);
+                            }}
                             className="hidden"
                           />
                         </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExistingImagesMode("color");
+                            setShowExistingImagesDialog(true);
+                          }}
+                          className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-accent/50 bg-accent/5 hover:bg-accent/10 text-xs text-accent-foreground"
+                        >
+                          <FolderOpen className="w-3 h-3" />
+                          {colorImageUrl ? '✓' : 'Gallery'}
+                        </button>
                       </div>
                       <button
                         type="button"
@@ -1036,6 +1114,14 @@ const ProductsTab = ({
         confirmText="Delete Product"
         variant="destructive"
         onConfirm={handleConfirmDelete}
+      />
+
+      <ExistingImagesDialog
+        open={showExistingImagesDialog}
+        onOpenChange={setShowExistingImagesDialog}
+        onSelect={existingImagesMode === "color" ? handleSelectExistingColorImage : () => {}}
+        multiSelect={existingImagesMode !== "color"}
+        onMultiSelect={existingImagesMode !== "color" ? handleSelectExistingImages : undefined}
       />
     </div>
   );
