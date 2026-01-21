@@ -310,6 +310,61 @@ const ProductsTab = ({
   const [existingImagesMode, setExistingImagesMode] = useState<"gallery" | "gallery360" | "color">("gallery");
   const [colorImageUrl, setColorImageUrl] = useState<string | null>(null);
 
+  // Color name to hex mapping for auto-detection
+  const colorNameToHex: Record<string, string> = {
+    black: "#000000",
+    white: "#FFFFFF",
+    red: "#FF0000",
+    green: "#00FF00",
+    blue: "#0000FF",
+    yellow: "#FFFF00",
+    orange: "#FFA500",
+    pink: "#FFC0CB",
+    purple: "#800080",
+    violet: "#EE82EE",
+    brown: "#A52A2A",
+    gray: "#808080",
+    grey: "#808080",
+    silver: "#C0C0C0",
+    gold: "#FFD700",
+    navy: "#000080",
+    teal: "#008080",
+    cyan: "#00FFFF",
+    magenta: "#FF00FF",
+    maroon: "#800000",
+    olive: "#808000",
+    lime: "#00FF00",
+    aqua: "#00FFFF",
+    coral: "#FF7F50",
+    salmon: "#FA8072",
+    beige: "#F5F5DC",
+    ivory: "#FFFFF0",
+    khaki: "#F0E68C",
+    lavender: "#E6E6FA",
+    mint: "#98FF98",
+    peach: "#FFCBA4",
+    rose: "#FF007F",
+    ruby: "#E0115F",
+    emerald: "#50C878",
+    sapphire: "#0F52BA",
+    crimson: "#DC143C",
+    indigo: "#4B0082",
+    turquoise: "#40E0D0",
+    chocolate: "#D2691E",
+    tan: "#D2B48C",
+    charcoal: "#36454F",
+  };
+
+  const handleColorNameChange = (name: string) => {
+    const lowerName = name.toLowerCase().trim();
+    const matchedHex = colorNameToHex[lowerName];
+    if (matchedHex) {
+      setNewColor({ name, hex: matchedHex });
+    } else {
+      setNewColor({ ...newColor, name });
+    }
+  };
+
   const resetForm = () => {
     setFormData({ name: "", description: "", price: "", category_id: "", rating: "4.5", in_stock: true });
     setImageFile(null);
@@ -995,9 +1050,9 @@ const ProductsTab = ({
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
-                        placeholder="Color name (e.g., Red)"
+                        placeholder="Color name (e.g., Red, Black)"
                         value={newColor.name}
-                        onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
+                        onChange={(e) => handleColorNameChange(e.target.value)}
                         className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                       />
                       <div className="flex gap-2">
@@ -1122,6 +1177,7 @@ const ProductsTab = ({
         onSelect={existingImagesMode === "color" ? handleSelectExistingColorImage : () => {}}
         multiSelect={existingImagesMode !== "color"}
         onMultiSelect={existingImagesMode !== "color" ? handleSelectExistingImages : undefined}
+        productImages={existingImagesMode === "color" ? galleryImages.map(img => ({ url: img.image_url, name: `Gallery ${img.sort_order}` })) : undefined}
       />
     </div>
   );

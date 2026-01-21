@@ -22,6 +22,7 @@ interface ExistingImagesDialogProps {
   onSelect: (imageUrl: string) => void;
   multiSelect?: boolean;
   onMultiSelect?: (imageUrls: string[]) => void;
+  productImages?: { url: string; name?: string }[];
 }
 
 const ExistingImagesDialog = ({
@@ -30,6 +31,7 @@ const ExistingImagesDialog = ({
   onSelect,
   multiSelect = false,
   onMultiSelect,
+  productImages,
 }: ExistingImagesDialogProps) => {
   const [images, setImages] = useState<ExistingImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,10 +40,19 @@ const ExistingImagesDialog = ({
 
   useEffect(() => {
     if (open) {
-      fetchImages();
+      if (productImages && productImages.length > 0) {
+        // Use provided product images instead of fetching
+        setImages(productImages.map((img, idx) => ({
+          url: img.url,
+          name: img.name || `Image ${idx + 1}`,
+        })));
+        setLoading(false);
+      } else {
+        fetchImages();
+      }
       setSelectedImages([]);
     }
-  }, [open]);
+  }, [open, productImages]);
 
   const fetchImages = async () => {
     setLoading(true);
@@ -95,19 +106,21 @@ const ExistingImagesDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ImageIcon className="w-5 h-5" />
-            Select from Gallery
+            {productImages ? "Select from Product Gallery" : "Select from Gallery"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search images..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        {images.length > 6 && (
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search images..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
