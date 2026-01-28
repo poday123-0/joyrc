@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,9 +15,25 @@ const Login = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("logo_url")
+        .limit(1)
+        .maybeSingle();
+      
+      if (data?.logo_url) {
+        setLogoUrl(data.logo_url);
+      }
+    };
+    fetchLogo();
+  }, []);
 
   const handleForgotPassword = async () => {
     if (!email) {
@@ -104,29 +121,33 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-md mx-auto px-4 pt-8 pb-8">
-        {/* Header with logo */}
-        <div className="gradient-auth-dark rounded-3xl p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-cta flex items-center justify-center">
-            <span className="text-2xl">🏎️</span>
+        {/* Header with system logo */}
+        <div className="glass-card rounded-3xl p-8 text-center shadow-soft">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl overflow-hidden bg-muted flex items-center justify-center">
+            <img 
+              src={logoUrl || rcJoyLogo} 
+              alt="Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white">
-            {isLogin ? "Welcome Back !" : "Join RC Joy"}
+          <h1 className="text-2xl font-bold text-foreground">
+            {isLogin ? "Welcome Back!" : "Create Account"}
           </h1>
-          <p className="text-white/60 text-sm mt-2">
-            {isLogin ? "Your world of RC toys awaits" : "Everything you need for ultimate RC fun"}
+          <p className="text-muted-foreground text-sm mt-2">
+            {isLogin ? "Sign in to continue" : "Join us today"}
           </p>
         </div>
 
         {/* Toggle buttons */}
-        <div className="flex mt-6 bg-white rounded-full p-1 shadow-soft">
+        <div className="flex mt-6 glass-card rounded-full p-1 shadow-soft">
           <button
             onClick={() => setIsLogin(true)}
             className={`flex-1 py-3 rounded-full font-medium transition-all ${
               isLogin
                 ? "bg-primary text-primary-foreground shadow-soft"
-                : "text-muted-foreground"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Log In
@@ -136,7 +157,7 @@ const Login = () => {
             className={`flex-1 py-3 rounded-full font-medium transition-all ${
               !isLogin
                 ? "bg-primary text-primary-foreground shadow-soft"
-                : "text-muted-foreground"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Sign Up
@@ -289,7 +310,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-full gradient-primary text-white font-semibold shadow-elevated hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold shadow-soft hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {loading ? "Please wait..." : isLogin ? "Log In" : "Create Account"}
           </button>
