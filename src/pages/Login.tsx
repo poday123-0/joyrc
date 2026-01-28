@@ -136,7 +136,7 @@ const Login = () => {
 
         {/* Header with system logo */}
         <div className="glass-card rounded-3xl p-8 text-center shadow-soft">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl overflow-hidden bg-muted flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto mb-4 overflow-hidden flex items-center justify-center">
             <img 
               src={logoUrl || rcJoyLogo} 
               alt="Logo" 
