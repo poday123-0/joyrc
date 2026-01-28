@@ -28,6 +28,7 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
+  old_price: number | null;
   image_url: string | null;
   category_id: string | null;
   rating: number | null;
@@ -282,6 +283,7 @@ const ProductsTab = ({
     name: "",
     description: "",
     price: "",
+    old_price: "",
     category_id: "",
     rating: "4.5",
     in_stock: true,
@@ -369,7 +371,7 @@ const ProductsTab = ({
   };
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", price: "", category_id: "", rating: "4.5", in_stock: true });
+    setFormData({ name: "", description: "", price: "", old_price: "", category_id: "", rating: "4.5", in_stock: true });
     setImageFile(null);
     setEditingProduct(null);
     setSpecifications([]);
@@ -458,6 +460,7 @@ const ProductsTab = ({
       name: product.name,
       description: product.description || "",
       price: product.price.toString(),
+      old_price: product.old_price?.toString() || "",
       category_id: product.category_id || "",
       rating: (product.rating || 4.5).toString(),
       in_stock: product.in_stock ?? true,
@@ -700,6 +703,7 @@ const ProductsTab = ({
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         price: parseFloat(formData.price),
+        old_price: formData.old_price ? parseFloat(formData.old_price) : null,
         category_id: formData.category_id || null,
         rating: parseFloat(formData.rating),
         in_stock: formData.in_stock,
@@ -800,11 +804,19 @@ const ProductsTab = ({
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
                 required
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <input
                   type="number"
                   step="0.01"
-                  placeholder="Price (MVR)"
+                  placeholder="Old Price (MVR)"
+                  value={formData.old_price}
+                  onChange={(e) => setFormData({ ...formData, old_price: e.target.value })}
+                  className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="New Price (MVR)"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
@@ -815,7 +827,7 @@ const ProductsTab = ({
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                   className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
                 >
-                  <option value="">Select Category</option>
+                  <option value="">Category</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}

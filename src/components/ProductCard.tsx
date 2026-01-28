@@ -10,6 +10,7 @@ interface ProductCardProps {
     name: string;
     category?: string;
     price: number;
+    old_price?: number | null;
     rating?: number;
     image?: string;
     image_url?: string;
@@ -71,8 +72,8 @@ const ProductCard = memo(({ product, size = "large", priority = false }: Product
           </div>
           
           {/* Product name overlay at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h4 className="font-semibold text-white text-base lg:text-lg leading-tight line-clamp-2 drop-shadow-lg">
+          <div className="absolute bottom-0 left-0 right-0 p-3 lg:p-4">
+            <h4 className="font-medium text-white text-sm lg:text-base leading-tight line-clamp-2 drop-shadow-lg">
               {product.name}
             </h4>
           </div>
@@ -86,34 +87,49 @@ const ProductCard = memo(({ product, size = "large", priority = false }: Product
             transform: 'rotateY(180deg)'
           }}
         >
-          <div className="h-full flex flex-col p-5">
+          <div className="h-full flex flex-col p-4">
             {/* Header */}
-            <div className="mb-3">
-              <h4 className="font-bold text-foreground text-base lg:text-lg leading-tight line-clamp-2">
+            <div className="mb-2">
+              <h4 className="font-semibold text-foreground text-sm lg:text-base leading-tight line-clamp-2">
                 {product.name}
               </h4>
-              <p className="text-primary font-semibold text-lg mt-1">
-                {formatMVR(product.price)}
-              </p>
+              <div className="flex items-center gap-2 mt-1.5">
+                {product.old_price && product.old_price > product.price ? (
+                  <>
+                    <span className="text-muted-foreground text-xs line-through">
+                      {formatMVR(product.old_price)}
+                    </span>
+                    <span className="text-primary font-bold text-base">
+                      {formatMVR(product.price)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-primary font-bold text-base">
+                    {formatMVR(product.price)}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Divider */}
-            <div className="w-full h-px bg-border mb-3" />
+            <div className="w-full h-px bg-border mb-2" />
             
-            {/* Description */}
-            <div className="flex-1 overflow-y-auto">
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {product.description || "Discover the thrill of RC with this amazing product. Built with premium materials for durability and performance. Perfect for enthusiasts of all skill levels."}
-              </p>
+            {/* Description - Auto scroll with animation */}
+            <div className="flex-1 overflow-hidden relative">
+              <div className="animate-scroll-up hover:pause-animation">
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {product.description || "Discover the thrill of RC with this amazing product. Built with premium materials for durability and performance. Perfect for enthusiasts of all skill levels."}
+                </p>
+              </div>
             </div>
 
-            {/* Action button */}
+            {/* Action button - smaller and nicer */}
             <button
               onClick={handleNavigate}
-              className="mt-4 w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="mt-3 w-full py-2 bg-primary text-primary-foreground rounded-lg font-medium text-xs hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-1.5 shadow-soft hover:shadow-elevated"
             >
               View Details
-              <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
             </button>
           </div>
         </div>
