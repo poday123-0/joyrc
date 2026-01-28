@@ -318,18 +318,18 @@ const Categories = () => {
             {/* Mobile Category Pills - Circle Design */}
             <div className="lg:hidden mb-6">
               <h3 className="text-sm font-medium text-muted-foreground mb-3">Browse by Category</h3>
-              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
+              <div className="flex gap-5 overflow-x-auto pb-3 px-1 scrollbar-hide">
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryChange(category.id)}
-                    className="flex flex-col items-center gap-2 flex-shrink-0"
+                    className="flex flex-col items-center gap-1.5 flex-shrink-0"
                   >
                     <div
-                      className={`w-16 h-16 rounded-full overflow-hidden transition-all shadow-soft ${
+                      className={`w-14 h-14 rounded-full overflow-hidden transition-all ${
                         activeCategory === category.id
-                          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                          : "hover:shadow-elevated"
+                          ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-soft"
+                          : "shadow-soft hover:shadow-elevated"
                       }`}
                     >
                       {category.image_url ? (
@@ -341,15 +341,15 @@ const Categories = () => {
                       ) : (
                         <div className={`w-full h-full flex items-center justify-center ${
                           activeCategory === category.id
-                            ? "bg-primary"
+                            ? "bg-primary text-primary-foreground"
                             : "bg-muted"
                         }`}>
-                          <span className="text-2xl">{category.icon}</span>
+                          <span className="text-lg">{category.icon}</span>
                         </div>
                       )}
                     </div>
-                    <span className={`text-xs font-medium text-center max-w-16 truncate ${
-                      activeCategory === category.id ? "text-primary" : "text-foreground"
+                    <span className={`text-[11px] font-medium text-center w-14 truncate ${
+                      activeCategory === category.id ? "text-primary" : "text-muted-foreground"
                     }`}>
                       {category.name}
                     </span>
