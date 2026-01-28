@@ -93,10 +93,10 @@ const Categories = () => {
   // Filter and sort products
   const filteredProducts = products
     .filter((p) => {
-      // Category filter
+      // Category filter - now handles category_id directly
       if (activeCategory !== "all") {
-        const category = categories.find((c) => c.id === activeCategory);
-        if (category && p.category?.toLowerCase() !== category.name.toLowerCase()) {
+        // Check if filter is a UUID (category_id) or category name
+        if (p.category_id !== activeCategory) {
           return false;
         }
       }

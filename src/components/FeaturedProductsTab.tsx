@@ -22,21 +22,30 @@ interface Product {
   image_url: string | null;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface FeaturedProduct {
   id: string;
   product_id: string;
+  category_id: string | null;
   title: string | null;
   subtitle: string | null;
   sort_order: number;
   is_active: boolean;
   product: Product;
+  category?: Category;
 }
 
 const FeaturedProductsTab = () => {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [customTitle, setCustomTitle] = useState("");
   const [customSubtitle, setCustomSubtitle] = useState("");
 
@@ -45,17 +54,19 @@ const FeaturedProductsTab = () => {
   }, []);
 
   const fetchData = async () => {
-    // Fetch featured products
+    // Fetch featured products with category
     const { data: featured } = await supabase
       .from("featured_products")
       .select(`
         id,
         product_id,
+        category_id,
         title,
         subtitle,
         sort_order,
         is_active,
-        product:products (id, name, price, image_url)
+        product:products (id, name, price, image_url),
+        category:categories (id, name)
       `)
       .order("sort_order");
 
@@ -73,6 +84,16 @@ const FeaturedProductsTab = () => {
       setAllProducts(products);
     }
 
+    // Fetch all categories
+    const { data: cats } = await supabase
+      .from("categories")
+      .select("id, name")
+      .order("sort_order");
+
+    if (cats) {
+      setCategories(cats);
+    }
+
     setLoading(false);
   };
 
@@ -86,10 +107,20 @@ const FeaturedProductsTab = () => {
       return;
     }
 
+    if (!selectedCategoryId) {
+      toast({
+        title: "Error",
+        description: "Please select a category filter",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from("featured_products")
       .insert({
         product_id: selectedProductId,
+        category_id: selectedCategoryId,
         title: customTitle || null,
         subtitle: customSubtitle || null,
         sort_order: featuredProducts.length
@@ -107,6 +138,7 @@ const FeaturedProductsTab = () => {
         description: "Featured product added"
       });
       setSelectedProductId("");
+      setSelectedCategoryId("");
       setCustomTitle("");
       setCustomSubtitle("");
       fetchData();
@@ -141,16 +173,21 @@ const FeaturedProductsTab = () => {
     }
   };
 
-  const handleUpdateField = async (id: string, field: 'title' | 'subtitle', value: string) => {
+  const handleUpdateField = async (id: string, field: 'title' | 'subtitle' | 'category_id', value: string) => {
     const { error } = await supabase
       .from("featured_products")
       .update({ [field]: value || null })
       .eq("id", id);
 
     if (!error) {
-      setFeaturedProducts(prev =>
-        prev.map(fp => fp.id === id ? { ...fp, [field]: value || null } : fp)
-      );
+      if (field === 'category_id') {
+        // Refetch to get updated category name
+        fetchData();
+      } else {
+        setFeaturedProducts(prev =>
+          prev.map(fp => fp.id === id ? { ...fp, [field]: value || null } : fp)
+        );
+      }
     }
   };
 
@@ -203,16 +240,34 @@ const FeaturedProductsTab = () => {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Custom Subtitle (optional)</Label>
-          <Input
-            value={customSubtitle}
-            onChange={(e) => setCustomSubtitle(e.target.value)}
-            placeholder="Custom description for homepage"
-          />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Custom Subtitle (optional)</Label>
+            <Input
+              value={customSubtitle}
+              onChange={(e) => setCustomSubtitle(e.target.value)}
+              placeholder="Custom description for homepage"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Category Filter (required)</Label>
+            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose category to filter by" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <Button onClick={handleAddFeatured} disabled={!selectedProductId}>
+        <Button onClick={handleAddFeatured} disabled={!selectedProductId || !selectedCategoryId}>
           <Plus className="w-4 h-4 mr-2" />
           Add to Featured
         </Button>
@@ -292,11 +347,11 @@ const FeaturedProductsTab = () => {
                   </div>
 
                   {/* Editable fields */}
-                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-3">
                     <Input
                       value={featured.title || ""}
                       onChange={(e) => handleUpdateField(featured.id, 'title', e.target.value)}
-                      placeholder="Custom title (uses product name if empty)"
+                      placeholder="Custom title"
                       className="text-sm"
                     />
                     <Input
@@ -305,7 +360,27 @@ const FeaturedProductsTab = () => {
                       placeholder="Custom subtitle"
                       className="text-sm"
                     />
+                    <Select 
+                      value={featured.category_id || ""} 
+                      onValueChange={(value) => handleUpdateField(featured.id, 'category_id', value)}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Category filter" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {featured.category && (
+                    <p className="text-xs text-muted-foreground">
+                      Clicking navigates to: {featured.category.name} category
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
