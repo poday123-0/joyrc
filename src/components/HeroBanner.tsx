@@ -7,15 +7,39 @@ import heroRcTrack from "@/assets/hero-rc-track.jpg";
 interface HeroBackground {
   id: string;
   media_url: string;
-  media_type: 'image' | 'video';
+  media_type: 'image' | 'video' | 'youtube';
   title: string | null;
   subtitle: string | null;
 }
 
+// Extract YouTube video ID from various URL formats
+const getYouTubeVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/,
+    /youtube\.com\/shorts\/([^&\s?]+)/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+};
+
 // Preload images for smoother transitions
-const preloadMedia = (url: string, type: 'image' | 'video'): Promise<void> => {
+const preloadMedia = (url: string, type: 'image' | 'video' | 'youtube'): Promise<void> => {
   return new Promise((resolve) => {
-    if (type === 'image') {
+    if (type === 'youtube') {
+      // For YouTube, preload the thumbnail
+      const videoId = getYouTubeVideoId(url);
+      if (videoId) {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      } else {
+        resolve();
+      }
+    } else if (type === 'image') {
       const img = new Image();
       img.onload = () => resolve();
       img.onerror = () => resolve();
@@ -36,34 +60,49 @@ const BackgroundMedia = memo(({
 }: { 
   bg: HeroBackground; 
   isActive: boolean; 
-}) => (
-  <div
-    className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
-      isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
-    }`}
-  >
-    {bg.media_type === 'video' ? (
-      <video
-        src={bg.media_url}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload={isActive ? "auto" : "none"}
-        className="w-full h-full object-cover"
-      />
-    ) : (
-      <img
-        src={bg.media_url}
-        alt="Hero background"
-        loading={isActive ? "eager" : "lazy"}
-        decoding={isActive ? "sync" : "async"}
-        fetchPriority={isActive ? "high" : "auto"}
-        className="w-full h-full object-cover"
-      />
-    )}
-  </div>
-));
+}) => {
+  const youtubeId = bg.media_type === 'youtube' ? getYouTubeVideoId(bg.media_url) : null;
+
+  return (
+    <div
+      className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
+        isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+    >
+      {bg.media_type === 'youtube' && youtubeId ? (
+        <div className="relative w-full h-full overflow-hidden">
+          {/* Scale up iframe to hide YouTube branding at edges */}
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${isActive ? 1 : 0}&mute=1&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1`}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] min-w-[120%] min-h-[120%] pointer-events-none"
+            allow="autoplay; encrypted-media"
+            allowFullScreen={false}
+            style={{ border: 0 }}
+            title="Hero video background"
+          />
+        </div>
+      ) : bg.media_type === 'video' ? (
+        <video
+          src={bg.media_url}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload={isActive ? "auto" : "none"}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <img
+          src={bg.media_url}
+          alt="Hero background"
+          loading={isActive ? "eager" : "lazy"}
+          decoding={isActive ? "sync" : "async"}
+          className="w-full h-full object-cover"
+        />
+      )}
+    </div>
+  );
+});
 
 BackgroundMedia.displayName = 'BackgroundMedia';
 
@@ -83,7 +122,7 @@ const HeroBanner = () => {
       if (!error && data && data.length > 0) {
         const typedData = data.map(bg => ({
           ...bg,
-          media_type: bg.media_type as 'image' | 'video'
+          media_type: bg.media_type as 'image' | 'video' | 'youtube'
         }));
         setBackgrounds(typedData);
         
