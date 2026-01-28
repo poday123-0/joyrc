@@ -23,6 +23,23 @@ interface FeaturedProduct {
   };
 }
 
+interface HomeContent {
+  hero_title: string | null;
+  hero_subtitle: string | null;
+  feature_1_icon: string | null;
+  feature_1_title: string | null;
+  feature_1_description: string | null;
+  feature_2_icon: string | null;
+  feature_2_title: string | null;
+  feature_2_description: string | null;
+  feature_3_icon: string | null;
+  feature_3_title: string | null;
+  feature_3_description: string | null;
+  cta_title: string | null;
+  cta_subtitle: string | null;
+  cta_button_text: string | null;
+}
+
 import OptimizedImage, { preloadImage } from "@/components/OptimizedImage";
 
 // Preload featured product images on hover
@@ -37,37 +54,63 @@ const preloadFeaturedImages = (products: FeaturedProduct[]) => {
 const Index = () => {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [homeContent, setHomeContent] = useState<HomeContent | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      const { data, error } = await supabase
-        .from("featured_products")
-        .select(`
-          id,
-          product_id,
-          category_id,
-          title,
-          subtitle,
-          product:products (
+    const fetchData = async () => {
+      const [featuredRes, contentRes] = await Promise.all([
+        supabase
+          .from("featured_products")
+          .select(`
             id,
-            name,
-            price,
-            image_url,
-            rating,
-            description
-          )
-        `)
-        .eq("is_active", true)
-        .order("sort_order");
+            product_id,
+            category_id,
+            title,
+            subtitle,
+            product:products (
+              id,
+              name,
+              price,
+              image_url,
+              rating,
+              description
+            )
+          `)
+          .eq("is_active", true)
+          .order("sort_order"),
+        supabase
+          .from("system_settings")
+          .select(`
+            hero_title,
+            hero_subtitle,
+            feature_1_icon,
+            feature_1_title,
+            feature_1_description,
+            feature_2_icon,
+            feature_2_title,
+            feature_2_description,
+            feature_3_icon,
+            feature_3_title,
+            feature_3_description,
+            cta_title,
+            cta_subtitle,
+            cta_button_text
+          `)
+          .limit(1)
+          .maybeSingle()
+      ]);
 
-      if (data && !error) {
-        setFeaturedProducts(data as unknown as FeaturedProduct[]);
+      if (featuredRes.data) {
+        setFeaturedProducts(featuredRes.data as unknown as FeaturedProduct[]);
+      }
+      if (contentRes.data) {
+        setHomeContent(contentRes.data as HomeContent);
       }
       setLoading(false);
     };
 
-    fetchFeaturedProducts();
+    fetchData();
   }, []);
 
   return (
@@ -84,10 +127,10 @@ const Index = () => {
         <div className="container max-w-7xl mx-auto px-4 lg:px-8 text-center">
           <div className="space-y-4 mb-6">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-              Ultimate RC Experience
+              {homeContent?.hero_title || "Ultimate RC Experience"}
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Discover premium remote control toys that bring excitement to every adventure.
+              {homeContent?.hero_subtitle || "Discover premium remote control toys that bring excitement to every adventure."}
             </p>
           </div>
 
@@ -174,29 +217,29 @@ const Index = () => {
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
             <div className="text-center space-y-4 p-6">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
-                <span className="text-3xl">🚗</span>
+                <span className="text-3xl">{homeContent?.feature_1_icon || "🚗"}</span>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">Premium Quality</h3>
+              <h3 className="text-xl font-semibold text-foreground">{homeContent?.feature_1_title || "Premium Quality"}</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Every toy is crafted with precision and built to last through countless adventures.
+                {homeContent?.feature_1_description || "Every toy is crafted with precision and built to last through countless adventures."}
               </p>
             </div>
             <div className="text-center space-y-4 p-6">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
-                <span className="text-3xl">🎮</span>
+                <span className="text-3xl">{homeContent?.feature_2_icon || "🎮"}</span>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">Easy Control</h3>
+              <h3 className="text-xl font-semibold text-foreground">{homeContent?.feature_2_title || "Easy Control"}</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Intuitive controls designed for beginners and exciting enough for experts.
+                {homeContent?.feature_2_description || "Intuitive controls designed for beginners and exciting enough for experts."}
               </p>
             </div>
             <div className="text-center space-y-4 p-6">
               <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
-                <span className="text-3xl">🔋</span>
+                <span className="text-3xl">{homeContent?.feature_3_icon || "🔋"}</span>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">Long Battery Life</h3>
+              <h3 className="text-xl font-semibold text-foreground">{homeContent?.feature_3_title || "Long Battery Life"}</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Extended playtime with powerful batteries that keep the fun going.
+                {homeContent?.feature_3_description || "Extended playtime with powerful batteries that keep the fun going."}
               </p>
             </div>
           </div>
@@ -207,17 +250,26 @@ const Index = () => {
       <section className="py-20 lg:py-32">
         <div className="container max-w-4xl mx-auto px-4 lg:px-8 text-center space-y-8">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-            Ready to start your
-            <br />
-            <span className="text-primary">RC adventure?</span>
+            {homeContent?.cta_title?.split('\n').map((line, i) => (
+              <span key={i}>
+                {i > 0 && <br />}
+                {i === 1 ? <span className="text-primary">{line}</span> : line}
+              </span>
+            )) || (
+              <>
+                Ready to start your
+                <br />
+                <span className="text-primary">RC adventure?</span>
+              </>
+            )}
           </h2>
           <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join thousands of happy customers who've discovered the thrill of remote control.
+            {homeContent?.cta_subtitle || "Join thousands of happy customers who've discovered the thrill of remote control."}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link to="/categories">
               <button className="group bg-foreground text-background font-medium px-8 py-4 rounded-full text-base lg:text-lg hover:bg-foreground/90 transition-all duration-300 flex items-center gap-2">
-                Browse Collection
+                {homeContent?.cta_button_text || "Browse Collection"}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>

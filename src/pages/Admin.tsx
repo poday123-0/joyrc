@@ -22,6 +22,7 @@ import FeaturedProductsTab from "@/components/FeaturedProductsTab";
 import VideoShowcasesTab from "@/components/VideoShowcasesTab";
 import UsersManagementTab from "@/components/UsersManagementTab";
 import ExistingImagesDialog from "@/components/ExistingImagesDialog";
+import HomeContentTab from "@/components/HomeContentTab";
 
 interface Product {
   id: string;
@@ -81,7 +82,7 @@ interface SystemSettings {
   google_login_enabled: boolean;
 }
 
-type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "settings";
+type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -96,6 +97,7 @@ const tabs = [
   { id: "admins", label: "Admins", icon: Users },
   { id: "users", label: "Users", icon: User },
   { id: "hero", label: "Hero", icon: ImageIcon },
+  { id: "home-content", label: "Home", icon: FolderOpen },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -260,6 +262,7 @@ const Admin = () => {
             {activeTab === "admins" && <AdminManagementTab />}
             {activeTab === "users" && <UsersManagementTab />}
             {activeTab === "hero" && <HeroBackgroundsTab />}
+            {activeTab === "home-content" && <HomeContentTab />}
             {activeTab === "settings" && settings && (
               <SettingsTab 
                 settings={settings} 

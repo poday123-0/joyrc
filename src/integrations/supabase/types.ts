@@ -576,6 +576,18 @@ export type Database = {
       system_settings: {
         Row: {
           created_at: string
+          cta_button_text: string | null
+          cta_subtitle: string | null
+          cta_title: string | null
+          feature_1_description: string | null
+          feature_1_icon: string | null
+          feature_1_title: string | null
+          feature_2_description: string | null
+          feature_2_icon: string | null
+          feature_2_title: string | null
+          feature_3_description: string | null
+          feature_3_icon: string | null
+          feature_3_title: string | null
           google_login_enabled: boolean | null
           hero_subtitle: string | null
           hero_title: string | null
@@ -590,6 +602,18 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          cta_button_text?: string | null
+          cta_subtitle?: string | null
+          cta_title?: string | null
+          feature_1_description?: string | null
+          feature_1_icon?: string | null
+          feature_1_title?: string | null
+          feature_2_description?: string | null
+          feature_2_icon?: string | null
+          feature_2_title?: string | null
+          feature_3_description?: string | null
+          feature_3_icon?: string | null
+          feature_3_title?: string | null
           google_login_enabled?: boolean | null
           hero_subtitle?: string | null
           hero_title?: string | null
@@ -604,6 +628,18 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          cta_button_text?: string | null
+          cta_subtitle?: string | null
+          cta_title?: string | null
+          feature_1_description?: string | null
+          feature_1_icon?: string | null
+          feature_1_title?: string | null
+          feature_2_description?: string | null
+          feature_2_icon?: string | null
+          feature_2_title?: string | null
+          feature_3_description?: string | null
+          feature_3_icon?: string | null
+          feature_3_title?: string | null
           google_login_enabled?: boolean | null
           hero_subtitle?: string | null
           hero_title?: string | null
