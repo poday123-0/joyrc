@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { 
   TrendingUp, TrendingDown, Package, ShoppingCart, 
   DollarSign, Users, Plus, X, Trash2, Edit2, CheckCircle2,
-  ArrowUpRight, ArrowDownRight, Calendar, PieChart
+  ArrowUpRight, ArrowDownRight, Calendar, PieChart, Wallet
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -81,7 +81,6 @@ const AdminDashboard = () => {
     const allTransactions = transactionsRes.data || [];
     const monthlyTxns = monthlyTransactionsRes.data || [];
 
-    // Calculate stats
     const totalRevenue = allTransactions
       .filter(t => t.type === "income")
       .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -221,16 +220,22 @@ const AdminDashboard = () => {
   const monthlyNetProfit = stats.monthlyRevenue - stats.monthlyExpenses;
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="mb-2">
+        <h2 className="text-lg font-semibold text-foreground">Dashboard Overview</h2>
+        <p className="text-xs text-muted-foreground">Monitor your business performance</p>
+      </div>
+
+      {/* Primary Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <StatCard
           title="Total Revenue"
           value={formatMVRCompact(stats.totalRevenue)}
           icon={TrendingUp}
           trend={`${formatMVR(stats.monthlyRevenue)} this month`}
           trendUp={true}
-          color="mint"
+          variant="success"
         />
         <StatCard
           title="Total Expenses"
@@ -238,119 +243,130 @@ const AdminDashboard = () => {
           icon={TrendingDown}
           trend={`${formatMVR(stats.monthlyExpenses)} this month`}
           trendUp={false}
-          color="coral"
+          variant="danger"
         />
         <StatCard
           title="Net Profit"
           value={formatMVRCompact(netProfit)}
-          icon={DollarSign}
+          icon={Wallet}
           trend={`${formatMVR(monthlyNetProfit)} this month`}
           trendUp={monthlyNetProfit > 0}
-          color={netProfit >= 0 ? "teal" : "coral"}
-        />
-        <StatCard
-          title="Total Orders"
-          value={stats.totalOrders.toString()}
-          icon={ShoppingCart}
-          trend={`${stats.pendingOrders} pending`}
-          color="cyan"
-        />
-        <StatCard
-          title="Products"
-          value={stats.totalProducts.toString()}
-          icon={Package}
-          trend="In catalog"
-          color="pink"
-        />
-        <StatCard
-          title="Confirmed"
-          value={stats.confirmedOrders.toString()}
-          icon={CheckCircle2}
-          trend="Paid orders"
-          trendUp={true}
-          color="mint"
+          variant={netProfit >= 0 ? "primary" : "danger"}
+          className="col-span-2 lg:col-span-1"
         />
       </div>
 
-      {/* Quick Stats Bar */}
-      <div className="glass-card rounded-2xl p-4 shadow-soft">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-mint to-teal flex items-center justify-center flex-shrink-0">
-              <PieChart className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">This Month</p>
-              <p className="font-bold text-foreground">
-                {monthlyNetProfit >= 0 ? "+" : ""}{formatMVR(monthlyNetProfit)}
-              </p>
-            </div>
+      {/* Secondary Stats Row */}
+      <div className="grid grid-cols-3 gap-3">
+        <MiniStatCard
+          title="Orders"
+          value={stats.totalOrders.toString()}
+          icon={ShoppingCart}
+          subtitle={`${stats.pendingOrders} pending`}
+        />
+        <MiniStatCard
+          title="Products"
+          value={stats.totalProducts.toString()}
+          icon={Package}
+          subtitle="In catalog"
+        />
+        <MiniStatCard
+          title="Confirmed"
+          value={stats.confirmedOrders.toString()}
+          icon={CheckCircle2}
+          subtitle="Paid orders"
+        />
+      </div>
+
+      {/* Monthly Summary Card */}
+      <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Calendar className="w-4 h-4 text-primary" />
           </div>
-          <div className="flex gap-6 text-sm w-full sm:w-auto justify-around sm:justify-end">
-            <div className="text-center">
-              <p className="text-muted-foreground">Income</p>
-              <p className="font-semibold text-mint">{formatMVRCompact(stats.monthlyRevenue)}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-muted-foreground">Expenses</p>
-              <p className="font-semibold text-coral">{formatMVRCompact(stats.monthlyExpenses)}</p>
-            </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Monthly Summary</p>
+            <p className="text-xs text-muted-foreground">Current month performance</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-3 rounded-xl bg-muted/30">
+            <p className="text-xs text-muted-foreground mb-1">Income</p>
+            <p className="text-sm font-bold text-emerald-600">{formatMVRCompact(stats.monthlyRevenue)}</p>
+          </div>
+          <div className="text-center p-3 rounded-xl bg-muted/30">
+            <p className="text-xs text-muted-foreground mb-1">Expenses</p>
+            <p className="text-sm font-bold text-rose-500">{formatMVRCompact(stats.monthlyExpenses)}</p>
+          </div>
+          <div className="text-center p-3 rounded-xl bg-primary/5">
+            <p className="text-xs text-muted-foreground mb-1">Net</p>
+            <p className={`text-sm font-bold ${monthlyNetProfit >= 0 ? "text-primary" : "text-rose-500"}`}>
+              {monthlyNetProfit >= 0 ? "+" : ""}{formatMVRCompact(monthlyNetProfit)}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Transactions */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-foreground">Transactions</h3>
+      {/* Transactions Section */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">Transactions</h3>
+            <p className="text-xs text-muted-foreground">Recent financial activity</p>
+          </div>
           <button
             onClick={() => setShowTransactionForm(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full gradient-cta text-white text-sm font-medium shadow-soft"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
           >
-            <Plus className="w-4 h-4" /> Add Transaction
+            <Plus className="w-3.5 h-3.5" /> Add
           </button>
         </div>
 
         {showTransactionForm && (
-          <div className="glass-card rounded-2xl p-4 mb-4 shadow-soft">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold">
+          <div className="p-4 bg-muted/30 border-b border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-sm text-foreground">
                 {editingTransaction ? "Edit Transaction" : "New Transaction"}
               </h4>
-              <button onClick={resetForm}>
-                <X className="w-5 h-5 text-muted-foreground" />
+              <button 
+                onClick={resetForm}
+                className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+              >
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
+            
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, type: "income" })}
-                  className={`flex-1 py-2 rounded-xl font-medium transition-all ${
+                  className={`flex-1 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-1.5 ${
                     formData.type === "income"
-                      ? "bg-mint text-white"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-emerald-500 text-white shadow-sm"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  <ArrowUpRight className="w-4 h-4 inline mr-1" /> Income
+                  <ArrowUpRight className="w-4 h-4" /> Income
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, type: "expense" })}
-                  className={`flex-1 py-2 rounded-xl font-medium transition-all ${
+                  className={`flex-1 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-1.5 ${
                     formData.type === "expense"
-                      ? "bg-coral text-white"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-rose-500 text-white shadow-sm"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  <ArrowDownRight className="w-4 h-4 inline mr-1" /> Expense
+                  <ArrowDownRight className="w-4 h-4" /> Expense
                 </button>
               </div>
 
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 required
               >
                 <option value="">Select Category</option>
@@ -365,7 +381,7 @@ const AdminDashboard = () => {
                 placeholder="Amount (MVR)"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 required
               />
 
@@ -374,13 +390,13 @@ const AdminDashboard = () => {
                 placeholder="Description (optional)"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
 
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50"
+                className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50 hover:bg-primary/90 transition-colors"
               >
                 {saving ? "Saving..." : editingTransaction ? "Update Transaction" : "Add Transaction"}
               </button>
@@ -388,40 +404,40 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        <div className="space-y-2 max-h-80 overflow-y-auto">
+        <div className="divide-y divide-border max-h-80 overflow-y-auto">
           {transactions.slice(0, 20).map((tx) => (
-            <div key={tx.id} className="glass-card rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-soft">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  tx.type === "income" ? "bg-mint/20" : "bg-coral/20"
-                }`}>
-                  {tx.type === "income" ? (
-                    <ArrowUpRight className="w-5 h-5 text-mint" />
-                  ) : (
-                    <ArrowDownRight className="w-5 h-5 text-coral" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground text-sm">{tx.category}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {tx.description || new Date(tx.created_at).toLocaleDateString()}
-                  </p>
-                </div>
+            <div key={tx.id} className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                tx.type === "income" ? "bg-emerald-500/10" : "bg-rose-500/10"
+              }`}>
+                {tx.type === "income" ? (
+                  <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <ArrowDownRight className="w-4 h-4 text-rose-500" />
+                )}
               </div>
-              <div className="flex items-center justify-between sm:justify-end gap-3 ml-13 sm:ml-0">
-                <p className={`font-bold text-sm ${tx.type === "income" ? "text-mint" : "text-coral"}`}>
+              
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground text-sm truncate">{tx.category}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {tx.description || new Date(tx.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <p className={`font-semibold text-sm ${tx.type === "income" ? "text-emerald-600" : "text-rose-500"}`}>
                   {tx.type === "income" ? "+" : "-"}{formatMVR(tx.amount)}
                 </p>
                 <div className="flex gap-1">
                   <button
                     onClick={() => handleEdit(tx)}
-                    className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+                    className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
                   >
-                    <Edit2 className="w-3 h-3" />
+                    <Edit2 className="w-3 h-3 text-muted-foreground" />
                   </button>
                   <button
                     onClick={() => handleDeleteClick(tx.id)}
-                    className="w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                    className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
                   >
                     <Trash2 className="w-3 h-3 text-destructive" />
                   </button>
@@ -429,10 +445,14 @@ const AdminDashboard = () => {
               </div>
             </div>
           ))}
+          
           {transactions.length === 0 && (
-            <div className="text-center py-8">
-              <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground">No transactions yet</p>
+            <div className="text-center py-10">
+              <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-3 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground">No transactions yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Add your first transaction to get started</p>
             </div>
           )}
         </div>
@@ -451,48 +471,69 @@ const AdminDashboard = () => {
   );
 };
 
+// Primary Stat Card
 const StatCard = ({
   title,
   value,
   icon: Icon,
   trend,
   trendUp,
-  color,
+  variant,
+  className = "",
 }: {
   title: string;
   value: string;
   icon: any;
   trend: string;
   trendUp?: boolean;
-  color: string;
+  variant: "success" | "danger" | "primary";
+  className?: string;
 }) => {
-  const colorClasses: Record<string, string> = {
-    mint: "from-mint/20 to-mint/5 text-mint",
-    coral: "from-coral/20 to-coral/5 text-coral",
-    teal: "from-teal/20 to-teal/5 text-teal",
-    cyan: "from-cyan/20 to-cyan/5 text-cyan",
-    pink: "from-pink/20 to-pink/5 text-pink",
+  const variantStyles = {
+    success: "bg-emerald-500/10 text-emerald-600",
+    danger: "bg-rose-500/10 text-rose-500",
+    primary: "bg-primary/10 text-primary",
   };
 
   return (
-    <div className="glass-card rounded-2xl p-4 shadow-soft">
-      <div className="flex items-start justify-between">
-        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center`}>
-          <Icon className="w-5 h-5" />
+    <div className={`bg-card border border-border rounded-2xl p-4 ${className}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${variantStyles[variant]}`}>
+          <Icon className="w-4 h-4" />
         </div>
-      </div>
-      <p className="text-2xl font-bold text-foreground mt-3">{value}</p>
-      <p className="text-xs text-muted-foreground">{title}</p>
-      <div className="flex items-center gap-1 mt-1">
         {trendUp !== undefined && (
-          trendUp ? (
-            <ArrowUpRight className="w-3 h-3 text-mint" />
-          ) : (
-            <ArrowDownRight className="w-3 h-3 text-coral" />
-          )
+          <div className={`flex items-center gap-0.5 text-xs ${trendUp ? "text-emerald-600" : "text-rose-500"}`}>
+            {trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+          </div>
         )}
-        <span className="text-xs text-muted-foreground">{trend}</span>
       </div>
+      <p className="text-xl font-bold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{title}</p>
+      <p className="text-[10px] text-muted-foreground mt-1">{trend}</p>
+    </div>
+  );
+};
+
+// Mini Stat Card
+const MiniStatCard = ({
+  title,
+  value,
+  icon: Icon,
+  subtitle,
+}: {
+  title: string;
+  value: string;
+  icon: any;
+  subtitle: string;
+}) => {
+  return (
+    <div className="bg-card border border-border rounded-xl p-3 text-center">
+      <div className="w-8 h-8 rounded-lg bg-muted mx-auto mb-2 flex items-center justify-center">
+        <Icon className="w-4 h-4 text-muted-foreground" />
+      </div>
+      <p className="text-lg font-bold text-foreground">{value}</p>
+      <p className="text-[10px] text-muted-foreground">{title}</p>
+      <p className="text-[9px] text-muted-foreground/70 mt-0.5">{subtitle}</p>
     </div>
   );
 };
