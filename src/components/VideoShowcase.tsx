@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play, ArrowRight } from "lucide-react";
+import { Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VideoShowcase {
@@ -61,7 +61,6 @@ const VideoShowcase = () => {
     }
   };
 
-
   const handleVideoEnd = () => {
     if (videos.length > 1) {
       transitionToNext();
@@ -98,10 +97,9 @@ const VideoShowcase = () => {
     }
   }, [currentIndex, videos.length]);
 
-
   if (loading) {
     return (
-      <div className="w-full h-[45vh] sm:h-[50vh] lg:h-[55vh] bg-foreground/5 animate-pulse flex items-center justify-center">
+      <div className="w-full h-[60vh] md:h-[70vh] lg:h-[75vh] bg-foreground/5 animate-pulse flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-muted-foreground/20 border-t-foreground/60 rounded-full animate-spin" />
       </div>
     );
@@ -114,7 +112,7 @@ const VideoShowcase = () => {
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[55vh] bg-foreground overflow-hidden"
+      className="relative w-full h-[60vh] md:h-[70vh] lg:h-[75vh] bg-foreground overflow-hidden"
     >
       {/* Full-width Video */}
       <video
@@ -138,97 +136,71 @@ const VideoShowcase = () => {
         onClick={handleVideoClick}
       />
 
-      {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+      {/* Gradient overlay - stronger at bottom for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
 
-      {/* Bottom content bar with vertical scrolling titles */}
+      {/* Bottom content - Stacked titles like reference */}
       <div className={`absolute bottom-0 left-0 right-0 pointer-events-none transition-opacity duration-300 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}>
-        {/* Content area */}
-        <div className="flex items-end justify-between px-4 sm:px-6 lg:px-8 pb-14 sm:pb-16">
-          {/* Left - Vertical scrolling titles with details */}
-          <div className="flex-1 max-w-md space-y-2">
-            {/* Previous video */}
-            <div 
-              className="transition-all duration-500"
-              style={{ 
-                opacity: currentIndex === 0 ? 0 : 0.4,
-                transform: `translateY(${currentIndex === 0 ? '20px' : '0'})`
-              }}
-            >
-              <p className="text-xs sm:text-sm text-white/50 truncate">
-                {videos[currentIndex - 1]?.title || ''}
-              </p>
-              <p className="text-[10px] sm:text-xs text-white/30 truncate">
-                {videos[currentIndex - 1]?.description || ''}
-              </p>
-            </div>
-            
-            {/* Current video - Center */}
-            <div className="py-1">
-              <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white truncate">
-                {currentVideo?.title || 'Featured Video'}
-              </h3>
-              <p className="text-xs sm:text-sm text-white/60 truncate">
-                {currentVideo?.description || ''}
-              </p>
-            </div>
-            
-            {/* Next video */}
-            <div 
-              className="transition-all duration-500"
-              style={{ 
-                opacity: currentIndex === videos.length - 1 ? 0 : 0.4,
-                transform: `translateY(${currentIndex === videos.length - 1 ? '-20px' : '0'})`
-              }}
-            >
-              <p className="text-xs sm:text-sm text-white/50 truncate">
-                {videos[currentIndex + 1]?.title || ''}
-              </p>
-              <p className="text-[10px] sm:text-xs text-white/30 truncate">
-                {videos[currentIndex + 1]?.description || ''}
-              </p>
-            </div>
-          </div>
-
-          {/* Right - Learn More button */}
-          {currentVideo?.product_id && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/product/${currentVideo.product_id}`);
-              }}
-              className="pointer-events-auto flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-medium rounded-full hover:bg-white hover:text-foreground active:scale-95 transition-all duration-300 group"
-            >
-              <span className="hidden sm:inline">Learn More</span>
-              <span className="sm:hidden">View</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          )}
-        </div>
-
-        {/* Video indicators only */}
-        {videos.length > 1 && (
-          <div className={`flex items-center justify-end px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 transition-opacity duration-300 ${
-            isTransitioning ? 'opacity-0' : 'opacity-100'
-          }`}>
-            <div className="flex items-center gap-1.5">
-              {videos.map((_, index) => (
+        <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 lg:pb-10">
+          {/* Stacked product titles - vertical list */}
+          <div className="space-y-0.5 sm:space-y-1">
+            {videos.map((video, index) => {
+              const isActive = index === currentIndex;
+              const isPrev = index < currentIndex;
+              
+              return (
                 <button
-                  key={index}
+                  key={video.id}
                   onClick={() => goToVideo(index)}
-                  className={`transition-all duration-300 rounded-full ${
-                    index === currentIndex
-                      ? "w-5 sm:w-6 h-1.5 bg-white"
-                      : "w-1.5 h-1.5 bg-white/40 hover:bg-white/60"
+                  className={`pointer-events-auto block text-left w-full max-w-md transition-all duration-300 ${
+                    isActive 
+                      ? 'opacity-100' 
+                      : 'opacity-40 hover:opacity-60'
                   }`}
-                />
-              ))}
-            </div>
+                >
+                  {/* Description/speed line */}
+                  <p className={`transition-all duration-300 truncate ${
+                    isActive 
+                      ? 'text-xs sm:text-sm text-primary font-medium' 
+                      : 'text-[10px] sm:text-xs text-white/60'
+                  }`}>
+                    {video.description || ''}
+                  </p>
+                  {/* Title line */}
+                  <p className={`transition-all duration-300 truncate ${
+                    isActive 
+                      ? 'text-base sm:text-lg lg:text-xl font-bold text-white' 
+                      : 'text-sm sm:text-base font-medium text-white/70'
+                  }`}>
+                    {video.title || 'Featured Video'}
+                  </p>
+                </button>
+              );
+            })}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Video indicators - bottom right */}
+      {videos.length > 1 && (
+        <div className={`absolute bottom-4 sm:bottom-6 right-4 sm:right-6 lg:right-8 flex items-center gap-1.5 transition-opacity duration-300 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}>
+          {videos.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToVideo(index)}
+              className={`transition-all duration-300 rounded-full ${
+                index === currentIndex
+                  ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-white"
+                  : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/60"
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Center play button when paused */}
       {!isPlaying && (
@@ -236,8 +208,8 @@ const VideoShowcase = () => {
           className="absolute inset-0 flex items-center justify-center cursor-pointer"
           onClick={handlePlayPause}
         >
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 hover:bg-white/30 hover:scale-110 active:scale-95 transition-all duration-200">
-            <Play className="w-6 h-6 sm:w-7 sm:h-7 text-white ml-0.5" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 hover:bg-white/30 hover:scale-110 active:scale-95 transition-all duration-200">
+            <Play className="w-7 h-7 sm:w-8 sm:h-8 text-white ml-1" />
           </div>
         </div>
       )}
