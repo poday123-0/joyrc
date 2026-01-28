@@ -1624,6 +1624,21 @@ const SettingsTab = ({
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
+  // Sync form data when settings prop changes (after refresh)
+  useEffect(() => {
+    setFormData({
+      site_name: settings.site_name,
+      logo_url: settings.logo_url || "",
+      primary_color: settings.primary_color,
+      secondary_color: settings.secondary_color,
+      hero_title: settings.hero_title,
+      hero_subtitle: settings.hero_subtitle,
+      notification_email: settings.notification_email || "",
+      notification_sender_name: settings.notification_sender_name || "RC Joy",
+      google_login_enabled: settings.google_login_enabled ?? true,
+    });
+  }, [settings]);
+
   const handleLogoUpload = async (file: File | null) => {
     if (!file) return;
     
