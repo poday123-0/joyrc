@@ -173,10 +173,10 @@ const Landing = () => {
         {/* Mobile: Elegant Glass Swipe Button */}
         {isMobile && (
           <div 
-            className="absolute bottom-16 left-1/2 -translate-x-1/2 animate-fade-in z-20" 
+            className="absolute bottom-32 left-1/2 -translate-x-1/2 animate-fade-in z-20" 
             style={{ animationDelay: '0.3s' }}
           >
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-3">
               {/* Glass capsule container */}
               <div 
                 className="relative w-14 h-24 rounded-full overflow-visible"
@@ -230,6 +230,23 @@ const Landing = () => {
               <span className="text-white/40 text-[10px] font-medium tracking-widest uppercase">
                 Swipe
               </span>
+
+              {/* Background indicators - moved here for mobile */}
+              {backgrounds.length > 1 && (
+                <div className="flex gap-1.5 mt-2">
+                  {backgrounds.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentIndex(index)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                        index === currentIndex 
+                          ? 'bg-white w-4' 
+                          : 'bg-white/40 hover:bg-white/60'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -339,16 +356,16 @@ const Landing = () => {
           </div>
         )}
 
-        {/* Background indicators */}
-        {backgrounds.length > 1 && (
-          <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2">
+        {/* Background indicators - desktop only (mobile indicators are with swipe button) */}
+        {!isMobile && backgrounds.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
             {backgrounds.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex 
-                    ? 'bg-white w-4 sm:w-6' 
+                    ? 'bg-white w-6' 
                     : 'bg-white/40 hover:bg-white/60'
                 }`}
               />
