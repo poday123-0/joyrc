@@ -152,56 +152,60 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-hero pb-8 lg:pb-0">
+    <div className="min-h-screen bg-background pb-8 lg:pb-0">
       {/* Mobile Header */}
-      <div className="lg:hidden container max-w-6xl mx-auto px-4 pt-4">
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            to="/"
-            className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </Link>
-          <h1 className="font-bold text-xl text-foreground">Admin Panel</h1>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors lg:hidden"
-          >
-            <Menu className="w-5 h-5 text-foreground" />
-          </button>
+      <div className="lg:hidden sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border">
+        <div className="container max-w-6xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Link
+              to="/"
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+            </Link>
+            <h1 className="font-semibold text-lg text-foreground">Admin</h1>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors lg:hidden"
+            >
+              <Menu className="w-5 h-5 text-foreground" />
+            </button>
+          </div>
         </div>
 
-        {/* Mobile Tabs */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as Tab)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full whitespace-nowrap transition-all ${
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-soft"
-                  : "glass-card text-foreground hover:bg-white/80"
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{tab.label}</span>
-            </button>
-          ))}
+        {/* Mobile Tabs - Horizontal scroll */}
+        <div className="px-4 pb-3">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as Tab)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full whitespace-nowrap transition-all text-xs font-medium ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Desktop Layout */}
       <div className="lg:flex lg:min-h-screen">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 xl:w-72 bg-white/80 backdrop-blur-sm border-r border-border p-6 sticky top-0 h-screen overflow-y-auto">
-          <div className="flex items-center gap-3 mb-8">
+        <aside className="hidden lg:block w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
             <Link
               to="/"
-              className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5 text-primary" />
+              <ChevronLeft className="w-5 h-5 text-foreground" />
             </Link>
-            <h1 className="font-bold text-xl text-foreground">Admin Panel</h1>
+            <h1 className="font-semibold text-lg text-foreground">Admin</h1>
           </div>
 
           <nav className="space-y-1">
@@ -209,13 +213,13 @@ const Admin = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as Tab)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
                   activeTab === tab.id
-                    ? "bg-primary text-primary-foreground shadow-soft"
-                    : "text-foreground hover:bg-muted/50"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                <tab.icon className="w-5 h-5" />
+                <tab.icon className="w-4 h-4" />
                 <span className="font-medium">{tab.label}</span>
               </button>
             ))}
@@ -223,11 +227,12 @@ const Admin = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:p-8">
-          <div className="container max-w-6xl mx-auto px-4 lg:px-0">
+        <main className="flex-1 lg:p-6 xl:p-8">
+          <div className="container max-w-5xl mx-auto px-4 py-4 lg:px-0 lg:py-0">
             {/* Desktop Header */}
-            <div className="hidden lg:flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-foreground capitalize">{activeTab}</h2>
+            <div className="hidden lg:block mb-6">
+              <h2 className="text-xl font-semibold text-foreground capitalize">{activeTab}</h2>
+              <p className="text-sm text-muted-foreground mt-1">Manage your {activeTab} settings</p>
             </div>
 
             {/* Content */}
@@ -775,23 +780,26 @@ const ProductsTab = ({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4 lg:mb-6">
-        <h2 className="font-semibold text-foreground lg:text-lg">Products ({products.length})</h2>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-foreground">Products</h2>
+          <p className="text-xs text-muted-foreground">{products.length} items</p>
+        </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-cta text-white text-sm font-medium shadow-soft"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          <Plus className="w-4 h-4" /> Add Product
+          <Plus className="w-4 h-4" /> Add
         </button>
       </div>
 
       {showForm && (
-        <div className="glass-card rounded-2xl p-4 md:p-6 mb-4 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">{editingProduct ? "Edit Product" : "New Product"}</h3>
-            <button onClick={resetForm}>
-              <X className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-semibold">{editingProduct ? "Edit Product" : "New Product"}</h3>
+            <button onClick={resetForm} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80">
+              <X className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -1119,7 +1127,7 @@ const ProductsTab = ({
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {saving ? "Saving..." : (
                 <>
@@ -1134,44 +1142,44 @@ const ProductsTab = ({
 
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
-          <div key={product.id} className="glass-card rounded-2xl p-3 sm:p-4 shadow-soft">
+          <div key={product.id} className="bg-card border border-border rounded-xl p-3">
             <div className="flex items-start gap-3">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                 {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
+                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xl sm:text-2xl">📦</span>
+                  <span className="text-lg">📦</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-foreground text-sm sm:text-base line-clamp-2">{product.name}</h4>
-                <p className="text-primary font-medium text-sm">{formatMVR(product.price)}</p>
+                <h4 className="font-medium text-foreground text-sm line-clamp-2">{product.name}</h4>
+                <p className="text-primary font-semibold text-sm mt-0.5">{formatMVR(product.price)}</p>
               </div>
             </div>
             <div className="flex gap-2 mt-3 pt-3 border-t border-border">
               <button
                 onClick={() => handleEdit(product)}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium"
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium transition-colors"
               >
-                <Pencil className="w-4 h-4" />
-                <span className="sm:hidden">Edit</span>
+                <Pencil className="w-3.5 h-3.5" />
+                Edit
               </button>
               <button
                 onClick={() => handleDeleteClick(product.id)}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive text-sm font-medium"
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-medium transition-colors"
               >
-                <Trash2 className="w-4 h-4" />
-                <span className="sm:hidden">Delete</span>
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete
               </button>
             </div>
           </div>
         ))}
         {products.length === 0 && (
           <div className="col-span-full text-center py-12">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Package className="w-8 h-8 text-muted-foreground" />
+            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+              <Package className="w-6 h-6 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground">No products yet. Add your first product!</p>
+            <p className="text-sm text-muted-foreground">No products yet. Add your first product!</p>
           </div>
         )}
       </div>
@@ -1396,23 +1404,26 @@ const CategoriesTab = ({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4 lg:mb-6">
-        <h2 className="font-semibold text-foreground lg:text-lg">Categories ({categories.length})</h2>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-foreground">Categories</h2>
+          <p className="text-xs text-muted-foreground">{categories.length} items</p>
+        </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-cta text-white text-sm font-medium shadow-soft"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          <Plus className="w-4 h-4" /> Add Category
+          <Plus className="w-4 h-4" /> Add
         </button>
       </div>
 
       {showForm && (
-        <div className="glass-card rounded-2xl p-4 md:p-6 mb-4 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">{editingCategory ? "Edit Category" : "New Category"}</h3>
-            <button onClick={resetForm}>
-              <X className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-semibold">{editingCategory ? "Edit Category" : "New Category"}</h3>
+            <button onClick={resetForm} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80">
+              <X className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -1515,7 +1526,7 @@ const CategoriesTab = ({
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium disabled:opacity-50"
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50"
             >
               {saving ? "Saving..." : editingCategory ? "Update Category" : "Create Category"}
             </button>
@@ -1523,38 +1534,38 @@ const CategoriesTab = ({
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((category) => (
-          <div key={category.id} className="glass-card rounded-2xl overflow-hidden shadow-soft">
+          <div key={category.id} className="bg-card border border-border rounded-xl overflow-hidden">
             {category.image_url ? (
-              <div className="h-32 w-full overflow-hidden">
+              <div className="h-24 w-full overflow-hidden">
                 <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="h-32 w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                <span className="text-5xl">{category.icon}</span>
+              <div className="h-24 w-full bg-muted flex items-center justify-center">
+                <span className="text-4xl">{category.icon}</span>
               </div>
             )}
-            <div className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
+            <div className="p-3 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-base flex-shrink-0">
                 {category.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-foreground truncate">{category.name}</h4>
-                <p className="text-xs text-muted-foreground">Order: {category.sort_order}</p>
+                <h4 className="font-medium text-foreground text-sm truncate">{category.name}</h4>
+                <p className="text-[10px] text-muted-foreground">Order: {category.sort_order}</p>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => handleEdit(category)}
-                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+                  className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80"
                 >
-                  <Pencil className="w-4 h-4" />
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => handleDeleteClick(category.id)}
-                  className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                  className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
                 >
-                  <Trash2 className="w-4 h-4 text-destructive" />
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
                 </button>
               </div>
             </div>
@@ -1562,10 +1573,10 @@ const CategoriesTab = ({
         ))}
         {categories.length === 0 && (
           <div className="col-span-full text-center py-12">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Grid3X3 className="w-8 h-8 text-muted-foreground" />
+            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+              <Grid3X3 className="w-6 h-6 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground">No categories yet. Add your first category!</p>
+            <p className="text-sm text-muted-foreground">No categories yet. Add your first category!</p>
           </div>
         )}
       </div>
@@ -1675,9 +1686,12 @@ const SettingsTab = ({
   return (
     <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
       <div>
-        <h2 className="font-semibold text-foreground mb-4 text-base lg:text-lg">System Settings</h2>
+        <div className="mb-4">
+          <h2 className="font-semibold text-foreground">System Settings</h2>
+          <p className="text-xs text-muted-foreground">Configure your site appearance</p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 md:p-6 shadow-soft space-y-4">
+        <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-4 md:p-5 space-y-4">
           {/* Logo Section */}
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">Site Logo</label>
@@ -1838,7 +1852,7 @@ const SettingsTab = ({
           <button
             type="submit"
             disabled={saving}
-            className="w-full py-3 rounded-full gradient-cta text-white font-medium shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Save className="w-4 h-4" />
             {saving ? "Saving..." : "Save Settings"}
@@ -1848,9 +1862,12 @@ const SettingsTab = ({
 
       {/* Preview */}
       <div className="hidden sm:block">
-        <h3 className="font-semibold text-foreground mb-4 text-base lg:text-lg">Preview</h3>
+        <div className="mb-4">
+          <h3 className="font-semibold text-foreground">Preview</h3>
+          <p className="text-xs text-muted-foreground">See how your site will look</p>
+        </div>
         <div 
-          className="rounded-2xl p-4 sm:p-6 text-white lg:sticky lg:top-8"
+          className="rounded-xl p-4 sm:p-5 text-white lg:sticky lg:top-8"
           style={{ background: `linear-gradient(135deg, ${formData.primary_color}, ${formData.secondary_color})` }}
         >
           <div className="flex items-center gap-3 mb-4">
