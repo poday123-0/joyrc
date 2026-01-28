@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, Search, SlidersHorizontal, X } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { staticProducts, staticCategories } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
@@ -28,6 +28,7 @@ interface Category {
 
 const Categories = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,21 +141,26 @@ const Categories = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero pb-24 lg:pb-8">
-      <div className="container max-w-7xl mx-auto px-4 lg:px-8 pt-4">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+      <div className="container max-w-7xl mx-auto px-4 lg:px-8 pt-6 lg:pt-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            to="/"
-            className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </Link>
-          <h1 className="font-bold text-xl lg:text-2xl text-foreground">All Products</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 rounded-full glass-card shadow-soft flex items-center justify-center hover:bg-accent/50 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-foreground" />
+            </button>
+            <div>
+              <h1 className="font-bold text-xl lg:text-2xl text-foreground">All Products</h1>
+              <p className="text-sm text-muted-foreground">{filteredProducts.length} items</p>
+            </div>
+          </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`w-10 h-10 rounded-full glass-card flex items-center justify-center transition-colors ${
-              showFilters ? "bg-primary text-primary-foreground" : "hover:bg-white/80"
+            className={`w-10 h-10 rounded-full glass-card shadow-soft flex items-center justify-center transition-colors ${
+              showFilters ? "bg-primary text-primary-foreground" : "hover:bg-accent/50"
             }`}
           >
             <SlidersHorizontal className="w-5 h-5" />
@@ -164,8 +170,8 @@ const Categories = () => {
         <div className="lg:flex lg:gap-8">
           {/* Sidebar for desktop */}
           <div className="hidden lg:block lg:w-72 lg:flex-shrink-0">
-            <div className="glass-card rounded-2xl p-6 shadow-soft sticky top-4">
-              <h3 className="font-semibold text-foreground mb-4">Categories</h3>
+            <div className="glass-card rounded-3xl p-6 shadow-soft sticky top-4">
+              <h3 className="font-bold text-foreground mb-4">Categories</h3>
               <div className="space-y-2">
                 {categories.map((category) => (
                   <button
@@ -174,15 +180,17 @@ const Categories = () => {
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left overflow-hidden ${
                       activeCategory === category.id
                         ? "bg-primary text-primary-foreground shadow-soft"
-                        : "hover:bg-white/50 text-foreground"
+                        : "hover:bg-accent/50 text-foreground"
                     }`}
                   >
                     {category.image_url ? (
-                      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                         <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <span className="text-lg">{category.icon}</span>
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg">{category.icon}</span>
+                      </div>
                     )}
                     <span className="font-medium truncate">{category.name}</span>
                   </button>
@@ -190,7 +198,7 @@ const Categories = () => {
               </div>
 
               <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-semibold text-foreground mb-4">Filters</h3>
+                <h3 className="font-bold text-foreground mb-4">Filters</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-muted-foreground">Price Range</label>
@@ -200,14 +208,14 @@ const Categories = () => {
                         placeholder="Min"
                         value={priceRange.min}
                         onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="w-full min-w-0 px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={priceRange.max}
                         onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="w-full min-w-0 px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       />
                     </div>
                   </div>
@@ -217,7 +225,7 @@ const Categories = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full mt-2 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full mt-2 px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value="newest">Newest</option>
                       <option value="price-low">Price: Low to High</option>
@@ -228,7 +236,7 @@ const Categories = () => {
 
                   <button
                     onClick={clearFilters}
-                    className="w-full py-2 rounded-lg text-coral text-sm font-medium hover:bg-coral/10 transition-colors"
+                    className="w-full py-2.5 rounded-xl text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors"
                   >
                     Clear Filters
                   </button>
@@ -240,14 +248,14 @@ const Categories = () => {
           {/* Main content */}
           <div className="flex-1">
             {/* Search */}
-            <div className="relative mb-4">
+            <div className="relative mb-5">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-full glass-card border-0 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full pl-12 pr-4 py-3.5 rounded-full glass-card shadow-soft border-0 focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
               {searchQuery && (
                 <button
@@ -261,31 +269,31 @@ const Categories = () => {
 
             {/* Mobile Filters Panel */}
             {showFilters && (
-              <div className="lg:hidden glass-card rounded-2xl p-4 mb-4 shadow-soft">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-foreground">Filters</h3>
-                  <button onClick={clearFilters} className="text-xs text-primary hover:text-primary/80 transition-colors">
+              <div className="lg:hidden glass-card rounded-2xl p-4 mb-5 shadow-soft">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-foreground">Filters</h3>
+                  <button onClick={clearFilters} className="text-sm text-destructive font-medium hover:text-destructive/80 transition-colors">
                     Clear all
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
                     <label className="text-sm text-muted-foreground">Price Range</label>
-                    <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="grid grid-cols-2 gap-2 mt-2">
                       <input
                         type="number"
                         placeholder="Min"
                         value={priceRange.min}
                         onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full min-w-0 px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={priceRange.max}
                         onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full min-w-0 px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       />
                     </div>
                   </div>
@@ -295,7 +303,7 @@ const Categories = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full mt-2 px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value="newest">Newest</option>
                       <option value="price-low">Price: Low to High</option>
@@ -307,63 +315,58 @@ const Categories = () => {
               </div>
             )}
 
-            {/* Mobile Category Pills with Images - Rounded Cards */}
+            {/* Mobile Category Pills - Circle Design */}
             <div className="lg:hidden mb-6">
               <h3 className="text-sm font-medium text-muted-foreground mb-3">Browse by Category</h3>
-              <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
+              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryChange(category.id)}
-                    className={`relative flex-shrink-0 rounded-2xl overflow-hidden transition-all shadow-soft ${
-                      activeCategory === category.id
-                        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                        : "hover:shadow-elevated"
-                    }`}
+                    className="flex flex-col items-center gap-2 flex-shrink-0"
                   >
-                    {category.image_url ? (
-                      <div className="w-28 h-32 relative">
+                    <div
+                      className={`w-16 h-16 rounded-full overflow-hidden transition-all shadow-soft ${
+                        activeCategory === category.id
+                          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                          : "hover:shadow-elevated"
+                      }`}
+                    >
+                      {category.image_url ? (
                         <img 
                           src={category.image_url} 
                           alt={category.name} 
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                          <span className="text-xs font-semibold text-white block text-center truncate">
-                            {category.name}
-                          </span>
+                      ) : (
+                        <div className={`w-full h-full flex items-center justify-center ${
+                          activeCategory === category.id
+                            ? "bg-primary"
+                            : "bg-muted"
+                        }`}>
+                          <span className="text-2xl">{category.icon}</span>
                         </div>
-                      </div>
-                    ) : (
-                      <div className={`w-28 h-32 flex flex-col items-center justify-center gap-2 ${
-                        activeCategory === category.id
-                          ? "bg-primary text-primary-foreground"
-                          : "glass-card text-foreground"
-                      }`}>
-                        <span className="text-3xl">{category.icon}</span>
-                        <span className="text-xs font-semibold px-2 text-center truncate w-full">{category.name}</span>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium text-center max-w-16 truncate ${
+                      activeCategory === category.id ? "text-primary" : "text-foreground"
+                    }`}>
+                      {category.name}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Results count */}
-            <p className="text-sm text-muted-foreground mb-4">
-              {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} found
-            </p>
-
             {/* Products Grid */}
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="h-64 lg:h-80 rounded-3xl bg-white/50 animate-pulse" />
+                  <div key={i} className="aspect-[4/5] rounded-2xl bg-muted/50 animate-pulse" />
                 ))}
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
                 {filteredProducts.map((product, index) => (
                   <ProductCard 
                     key={product.id} 
@@ -373,13 +376,15 @@ const Categories = () => {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12">
-                <span className="text-4xl mb-4">🔍</span>
-                <h3 className="font-semibold text-foreground">No products found</h3>
-                <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters</p>
+              <div className="glass-card rounded-3xl p-8 lg:p-12 shadow-soft text-center">
+                <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
+                  <Search className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-bold text-foreground text-lg mb-2">No products found</h3>
+                <p className="text-muted-foreground mb-6">Try adjusting your filters or search term</p>
                 <button
                   onClick={clearFilters}
-                  className="mt-4 px-4 py-2 rounded-full gradient-cta text-white text-sm font-medium"
+                  className="px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium shadow-soft hover:bg-primary/90 transition-colors"
                 >
                   Clear Filters
                 </button>
