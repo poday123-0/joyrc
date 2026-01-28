@@ -154,4 +154,19 @@
   .skeleton-shimmer {
     animation: shimmer 1.5s ease-in-out infinite;
   }
+
+  /* Auto scroll animation for product descriptions */
+  @keyframes scroll-up {
+    0%, 10% { transform: translateY(0); }
+    90%, 100% { transform: translateY(calc(-100% + 60px)); }
+  }
+
+  .animate-scroll-up {
+    animation: scroll-up 8s ease-in-out infinite;
+  }
+
+  .animate-scroll-up:hover,
+  .pause-animation {
+    animation-play-state: paused;
+  }
 }
