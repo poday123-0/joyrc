@@ -4,7 +4,7 @@
  * No upload required - transforms on-the-fly
  */
 
-const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '';
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'rcjoy';
 
 interface CloudinaryOptions {
   width?: number;
