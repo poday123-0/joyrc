@@ -191,7 +191,7 @@ const ProductDetail = () => {
           {/* Left Column - Product Image */}
           <div className="py-6 lg:py-0">
             <div className="lg:sticky lg:top-20">
-              <div className="aspect-square w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
+              <div className="aspect-[4/5] w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
                 {currentImage ? (
                   <img
                     src={currentImage}
@@ -352,8 +352,8 @@ const ProductDetail = () => {
                   to={`/product/${p.id}`}
                   className="group block"
                 >
-                  <div className="aspect-square bg-muted/30 rounded-2xl overflow-hidden mb-3">
-                    <div className="w-full h-full flex items-center justify-center p-4">
+                  <div className="aspect-[4/5] bg-muted/30 rounded-2xl overflow-hidden mb-3">
+                    <div className="w-full h-full flex items-center justify-center">
                       {p.image_url ? (
                         <img
                           src={p.image_url}
