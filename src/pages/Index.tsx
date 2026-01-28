@@ -155,7 +155,7 @@ const Index = () => {
                 <Link
                   key={featured.id}
                   to={`/product/${featured.product.id}`}
-                  className="group block relative overflow-hidden animate-fade-in"
+                  className="group block relative overflow-hidden rounded-2xl animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {/* Title label at top */}
