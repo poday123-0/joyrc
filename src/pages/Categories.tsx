@@ -316,20 +316,20 @@ const Categories = () => {
             )}
 
             {/* Mobile Category Pills - Circle Design */}
-            <div className="lg:hidden mb-6">
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">Browse by Category</h3>
-              <div className="flex gap-5 overflow-x-auto pb-3 px-1 scrollbar-hide">
+            <div className="lg:hidden mb-5">
+              <h3 className="text-xs font-medium text-muted-foreground mb-2">Browse by Category</h3>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryChange(category.id)}
-                    className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                    className="flex flex-col items-center gap-1 flex-shrink-0"
                   >
                     <div
-                      className={`w-14 h-14 rounded-full overflow-hidden transition-all ${
+                      className={`w-11 h-11 rounded-full overflow-hidden transition-all ${
                         activeCategory === category.id
-                          ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-soft"
-                          : "shadow-soft hover:shadow-elevated"
+                          ? "ring-2 ring-primary ring-offset-1 ring-offset-background"
+                          : "shadow-soft"
                       }`}
                     >
                       {category.image_url ? (
@@ -344,11 +344,11 @@ const Categories = () => {
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
                         }`}>
-                          <span className="text-lg">{category.icon}</span>
+                          <span className="text-sm">{category.icon}</span>
                         </div>
                       )}
                     </div>
-                    <span className={`text-[11px] font-medium text-center w-14 truncate ${
+                    <span className={`text-[10px] font-medium text-center w-11 truncate ${
                       activeCategory === category.id ? "text-primary" : "text-muted-foreground"
                     }`}>
                       {category.name}
