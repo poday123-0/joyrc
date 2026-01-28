@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
+import { getOptimizedImageUrl, getResponsiveSrcSet, isCloudinaryConfigured } from "@/lib/cloudinary";
 
 interface OptimizedImageProps {
   src: string;
@@ -7,6 +8,7 @@ interface OptimizedImageProps {
   priority?: boolean;
   fill?: boolean;
   sizes?: string;
+  width?: number;
   onLoad?: () => void;
 }
 
@@ -17,6 +19,9 @@ const imageCache = new Set<string>();
 const preloadImage = (src: string): Promise<void> => {
   if (imageCache.has(src)) return Promise.resolve();
   
+  // Use Cloudinary-optimized URL if configured
+  const optimizedSrc = getOptimizedImageUrl(src, { quality: 'auto', format: 'auto' });
+  
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -24,7 +29,7 @@ const preloadImage = (src: string): Promise<void> => {
       resolve();
     };
     img.onerror = () => resolve();
-    img.src = src;
+    img.src = optimizedSrc;
   });
 };
 
@@ -35,6 +40,7 @@ const OptimizedImage = memo(({
   priority = false,
   fill = false,
   sizes = "100vw",
+  width,
   onLoad
 }: OptimizedImageProps) => {
   const [loaded, setLoaded] = useState(() => imageCache.has(src));
@@ -90,18 +96,42 @@ const OptimizedImage = memo(({
     onLoad?.();
   }, [src, onLoad]);
 
-  // Generate optimized srcset for Supabase storage images
+  // Get optimized image URL via Cloudinary or fallback
+  const optimizedSrc = useCallback(() => {
+    if (isCloudinaryConfigured()) {
+      return getOptimizedImageUrl(src, { 
+        width, 
+        quality: 'auto', 
+        format: 'auto',
+        crop: width ? 'limit' : undefined
+      });
+    }
+    return src;
+  }, [src, width]);
+
+  // Generate optimized srcset
   const generateSrcSet = useCallback(() => {
-    if (!src.includes('supabase.co/storage')) return undefined;
+    // Use Cloudinary srcset if configured
+    if (isCloudinaryConfigured()) {
+      return getResponsiveSrcSet(src, [320, 640, 960, 1280, 1920], {
+        quality: 'auto',
+        format: 'auto',
+        crop: 'limit'
+      });
+    }
     
-    // Supabase storage supports image transformation via URL params
-    const widths = [320, 640, 768, 1024, 1280];
-    return widths
-      .map(w => {
-        const transformedUrl = `${src}?width=${w}&quality=80`;
-        return `${transformedUrl} ${w}w`;
-      })
-      .join(', ');
+    // Fallback: Supabase storage transformation
+    if (src.includes('supabase.co/storage')) {
+      const widths = [320, 640, 768, 1024, 1280];
+      return widths
+        .map(w => {
+          const transformedUrl = `${src}?width=${w}&quality=80`;
+          return `${transformedUrl} ${w}w`;
+        })
+        .join(', ');
+    }
+    
+    return undefined;
   }, [src]);
 
   return (
@@ -127,13 +157,12 @@ const OptimizedImage = memo(({
       {inView && (
         <img
           ref={imgRef}
-          src={src}
+          src={optimizedSrc()}
           srcSet={generateSrcSet()}
           sizes={sizes}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
-          fetchPriority={priority ? "high" : "auto"}
           onLoad={handleLoad}
           className={`${className} transition-opacity duration-150 ${
             loaded ? 'opacity-100' : 'opacity-0'
