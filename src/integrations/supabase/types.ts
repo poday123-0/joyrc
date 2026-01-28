@@ -147,6 +147,7 @@ export type Database = {
       }
       featured_products: {
         Row: {
+          category_id: string | null
           created_at: string
           id: string
           is_active: boolean | null
@@ -157,6 +158,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -167,6 +169,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -177,6 +180,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "featured_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "featured_products_product_id_fkey"
             columns: ["product_id"]

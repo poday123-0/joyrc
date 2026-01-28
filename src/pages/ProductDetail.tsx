@@ -188,9 +188,9 @@ const ProductDetail = () => {
         {/* Desktop: Two-column layout, Mobile: Single column */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-12 lg:py-12">
           
-          {/* Left Column - Product Image */}
+          {/* Left Column - Product Image + Price & Cart */}
           <div className="py-6 lg:py-0">
-            <div className="lg:sticky lg:top-20">
+            <div className="lg:sticky lg:top-20 space-y-6">
               <div className="aspect-[4/5] w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
                 {currentImage ? (
                   <img
@@ -208,7 +208,7 @@ const ProductDetail = () => {
               
               {/* Image Dots */}
               {galleryImages.length > 1 && (
-                <div className="flex justify-center gap-2 mt-4">
+                <div className="flex justify-center gap-2">
                   {galleryImages.map((_, index) => (
                     <button
                       key={index}
@@ -222,15 +222,31 @@ const ProductDetail = () => {
                   ))}
                 </div>
               )}
+
+              {/* Price and Buy Button - Under Image */}
+              <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border">
+                <p className="text-3xl font-bold text-foreground mb-2">
+                  {formatMVR(product.price)}
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Free shipping on orders over MVR 500
+                </p>
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full px-12 py-3 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
+                >
+                  Add to Cart
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Right Column - Product Info */}
           <div className="lg:py-0">
-            {/* Product Title - Desktop */}
-            <div className="hidden lg:block mb-6">
-              <h1 className="text-3xl font-bold text-foreground mb-2">{product.name}</h1>
-              <p className="text-2xl font-semibold text-primary">{formatMVR(product.price)}</p>
+            {/* Product Title */}
+            <div className="mb-6">
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">{product.name}</h1>
+              <p className="text-sm text-muted-foreground">{product.category}</p>
             </div>
 
             {/* Color Options */}
@@ -314,28 +330,11 @@ const ProductDetail = () => {
             {/* Product Description */}
             {product.description && (
               <div className="py-6 border-t border-border">
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
               </div>
             )}
-
-            {/* Price and Buy Button */}
-            <div className="py-6 lg:py-8 text-center lg:text-left border-t border-border">
-              {/* Mobile price display */}
-              <p className="text-3xl font-semibold text-foreground lg:hidden">
-                {formatMVR(product.price)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2 mb-5">
-                Free shipping on orders over MVR 500
-              </p>
-              <button
-                onClick={handleAddToCart}
-                className="w-full lg:w-auto px-12 py-3 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
-              >
-                Add to Cart
-              </button>
-            </div>
           </div>
         </div>
 

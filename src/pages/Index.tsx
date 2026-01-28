@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, memo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -10,6 +10,7 @@ import { formatMVR } from "@/lib/currency";
 interface FeaturedProduct {
   id: string;
   product_id: string;
+  category_id: string | null;
   title: string | null;
   subtitle: string | null;
   product: {
@@ -77,6 +78,7 @@ const ImageWithSkeleton = memo(({ src, alt, className, priority = false }: {
 ImageWithSkeleton.displayName = 'ImageWithSkeleton';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,6 +89,7 @@ const Index = () => {
         .select(`
           id,
           product_id,
+          category_id,
           title,
           subtitle,
           product:products (
@@ -152,10 +155,17 @@ const Index = () => {
           ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {featuredProducts.map((featured, index) => (
-                <Link
+                <div
                   key={featured.id}
-                  to={`/product/${featured.product.id}`}
-                  className="group block relative overflow-hidden rounded-2xl animate-fade-in"
+                  onClick={() => {
+                    // Navigate to categories page with category filter
+                    if (featured.category_id) {
+                      navigate(`/categories?category=${featured.category_id}`);
+                    } else {
+                      navigate('/categories');
+                    }
+                  }}
+                  className="group block relative overflow-hidden rounded-2xl animate-fade-in cursor-pointer"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {/* Title label at top */}
@@ -178,7 +188,7 @@ const Index = () => {
                       <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">📦</div>
                     )}
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           ) : (
