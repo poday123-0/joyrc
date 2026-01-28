@@ -141,89 +141,48 @@ const Index = () => {
       </section>
 
       {/* Featured Products Section */}
-      <section className="py-8 lg:py-16">
+      <section className="py-6 lg:py-12">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <p className="text-sm font-medium text-primary tracking-wide uppercase mb-1">
-                Featured
-              </p>
-              <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
-                Top Picks
-              </h2>
-            </div>
-            <Link 
-              to="/categories" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              View all
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-[4/5] rounded-3xl bg-muted animate-pulse" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="aspect-[4/5] bg-muted animate-pulse" />
               ))}
             </div>
           ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {featuredProducts.map((featured, index) => (
                 <Link
                   key={featured.id}
                   to={`/product/${featured.product.id}`}
-                  className="group block animate-fade-in"
+                  className="group block relative overflow-hidden animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className="relative bg-gradient-to-br from-muted/50 to-muted rounded-3xl overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
-                    {/* Product Image */}
-                    <div className="aspect-square p-4 sm:p-5 lg:p-6">
-                      {featured.product.image_url ? (
-                        <div className="w-full h-full rounded-2xl overflow-hidden bg-background/50">
-                          <ImageWithSkeleton
-                            src={featured.product.image_url}
-                            alt={featured.product.name}
-                            priority={index === 0}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 rounded-2xl"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full rounded-2xl bg-background/50 flex items-center justify-center text-6xl">📦</div>
-                      )}
-                    </div>
+                  {/* Title label at top */}
+                  <div className="absolute top-4 left-0 right-0 z-10 text-center">
+                    <span className="text-xs sm:text-sm font-medium tracking-widest text-foreground/80 uppercase">
+                      {featured.title || featured.product.name}
+                    </span>
+                  </div>
 
-                    {/* Content Overlay */}
-                    <div className="p-6 pt-0">
-                      {/* Custom title from admin or product name */}
-                      <h3 className="font-semibold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">
-                        {featured.title || featured.product.name}
-                      </h3>
-                      
-                      {/* Custom subtitle or description */}
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {featured.subtitle || featured.product.description || "Premium RC toy"}
-                      </p>
-
-                      {/* Price and Rating */}
-                      <div className="flex items-center justify-between">
-                        <p className="font-bold text-foreground">
-                          {formatMVR(featured.product.price)}
-                        </p>
-                        {featured.product.rating && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Star className="w-4 h-4 fill-foreground text-foreground" />
-                            <span className="font-medium">{featured.product.rating}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  {/* Full-bleed image */}
+                  <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
+                    {featured.product.image_url ? (
+                      <ImageWithSkeleton
+                        src={featured.product.image_url}
+                        alt={featured.product.name}
+                        priority={index === 0}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">📦</div>
+                    )}
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-muted/30 rounded-3xl">
+            <div className="text-center py-16 bg-muted/30 rounded-xl">
               <div className="text-6xl mb-4">🎮</div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 No Featured Products Yet
