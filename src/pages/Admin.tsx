@@ -64,6 +64,7 @@ interface Category {
   name: string;
   icon: string;
   sort_order: number;
+  image_url: string | null;
 }
 
 interface SystemSettings {
@@ -1193,15 +1194,43 @@ const CategoriesTab = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState({ name: "", icon: "🎮", sort_order: "0" });
+  const [formData, setFormData] = useState({ name: "", icon: "🎮", sort_order: "0", image_url: "" });
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   const resetForm = () => {
-    setFormData({ name: "", icon: "🎮", sort_order: "0" });
+    setFormData({ name: "", icon: "🎮", sort_order: "0", image_url: "" });
     setEditingCategory(null);
     setShowForm(false);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const compressed = await compressImage(file);
+      const fileName = `category-${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, compressed);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, image_url: publicUrl });
+      toast({ title: "Image uploaded", description: "Category image uploaded successfully." });
+    } catch (error: any) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleEdit = (category: Category) => {
@@ -1210,6 +1239,7 @@ const CategoriesTab = ({
       name: category.name,
       icon: category.icon,
       sort_order: category.sort_order.toString(),
+      image_url: category.image_url || "",
     });
     setShowForm(true);
   };
@@ -1223,6 +1253,7 @@ const CategoriesTab = ({
         name: formData.name.trim(),
         icon: formData.icon,
         sort_order: parseInt(formData.sort_order),
+        image_url: formData.image_url || null,
       };
 
       if (editingCategory) {
@@ -1330,6 +1361,41 @@ const CategoriesTab = ({
                 className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
+            
+            {/* Category Image Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Category Image (optional)</label>
+              <div className="flex items-center gap-3">
+                {formData.image_url ? (
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-border">
+                    <img src={formData.image_url} alt="Category" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: "" })}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="w-20 h-20 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                    {uploadingImage ? (
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5 text-muted-foreground" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                )}
+                <p className="text-xs text-muted-foreground flex-1">Upload an image for the category filter cards</p>
+              </div>
+            </div>
             <button
               type="submit"
               disabled={saving}
@@ -1343,27 +1409,38 @@ const CategoriesTab = ({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {categories.map((category) => (
-          <div key={category.id} className="glass-card rounded-2xl p-4 flex items-center gap-4 shadow-soft">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-cyan-light/30 to-white flex items-center justify-center text-2xl">
-              {category.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-foreground truncate">{category.name}</h4>
-              <p className="text-xs text-muted-foreground">Order: {category.sort_order}</p>
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <button
-                onClick={() => handleEdit(category)}
-                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleDeleteClick(category.id)}
-                className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
-              >
-                <Trash2 className="w-4 h-4 text-destructive" />
-              </button>
+          <div key={category.id} className="glass-card rounded-2xl overflow-hidden shadow-soft">
+            {category.image_url ? (
+              <div className="h-32 w-full overflow-hidden">
+                <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="h-32 w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                <span className="text-5xl">{category.icon}</span>
+              </div>
+            )}
+            <div className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
+                {category.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-foreground truncate">{category.name}</h4>
+                <p className="text-xs text-muted-foreground">Order: {category.sort_order}</p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  onClick={() => handleEdit(category)}
+                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(category.id)}
+                  className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                >
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
