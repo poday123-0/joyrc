@@ -75,6 +75,8 @@ interface SystemSettings {
   secondary_color: string;
   hero_title: string;
   hero_subtitle: string;
+  notification_email: string | null;
+  notification_sender_name: string | null;
 }
 
 type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "settings";
@@ -1584,6 +1586,8 @@ const SettingsTab = ({
     secondary_color: settings.secondary_color,
     hero_title: settings.hero_title,
     hero_subtitle: settings.hero_subtitle,
+    notification_email: settings.notification_email || "",
+    notification_sender_name: settings.notification_sender_name || "RC Joy",
   });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -1634,6 +1638,8 @@ const SettingsTab = ({
           secondary_color: formData.secondary_color,
           hero_title: formData.hero_title.trim(),
           hero_subtitle: formData.hero_subtitle.trim(),
+          notification_email: formData.notification_email.trim() || null,
+          notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
         })
         .eq("id", settings.id);
 
@@ -1764,6 +1770,57 @@ const SettingsTab = ({
               onChange={(e) => setFormData({ ...formData, hero_subtitle: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
             />
+          </div>
+
+          {/* Notification Email Settings */}
+          <div className="pt-4 border-t border-border">
+            <h4 className="font-medium text-foreground mb-3">Notification Settings</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Notification Sender Name</label>
+                <input
+                  type="text"
+                  value={formData.notification_sender_name}
+                  onChange={(e) => setFormData({ ...formData, notification_sender_name: e.target.value })}
+                  placeholder="e.g., RC Joy"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Notification Email Address</label>
+                <input
+                  type="email"
+                  value={formData.notification_email}
+                  onChange={(e) => setFormData({ ...formData, notification_email: e.target.value })}
+                  placeholder="noreply@yourdomain.com"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  This email will appear as the sender for order notifications. Must be a verified domain in Resend.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Google Login Info */}
+          <div className="pt-4 border-t border-border">
+            <h4 className="font-medium text-foreground mb-2">Google Login Settings</h4>
+            <p className="text-sm text-muted-foreground mb-3">
+              Google OAuth is managed through Lovable Cloud. To configure custom Google OAuth credentials, visit the Cloud Dashboard.
+            </p>
+            <a 
+              href="#" 
+              onClick={(e) => {
+                e.preventDefault();
+                toast({ 
+                  title: "Open Cloud Dashboard", 
+                  description: "Navigate to Users → Authentication Settings → Sign In Methods → Google in the Cloud Dashboard." 
+                });
+              }}
+              className="text-sm text-primary font-medium hover:underline"
+            >
+              Configure Google OAuth →
+            </a>
           </div>
 
           <button
