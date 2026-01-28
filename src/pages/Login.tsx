@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,6 +123,15 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-md mx-auto px-4 pt-8 pb-8">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
         {/* Header with system logo */}
         <div className="glass-card rounded-3xl p-8 text-center shadow-soft">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl overflow-hidden bg-muted flex items-center justify-center">
