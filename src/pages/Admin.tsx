@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
@@ -282,6 +282,7 @@ const ProductsTab = ({
   categories: Category[];
   onRefresh: () => void;
 }) => {
+  const formRef = useRef<HTMLDivElement>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
@@ -471,6 +472,12 @@ const ProductsTab = ({
       in_stock: product.in_stock ?? true,
     });
     setShowForm(true);
+    
+    // Scroll to form after a short delay to ensure it's rendered
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    
     await Promise.all([
       fetchSpecifications(product.id),
       fetchGalleryImages(product.id),
@@ -795,7 +802,7 @@ const ProductsTab = ({
       </div>
 
       {showForm && (
-        <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
+        <div ref={formRef} className="bg-card border border-border rounded-2xl p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold">{editingProduct ? "Edit Product" : "New Product"}</h3>
             <button onClick={resetForm} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80">
