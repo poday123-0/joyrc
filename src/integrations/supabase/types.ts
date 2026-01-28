@@ -566,6 +566,7 @@ export type Database = {
       system_settings: {
         Row: {
           created_at: string
+          google_login_enabled: boolean | null
           hero_subtitle: string | null
           hero_title: string | null
           id: string
@@ -579,6 +580,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          google_login_enabled?: boolean | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
@@ -592,6 +594,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          google_login_enabled?: boolean | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
