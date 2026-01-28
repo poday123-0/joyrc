@@ -84,7 +84,6 @@ const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
                 alt={`${productName} - Image ${index + 1}`}
                 loading={index === 0 ? "eager" : "lazy"}
                 decoding="async"
-                fetchPriority={index === 0 ? "high" : "auto"}
                 className="max-w-full max-h-full object-contain"
               />
             </div>

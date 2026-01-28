@@ -198,7 +198,6 @@ const ProductDetail = () => {
                     alt={product.name}
                     loading="eager"
                     decoding="async"
-                    fetchPriority="high"
                     className="w-full h-full object-cover rounded-3xl animate-fade-in transition-transform duration-300 hover:scale-105"
                   />
                 ) : (

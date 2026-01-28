@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface VideoShowcase {
+interface VideoShowcaseData {
   id: string;
   title: string | null;
   description: string | null;
@@ -12,14 +12,61 @@ interface VideoShowcase {
   product_id: string | null;
 }
 
+// Preload video metadata for smoother transitions
+const preloadVideoMetadata = (url: string): Promise<void> => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => resolve();
+    video.onerror = () => resolve();
+    video.src = url;
+  });
+};
+
+const VideoTitleButton = memo(({ 
+  video, 
+  isActive, 
+  onClick 
+}: { 
+  video: VideoShowcaseData; 
+  isActive: boolean; 
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className={`block text-left w-full max-w-md transition-all duration-300 ${
+      isActive 
+        ? 'opacity-100' 
+        : 'opacity-40 hover:opacity-60'
+    }`}
+  >
+    <p className={`transition-all duration-300 truncate ${
+      isActive 
+        ? 'text-xs sm:text-sm text-primary font-medium' 
+        : 'text-[10px] sm:text-xs text-white/60'
+    }`}>
+      {video.description || ''}
+    </p>
+    <p className={`transition-all duration-300 truncate ${
+      isActive 
+        ? 'text-base sm:text-lg lg:text-xl font-bold text-white' 
+        : 'text-sm sm:text-base font-medium text-white/70'
+    }`}>
+      {video.title || 'Featured Video'}
+    </p>
+  </button>
+));
+
+VideoTitleButton.displayName = 'VideoTitleButton';
+
 const VideoShowcase = () => {
-  const [videos, setVideos] = useState<VideoShowcase[]>([]);
+  const [videos, setVideos] = useState<VideoShowcaseData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,7 +78,15 @@ const VideoShowcase = () => {
         .order("sort_order");
 
       if (data && data.length > 0) {
-        setVideos(data as VideoShowcase[]);
+        setVideos(data as VideoShowcaseData[]);
+        
+        // Preload first video and next video metadata
+        if (data[0]?.video_url) {
+          preloadVideoMetadata(data[0].video_url);
+        }
+        if (data[1]?.video_url) {
+          preloadVideoMetadata(data[1].video_url);
+        }
       }
       setLoading(false);
     };
@@ -41,7 +96,7 @@ const VideoShowcase = () => {
 
   const currentVideo = videos[currentIndex];
 
-  const handlePlayPause = (e?: React.MouseEvent) => {
+  const handlePlayPause = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!videoRef.current) return;
     
@@ -51,55 +106,85 @@ const VideoShowcase = () => {
       videoRef.current.play();
     }
     setIsPlaying(!isPlaying);
-  };
+  }, [isPlaying]);
 
-  const handleVideoClick = () => {
+  const handleVideoClick = useCallback(() => {
     if (currentVideo?.product_id) {
       navigate(`/product/${currentVideo.product_id}`);
     } else {
       handlePlayPause();
     }
-  };
+  }, [currentVideo, handlePlayPause, navigate]);
 
-  const handleVideoEnd = () => {
+  const transitionToNext = useCallback(() => {
+    setIsTransitioning(true);
+    setVideoReady(false);
+    
+    const nextIndex = currentIndex === videos.length - 1 ? 0 : currentIndex + 1;
+    
+    // Preload the video after next
+    const afterNextIndex = nextIndex === videos.length - 1 ? 0 : nextIndex + 1;
+    if (videos[afterNextIndex]?.video_url) {
+      preloadVideoMetadata(videos[afterNextIndex].video_url);
+    }
+    
+    setTimeout(() => {
+      setCurrentIndex(nextIndex);
+      setIsTransitioning(false);
+    }, 400);
+  }, [currentIndex, videos]);
+
+  const handleVideoEnd = useCallback(() => {
     if (videos.length > 1) {
       transitionToNext();
     }
-  };
+  }, [videos.length, transitionToNext]);
 
-  const transitionToNext = () => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev === videos.length - 1 ? 0 : prev + 1));
-      setIsTransitioning(false);
-    }, 500);
-  };
-
-  const goToVideo = (index: number) => {
+  const goToVideo = useCallback((index: number) => {
     if (index === currentIndex) return;
     setIsTransitioning(true);
+    setVideoReady(false);
+    
+    // Preload target video
+    if (videos[index]?.video_url) {
+      preloadVideoMetadata(videos[index].video_url);
+    }
+    
     setTimeout(() => {
       setCurrentIndex(index);
       setIsTransitioning(false);
     }, 300);
-  };
+  }, [currentIndex, videos]);
 
   // Auto-play video when component mounts or video changes
   useEffect(() => {
     if (videoRef.current && videos.length > 0) {
-      videoRef.current.load();
-      videoRef.current.muted = true;
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(() => {
-        setIsPlaying(false);
-      });
+      const video = videoRef.current;
+      video.load();
+      video.muted = true;
+      
+      const playVideo = () => {
+        video.play().then(() => {
+          setIsPlaying(true);
+          setVideoReady(true);
+        }).catch(() => {
+          setIsPlaying(false);
+          setVideoReady(true);
+        });
+      };
+
+      // Wait for enough data before playing
+      if (video.readyState >= 3) {
+        playVideo();
+      } else {
+        video.addEventListener('canplay', playVideo, { once: true });
+      }
     }
   }, [currentIndex, videos.length]);
 
   if (loading) {
     return (
-      <div className="w-full h-[60vh] md:h-[70vh] lg:h-[75vh] bg-foreground/5 animate-pulse flex items-center justify-center">
+      <div className="w-full h-[60vh] md:h-[70vh] lg:h-[75vh] bg-foreground/5 flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-muted-foreground/20 border-t-foreground/60 rounded-full animate-spin" />
       </div>
     );
@@ -110,17 +195,24 @@ const VideoShowcase = () => {
   }
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-[60vh] md:h-[70vh] lg:h-[75vh] bg-foreground overflow-hidden"
-    >
+    <div className="relative w-full h-[60vh] md:h-[70vh] lg:h-[75vh] bg-foreground overflow-hidden">
+      {/* Thumbnail as immediate placeholder */}
+      {currentVideo?.thumbnail_url && !videoReady && (
+        <img
+          src={currentVideo.thumbnail_url}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+        />
+      )}
+      
       {/* Full-width Video */}
       <video
         ref={videoRef}
         src={currentVideo?.video_url}
         poster={currentVideo?.thumbnail_url || undefined}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-400 ${
+          isTransitioning || !videoReady ? 'opacity-0' : 'opacity-100'
         }`}
         muted
         playsInline
@@ -128,57 +220,28 @@ const VideoShowcase = () => {
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={handleVideoEnd}
-        onCanPlay={() => {
-          if (videoRef.current) {
-            videoRef.current.play().catch(() => {});
-          }
-        }}
+        onCanPlay={() => setVideoReady(true)}
         onClick={handleVideoClick}
       />
 
       {/* Gradient overlay - stronger at bottom for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
 
-      {/* Bottom content - Stacked titles like reference */}
+      {/* Bottom content - Stacked titles */}
       <div className={`absolute bottom-0 left-0 right-0 pointer-events-none transition-opacity duration-300 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}>
         <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 lg:pb-10">
-          {/* Stacked product titles - vertical list */}
           <div className="space-y-0.5 sm:space-y-1">
-            {videos.map((video, index) => {
-              const isActive = index === currentIndex;
-              const isPrev = index < currentIndex;
-              
-              return (
-                <button
-                  key={video.id}
+            {videos.map((video, index) => (
+              <div key={video.id} className="pointer-events-auto">
+                <VideoTitleButton
+                  video={video}
+                  isActive={index === currentIndex}
                   onClick={() => goToVideo(index)}
-                  className={`pointer-events-auto block text-left w-full max-w-md transition-all duration-300 ${
-                    isActive 
-                      ? 'opacity-100' 
-                      : 'opacity-40 hover:opacity-60'
-                  }`}
-                >
-                  {/* Description/speed line */}
-                  <p className={`transition-all duration-300 truncate ${
-                    isActive 
-                      ? 'text-xs sm:text-sm text-primary font-medium' 
-                      : 'text-[10px] sm:text-xs text-white/60'
-                  }`}>
-                    {video.description || ''}
-                  </p>
-                  {/* Title line */}
-                  <p className={`transition-all duration-300 truncate ${
-                    isActive 
-                      ? 'text-base sm:text-lg lg:text-xl font-bold text-white' 
-                      : 'text-sm sm:text-base font-medium text-white/70'
-                  }`}>
-                    {video.title || 'Featured Video'}
-                  </p>
-                </button>
-              );
-            })}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -203,7 +266,7 @@ const VideoShowcase = () => {
       )}
 
       {/* Center play button when paused */}
-      {!isPlaying && (
+      {!isPlaying && videoReady && (
         <div 
           className="absolute inset-0 flex items-center justify-center cursor-pointer"
           onClick={handlePlayPause}

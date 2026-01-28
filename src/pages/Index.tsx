@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import Header from "@/components/Header";
@@ -23,59 +23,16 @@ interface FeaturedProduct {
   };
 }
 
-const ImageWithSkeleton = memo(({ src, alt, className, priority = false }: { 
-  src: string; 
-  alt: string; 
-  className?: string;
-  priority?: boolean;
-}) => {
-  const [loaded, setLoaded] = useState(false);
-  const [inView, setInView] = useState(priority);
-  const containerRef = useRef<HTMLDivElement>(null);
+import OptimizedImage, { preloadImage } from "@/components/OptimizedImage";
 
-  useEffect(() => {
-    if (priority) return;
-    
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px', threshold: 0.01 }
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+// Preload featured product images on hover
+const preloadFeaturedImages = (products: FeaturedProduct[]) => {
+  products.forEach(fp => {
+    if (fp.product.image_url) {
+      preloadImage(fp.product.image_url);
     }
-
-    return () => observer.disconnect();
-  }, [priority]);
-  
-  return (
-    <div ref={containerRef} className="relative w-full h-full">
-      {!loaded && (
-        <div className="absolute inset-0 bg-muted animate-pulse rounded-lg">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
-        </div>
-      )}
-      {inView && (
-        <img
-          src={src}
-          alt={alt}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
-          fetchPriority={priority ? "high" : "auto"}
-          onLoad={() => setLoaded(true)}
-          className={`${className} transition-opacity duration-200 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        />
-      )}
-    </div>
-  );
-});
-
-ImageWithSkeleton.displayName = 'ImageWithSkeleton';
+  });
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -178,10 +135,11 @@ const Index = () => {
                   {/* Full-bleed image */}
                   <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
                     {featured.product.image_url ? (
-                      <ImageWithSkeleton
+                      <OptimizedImage
                         src={featured.product.image_url}
                         alt={featured.product.name}
                         priority={index === 0}
+                        fill
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
