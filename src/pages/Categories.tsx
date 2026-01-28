@@ -307,42 +307,47 @@ const Categories = () => {
               </div>
             )}
 
-            {/* Mobile Category Pills with Images */}
-            <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryChange(category.id)}
-                  className={`relative flex-shrink-0 rounded-2xl overflow-hidden transition-all ${
-                    activeCategory === category.id
-                      ? "ring-2 ring-primary ring-offset-2"
-                      : ""
-                  }`}
-                >
-                  {category.image_url ? (
-                    <div className="w-24 h-28 relative">
-                      <img 
-                        src={category.image_url} 
-                        alt={category.name} 
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <span className="absolute bottom-2 left-2 right-2 text-xs font-medium text-white text-center truncate">
-                        {category.name}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className={`w-24 h-28 flex flex-col items-center justify-center gap-1 ${
+            {/* Mobile Category Pills with Images - Rounded Cards */}
+            <div className="lg:hidden mb-6">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Browse by Category</h3>
+              <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategoryChange(category.id)}
+                    className={`relative flex-shrink-0 rounded-2xl overflow-hidden transition-all shadow-soft ${
                       activeCategory === category.id
-                        ? "bg-primary text-primary-foreground"
-                        : "glass-card text-foreground"
-                    }`}>
-                      <span className="text-2xl">{category.icon}</span>
-                      <span className="text-xs font-medium px-1 text-center truncate w-full">{category.name}</span>
-                    </div>
-                  )}
-                </button>
-              ))}
+                        ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        : "hover:shadow-elevated"
+                    }`}
+                  >
+                    {category.image_url ? (
+                      <div className="w-28 h-32 relative">
+                        <img 
+                          src={category.image_url} 
+                          alt={category.name} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                          <span className="text-xs font-semibold text-white block text-center truncate">
+                            {category.name}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`w-28 h-32 flex flex-col items-center justify-center gap-2 ${
+                        activeCategory === category.id
+                          ? "bg-primary text-primary-foreground"
+                          : "glass-card text-foreground"
+                      }`}>
+                        <span className="text-3xl">{category.icon}</span>
+                        <span className="text-xs font-semibold px-2 text-center truncate w-full">{category.name}</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Results count */}

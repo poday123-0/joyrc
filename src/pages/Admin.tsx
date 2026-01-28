@@ -1199,11 +1199,15 @@ const CategoriesTab = ({
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [relatedImages, setRelatedImages] = useState<{id: string; image_url: string}[]>([]);
+  const [uploadingRelated, setUploadingRelated] = useState(false);
+  const [showRelatedImagesFor, setShowRelatedImagesFor] = useState<string | null>(null);
 
   const resetForm = () => {
     setFormData({ name: "", icon: "🎮", sort_order: "0", image_url: "" });
     setEditingCategory(null);
     setShowForm(false);
+    setRelatedImages([]);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1233,7 +1237,7 @@ const CategoriesTab = ({
     }
   };
 
-  const handleEdit = (category: Category) => {
+  const handleEdit = async (category: Category) => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
@@ -1241,7 +1245,68 @@ const CategoriesTab = ({
       sort_order: category.sort_order.toString(),
       image_url: category.image_url || "",
     });
+    // Fetch related images
+    const { data } = await supabase
+      .from("category_images")
+      .select("id, image_url")
+      .eq("category_id", category.id)
+      .order("sort_order");
+    setRelatedImages(data || []);
     setShowForm(true);
+  };
+
+  const handleRelatedImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingCategory) return;
+
+    setUploadingRelated(true);
+    try {
+      const compressed = await compressImage(file);
+      const fileName = `category-related-${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, compressed);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      const { data, error } = await supabase
+        .from("category_images")
+        .insert({ category_id: editingCategory.id, image_url: publicUrl, sort_order: relatedImages.length })
+        .select("id, image_url")
+        .single();
+
+      if (error) throw error;
+      setRelatedImages([...relatedImages, data]);
+      toast({ title: "Image added", description: "Related image uploaded successfully." });
+    } catch (error: any) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingRelated(false);
+    }
+  };
+
+  const handleDeleteRelatedImage = async (imageId: string) => {
+    const { error } = await supabase.from("category_images").delete().eq("id", imageId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setRelatedImages(relatedImages.filter(img => img.id !== imageId));
+      toast({ title: "Image removed", description: "Related image deleted." });
+    }
+  };
+
+  const fetchRelatedImages = async (categoryId: string) => {
+    const { data } = await supabase
+      .from("category_images")
+      .select("id, image_url")
+      .eq("category_id", categoryId)
+      .order("sort_order");
+    setRelatedImages(data || []);
+    setShowRelatedImagesFor(categoryId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1396,6 +1461,43 @@ const CategoriesTab = ({
                 <p className="text-xs text-muted-foreground flex-1">Upload an image for the category filter cards</p>
               </div>
             </div>
+
+            {/* Related Images Section - only show when editing */}
+            {editingCategory && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Related Images</label>
+                <div className="flex flex-wrap gap-2">
+                  {relatedImages.map((img) => (
+                    <div key={img.id} className="relative w-16 h-16 rounded-xl overflow-hidden border border-border">
+                      <img src={img.image_url} alt="Related" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRelatedImage(img.id)}
+                        className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-destructive text-white flex items-center justify-center"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="w-16 h-16 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                    {uploadingRelated ? (
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleRelatedImageUpload}
+                      className="hidden"
+                      disabled={uploadingRelated}
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground">Add additional images for this category</p>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={saving}
