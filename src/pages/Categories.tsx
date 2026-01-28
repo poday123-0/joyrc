@@ -23,6 +23,7 @@ interface Category {
   id: string;
   name: string;
   icon: string;
+  image_url?: string | null;
 }
 
 const Categories = () => {
@@ -170,14 +171,20 @@ const Categories = () => {
                   <button
                     key={category.id}
                     onClick={() => handleCategoryChange(category.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left overflow-hidden ${
                       activeCategory === category.id
                         ? "bg-primary text-primary-foreground shadow-soft"
                         : "hover:bg-white/50 text-foreground"
                     }`}
                   >
-                    <span className="text-lg">{category.icon}</span>
-                    <span className="font-medium">{category.name}</span>
+                    {category.image_url ? (
+                      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                        <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <span className="text-lg">{category.icon}</span>
+                    )}
+                    <span className="font-medium truncate">{category.name}</span>
                   </button>
                 ))}
               </div>
@@ -300,20 +307,40 @@ const Categories = () => {
               </div>
             )}
 
-            {/* Mobile Category Pills */}
-            <div className="lg:hidden flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+            {/* Mobile Category Pills with Images */}
+            <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 mb-4 scrollbar-hide">
               {categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => handleCategoryChange(category.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full whitespace-nowrap transition-all ${
+                  className={`relative flex-shrink-0 rounded-2xl overflow-hidden transition-all ${
                     activeCategory === category.id
-                      ? "bg-primary text-primary-foreground shadow-soft"
-                      : "glass-card text-foreground hover:bg-white/80"
+                      ? "ring-2 ring-primary ring-offset-2"
+                      : ""
                   }`}
                 >
-                  <span className="text-sm">{category.icon}</span>
-                  <span className="text-sm font-medium">{category.name}</span>
+                  {category.image_url ? (
+                    <div className="w-24 h-28 relative">
+                      <img 
+                        src={category.image_url} 
+                        alt={category.name} 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <span className="absolute bottom-2 left-2 right-2 text-xs font-medium text-white text-center truncate">
+                        {category.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className={`w-24 h-28 flex flex-col items-center justify-center gap-1 ${
+                      activeCategory === category.id
+                        ? "bg-primary text-primary-foreground"
+                        : "glass-card text-foreground"
+                    }`}>
+                      <span className="text-2xl">{category.icon}</span>
+                      <span className="text-xs font-medium px-1 text-center truncate w-full">{category.name}</span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
