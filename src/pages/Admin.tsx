@@ -1835,26 +1835,6 @@ const SettingsTab = ({
             </div>
           </div>
 
-          {/* Google Login Info */}
-          <div className="pt-4 border-t border-border">
-            <h4 className="font-medium text-foreground mb-2">Google Login Settings</h4>
-            <p className="text-sm text-muted-foreground mb-3">
-              Google OAuth is managed through Lovable Cloud. To configure custom Google OAuth credentials, visit the Cloud Dashboard.
-            </p>
-            <a 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                toast({ 
-                  title: "Open Cloud Dashboard", 
-                  description: "Navigate to Users → Authentication Settings → Sign In Methods → Google in the Cloud Dashboard." 
-                });
-              }}
-              className="text-sm text-primary font-medium hover:underline"
-            >
-              Configure Google OAuth →
-            </a>
-          </div>
 
           <button
             type="submit"
