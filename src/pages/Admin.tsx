@@ -78,6 +78,7 @@ interface SystemSettings {
   hero_subtitle: string;
   notification_email: string | null;
   notification_sender_name: string | null;
+  google_login_enabled: boolean;
 }
 
 type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "settings";
@@ -1618,6 +1619,7 @@ const SettingsTab = ({
     hero_subtitle: settings.hero_subtitle,
     notification_email: settings.notification_email || "",
     notification_sender_name: settings.notification_sender_name || "RC Joy",
+    google_login_enabled: settings.google_login_enabled ?? true,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -1670,6 +1672,7 @@ const SettingsTab = ({
           hero_subtitle: formData.hero_subtitle.trim(),
           notification_email: formData.notification_email.trim() || null,
           notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
+          google_login_enabled: formData.google_login_enabled,
         })
         .eq("id", settings.id);
 
@@ -1832,6 +1835,29 @@ const SettingsTab = ({
                   This email will appear as the sender for order notifications. Must be a verified domain in Resend.
                 </p>
               </div>
+          </div>
+        </div>
+
+          {/* Google Login Toggle */}
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-foreground">Google Login</h4>
+                <p className="text-xs text-muted-foreground">Allow users to sign in with Google</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, google_login_enabled: !formData.google_login_enabled })}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  formData.google_login_enabled ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                    formData.google_login_enabled ? "left-7" : "left-1"
+                  }`}
+                />
+              </button>
             </div>
           </div>
 
