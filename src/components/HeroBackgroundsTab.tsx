@@ -7,17 +7,35 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Image, Video, Upload, Loader2 } from "lucide-react";
+import { Plus, Trash2, Image, Video, Upload, Loader2, Youtube } from "lucide-react";
 
 interface HeroBackground {
   id: string;
   media_url: string;
-  media_type: 'image' | 'video';
+  media_type: 'image' | 'video' | 'youtube';
   title: string | null;
   subtitle: string | null;
   is_active: boolean;
   sort_order: number;
 }
+
+// Check if URL is a YouTube link
+const isYouTubeUrl = (url: string): boolean => {
+  return /(?:youtube\.com|youtu\.be)/.test(url);
+};
+
+// Extract YouTube video ID
+const getYouTubeVideoId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/,
+    /youtube\.com\/shorts\/([^&\s?]+)/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+};
 
 const HeroBackgroundsTab = () => {
   const [backgrounds, setBackgrounds] = useState<HeroBackground[]>([]);
@@ -25,11 +43,21 @@ const HeroBackgroundsTab = () => {
   const [uploading, setUploading] = useState(false);
   const [newBackground, setNewBackground] = useState({
     media_url: '',
-    media_type: 'image' as 'image' | 'video',
+    media_type: 'image' as 'image' | 'video' | 'youtube',
     title: '',
     subtitle: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-detect YouTube URLs
+  const handleUrlChange = (url: string) => {
+    const isYT = isYouTubeUrl(url);
+    setNewBackground(prev => ({
+      ...prev,
+      media_url: url,
+      media_type: isYT ? 'youtube' : prev.media_type
+    }));
+  };
 
   const fetchBackgrounds = async () => {
     const { data, error } = await supabase
@@ -43,7 +71,7 @@ const HeroBackgroundsTab = () => {
     }
     setBackgrounds((data || []).map(bg => ({
       ...bg,
-      media_type: bg.media_type as 'image' | 'video',
+      media_type: bg.media_type as 'image' | 'video' | 'youtube',
       is_active: bg.is_active ?? false
     })));
     setIsLoading(false);
@@ -264,18 +292,23 @@ const HeroBackgroundsTab = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Media URL</Label>
+              <Label>Media URL or YouTube Link</Label>
               <Input
-                placeholder="https://example.com/image.jpg"
+                placeholder="https://youtube.com/watch?v=... or image URL"
                 value={newBackground.media_url}
-                onChange={(e) => setNewBackground(prev => ({ ...prev, media_url: e.target.value }))}
+                onChange={(e) => handleUrlChange(e.target.value)}
               />
+              {newBackground.media_type === 'youtube' && (
+                <p className="text-xs text-primary flex items-center gap-1">
+                  <Youtube className="w-3 h-3" /> YouTube video detected
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Media Type</Label>
               <Select
                 value={newBackground.media_type}
-                onValueChange={(value: 'image' | 'video') => 
+                onValueChange={(value: 'image' | 'video' | 'youtube') => 
                   setNewBackground(prev => ({ ...prev, media_type: value }))
                 }
               >
@@ -284,7 +317,8 @@ const HeroBackgroundsTab = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="image">Image</SelectItem>
-                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="video">Video (Upload)</SelectItem>
+                  <SelectItem value="youtube">YouTube Video</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -332,7 +366,22 @@ const HeroBackgroundsTab = () => {
               >
                 {/* Preview with replace option */}
                 <div className="relative w-full md:w-32 h-24 rounded overflow-hidden bg-muted flex-shrink-0 group">
-                  {bg.media_type === 'video' ? (
+                  {bg.media_type === 'youtube' ? (
+                    (() => {
+                      const videoId = getYouTubeVideoId(bg.media_url);
+                      return videoId ? (
+                        <img
+                          src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                          alt="YouTube thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Youtube className="w-8 h-8 text-red-500" />
+                        </div>
+                      );
+                    })()
+                  ) : bg.media_type === 'video' ? (
                     <video
                       src={bg.media_url}
                       className="w-full h-full object-cover"
@@ -345,31 +394,35 @@ const HeroBackgroundsTab = () => {
                       className="w-full h-full object-cover"
                     />
                   )}
-                  {/* Replace overlay */}
-                  <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
-                    <input
-                      type="file"
-                      accept="image/*,video/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleReplaceMedia(bg.id, file);
-                      }}
-                    />
-                    <Upload className="w-6 h-6 text-white" />
-                  </label>
+                  {/* Replace overlay - only for non-youtube */}
+                  {bg.media_type !== 'youtube' && (
+                    <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleReplaceMedia(bg.id, file);
+                        }}
+                      />
+                      <Upload className="w-6 h-6 text-white" />
+                    </label>
+                  )}
                 </div>
 
                 {/* Details */}
                 <div className="flex-1 space-y-2 min-w-0 w-full">
                   <div className="flex items-center gap-2">
-                    {bg.media_type === 'image' ? (
+                    {bg.media_type === 'youtube' ? (
+                      <Youtube className="w-4 h-4 text-red-500" />
+                    ) : bg.media_type === 'image' ? (
                       <Image className="w-4 h-4 text-muted-foreground" />
                     ) : (
                       <Video className="w-4 h-4 text-muted-foreground" />
                     )}
                     <span className="text-sm text-muted-foreground capitalize">
-                      {bg.media_type}
+                      {bg.media_type === 'youtube' ? 'YouTube' : bg.media_type}
                     </span>
                   </div>
                   
