@@ -645,6 +645,7 @@ export type Database = {
           cta_button_text: string | null
           cta_subtitle: string | null
           cta_title: string | null
+          favicon_url: string | null
           feature_1_description: string | null
           feature_1_icon: string | null
           feature_1_title: string | null
@@ -661,9 +662,11 @@ export type Database = {
           logo_url: string | null
           notification_email: string | null
           notification_sender_name: string | null
+          og_image_url: string | null
           primary_color: string | null
           secondary_color: string | null
           site_name: string
+          site_title: string | null
           updated_at: string
         }
         Insert: {
@@ -671,6 +674,7 @@ export type Database = {
           cta_button_text?: string | null
           cta_subtitle?: string | null
           cta_title?: string | null
+          favicon_url?: string | null
           feature_1_description?: string | null
           feature_1_icon?: string | null
           feature_1_title?: string | null
@@ -687,9 +691,11 @@ export type Database = {
           logo_url?: string | null
           notification_email?: string | null
           notification_sender_name?: string | null
+          og_image_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           site_name?: string
+          site_title?: string | null
           updated_at?: string
         }
         Update: {
@@ -697,6 +703,7 @@ export type Database = {
           cta_button_text?: string | null
           cta_subtitle?: string | null
           cta_title?: string | null
+          favicon_url?: string | null
           feature_1_description?: string | null
           feature_1_icon?: string | null
           feature_1_title?: string | null
@@ -713,9 +720,11 @@ export type Database = {
           logo_url?: string | null
           notification_email?: string | null
           notification_sender_name?: string | null
+          og_image_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           site_name?: string
+          site_title?: string | null
           updated_at?: string
         }
         Relationships: []

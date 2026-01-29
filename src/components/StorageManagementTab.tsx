@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Trash2, Image, Video, Check, RefreshCw, HardDrive, AlertTriangle } from "lucide-react";
+import { Trash2, Image, Video, Check, RefreshCw, HardDrive, AlertTriangle, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "./ConfirmDialog";
@@ -115,6 +115,37 @@ const StorageManagementTab = () => {
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
+  const handleDownloadSelected = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    const filesToDownload = Array.from(selectedFiles);
+    
+    for (const fileId of filesToDownload) {
+      const file = files.find(f => f.id === fileId);
+      if (!file) continue;
+
+      try {
+        const response = await fetch(file.url);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading file:", file.name, error);
+      }
+    }
+
+    toast({
+      title: "Download Started",
+      description: `Downloading ${filesToDownload.length} file(s)...`,
+    });
   };
 
   const handleDeleteSelected = async () => {
@@ -277,13 +308,22 @@ const StorageManagementTab = () => {
           </div>
 
           {selectedFiles.size > 0 && (
-            <button
-              onClick={() => setDeleteDialogOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete ({selectedFiles.size})
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDownloadSelected}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download ({selectedFiles.size})
+              </button>
+              <button
+                onClick={() => setDeleteDialogOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete ({selectedFiles.size})
+              </button>
+            </div>
           )}
         </div>
       )}
