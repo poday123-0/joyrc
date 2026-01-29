@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
-import { getOptimizedImageUrl, getResponsiveSrcSet, isCloudinaryConfigured } from "@/lib/cloudinary";
+import { 
+  getOptimizedImageUrl, 
+  getResponsiveSrcSet, 
+  getPlaceholderColor 
+} from "@/lib/imageOptimization";
 
 interface OptimizedImageProps {
   src: string;
@@ -9,6 +13,7 @@ interface OptimizedImageProps {
   fill?: boolean;
   sizes?: string;
   width?: number;
+  quality?: number;
   onLoad?: () => void;
 }
 
@@ -16,11 +21,10 @@ interface OptimizedImageProps {
 const imageCache = new Set<string>();
 
 // Preload image function
-const preloadImage = (src: string): Promise<void> => {
+export const preloadImage = (src: string, width?: number): Promise<void> => {
   if (imageCache.has(src)) return Promise.resolve();
   
-  // Use Cloudinary-optimized URL if configured
-  const optimizedSrc = getOptimizedImageUrl(src, { quality: 'auto', format: 'auto' });
+  const optimizedSrc = getOptimizedImageUrl(src, { width, quality: 80 });
   
   return new Promise((resolve) => {
     const img = new Image();
@@ -39,14 +43,14 @@ const OptimizedImage = memo(({
   className = "", 
   priority = false,
   fill = false,
-  sizes = "100vw",
+  sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
   width,
+  quality = 80,
   onLoad
 }: OptimizedImageProps) => {
   const [loaded, setLoaded] = useState(() => imageCache.has(src));
   const [inView, setInView] = useState(priority || imageCache.has(src));
   const containerRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
 
   // Check if image is already cached
   useEffect(() => {
@@ -56,7 +60,7 @@ const OptimizedImage = memo(({
     }
   }, [src]);
 
-  // Intersection Observer for lazy loading - with larger margin for earlier loading
+  // Intersection Observer for lazy loading - with large margin for earlier loading
   useEffect(() => {
     if (priority || imageCache.has(src)) {
       setInView(true);
@@ -71,7 +75,7 @@ const OptimizedImage = memo(({
         }
       },
       { 
-        rootMargin: '600px', // Start loading 600px before visible
+        rootMargin: '800px', // Start loading 800px before visible
         threshold: 0.01 
       }
     );
@@ -83,12 +87,12 @@ const OptimizedImage = memo(({
     return () => observer.disconnect();
   }, [priority, src]);
 
-  // Preload next images when this one loads
+  // Preload priority images immediately
   useEffect(() => {
-    if (priority) {
-      preloadImage(src);
+    if (priority && src) {
+      preloadImage(src, width);
     }
-  }, [priority, src]);
+  }, [priority, src, width]);
 
   const handleLoad = useCallback(() => {
     imageCache.add(src);
@@ -96,43 +100,18 @@ const OptimizedImage = memo(({
     onLoad?.();
   }, [src, onLoad]);
 
-  // Get optimized image URL via Cloudinary or fallback
+  // Get optimized image URL
   const optimizedSrc = useCallback(() => {
-    if (isCloudinaryConfigured()) {
-      return getOptimizedImageUrl(src, { 
-        width, 
-        quality: 'auto', 
-        format: 'auto',
-        crop: width ? 'limit' : undefined
-      });
-    }
-    return src;
-  }, [src, width]);
+    return getOptimizedImageUrl(src, { 
+      width, 
+      quality
+    });
+  }, [src, width, quality]);
 
   // Generate optimized srcset
-  const generateSrcSet = useCallback(() => {
-    // Use Cloudinary srcset if configured
-    if (isCloudinaryConfigured()) {
-      return getResponsiveSrcSet(src, [320, 640, 960, 1280, 1920], {
-        quality: 'auto',
-        format: 'auto',
-        crop: 'limit'
-      });
-    }
-    
-    // Fallback: Supabase storage transformation
-    if (src.includes('supabase.co/storage')) {
-      const widths = [320, 640, 768, 1024, 1280];
-      return widths
-        .map(w => {
-          const transformedUrl = `${src}?width=${w}&quality=80`;
-          return `${transformedUrl} ${w}w`;
-        })
-        .join(', ');
-    }
-    
-    return undefined;
-  }, [src]);
+  const srcSet = useCallback(() => {
+    return getResponsiveSrcSet(src, [320, 640, 960, 1280], quality);
+  }, [src, quality]);
 
   return (
     <div 
@@ -141,30 +120,28 @@ const OptimizedImage = memo(({
     >
       {/* Skeleton placeholder - only show if not cached */}
       {!loaded && (
-        <div 
-          className="absolute inset-0 bg-muted rounded-inherit"
-        >
-          <div 
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"
-            style={{
-              backgroundSize: '200% 100%',
-            }}
+        <div className="absolute inset-0 bg-muted animate-pulse rounded-inherit">
+          <img 
+            src={getPlaceholderColor()} 
+            alt="" 
+            className="w-full h-full object-cover"
+            aria-hidden="true"
           />
         </div>
       )}
       
-      {/* Actual image - render immediately when in view */}
+      {/* Actual image - render when in view */}
       {inView && (
         <img
-          ref={imgRef}
           src={optimizedSrc()}
-          srcSet={generateSrcSet()}
+          srcSet={srcSet() || undefined}
           sizes={sizes}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
+          fetchPriority={priority ? "high" : "auto"}
           onLoad={handleLoad}
-          className={`${className} transition-opacity duration-150 ${
+          className={`${className} transition-opacity duration-200 ${
             loaded ? 'opacity-100' : 'opacity-0'
           }`}
         />
@@ -176,6 +153,3 @@ const OptimizedImage = memo(({
 OptimizedImage.displayName = 'OptimizedImage';
 
 export default OptimizedImage;
-
-// Export preload function for use in other components
-export { preloadImage };

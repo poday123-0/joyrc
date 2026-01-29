@@ -41,14 +41,14 @@ interface HomeContent {
 }
 
 import OptimizedImage, { preloadImage } from "@/components/OptimizedImage";
+import { preloadImages } from "@/lib/imageOptimization";
 
-// Preload featured product images on hover
+// Preload featured product images
 const preloadFeaturedImages = (products: FeaturedProduct[]) => {
-  products.forEach(fp => {
-    if (fp.product.image_url) {
-      preloadImage(fp.product.image_url);
-    }
-  });
+  const urls = products
+    .map(fp => fp.product.image_url)
+    .filter((url): url is string => !!url);
+  preloadImages(urls, 640);
 };
 
 const Index = () => {
