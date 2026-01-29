@@ -280,19 +280,39 @@ const VideoShowcase = () => {
       {/* Gradient overlay - stronger at bottom for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
 
-      {/* Bottom content - Stacked titles */}
+      {/* Center title - Currently playing video */}
+      <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+        isTransitioning ? 'opacity-0' : 'opacity-100'
+      }`}>
+        <div className="text-center px-4">
+          <p className="text-[10px] sm:text-xs text-white/70 font-medium mb-1">
+            {currentVideo?.description || ''}
+          </p>
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+            {currentVideo?.title || 'Featured Video'}
+          </h2>
+        </div>
+      </div>
+
+      {/* Bottom content - Inactive titles for navigation */}
       <div className={`absolute bottom-0 left-0 right-0 pointer-events-none transition-opacity duration-300 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}>
         <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 lg:pb-10">
           <div className="space-y-0.5 sm:space-y-1">
-            {videos.map((video, index) => (
+            {videos.filter((_, index) => index !== currentIndex).map((video) => (
               <div key={video.id} className="pointer-events-auto">
-                <VideoTitleButton
-                  video={video}
-                  isActive={index === currentIndex}
-                  onClick={() => goToVideo(index)}
-                />
+                <button
+                  onClick={() => goToVideo(videos.findIndex(v => v.id === video.id))}
+                  className="block text-left w-full max-w-md transition-all duration-300 opacity-40 hover:opacity-60"
+                >
+                  <p className="text-[9px] sm:text-[10px] text-white/60 truncate">
+                    {video.description || ''}
+                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-white/70 truncate">
+                    {video.title || 'Featured Video'}
+                  </p>
+                </button>
               </div>
             ))}
           </div>
