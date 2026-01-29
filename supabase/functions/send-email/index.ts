@@ -57,11 +57,12 @@ serve(async (req: Request): Promise<Response> => {
     // Get system settings for sender info
     const { data: settings } = await supabase
       .from("system_settings")
-      .select("notification_email, notification_sender_name, site_name")
+      .select("notification_email, site_name")
       .limit(1)
       .maybeSingle();
 
-    const senderName = settings?.notification_sender_name || settings?.site_name || "RC Joy";
+    // Use site_name as the sender name for all emails
+    const senderName = settings?.site_name || "RC Joy";
     const adminEmail = settings?.notification_email;
     
     // Use verified domain email or fallback to resend.dev
