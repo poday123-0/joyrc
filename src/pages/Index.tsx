@@ -93,7 +93,7 @@ const Index = () => {
     };
     fetchData();
   }, []);
-  return <div className="min-h-screen bg-background lg:pb-8 py-0 my-0 pb-[48px]">
+  return <div className="min-h-screen bg-background py-0 my-0 pb-[48px] lg:pb-0">
       <Header />
 
       {/* Video Showcase - Full Width */}
