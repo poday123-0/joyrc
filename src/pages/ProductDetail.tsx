@@ -500,7 +500,6 @@ const ProductDetail = () => {
                 {/* Product Name */}
                 <div>
                   <h1 className="text-xl lg:text-2xl font-bold text-foreground">{product.name}</h1>
-                  <p className="text-sm text-muted-foreground mt-0.5">{product.category}</p>
                 </div>
                 
                 {/* Add to Cart */}
