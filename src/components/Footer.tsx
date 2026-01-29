@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Facebook, Instagram, Twitter, Youtube, Linkedin, MapPin, Phone, Mail } from "lucide-react";
@@ -30,44 +30,84 @@ const Footer = () => {
   const [settings, setSettings] = useState<FooterSettings | null>(null);
   const [footerLinks, setFooterLinks] = useState<FooterLink[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [settingsRes, linksRes] = await Promise.all([
-        supabase
-          .from("system_settings")
-          .select(`
-            footer_copyright,
-            footer_company_name,
-            footer_address,
-            footer_phone,
-            footer_email,
-            footer_social_facebook,
-            footer_social_instagram,
-            footer_social_twitter,
-            footer_social_youtube,
-            footer_social_linkedin,
-            footer_social_pinterest
-          `)
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("footer_links")
-          .select("*")
-          .eq("is_active", true)
-          .order("column_order")
-          .order("sort_order"),
-      ]);
+  const fetchSettings = useCallback(async () => {
+    const { data } = await supabase
+      .from("system_settings")
+      .select(`
+        footer_copyright,
+        footer_company_name,
+        footer_address,
+        footer_phone,
+        footer_email,
+        footer_social_facebook,
+        footer_social_instagram,
+        footer_social_twitter,
+        footer_social_youtube,
+        footer_social_linkedin,
+        footer_social_pinterest
+      `)
+      .limit(1)
+      .maybeSingle();
 
-      if (settingsRes.data) {
-        setSettings(settingsRes.data);
-      }
-      if (linksRes.data) {
-        setFooterLinks(linksRes.data);
-      }
-    };
-
-    fetchData();
+    if (data) {
+      setSettings(data);
+    }
   }, []);
+
+  const fetchLinks = useCallback(async () => {
+    const { data } = await supabase
+      .from("footer_links")
+      .select("*")
+      .eq("is_active", true)
+      .order("column_order")
+      .order("sort_order");
+
+    if (data) {
+      setFooterLinks(data);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+    fetchLinks();
+
+    // Subscribe to realtime changes on system_settings
+    const settingsChannel = supabase
+      .channel('footer-settings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings'
+        },
+        () => {
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to realtime changes on footer_links
+    const linksChannel = supabase
+      .channel('footer-links-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'footer_links'
+        },
+        () => {
+          fetchLinks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(linksChannel);
+    };
+  }, [fetchSettings, fetchLinks]);
 
   // Group links by column
   const groupedLinks = footerLinks.reduce((acc, link) => {
