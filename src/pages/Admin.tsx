@@ -1673,23 +1673,29 @@ const SettingsTab = ({
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [uploadingOgImage, setUploadingOgImage] = useState(false);
 
-  // Sync form data when settings prop changes (after refresh)
+  // Track settings ID to only sync on actual data refresh, not every re-render
+  const [lastSettingsId, setLastSettingsId] = useState(settings.id);
+  
+  // Sync form data only when settings ID changes (after actual DB refresh)
   useEffect(() => {
-    setFormData({
-      site_name: settings.site_name,
-      logo_url: settings.logo_url || "",
-      primary_color: settings.primary_color,
-      secondary_color: settings.secondary_color,
-      hero_title: settings.hero_title,
-      hero_subtitle: settings.hero_subtitle,
-      notification_email: settings.notification_email || "",
-      notification_sender_name: settings.notification_sender_name || "RC Joy",
-      google_login_enabled: settings.google_login_enabled ?? true,
-      site_title: settings.site_title || "",
-      favicon_url: settings.favicon_url || "",
-      og_image_url: settings.og_image_url || "",
-    });
-  }, [settings]);
+    if (settings.id !== lastSettingsId) {
+      setFormData({
+        site_name: settings.site_name,
+        logo_url: settings.logo_url || "",
+        primary_color: settings.primary_color,
+        secondary_color: settings.secondary_color,
+        hero_title: settings.hero_title,
+        hero_subtitle: settings.hero_subtitle,
+        notification_email: settings.notification_email || "",
+        notification_sender_name: settings.notification_sender_name || "RC Joy",
+        google_login_enabled: settings.google_login_enabled ?? true,
+        site_title: settings.site_title || "",
+        favicon_url: settings.favicon_url || "",
+        og_image_url: settings.og_image_url || "",
+      });
+      setLastSettingsId(settings.id);
+    }
+  }, [settings, lastSettingsId]);
 
   const handleLogoUpload = async (file: File | null) => {
     if (!file) return;
