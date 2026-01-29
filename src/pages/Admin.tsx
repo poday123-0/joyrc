@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ import VideoShowcasesTab from "@/components/VideoShowcasesTab";
 import UsersManagementTab from "@/components/UsersManagementTab";
 import ExistingImagesDialog from "@/components/ExistingImagesDialog";
 import HomeContentTab from "@/components/HomeContentTab";
+import StorageManagementTab from "@/components/StorageManagementTab";
 
 interface Product {
   id: string;
@@ -82,7 +83,7 @@ interface SystemSettings {
   google_login_enabled: boolean;
 }
 
-type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "settings";
+type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -98,6 +99,7 @@ const tabs = [
   { id: "users", label: "Users", icon: User },
   { id: "hero", label: "Hero", icon: ImageIcon },
   { id: "home-content", label: "Home", icon: FolderOpen },
+  { id: "storage", label: "Storage", icon: HardDrive },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -263,6 +265,7 @@ const Admin = () => {
             {activeTab === "users" && <UsersManagementTab />}
             {activeTab === "hero" && <HeroBackgroundsTab />}
             {activeTab === "home-content" && <HomeContentTab />}
+            {activeTab === "storage" && <StorageManagementTab />}
             {activeTab === "settings" && settings && (
               <SettingsTab 
                 settings={settings} 
