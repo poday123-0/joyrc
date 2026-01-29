@@ -2088,9 +2088,9 @@ const SettingsTab = ({
                   </div>
 
                   <div className="p-3 rounded-lg bg-background border border-border">
-                    <h6 className="text-xs font-semibold text-foreground mb-2">3. Add to Cloud Dashboard</h6>
+                    <h6 className="text-xs font-semibold text-foreground mb-2">3. Configure in Admin Settings</h6>
                     <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Open your Lovable Cloud Dashboard</li>
+                      <li>Open your <span className="font-medium text-foreground">Cloud Dashboard</span> (button below)</li>
                       <li>Go to <span className="font-medium text-foreground">Users → Auth Settings → Google</span></li>
                       <li>Copy the redirect URL shown → paste into Google Console</li>
                       <li>Enter your Client ID and Client Secret</li>
@@ -2099,7 +2099,7 @@ const SettingsTab = ({
                 </div>
 
                 <p className="text-xs text-muted-foreground italic">
-                  💡 Tip: Users will now see "Sign in to RC Joy" on Google's consent screen instead of Lovable branding.
+                  💡 Tip: After setup, users will see "Sign in to RC Joy" on Google's consent screen.
                 </p>
               </div>
             )}
