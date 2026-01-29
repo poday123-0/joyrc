@@ -129,8 +129,65 @@ const Footer = () => {
       {/* Main Footer Content */}
       <div className="container max-w-7xl mx-auto px-4 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-          {/* Left Side - Company Info & Social */}
-          <div className="space-y-6">
+          {/* Left Side - Quick Links */}
+          <div className="flex flex-col">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-12">
+              {/* Quick Links Column */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-background text-sm uppercase tracking-wider">Quick Links</h4>
+                <ul className="space-y-2">
+                  <li>
+                    <Link to="/categories" className="text-sm text-background/70 hover:text-background transition-colors">
+                      Browse Products
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/support" className="text-sm text-background/70 hover:text-background transition-colors">
+                      Help Center
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/cart" className="text-sm text-background/70 hover:text-background transition-colors">
+                      Cart
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Dynamic Link Columns */}
+              {Object.entries(groupedLinks).map(([columnTitle, links]) => (
+                <div key={columnTitle} className="space-y-4">
+                  <h4 className="font-semibold text-background text-sm uppercase tracking-wider">{columnTitle}</h4>
+                  <ul className="space-y-2">
+                    {links.map((link) => (
+                      <li key={link.id}>
+                        {link.link_url.startsWith("/") ? (
+                          <Link
+                            to={link.link_url}
+                            className="text-sm text-background/70 hover:text-background transition-colors"
+                          >
+                            {link.link_label}
+                          </Link>
+                        ) : (
+                          <a
+                            href={link.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-background/70 hover:text-background transition-colors"
+                          >
+                            {link.link_label}
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side - Company Info & Social */}
+          <div className="space-y-6 lg:text-right">
             {settings?.footer_company_name && (
               <h3 className="text-xl font-bold text-background">
                 {settings.footer_company_name}
@@ -139,32 +196,32 @@ const Footer = () => {
             
             <div className="space-y-3">
               {settings?.footer_address && (
-                <div className="flex items-start gap-3 text-sm text-background/70">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 text-sm text-background/70 lg:justify-end">
                   <span className="whitespace-pre-line">{settings.footer_address}</span>
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 </div>
               )}
               {settings?.footer_phone && (
-                <div className="flex items-center gap-3 text-sm text-background/70">
-                  <Phone className="w-4 h-4 flex-shrink-0" />
+                <div className="flex items-center gap-3 text-sm text-background/70 lg:justify-end">
                   <a href={`tel:${settings.footer_phone}`} className="hover:text-background transition-colors">
                     {settings.footer_phone}
                   </a>
+                  <Phone className="w-4 h-4 flex-shrink-0" />
                 </div>
               )}
               {settings?.footer_email && (
-                <div className="flex items-center gap-3 text-sm text-background/70">
-                  <Mail className="w-4 h-4 flex-shrink-0" />
+                <div className="flex items-center gap-3 text-sm text-background/70 lg:justify-end">
                   <a href={`mailto:${settings.footer_email}`} className="hover:text-background transition-colors">
                     {settings.footer_email}
                   </a>
+                  <Mail className="w-4 h-4 flex-shrink-0" />
                 </div>
               )}
             </div>
 
             {/* Social Media Links */}
             {hasSocialLinks && (
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-wrap gap-3 pt-2 lg:justify-end">
                 {settings?.footer_social_instagram && (
                   <a
                     href={settings.footer_social_instagram}
@@ -222,63 +279,6 @@ const Footer = () => {
                 )}
               </div>
             )}
-          </div>
-
-          {/* Right Side - Quick Links */}
-          <div className="flex flex-col lg:items-end">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-12">
-              {/* Quick Links Column */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-background text-sm uppercase tracking-wider">Quick Links</h4>
-                <ul className="space-y-2">
-                  <li>
-                    <Link to="/categories" className="text-sm text-background/70 hover:text-background transition-colors">
-                      Browse Products
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/support" className="text-sm text-background/70 hover:text-background transition-colors">
-                      Help Center
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/cart" className="text-sm text-background/70 hover:text-background transition-colors">
-                      Cart
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Dynamic Link Columns */}
-              {Object.entries(groupedLinks).map(([columnTitle, links]) => (
-                <div key={columnTitle} className="space-y-4">
-                  <h4 className="font-semibold text-background text-sm uppercase tracking-wider">{columnTitle}</h4>
-                  <ul className="space-y-2">
-                    {links.map((link) => (
-                      <li key={link.id}>
-                        {link.link_url.startsWith("/") ? (
-                          <Link
-                            to={link.link_url}
-                            className="text-sm text-background/70 hover:text-background transition-colors"
-                          >
-                            {link.link_label}
-                          </Link>
-                        ) : (
-                          <a
-                            href={link.link_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-background/70 hover:text-background transition-colors"
-                          >
-                            {link.link_label}
-                          </a>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
