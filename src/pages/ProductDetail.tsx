@@ -222,6 +222,36 @@ const ProductDetail = () => {
                 </div>
               )}
 
+              {/* Product Title - Above Price on Mobile/Desktop */}
+              <div className="text-center lg:text-left mb-4">
+                <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">{product.name}</h1>
+                <p className="text-sm text-muted-foreground">{product.category}</p>
+              </div>
+
+              {/* Color Options - Above Price */}
+              {productColors.length > 0 && (
+                <div className="text-center lg:text-left mb-4">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Available in {productColors.length} colors
+                  </p>
+                  <div className="flex justify-center lg:justify-start gap-3">
+                    {productColors.map(color => (
+                      <button
+                        key={color.id}
+                        onClick={() => setSelectedColorId(color.id)}
+                        className={`w-8 h-8 rounded-full transition-all ${
+                          selectedColorId === color.id
+                            ? 'ring-2 ring-offset-2 ring-foreground'
+                            : 'opacity-70 hover:opacity-100'
+                        }`}
+                        style={{ backgroundColor: color.color_hex }}
+                        title={color.color_name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Price and Buy Button - Under Image */}
               <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border">
                 <p className="text-3xl font-bold text-foreground mb-2">
@@ -242,36 +272,6 @@ const ProductDetail = () => {
 
           {/* Right Column - Product Info */}
           <div className="lg:py-0">
-            {/* Product Title */}
-            <div className="mb-6">
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">{product.name}</h1>
-              <p className="text-sm text-muted-foreground">{product.category}</p>
-            </div>
-
-            {/* Color Options */}
-            {productColors.length > 0 && (
-              <div className="text-center lg:text-left pb-6 border-b border-border">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Available in {productColors.length} colors
-                </p>
-                <div className="flex justify-center lg:justify-start gap-3">
-                  {productColors.map(color => (
-                    <button
-                      key={color.id}
-                      onClick={() => setSelectedColorId(color.id)}
-                      className={`w-8 h-8 rounded-full transition-all ${
-                        selectedColorId === color.id
-                          ? 'ring-2 ring-offset-2 ring-foreground'
-                          : 'opacity-70 hover:opacity-100'
-                      }`}
-                      style={{ backgroundColor: color.color_hex }}
-                      title={color.color_name}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Specifications as Feature List */}
             <div className="py-6 space-y-0">
               {specs.length > 0 ? (
