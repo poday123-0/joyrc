@@ -497,6 +497,11 @@ const ProductDetail = () => {
                   )}
                 </div>
                 
+                {/* Product Name - Mobile only */}
+                <div className="lg:hidden">
+                  <h1 className="text-xl font-bold text-foreground">{product.name}</h1>
+                </div>
+                
                 {/* Add to Cart */}
                 <button
                   onClick={handleAddToCart}
@@ -504,11 +509,6 @@ const ProductDetail = () => {
                 >
                   Add to Cart
                 </button>
-                
-                {/* Product Name - Mobile only */}
-                <div className="lg:hidden">
-                  <h1 className="text-xl font-bold text-foreground">{product.name}</h1>
-                </div>
               </div>
             </div>
           </div>
