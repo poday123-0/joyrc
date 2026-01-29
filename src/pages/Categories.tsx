@@ -315,23 +315,39 @@ const Categories = () => {
               </div>
             )}
 
-            {/* Mobile Category Pills */}
+            {/* Mobile Category Pills - Circle Design */}
             <div className="lg:hidden mb-5">
-              <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex justify-start gap-4 overflow-x-auto pb-2 scrollbar-hide">
                 {categories.map((category) => {
                   const isActive = activeCategory === category.id;
                   return (
                     <button
                       key={category.id}
                       onClick={() => handleCategoryChange(category.id)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-md"
-                          : "bg-muted/60 text-muted-foreground hover:bg-muted"
-                      }`}
+                      className="flex flex-col items-center gap-1.5 flex-shrink-0"
                     >
-                      <span className="text-sm">{category.icon}</span>
-                      <span className="text-xs font-medium">{category.name}</span>
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {category.image_url ? (
+                          <img 
+                            src={category.image_url} 
+                            alt={category.name} 
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-lg">{category.icon}</span>
+                        )}
+                      </div>
+                      <span className={`text-[10px] font-medium text-center w-12 truncate ${
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      }`}>
+                        {category.name}
+                      </span>
                     </button>
                   );
                 })}
