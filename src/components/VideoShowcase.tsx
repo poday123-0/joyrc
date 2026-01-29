@@ -12,8 +12,14 @@ interface VideoShowcaseData {
   product_id: string | null;
 }
 
-// Preload video metadata for smoother transitions
+// Check if URL is a YouTube embed
+const isYoutubeEmbed = (url: string): boolean => {
+  return url.includes('youtube.com/embed/');
+};
+
+// Preload video metadata for smoother transitions (only for non-YouTube)
 const preloadVideoMetadata = (url: string): Promise<void> => {
+  if (isYoutubeEmbed(url)) return Promise.resolve();
   return new Promise((resolve) => {
     const video = document.createElement('video');
     video.preload = 'metadata';
@@ -34,10 +40,10 @@ const VideoTitleButton = memo(({
 }) => (
   <button
     onClick={onClick}
-    className={`block w-full max-w-md transition-all duration-300 ${
+    className={`block text-left w-full max-w-md transition-all duration-300 ${
       isActive 
-        ? 'opacity-100 text-center' 
-        : 'opacity-40 hover:opacity-60 text-left'
+        ? 'opacity-100' 
+        : 'opacity-40 hover:opacity-60'
     }`}
   >
     <p className={`transition-all duration-300 truncate ${
@@ -68,7 +74,11 @@ const VideoShowcase = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const navigate = useNavigate();
+
+  const currentVideo = videos[currentIndex];
+  const isCurrentYoutube = currentVideo ? isYoutubeEmbed(currentVideo.video_url) : false;
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -94,11 +104,16 @@ const VideoShowcase = () => {
 
     fetchVideos();
   }, []);
-
-  const currentVideo = videos[currentIndex];
+  // Get YouTube URL with mute parameter
+  const getYoutubeUrlWithMute = (url: string, muted: boolean): string => {
+    const baseUrl = url.split('?')[0];
+    const videoId = baseUrl.split('/').pop();
+    return `${baseUrl}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}&controls=0&modestbranding=1&playsinline=1&rel=0&showinfo=0`;
+  };
 
   const handlePlayPause = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
+    if (isCurrentYoutube) return; // YouTube handles its own playback
     if (!videoRef.current) return;
     
     if (isPlaying) {
@@ -107,16 +122,18 @@ const VideoShowcase = () => {
       videoRef.current.play();
     }
     setIsPlaying(!isPlaying);
-  }, [isPlaying]);
+  }, [isPlaying, isCurrentYoutube]);
 
   const handleMuteToggle = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!videoRef.current) return;
-    
     const newMutedState = !isMuted;
-    videoRef.current.muted = newMutedState;
     setIsMuted(newMutedState);
-  }, [isMuted]);
+    
+    if (!isCurrentYoutube && videoRef.current) {
+      videoRef.current.muted = newMutedState;
+    }
+    // For YouTube, we'll update the iframe src which triggers reload with new mute state
+  }, [isMuted, isCurrentYoutube]);
 
   const handleVideoClick = useCallback(() => {
     if (currentVideo?.product_id) {
@@ -166,12 +183,19 @@ const VideoShowcase = () => {
     }, 300);
   }, [currentIndex, videos]);
 
-  // Auto-play video when component mounts or video changes
+  // Auto-play video when component mounts or video changes (only for non-YouTube)
   useEffect(() => {
+    if (isCurrentYoutube) {
+      // YouTube videos auto-play via iframe params
+      setVideoReady(true);
+      setIsPlaying(true);
+      return;
+    }
+    
     if (videoRef.current && videos.length > 0) {
       const video = videoRef.current;
       video.load();
-      video.muted = true;
+      video.muted = isMuted;
       
       const playVideo = () => {
         video.play().then(() => {
@@ -190,7 +214,7 @@ const VideoShowcase = () => {
         video.addEventListener('canplay', playVideo, { once: true });
       }
     }
-  }, [currentIndex, videos.length]);
+  }, [currentIndex, videos.length, isCurrentYoutube]);
 
   if (loading) {
     return (
@@ -216,48 +240,52 @@ const VideoShowcase = () => {
         />
       )}
       
-      {/* Full-width Video */}
-      <video
-        ref={videoRef}
-        src={currentVideo?.video_url}
-        poster={currentVideo?.thumbnail_url || undefined}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-400 ${
-          isTransitioning || !videoReady ? 'opacity-0' : 'opacity-100'
-        }`}
-        muted
-        playsInline
-        preload="auto"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={handleVideoEnd}
-        onCanPlay={() => setVideoReady(true)}
-        onClick={handleVideoClick}
-      />
+      {/* Full-width Video or YouTube iframe */}
+      {isCurrentYoutube ? (
+        <div 
+          className={`absolute inset-0 transition-opacity duration-400 ${
+            isTransitioning || !videoReady ? 'opacity-0' : 'opacity-100'
+          }`}
+          onClick={handleVideoClick}
+        >
+          <iframe
+            ref={iframeRef}
+            src={getYoutubeUrlWithMute(currentVideo.video_url, isMuted)}
+            className="absolute inset-0 w-[300%] h-[300%] -top-[100%] -left-[100%] pointer-events-none"
+            style={{ transform: 'scale(0.5)', transformOrigin: 'center center' }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            onLoad={() => setVideoReady(true)}
+          />
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          src={currentVideo?.video_url}
+          poster={currentVideo?.thumbnail_url || undefined}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-400 ${
+            isTransitioning || !videoReady ? 'opacity-0' : 'opacity-100'
+          }`}
+          muted={isMuted}
+          playsInline
+          preload="auto"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={handleVideoEnd}
+          onCanPlay={() => setVideoReady(true)}
+          onClick={handleVideoClick}
+        />
+      )}
 
       {/* Gradient overlay - stronger at bottom for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
-
-      {/* Mute/Unmute button - bottom left */}
-      <button
-        onClick={handleMuteToggle}
-        className={`absolute bottom-4 sm:bottom-6 left-4 sm:left-6 lg:left-8 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-black/50 transition-all duration-200 ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}
-        aria-label={isMuted ? "Unmute video" : "Mute video"}
-      >
-        {isMuted ? (
-          <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-        ) : (
-          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-        )}
-      </button>
 
       {/* Bottom content - Stacked titles */}
       <div className={`absolute bottom-0 left-0 right-0 pointer-events-none transition-opacity duration-300 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}>
         <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 lg:pb-10">
-          <div className="space-y-0.5 sm:space-y-1 flex flex-col items-center">
+          <div className="space-y-0.5 sm:space-y-1">
             {videos.map((video, index) => (
               <div key={video.id} className="pointer-events-auto">
                 <VideoTitleButton
@@ -271,27 +299,43 @@ const VideoShowcase = () => {
         </div>
       </div>
 
-      {/* Video indicators - bottom right */}
-      {videos.length > 1 && (
-        <div className={`absolute bottom-4 sm:bottom-6 right-4 sm:right-6 lg:right-8 flex items-center gap-1.5 transition-opacity duration-300 ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}>
-          {videos.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToVideo(index)}
-              className={`transition-all duration-300 rounded-full ${
-                index === currentIndex
-                  ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-white"
-                  : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/60"
-              }`}
-            />
-          ))}
-        </div>
-      )}
+      {/* Video indicators and mute button - bottom right */}
+      <div className={`absolute bottom-4 sm:bottom-6 right-4 sm:right-6 lg:right-8 flex items-center gap-3 transition-opacity duration-300 ${
+        isTransitioning ? 'opacity-0' : 'opacity-100'
+      }`}>
+        {/* Mute/Unmute button */}
+        <button
+          onClick={handleMuteToggle}
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-black/50 transition-all duration-200"
+          aria-label={isMuted ? "Unmute video" : "Mute video"}
+        >
+          {isMuted ? (
+            <VolumeX className="w-4 h-4 text-white" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-white" />
+          )}
+        </button>
+        
+        {/* Video indicators */}
+        {videos.length > 1 && (
+          <div className="flex items-center gap-1.5">
+            {videos.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToVideo(index)}
+                className={`transition-all duration-300 rounded-full ${
+                  index === currentIndex
+                    ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-white"
+                    : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/60"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Center play button when paused */}
-      {!isPlaying && videoReady && (
+      {/* Center play button when paused (only for non-YouTube videos) */}
+      {!isCurrentYoutube && !isPlaying && videoReady && (
         <div 
           className="absolute inset-0 flex items-center justify-center cursor-pointer"
           onClick={handlePlayPause}
