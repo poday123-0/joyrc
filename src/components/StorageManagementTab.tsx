@@ -31,59 +31,61 @@ const StorageManagementTab = () => {
     fetchAllFiles();
   }, []);
 
+  const fetchFilesFromFolder = async (
+    bucket: string,
+    folderPath: string = ""
+  ): Promise<StorageFile[]> => {
+    const files: StorageFile[] = [];
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(folderPath, { limit: 500, sortBy: { column: "created_at", order: "desc" } });
+
+    if (error || !data) {
+      console.error(`Error fetching from ${bucket}/${folderPath}:`, error);
+      return files;
+    }
+
+    for (const item of data) {
+      if (!item.name) continue;
+      
+      const fullPath = folderPath ? `${folderPath}/${item.name}` : item.name;
+      
+      // Check if it's a folder (no id means it's a folder)
+      if (item.id === null) {
+        // Recursively fetch files from subfolder
+        const subFiles = await fetchFilesFromFolder(bucket, fullPath);
+        files.push(...subFiles);
+      } else {
+        // It's a file
+        const { data: urlData } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(fullPath);
+        
+        files.push({
+          id: `${bucket}/${fullPath}`,
+          name: item.name,
+          bucket: bucket,
+          url: urlData.publicUrl,
+          size: item.metadata?.size || 0,
+          created_at: item.created_at || "",
+        });
+      }
+    }
+
+    return files;
+  };
+
   const fetchAllFiles = async () => {
     setLoading(true);
-    const allFiles: StorageFile[] = [];
+    
+    // Fetch from both buckets in parallel
+    const [imageFiles, videoFiles] = await Promise.all([
+      fetchFilesFromFolder("product-images"),
+      fetchFilesFromFolder("videos"),
+    ]);
 
-    // Fetch from product-images bucket
-    const { data: imagesData, error: imagesError } = await supabase.storage
-      .from("product-images")
-      .list("", { limit: 500, sortBy: { column: "created_at", order: "desc" } });
-
-    if (imagesData && !imagesError) {
-      for (const file of imagesData) {
-        if (file.name) {
-          const { data: urlData } = supabase.storage
-            .from("product-images")
-            .getPublicUrl(file.name);
-          
-          allFiles.push({
-            id: `product-images/${file.name}`,
-            name: file.name,
-            bucket: "product-images",
-            url: urlData.publicUrl,
-            size: file.metadata?.size || 0,
-            created_at: file.created_at || "",
-          });
-        }
-      }
-    }
-
-    // Fetch from videos bucket
-    const { data: videosData, error: videosError } = await supabase.storage
-      .from("videos")
-      .list("", { limit: 500, sortBy: { column: "created_at", order: "desc" } });
-
-    if (videosData && !videosError) {
-      for (const file of videosData) {
-        if (file.name) {
-          const { data: urlData } = supabase.storage
-            .from("videos")
-            .getPublicUrl(file.name);
-          
-          allFiles.push({
-            id: `videos/${file.name}`,
-            name: file.name,
-            bucket: "videos",
-            url: urlData.publicUrl,
-            size: file.metadata?.size || 0,
-            created_at: file.created_at || "",
-          });
-        }
-      }
-    }
-
-    setFiles(allFiles);
+    setFiles([...imageFiles, ...videoFiles]);
     setLoading(false);
   };
 
