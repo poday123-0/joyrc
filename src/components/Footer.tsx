@@ -158,7 +158,7 @@ const Footer = () => {
             {settings?.footer_company_name && (
               <Link to="/" className="flex-shrink-0 h-8 flex items-center">
                 {!logoLoaded ? (
-                  <div className="h-8 w-20 bg-muted/30 rounded animate-pulse" />
+                  <div className="h-6 w-16 bg-muted/30 rounded animate-pulse" />
                 ) : (
                   <img
                     src={logoUrl || rcJoyLogo}
