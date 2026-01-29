@@ -33,6 +33,7 @@ interface Specification {
 }
 
 // Icon mapping from database value to Lucide component
+// Must match specIconOptions in Admin.tsx
 const iconMap: Record<string, LucideIcon> = {
   zap: Zap,
   battery: Battery,
@@ -47,6 +48,9 @@ const iconMap: Record<string, LucideIcon> = {
   camera: Camera,
   star: Star,
 };
+
+// Default icon when none specified
+const DefaultIcon = Box;
 
 interface ColorImage {
   id: string;
