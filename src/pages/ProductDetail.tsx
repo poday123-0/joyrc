@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ShoppingBag, Zap, Battery, Gauge, Radio, Box } from "lucide-react";
+import { ShoppingBag, Zap, Battery, Gauge, Radio, Box, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
@@ -41,6 +41,65 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [productColors, setProductColors] = useState<ProductColor[]>([]);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
+  const [userSelectedColor, setUserSelectedColor] = useState(false);
+  const [colorImageIndex, setColorImageIndex] = useState(0);
+  const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Get all images for a specific color (for now, each color has one image)
+  const getColorImages = useCallback((colorId: string) => {
+    const color = productColors.find(c => c.id === colorId);
+    return color?.image_url ? [color.image_url] : [];
+  }, [productColors]);
+
+  // Auto-slide through color images when user hasn't selected
+  useEffect(() => {
+    if (productColors.length === 0 || userSelectedColor) {
+      if (autoSlideRef.current) {
+        clearInterval(autoSlideRef.current);
+        autoSlideRef.current = null;
+      }
+      return;
+    }
+
+    autoSlideRef.current = setInterval(() => {
+      setColorImageIndex(prev => {
+        const nextIndex = (prev + 1) % productColors.length;
+        setSelectedColorId(productColors[nextIndex].id);
+        return nextIndex;
+      });
+    }, 3000);
+
+    return () => {
+      if (autoSlideRef.current) {
+        clearInterval(autoSlideRef.current);
+      }
+    };
+  }, [productColors, userSelectedColor]);
+
+  const handleColorSelect = (colorId: string) => {
+    setUserSelectedColor(true);
+    setSelectedColorId(colorId);
+    const index = productColors.findIndex(c => c.id === colorId);
+    if (index !== -1) setColorImageIndex(index);
+  };
+
+  const handlePrevColorImage = () => {
+    setUserSelectedColor(true);
+    setColorImageIndex(prev => {
+      const newIndex = prev === 0 ? productColors.length - 1 : prev - 1;
+      setSelectedColorId(productColors[newIndex].id);
+      return newIndex;
+    });
+  };
+
+  const handleNextColorImage = () => {
+    setUserSelectedColor(true);
+    setColorImageIndex(prev => {
+      const newIndex = (prev + 1) % productColors.length;
+      setSelectedColorId(productColors[newIndex].id);
+      return newIndex;
+    });
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -191,22 +250,43 @@ const ProductDetail = () => {
           {/* Left Column - Product Image + Price & Cart */}
           <div className="py-6 lg:py-0">
             <div className="lg:sticky lg:top-20 space-y-6">
-              <div className="aspect-[4/5] w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
-                {currentImage ? (
-                  <img
-                    src={currentImage}
-                    alt={product.name}
-                    loading="eager"
-                    decoding="async"
-                    className="w-full h-full object-cover rounded-3xl animate-fade-in transition-transform duration-300 hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-8xl">📦</div>
+              {/* Image with swipe arrows for colors */}
+              <div className="relative">
+                <div className="aspect-[4/5] w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
+                  {currentImage ? (
+                    <img
+                      src={currentImage}
+                      alt={product.name}
+                      loading="eager"
+                      decoding="async"
+                      className="w-full h-full object-cover rounded-3xl animate-fade-in transition-all duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-8xl">📦</div>
+                  )}
+                </div>
+                
+                {/* Color swipe arrows */}
+                {productColors.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevColorImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-sm"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-foreground" />
+                    </button>
+                    <button
+                      onClick={handleNextColorImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-sm"
+                    >
+                      <ChevronRight className="w-5 h-5 text-foreground" />
+                    </button>
+                  </>
                 )}
               </div>
               
-              {/* Image Dots */}
-              {galleryImages.length > 1 && (
+              {/* Image Dots - for gallery images when no colors */}
+              {galleryImages.length > 1 && productColors.length === 0 && (
                 <div className="flex justify-center gap-2">
                   {galleryImages.map((_, index) => (
                     <button
@@ -222,27 +302,21 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Product Title - Above Price on Mobile/Desktop */}
-              <div className="text-center lg:text-left mb-4">
-                <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">{product.name}</h1>
-                <p className="text-sm text-muted-foreground">{product.category}</p>
-              </div>
-
-              {/* Color Options - Above Price */}
+              {/* Color Options - Smaller circles */}
               {productColors.length > 0 && (
-                <div className="text-center lg:text-left mb-4">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Available in {productColors.length} colors
+                <div className="text-center lg:text-left">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {productColors.length} colors available
                   </p>
-                  <div className="flex justify-center lg:justify-start gap-3">
-                    {productColors.map(color => (
+                  <div className="flex justify-center lg:justify-start gap-2">
+                    {productColors.map((color, index) => (
                       <button
                         key={color.id}
-                        onClick={() => setSelectedColorId(color.id)}
-                        className={`w-8 h-8 rounded-full transition-all ${
+                        onClick={() => handleColorSelect(color.id)}
+                        className={`w-6 h-6 rounded-full transition-all duration-300 ${
                           selectedColorId === color.id
-                            ? 'ring-2 ring-offset-2 ring-foreground'
-                            : 'opacity-70 hover:opacity-100'
+                            ? 'ring-2 ring-offset-2 ring-primary scale-110'
+                            : 'opacity-60 hover:opacity-100 hover:scale-105'
                         }`}
                         style={{ backgroundColor: color.color_hex }}
                         title={color.color_name}
@@ -252,17 +326,28 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Price and Buy Button - Under Image */}
-              <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border">
-                <p className="text-3xl font-bold text-foreground mb-2">
-                  {formatMVR(product.price)}
-                </p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Free shipping on orders over MVR 500
-                </p>
+              {/* Price Card with Product Name and Add to Cart */}
+              <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border space-y-4">
+                {/* Price */}
+                <div>
+                  <p className="text-3xl font-bold text-foreground">
+                    {formatMVR(product.price)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Free shipping on orders over MVR 500
+                  </p>
+                </div>
+                
+                {/* Product Name - Under Price */}
+                <div className="pt-2 border-t border-border">
+                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">{product.name}</h1>
+                  <p className="text-sm text-muted-foreground mt-0.5">{product.category}</p>
+                </div>
+                
+                {/* Add to Cart - Under Product Name */}
                 <button
                   onClick={handleAddToCart}
-                  className="w-full px-12 py-3 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
+                  className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
                 >
                   Add to Cart
                 </button>
