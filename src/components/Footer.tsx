@@ -33,7 +33,8 @@ const Footer = () => {
   const fetchSettings = useCallback(async () => {
     const { data } = await supabase
       .from("system_settings")
-      .select(`
+      .select(
+        `
         footer_copyright,
         footer_company_name,
         footer_address,
@@ -45,7 +46,8 @@ const Footer = () => {
         footer_social_youtube,
         footer_social_linkedin,
         footer_social_pinterest
-      `)
+      `,
+      )
       .limit(1)
       .maybeSingle();
 
@@ -73,33 +75,33 @@ const Footer = () => {
 
     // Subscribe to realtime changes on system_settings
     const settingsChannel = supabase
-      .channel('footer-settings-changes')
+      .channel("footer-settings-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'system_settings'
+          event: "UPDATE",
+          schema: "public",
+          table: "system_settings",
         },
         () => {
           fetchSettings();
-        }
+        },
       )
       .subscribe();
 
     // Subscribe to realtime changes on footer_links
     const linksChannel = supabase
-      .channel('footer-links-changes')
+      .channel("footer-links-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'footer_links'
+          event: "*",
+          schema: "public",
+          table: "footer_links",
         },
         () => {
           fetchLinks();
-        }
+        },
       )
       .subscribe();
 
@@ -110,18 +112,26 @@ const Footer = () => {
   }, [fetchSettings, fetchLinks]);
 
   // Group links by column
-  const groupedLinks = footerLinks.reduce((acc, link) => {
-    if (!acc[link.column_title]) {
-      acc[link.column_title] = [];
-    }
-    acc[link.column_title].push(link);
-    return acc;
-  }, {} as Record<string, FooterLink[]>);
+  const groupedLinks = footerLinks.reduce(
+    (acc, link) => {
+      if (!acc[link.column_title]) {
+        acc[link.column_title] = [];
+      }
+      acc[link.column_title].push(link);
+      return acc;
+    },
+    {} as Record<string, FooterLink[]>,
+  );
 
-  const hasCompanyInfo = settings?.footer_company_name || settings?.footer_address || settings?.footer_phone || settings?.footer_email;
-  const hasSocialLinks = settings?.footer_social_facebook || settings?.footer_social_instagram || 
-    settings?.footer_social_twitter || settings?.footer_social_youtube || 
-    settings?.footer_social_linkedin || settings?.footer_social_pinterest;
+  const hasCompanyInfo =
+    settings?.footer_company_name || settings?.footer_address || settings?.footer_phone || settings?.footer_email;
+  const hasSocialLinks =
+    settings?.footer_social_facebook ||
+    settings?.footer_social_instagram ||
+    settings?.footer_social_twitter ||
+    settings?.footer_social_youtube ||
+    settings?.footer_social_linkedin ||
+    settings?.footer_social_pinterest;
   const hasFooterLinks = Object.keys(groupedLinks).length > 0;
 
   return (
@@ -132,11 +142,22 @@ const Footer = () => {
           {/* Left Side - Company Info & Social */}
           <div className="space-y-6">
             {settings?.footer_company_name && (
-              <h3 className="text-xl font-bold text-background">
-                {settings.footer_company_name}
-              </h3>
+              <Link to="/" className="flex-shrink-0 h-8 flex items-center">
+                {!logoLoaded ? (
+                  <div className="h-8 w-20 bg-muted/30 rounded animate-pulse" />
+                ) : (
+                  <img
+                    src={logoUrl || rcJoyLogo}
+                    alt="RC Joy"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    className="h-8 w-auto max-w-[120px] object-contain"
+                  />
+                )}
+              </Link>
             )}
-            
+
             <div className="space-y-3">
               {settings?.footer_address && (
                 <div className="flex items-start gap-3 text-sm text-background/70">
@@ -232,7 +253,10 @@ const Footer = () => {
                 <h4 className="font-semibold text-background text-sm uppercase tracking-wider">Quick Links</h4>
                 <ul className="space-y-2">
                   <li>
-                    <Link to="/categories" className="text-sm text-background/70 hover:text-background transition-colors">
+                    <Link
+                      to="/categories"
+                      className="text-sm text-background/70 hover:text-background transition-colors"
+                    >
                       Browse Products
                     </Link>
                   </li>
