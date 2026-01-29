@@ -1,12 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { 
-  ChevronLeft, ChevronDown, ChevronUp, Mail, Phone, 
-  Clock, MapPin, Send, HelpCircle 
+  ChevronDown, ChevronUp, Mail, Phone, 
+  Clock, MapPin, Send, HelpCircle, MessageSquare
 } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import BottomNavigation from "@/components/BottomNavigation";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface FAQItem {
   id: string;
@@ -21,13 +28,11 @@ interface ContactInfo {
 }
 
 interface BusinessHours {
-  weekdays: string;
-  saturday: string;
-  sunday: string;
+  [key: string]: string;
 }
 
 const Support = () => {
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -37,50 +42,81 @@ const Support = () => {
   const [sending, setSending] = useState(false);
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [contactInfo, setContactInfo] = useState<ContactInfo>({ email: "", phone: "", address: "" });
-  const [businessHours, setBusinessHours] = useState<BusinessHours>({ weekdays: "", saturday: "", sunday: "" });
+  const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSupportContent = async () => {
-      const { data } = await supabase
-        .from("support_content")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
+  const fetchSupportContent = useCallback(async () => {
+    const { data } = await supabase
+      .from("support_content")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order");
 
-      if (data) {
-        // Parse FAQs
-        const faqItems = data.filter(d => d.type === "faq").map(d => ({
-          id: d.id,
-          title: d.title,
-          content: d.content,
-        }));
-        setFaqs(faqItems);
+    if (data) {
+      // Parse FAQs
+      const faqItems = data.filter(d => d.type === "faq").map(d => ({
+        id: d.id,
+        title: d.title,
+        content: d.content,
+      }));
+      setFaqs(faqItems);
 
-        // Parse contact info
-        const contactData = data.filter(d => d.type === "contact_info");
-        setContactInfo({
-          email: contactData.find(c => c.title === "email")?.content || "",
-          phone: contactData.find(c => c.title === "phone")?.content || "",
-          address: contactData.find(c => c.title === "address")?.content || "",
-        });
+      // Parse contact info
+      const contactData = data.filter(d => d.type === "contact_info");
+      setContactInfo({
+        email: contactData.find(c => c.title.toLowerCase() === "email")?.content || "",
+        phone: contactData.find(c => c.title.toLowerCase() === "phone")?.content || "",
+        address: contactData.find(c => c.title.toLowerCase() === "address")?.content || "",
+      });
 
-        // Parse business hours
-        const hoursData = data.filter(d => d.type === "business_hours");
-        setBusinessHours({
-          weekdays: hoursData.find(h => h.title === "weekdays")?.content || "",
-          saturday: hoursData.find(h => h.title === "saturday")?.content || "",
-          sunday: hoursData.find(h => h.title === "sunday")?.content || "",
-        });
-      }
-      setLoading(false);
-    };
-
-    fetchSupportContent();
+      // Parse business hours - store all with their titles
+      const hoursData = data.filter(d => d.type === "business_hours");
+      const hoursMap: BusinessHours = {};
+      hoursData.forEach(h => {
+        hoursMap[h.title] = h.content;
+      });
+      setBusinessHours(hoursMap);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchSupportContent();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('support-content-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_content'
+        },
+        () => {
+          fetchSupportContent();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSupportContent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!formData.name.trim() || !formData.mobile.trim() || !formData.subject.trim() || !formData.message.trim()) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSending(true);
     
     try {
@@ -112,247 +148,292 @@ const Support = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-32">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
       </div>
     );
   }
 
+  const hasContactInfo = contactInfo.email || contactInfo.phone || contactInfo.address;
+  const hasBusinessHours = Object.keys(businessHours).length > 0;
+
   return (
-    <div className="min-h-screen gradient-hero pb-24 lg:pb-8">
-      <div className="container max-w-5xl mx-auto px-4 lg:px-8 pt-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Link
-            to="/"
-            className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/80 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </Link>
-          <h1 className="font-bold text-xl lg:text-2xl text-foreground">Help & Support</h1>
-          <div className="w-10" />
+    <div className="min-h-screen bg-background pb-24 lg:pb-0">
+      <Header />
+      
+      {/* Hero Section */}
+      <section className="gradient-hero py-12 lg:py-16">
+        <div className="container max-w-5xl mx-auto px-4">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <HelpCircle className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+              Help & Support
+            </h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Got questions? We're here to help you with anything you need.
+            </p>
+          </div>
         </div>
+      </section>
+
+      <div className="container max-w-5xl mx-auto px-4 py-8">
+        {/* Quick Contact Cards */}
+        {hasContactInfo && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {contactInfo.email && (
+              <a 
+                href={`mailto:${contactInfo.email}`}
+                className="glass-card rounded-2xl p-5 flex items-center gap-4 hover:shadow-card transition-all group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Mail className="w-5 h-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground">Email Us</p>
+                  <p className="text-sm text-muted-foreground truncate">{contactInfo.email}</p>
+                </div>
+              </a>
+            )}
+            {contactInfo.phone && (
+              <a 
+                href={`tel:${contactInfo.phone.replace(/\s/g, '')}`}
+                className="glass-card rounded-2xl p-5 flex items-center gap-4 hover:shadow-card transition-all group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
+                  <Phone className="w-5 h-5 text-accent" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground">Call Us</p>
+                  <p className="text-sm text-muted-foreground">{contactInfo.phone}</p>
+                </div>
+              </a>
+            )}
+            {contactInfo.address && (
+              <div className="glass-card rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground">Visit Us</p>
+                  <p className="text-sm text-muted-foreground truncate">{contactInfo.address}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="lg:flex lg:gap-8">
           {/* Main Content */}
-          <div className="flex-1">
-            {/* Quick Contact Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-              {contactInfo.email && (
-                <a 
-                  href={`mailto:${contactInfo.email}`}
-                  className="glass-card rounded-2xl p-4 text-center hover:bg-white/80 transition-colors"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Mail className="w-5 h-5 text-primary" />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">Email Us</p>
-                  <p className="text-xs text-muted-foreground truncate">{contactInfo.email}</p>
-                </a>
-              )}
-              {contactInfo.phone && (
-                <a 
-                  href={`tel:${contactInfo.phone}`}
-                  className="glass-card rounded-2xl p-4 text-center hover:bg-white/80 transition-colors"
-                >
-                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-2">
-                    <Phone className="w-5 h-5 text-accent" />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">Call Us</p>
-                  <p className="text-xs text-muted-foreground">{contactInfo.phone}</p>
-                </a>
-              )}
-              {contactInfo.address && (
-                <a 
-                  href="#"
-                  className="glass-card rounded-2xl p-4 text-center hover:bg-white/80 transition-colors"
-                >
-                  <div className="w-12 h-12 rounded-full bg-mint/30 flex items-center justify-center mx-auto mb-2">
-                    <MapPin className="w-5 h-5 text-foreground" />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">Visit Us</p>
-                  <p className="text-xs text-muted-foreground truncate">{contactInfo.address}</p>
-                </a>
-              )}
-              {(businessHours.weekdays || businessHours.saturday || businessHours.sunday) && (
-                <div className="glass-card rounded-2xl p-4 text-center">
-                  <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-2">
-                    <Clock className="w-5 h-5 text-gold" />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">Hours</p>
-                  <p className="text-xs text-muted-foreground">{businessHours.weekdays || "Check below"}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Business Hours - Desktop sidebar content on mobile */}
-            <div className="lg:hidden">
-              {(businessHours.weekdays || businessHours.saturday || businessHours.sunday) && (
-                <div className="glass-card rounded-2xl p-4 mb-8">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-mint/30 flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-foreground" />
+          <div className="flex-1 space-y-8">
+            {/* Business Hours - Mobile */}
+            {hasBusinessHours && (
+              <Card className="lg:hidden glass-card border-0 shadow-soft">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Business Hours</h3>
-                      <p className="text-xs text-muted-foreground">We're here to help!</p>
+                    <CardTitle className="text-lg">Business Hours</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {Object.entries(businessHours).map(([title, hours]) => (
+                    <div key={title} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{title}</span>
+                      <span className={`font-medium ${hours.toLowerCase() === "closed" ? "text-destructive" : "text-foreground"}`}>
+                        {hours}
+                      </span>
                     </div>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    {businessHours.weekdays && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Monday - Friday</span>
-                        <span className="font-medium">{businessHours.weekdays}</span>
-                      </div>
-                    )}
-                    {businessHours.saturday && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Saturday</span>
-                        <span className="font-medium">{businessHours.saturday}</span>
-                      </div>
-                    )}
-                    {businessHours.sunday && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Sunday</span>
-                        <span className={`font-medium ${businessHours.sunday.toLowerCase() === "closed" ? "text-coral" : ""}`}>
-                          {businessHours.sunday}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             {/* FAQ Section */}
             {faqs.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <HelpCircle className="w-5 h-5 text-primary" />
-                  <h2 className="font-bold text-lg lg:text-xl text-foreground">Frequently Asked Questions</h2>
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground">Frequently Asked Questions</h2>
                 </div>
                 <div className="space-y-3">
-                  {faqs.map((faq, index) => (
-                    <div key={faq.id} className="glass-card rounded-2xl overflow-hidden">
+                  {faqs.map((faq) => (
+                    <Card 
+                      key={faq.id} 
+                      className="glass-card border-0 shadow-soft overflow-hidden"
+                    >
                       <button
-                        onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-                        className="w-full p-4 flex items-center justify-between text-left"
+                        onClick={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
+                        className="w-full p-4 flex items-center justify-between text-left hover:bg-muted/30 transition-colors"
                       >
                         <span className="font-medium text-foreground pr-4">{faq.title}</span>
-                        {expandedFaq === index ? (
-                          <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                        )}
+                        <div className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 transition-transform ${expandedFaq === faq.id ? "rotate-180" : ""}`}>
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        </div>
                       </button>
-                      {expandedFaq === index && (
-                        <div className="px-4 pb-4">
-                          <p className="text-sm text-muted-foreground">{faq.content}</p>
+                      {expandedFaq === faq.id && (
+                        <div className="px-4 pb-4 border-t border-border/50">
+                          <p className="text-sm text-muted-foreground pt-4 whitespace-pre-line">{faq.content}</p>
                         </div>
                       )}
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </div>
             )}
 
             {/* Contact Form */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Phone className="w-5 h-5 text-primary" />
-                <h2 className="font-bold text-lg lg:text-xl text-foreground">Contact Us</h2>
-              </div>
-                <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-4 lg:p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm"
-                    required
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Mobile Number"
-                    value={formData.mobile}
-                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    className="px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm"
-                    required
-                  />
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-primary" />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm"
-                  required
-                />
-                <textarea
-                  placeholder="Your Message"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-32"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="w-full py-3.5 rounded-full gradient-primary text-primary-foreground font-semibold shadow-soft disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <Send className="w-4 h-4" />
-                  {sending ? "Sending..." : "Send Message"}
-                </button>
-              </form>
+                <h2 className="text-xl font-bold text-foreground">Send Us a Message</h2>
+              </div>
+              <Card className="glass-card border-0 shadow-soft">
+                <CardContent className="p-6">
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Your Name</Label>
+                        <Input
+                          id="name"
+                          type="text"
+                          placeholder="Enter your name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="bg-card border-border focus-visible:ring-accent"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="mobile">Mobile Number</Label>
+                        <Input
+                          id="mobile"
+                          type="tel"
+                          placeholder="Enter your mobile number"
+                          value={formData.mobile}
+                          onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                          className="bg-card border-border focus-visible:ring-accent"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subject">Subject</Label>
+                      <Input
+                        id="subject"
+                        type="text"
+                        placeholder="What is this about?"
+                        value={formData.subject}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                        className="bg-card border-border focus-visible:ring-accent"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Your Message</Label>
+                      <Textarea
+                        id="message"
+                        placeholder="Tell us how we can help..."
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        className="bg-card border-border focus-visible:ring-accent min-h-[120px] resize-none"
+                        required
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={sending}
+                      className="w-full gradient-cta text-white font-semibold h-12 rounded-xl"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {sending ? "Sending..." : "Send Message"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
           {/* Desktop Sidebar */}
           <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-            <div className="glass-card rounded-2xl p-6 shadow-soft sticky top-4">
-              <h3 className="font-semibold text-lg text-foreground mb-4">Business Hours</h3>
-              <div className="space-y-3 text-sm mb-6">
-                {businessHours.weekdays && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Mon - Fri</span>
-                    <span className="font-medium">{businessHours.weekdays}</span>
-                  </div>
-                )}
-                {businessHours.saturday && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Saturday</span>
-                    <span className="font-medium">{businessHours.saturday}</span>
-                  </div>
-                )}
-                {businessHours.sunday && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sunday</span>
-                    <span className={`font-medium ${businessHours.sunday.toLowerCase() === "closed" ? "text-coral" : ""}`}>
-                      {businessHours.sunday}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {contactInfo.address && (
-                <div className="pt-6 border-t border-border">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-5 h-5 text-primary" />
+            <div className="sticky top-20 space-y-6">
+              {/* Business Hours */}
+              {hasBusinessHours && (
+                <Card className="glass-card border-0 shadow-soft">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-primary" />
+                      </div>
+                      <CardTitle className="text-lg">Business Hours</CardTitle>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground">Our Location</h4>
-                      <p className="text-sm text-muted-foreground mt-1">{contactInfo.address}</p>
-                    </div>
-                  </div>
-                </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {Object.entries(businessHours).map(([title, hours]) => (
+                      <div key={title} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{title}</span>
+                        <span className={`font-medium ${hours.toLowerCase() === "closed" ? "text-destructive" : "text-foreground"}`}>
+                          {hours}
+                        </span>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
               )}
+
+              {/* Location Card */}
+              {contactInfo.address && (
+                <Card className="glass-card border-0 shadow-soft">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground mb-1">Our Location</h4>
+                        <p className="text-sm text-muted-foreground">{contactInfo.address}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Quick Help */}
+              <Card className="glass-card border-0 shadow-soft">
+                <CardContent className="p-5 text-center">
+                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
+                    <Phone className="w-5 h-5 text-accent" />
+                  </div>
+                  <h4 className="font-semibold text-foreground mb-1">Need Quick Help?</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Our team is ready to assist you
+                  </p>
+                  {contactInfo.phone && (
+                    <a
+                      href={`tel:${contactInfo.phone.replace(/\s/g, '')}`}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors"
+                    >
+                      <Phone className="w-4 h-4" />
+                      Call Now
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </div>
-      
+
+      <Footer />
       <BottomNavigation />
     </div>
   );
