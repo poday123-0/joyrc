@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface SendEmailRequest {
-  type: "order_notification" | "order_update" | "marketing";
+  type: "order_notification" | "order_update" | "marketing" | "admin_notification";
   template_key?: string;
   order_id?: string;
   recipient_email?: string;
@@ -63,6 +63,10 @@ serve(async (req: Request): Promise<Response> => {
 
     const senderName = settings?.notification_sender_name || settings?.site_name || "RC Joy";
     const adminEmail = settings?.notification_email;
+    
+    // Use verified domain email or fallback to resend.dev
+    // When you have a verified domain, replace onboarding@resend.dev with your domain
+    const fromEmail = adminEmail ? `${senderName} <${adminEmail}>` : `${senderName} <onboarding@resend.dev>`;
 
     // For marketing emails - send to multiple recipients
     if (body.type === "marketing") {
@@ -80,7 +84,7 @@ serve(async (req: Request): Promise<Response> => {
       for (const email of body.recipient_emails) {
         try {
           const result = await resend.emails.send({
-            from: `${senderName} <onboarding@resend.dev>`,
+            from: fromEmail,
             to: [email],
             subject: body.subject,
             html: body.html_content,
@@ -176,6 +180,18 @@ serve(async (req: Request): Promise<Response> => {
       }
     }
 
+    // For admin notifications (like new product updates), send to admin email
+    if (body.type === "admin_notification") {
+      if (!adminEmail) {
+        console.log("No admin email configured, skipping admin notification");
+        return new Response(
+          JSON.stringify({ success: false, message: "No admin email configured" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      recipientEmail = adminEmail;
+    }
+
     if (!recipientEmail) {
       throw new Error("No recipient email available");
     }
@@ -187,7 +203,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending email to ${recipientEmail}: ${subject}`);
 
     const emailResult = await resend.emails.send({
-      from: `${senderName} <onboarding@resend.dev>`,
+      from: fromEmail,
       to: [recipientEmail],
       subject: subject,
       html: htmlContent,
