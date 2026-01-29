@@ -1882,7 +1882,7 @@ const SettingsTab = ({
                 <label className="text-sm text-muted-foreground mb-1 block">Notification Email Address</label>
                 <input
                   type="email"
-                  value={formData.notification_email}
+                  value={formData.notification_email || ""}
                   onChange={(e) => setFormData({ ...formData, notification_email: e.target.value })}
                   placeholder="noreply@yourdomain.com"
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
