@@ -143,23 +143,22 @@ const Footer = () => {
       <div className="container max-w-7xl mx-auto px-4 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
           {/* Left Side - Company Info & Social */}
-          <div className="space-y-6">
-            {settings?.footer_company_name && (
-              <Link to="/" className="flex-shrink-0 h-8 flex items-center">
-                {!logoLoaded ? (
-                  <div className="h-8 w-20 bg-muted/30 rounded animate-pulse" />
-                ) : (
-                  <img
-                    src={logoUrl || rcJoyLogo}
-                    alt="RC Joy"
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority="high"
-                    className="h-8 w-auto max-w-[120px] object-contain"
-                  />
-                )}
-              </Link>
+        <nav className="h-11 flex items-center justify-between px-4 sm:px-6 max-w-[980px] mx-auto">
+          {/* Logo */}
+          <Link to="/" className="flex-shrink-0 h-8 flex items-center">
+            {!logoLoaded ? (
+              <div className="h-8 w-20 bg-muted/30 rounded animate-pulse" />
+            ) : (
+              <img 
+                src={logoUrl || rcJoyLogo} 
+                alt="RC Joy" 
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                className="h-8 w-auto max-w-[120px] object-contain"
+              />
             )}
+          </Link>
 
             <div className="space-y-3">
               {settings?.footer_address && (
