@@ -527,9 +527,9 @@ const ProductDetail = () => {
                       </div>
                       <div className="flex-1">
                         <p className="text-foreground text-base leading-relaxed">
-                          <span className="font-medium">{spec.value}</span>
-                          {spec.name && (
-                            <span className="text-muted-foreground"> — {spec.name}</span>
+                          <span className="font-medium">{spec.name}</span>
+                          {spec.value && (
+                            <span className="text-muted-foreground"> - {spec.value}</span>
                           )}
                         </p>
                       </div>
