@@ -125,7 +125,7 @@ const Index = () => {
       {/* Hero Text Section */}
       <section className="py-10 lg:py-16">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8 text-center">
-          <div className="space-y-4 mb-6">
+          <div className="space-y-4">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
               {homeContent?.hero_title || "Ultimate RC Experience"}
             </h1>
@@ -133,13 +133,6 @@ const Index = () => {
               {homeContent?.hero_subtitle || "Discover premium remote control toys that bring excitement to every adventure."}
             </p>
           </div>
-
-          <Link to="/categories">
-            <button className="group bg-primary text-primary-foreground font-medium px-8 py-3 rounded-full text-base hover:bg-primary/90 transition-all inline-flex items-center gap-2">
-              Shop All Products
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </Link>
         </div>
       </section>
 
