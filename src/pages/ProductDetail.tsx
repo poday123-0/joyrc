@@ -256,11 +256,12 @@ const ProductDetail = () => {
                 <div className="aspect-[4/5] w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
                   {currentImage ? (
                     <img
+                      key={currentImage}
                       src={currentImage}
                       alt={product.name}
                       loading="eager"
                       decoding="async"
-                      className="w-full h-full object-cover rounded-3xl animate-fade-in transition-all duration-500"
+                      className="w-full h-full object-cover rounded-3xl animate-fade-in"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-8xl">📦</div>
