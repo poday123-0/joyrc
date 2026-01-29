@@ -140,7 +140,7 @@ const Support = () => {
   }
   const hasContactInfo = contactInfo.email || contactInfo.phone || contactInfo.address;
   const hasBusinessHours = Object.keys(businessHours).length > 0;
-  return <div className="min-h-screen bg-background pb-24 lg:pb-0">
+  return <div className="min-h-screen bg-background lg:pb-0 pb-[48px]">
       <Header />
       
       {/* Hero Section */}
