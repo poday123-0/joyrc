@@ -7,6 +7,7 @@ import { CartProvider } from "@/hooks/useCart";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useEffect, useState, ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import SiteMetadata from "@/components/SiteMetadata";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
@@ -95,6 +96,7 @@ const App = () => (
     <AuthProvider>
       <CartProvider>
         <TooltipProvider>
+          <SiteMetadata />
           <Toaster />
           <Sonner />
           <BrowserRouter>

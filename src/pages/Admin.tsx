@@ -84,6 +84,9 @@ interface SystemSettings {
   notification_email: string | null;
   notification_sender_name: string | null;
   google_login_enabled: boolean;
+  site_title: string | null;
+  favicon_url: string | null;
+  og_image_url: string | null;
 }
 
 type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "settings";
@@ -1661,9 +1664,14 @@ const SettingsTab = ({
     notification_email: settings.notification_email || "",
     notification_sender_name: settings.notification_sender_name || "RC Joy",
     google_login_enabled: settings.google_login_enabled ?? true,
+    site_title: settings.site_title || "",
+    favicon_url: settings.favicon_url || "",
+    og_image_url: settings.og_image_url || "",
   });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [uploadingOgImage, setUploadingOgImage] = useState(false);
 
   // Sync form data when settings prop changes (after refresh)
   useEffect(() => {
@@ -1677,6 +1685,9 @@ const SettingsTab = ({
       notification_email: settings.notification_email || "",
       notification_sender_name: settings.notification_sender_name || "RC Joy",
       google_login_enabled: settings.google_login_enabled ?? true,
+      site_title: settings.site_title || "",
+      favicon_url: settings.favicon_url || "",
+      og_image_url: settings.og_image_url || "",
     });
   }, [settings]);
 
@@ -1712,6 +1723,70 @@ const SettingsTab = ({
     }
   };
 
+  const handleFaviconUpload = async (file: File | null) => {
+    if (!file) return;
+    
+    setUploadingFavicon(true);
+    try {
+      const fileName = `favicon-${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, favicon_url: urlData.publicUrl });
+      toast({ 
+        title: "Favicon Uploaded",
+        description: "Your new favicon has been uploaded. Save settings to apply.",
+      });
+    } catch (error: any) {
+      toast({ 
+        title: "Upload Failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } finally {
+      setUploadingFavicon(false);
+    }
+  };
+
+  const handleOgImageUpload = async (file: File | null) => {
+    if (!file) return;
+    
+    setUploadingOgImage(true);
+    try {
+      const fileName = `og-image-${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, og_image_url: urlData.publicUrl });
+      toast({ 
+        title: "Share Image Uploaded",
+        description: "Your new share image has been uploaded. Save settings to apply.",
+      });
+    } catch (error: any) {
+      toast({ 
+        title: "Upload Failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } finally {
+      setUploadingOgImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -1729,6 +1804,9 @@ const SettingsTab = ({
           notification_email: formData.notification_email.trim() || null,
           notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
           google_login_enabled: formData.google_login_enabled,
+          site_title: formData.site_title.trim() || null,
+          favicon_url: formData.favicon_url || null,
+          og_image_url: formData.og_image_url || null,
         })
         .eq("id", settings.id);
 
@@ -1914,6 +1992,114 @@ const SettingsTab = ({
                   }`}
                 />
               </button>
+            </div>
+          </div>
+
+          {/* Website Info Section */}
+          <div className="pt-4 border-t border-border">
+            <h4 className="font-medium text-foreground mb-3">Website Info (SEO)</h4>
+            <p className="text-xs text-muted-foreground mb-4">Configure your site's title, favicon, and social share image</p>
+            
+            <div className="space-y-4">
+              {/* Site Title */}
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Page Title</label>
+                <input
+                  type="text"
+                  value={formData.site_title}
+                  onChange={(e) => setFormData({ ...formData, site_title: e.target.value })}
+                  placeholder="e.g., RC Joy - Premium RC Toys"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  This appears in browser tabs and search results.
+                </p>
+              </div>
+
+              {/* Favicon */}
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Favicon</label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border flex-shrink-0">
+                    {formData.favicon_url ? (
+                      <img src={formData.favicon_url} alt="Favicon" className="w-full h-full object-contain" />
+                    ) : (
+                      <Image className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 w-full sm:w-auto">
+                    <label className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <Upload className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {uploadingFavicon ? "Uploading..." : "Upload favicon"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/png,image/x-icon,image/ico"
+                        onChange={(e) => handleFaviconUpload(e.target.files?.[0] || null)}
+                        className="hidden"
+                        disabled={uploadingFavicon}
+                      />
+                    </label>
+                    {formData.favicon_url && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, favicon_url: "" })}
+                        className="text-sm text-destructive mt-2 hover:underline"
+                      >
+                        Remove favicon
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Small icon shown in browser tabs. Use a square PNG or ICO file.
+                </p>
+              </div>
+
+              {/* Share Image (OG Image) */}
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Share Image</label>
+                <div className="flex flex-col gap-3">
+                  <div className="w-full aspect-video max-w-xs rounded-xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border">
+                    {formData.og_image_url ? (
+                      <img src={formData.og_image_url} alt="Share Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center p-4">
+                        <Image className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                        <span className="text-xs text-muted-foreground">1200 x 630px recommended</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors max-w-xs">
+                      <Upload className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {uploadingOgImage ? "Uploading..." : "Upload share image"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleOgImageUpload(e.target.files?.[0] || null)}
+                        className="hidden"
+                        disabled={uploadingOgImage}
+                      />
+                    </label>
+                    {formData.og_image_url && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, og_image_url: "" })}
+                        className="text-sm text-destructive mt-2 hover:underline"
+                      >
+                        Remove share image
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This image appears when your site is shared on social media (Facebook, Twitter, WhatsApp).
+                </p>
+              </div>
             </div>
           </div>
 
