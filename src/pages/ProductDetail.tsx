@@ -331,20 +331,15 @@ const ProductDetail = () => {
               {/* Price Card with Product Name and Add to Cart */}
               <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border space-y-4">
                 {/* Price */}
-                <div>
-                  <div className="flex items-center justify-center lg:justify-start gap-3">
-                    <p className="text-2xl font-bold text-foreground">
-                      {formatMVR(product.price)}
-                    </p>
-                    {product.old_price && product.old_price > product.price && (
-                      <p className="text-lg text-muted-foreground line-through">
-                        {formatMVR(product.old_price)}
-                      </p>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Free shipping on orders over MVR 500
+                <div className="flex items-center justify-center lg:justify-start gap-3">
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatMVR(product.price)}
                   </p>
+                  {product.old_price && product.old_price > product.price && (
+                    <p className="text-lg text-muted-foreground line-through">
+                      {formatMVR(product.old_price)}
+                    </p>
+                  )}
                 </div>
                 
                 {/* Product Name - Under Price */}
