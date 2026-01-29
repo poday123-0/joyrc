@@ -1797,26 +1797,44 @@ const SettingsTab = ({
     e.preventDefault();
     setSaving(true);
 
+    const trimmedData = {
+      site_name: formData.site_name.trim(),
+      logo_url: formData.logo_url || null,
+      primary_color: formData.primary_color,
+      secondary_color: formData.secondary_color,
+      hero_title: formData.hero_title.trim(),
+      hero_subtitle: formData.hero_subtitle.trim(),
+      notification_email: formData.notification_email.trim() || null,
+      notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
+      google_login_enabled: formData.google_login_enabled,
+      site_title: formData.site_title.trim() || null,
+      favicon_url: formData.favicon_url || null,
+      og_image_url: formData.og_image_url || null,
+    };
+
     try {
       const { error } = await supabase
         .from("system_settings")
-        .update({
-          site_name: formData.site_name.trim(),
-          logo_url: formData.logo_url || null,
-          primary_color: formData.primary_color,
-          secondary_color: formData.secondary_color,
-          hero_title: formData.hero_title.trim(),
-          hero_subtitle: formData.hero_subtitle.trim(),
-          notification_email: formData.notification_email.trim() || null,
-          notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
-          google_login_enabled: formData.google_login_enabled,
-          site_title: formData.site_title.trim() || null,
-          favicon_url: formData.favicon_url || null,
-          og_image_url: formData.og_image_url || null,
-        })
+        .update(trimmedData)
         .eq("id", settings.id);
 
       if (error) throw error;
+      
+      // Update document metadata immediately after successful save
+      if (trimmedData.site_title) {
+        document.title = trimmedData.site_title;
+      }
+      if (trimmedData.favicon_url) {
+        let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+        if (favicon) favicon.href = trimmedData.favicon_url;
+      }
+      if (trimmedData.og_image_url) {
+        const ogImage = document.querySelector("meta[property='og:image']") as HTMLMetaElement;
+        if (ogImage) ogImage.content = trimmedData.og_image_url;
+        const twitterImage = document.querySelector("meta[name='twitter:image']") as HTMLMetaElement;
+        if (twitterImage) twitterImage.content = trimmedData.og_image_url;
+      }
+      
       toast({ 
         title: "Settings Saved",
         description: "Your system settings have been updated successfully.",
