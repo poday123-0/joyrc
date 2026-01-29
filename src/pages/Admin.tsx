@@ -2059,7 +2059,7 @@ const SettingsTab = ({
                 </div>
                 
                 <p className="text-xs text-muted-foreground">
-                  By default, users see "Sign in to Lovable" on Google's consent screen. To show "Sign in to RC Joy" instead, follow these steps:
+                  By default, Google's consent screen shows generic branding. To display "Sign in to RC Joy" instead, follow these steps:
                 </p>
 
                 <div className="space-y-3">
