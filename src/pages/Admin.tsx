@@ -57,20 +57,20 @@ interface ProductSpecification {
   icon: string | null;
 }
 
-// Available icons for specification selection
+// Available icons for specification selection - using Lucide icons
 const specIconOptions = [
-  { value: "zap", label: "Zap (Speed/Power)", icon: "⚡" },
-  { value: "battery", label: "Battery", icon: "🔋" },
-  { value: "gauge", label: "Gauge (Range)", icon: "📊" },
-  { value: "radio", label: "Radio (Control)", icon: "📻" },
-  { value: "box", label: "Box (Default)", icon: "📦" },
-  { value: "clock", label: "Clock (Time)", icon: "🕐" },
-  { value: "ruler", label: "Ruler (Size)", icon: "📏" },
-  { value: "weight", label: "Weight", icon: "⚖️" },
-  { value: "thermometer", label: "Temperature", icon: "🌡️" },
-  { value: "wifi", label: "Wifi (Signal)", icon: "📶" },
-  { value: "camera", label: "Camera", icon: "📷" },
-  { value: "star", label: "Star (Rating)", icon: "⭐" },
+  { value: "zap", label: "Speed/Power", Icon: Zap },
+  { value: "battery", label: "Battery", Icon: Battery },
+  { value: "gauge", label: "Range/Gauge", Icon: Gauge },
+  { value: "radio", label: "Control/Radio", Icon: Radio },
+  { value: "box", label: "Default", Icon: Box },
+  { value: "clock", label: "Time", Icon: Clock },
+  { value: "ruler", label: "Size", Icon: Ruler },
+  { value: "weight", label: "Weight", Icon: Scale },
+  { value: "thermometer", label: "Temperature", Icon: Thermometer },
+  { value: "wifi", label: "Signal", Icon: Wifi },
+  { value: "camera", label: "Camera", Icon: Camera },
+  { value: "star", label: "Rating", Icon: Star },
 ];
 
 interface ProductImage {
@@ -963,9 +963,10 @@ const ProductsTab = ({
                     <div className="grid gap-2 mb-3 md:grid-cols-2">
                       {specifications.map((spec) => {
                         const iconOption = specIconOptions.find(o => o.value === spec.icon) || specIconOptions.find(o => o.value === "box");
+                        const IconComponent = iconOption?.Icon || Box;
                         return (
                           <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                            <span className="text-lg">{iconOption?.icon || "📦"}</span>
+                            <IconComponent className="w-4 h-4 text-primary" />
                             <span className="font-medium text-sm flex-1">{spec.spec_name}</span>
                             <span className="text-sm text-muted-foreground flex-1">{spec.spec_value}</span>
                             <button
@@ -988,19 +989,25 @@ const ProductsTab = ({
                         value={newSpec.icon}
                         onValueChange={(value) => setNewSpec({ ...newSpec, icon: value })}
                       >
-                        <SelectTrigger className="w-full sm:w-[140px] bg-background">
+                        <SelectTrigger className="w-full sm:w-[160px] bg-background">
                           <SelectValue placeholder="Icon">
-                            <span className="flex items-center gap-2">
-                              <span>{specIconOptions.find(o => o.value === newSpec.icon)?.icon || "📦"}</span>
-                              <span className="text-xs truncate">{specIconOptions.find(o => o.value === newSpec.icon)?.value || "box"}</span>
-                            </span>
+                            {(() => {
+                              const selectedOption = specIconOptions.find(o => o.value === newSpec.icon);
+                              const SelectedIcon = selectedOption?.Icon || Box;
+                              return (
+                                <span className="flex items-center gap-2">
+                                  <SelectedIcon className="w-4 h-4" />
+                                  <span className="text-xs truncate">{selectedOption?.label || "Default"}</span>
+                                </span>
+                              );
+                            })()}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {specIconOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               <span className="flex items-center gap-2">
-                                <span>{option.icon}</span>
+                                <option.Icon className="w-4 h-4" />
                                 <span>{option.label}</span>
                               </span>
                             </SelectItem>
