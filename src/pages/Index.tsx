@@ -4,9 +4,9 @@ import { ArrowRight, Star } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import VideoShowcase from "@/components/VideoShowcase";
+import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMVR } from "@/lib/currency";
-
 interface FeaturedProduct {
   id: string;
   product_id: string;
@@ -271,23 +271,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 lg:py-12">
-        <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2024 RC Joy. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Support
-              </Link>
-              <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Shop
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       <BottomNavigation />
     </div>

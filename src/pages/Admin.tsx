@@ -34,6 +34,7 @@ import HomeContentTab from "@/components/HomeContentTab";
 import StorageManagementTab from "@/components/StorageManagementTab";
 import EmailTemplatesTab from "@/components/EmailTemplatesTab";
 import MarketingEmailsTab from "@/components/MarketingEmailsTab";
+import FooterSettingsTab from "@/components/FooterSettingsTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface Product {
@@ -114,7 +115,7 @@ interface SystemSettings {
   og_image_url: string | null;
 }
 
-type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "settings";
+type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -133,6 +134,7 @@ const tabs = [
   { id: "storage", label: "Storage", icon: HardDrive },
   { id: "email-templates", label: "Templates", icon: Mail },
   { id: "marketing", label: "Marketing", icon: Send },
+  { id: "footer", label: "Footer", icon: FolderOpen },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -329,6 +331,7 @@ const Admin = () => {
             {activeTab === "storage" && <StorageManagementTab />}
             {activeTab === "email-templates" && <EmailTemplatesTab />}
             {activeTab === "marketing" && <MarketingEmailsTab />}
+            {activeTab === "footer" && <FooterSettingsTab />}
             {activeTab === "settings" && settings && (
               <SettingsTab 
                 settings={settings} 

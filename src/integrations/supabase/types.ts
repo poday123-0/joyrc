@@ -235,6 +235,42 @@ export type Database = {
           },
         ]
       }
+      footer_links: {
+        Row: {
+          column_order: number | null
+          column_title: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          link_label: string
+          link_url: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          column_order?: number | null
+          column_title: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          link_label: string
+          link_url: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          column_order?: number | null
+          column_title?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          link_label?: string
+          link_url?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hero_backgrounds: {
         Row: {
           created_at: string
@@ -668,6 +704,17 @@ export type Database = {
           feature_3_description: string | null
           feature_3_icon: string | null
           feature_3_title: string | null
+          footer_address: string | null
+          footer_company_name: string | null
+          footer_copyright: string | null
+          footer_email: string | null
+          footer_phone: string | null
+          footer_social_facebook: string | null
+          footer_social_instagram: string | null
+          footer_social_linkedin: string | null
+          footer_social_pinterest: string | null
+          footer_social_twitter: string | null
+          footer_social_youtube: string | null
           google_login_enabled: boolean | null
           hero_subtitle: string | null
           hero_title: string | null
@@ -697,6 +744,17 @@ export type Database = {
           feature_3_description?: string | null
           feature_3_icon?: string | null
           feature_3_title?: string | null
+          footer_address?: string | null
+          footer_company_name?: string | null
+          footer_copyright?: string | null
+          footer_email?: string | null
+          footer_phone?: string | null
+          footer_social_facebook?: string | null
+          footer_social_instagram?: string | null
+          footer_social_linkedin?: string | null
+          footer_social_pinterest?: string | null
+          footer_social_twitter?: string | null
+          footer_social_youtube?: string | null
           google_login_enabled?: boolean | null
           hero_subtitle?: string | null
           hero_title?: string | null
@@ -726,6 +784,17 @@ export type Database = {
           feature_3_description?: string | null
           feature_3_icon?: string | null
           feature_3_title?: string | null
+          footer_address?: string | null
+          footer_company_name?: string | null
+          footer_copyright?: string | null
+          footer_email?: string | null
+          footer_phone?: string | null
+          footer_social_facebook?: string | null
+          footer_social_instagram?: string | null
+          footer_social_linkedin?: string | null
+          footer_social_pinterest?: string | null
+          footer_social_twitter?: string | null
+          footer_social_youtube?: string | null
           google_login_enabled?: boolean | null
           hero_subtitle?: string | null
           hero_title?: string | null
