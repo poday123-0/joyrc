@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SiteSettings {
@@ -11,21 +11,41 @@ interface SiteSettings {
 const SiteMetadata = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const { data } = await supabase
-        .from("system_settings")
-        .select("site_name, site_title, favicon_url, og_image_url")
-        .limit(1)
-        .maybeSingle();
-      
-      if (data) {
-        setSettings(data as SiteSettings);
-      }
-    };
-
-    fetchSettings();
+  const fetchSettings = useCallback(async () => {
+    const { data } = await supabase
+      .from("system_settings")
+      .select("site_name, site_title, favicon_url, og_image_url")
+      .limit(1)
+      .maybeSingle();
+    
+    if (data) {
+      setSettings(data as SiteSettings);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchSettings();
+
+    // Subscribe to realtime changes on system_settings
+    const channel = supabase
+      .channel('site-metadata-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings'
+        },
+        () => {
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSettings]);
 
   useEffect(() => {
     if (!settings) return;
@@ -34,35 +54,37 @@ const SiteMetadata = () => {
     const title = settings.site_title || settings.site_name || "RC Joy";
     document.title = title;
 
-    // Update favicon
+    // Update favicon - always ensure it exists
+    let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      document.head.appendChild(favicon);
+    }
     if (settings.favicon_url) {
-      let favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
-      if (!favicon) {
-        favicon = document.createElement("link");
-        favicon.rel = "icon";
-        document.head.appendChild(favicon);
-      }
       favicon.href = settings.favicon_url;
     }
 
     // Update OG meta tags
+    // OG Image
+    let ogImage = document.querySelector("meta[property='og:image']") as HTMLMetaElement;
+    if (!ogImage) {
+      ogImage = document.createElement("meta");
+      ogImage.setAttribute("property", "og:image");
+      document.head.appendChild(ogImage);
+    }
     if (settings.og_image_url) {
-      // OG Image
-      let ogImage = document.querySelector("meta[property='og:image']") as HTMLMetaElement;
-      if (!ogImage) {
-        ogImage = document.createElement("meta");
-        ogImage.setAttribute("property", "og:image");
-        document.head.appendChild(ogImage);
-      }
       ogImage.content = settings.og_image_url;
+    }
 
-      // Twitter Image
-      let twitterImage = document.querySelector("meta[name='twitter:image']") as HTMLMetaElement;
-      if (!twitterImage) {
-        twitterImage = document.createElement("meta");
-        twitterImage.setAttribute("name", "twitter:image");
-        document.head.appendChild(twitterImage);
-      }
+    // Twitter Image
+    let twitterImage = document.querySelector("meta[name='twitter:image']") as HTMLMetaElement;
+    if (!twitterImage) {
+      twitterImage = document.createElement("meta");
+      twitterImage.setAttribute("name", "twitter:image");
+      document.head.appendChild(twitterImage);
+    }
+    if (settings.og_image_url) {
       twitterImage.content = settings.og_image_url;
     }
 
