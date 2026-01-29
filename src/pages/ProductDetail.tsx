@@ -53,6 +53,8 @@ const ProductDetail = () => {
   const [colorImageIndex, setColorImageIndex] = useState(0);
   const [selectedColorImageIndex, setSelectedColorImageIndex] = useState(0);
   const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartRef = useRef<number | null>(null);
+  const touchEndRef = useRef<number | null>(null);
 
   // Get all images for a specific color
   const getImagesForColor = useCallback((colorId: string): string[] => {
@@ -131,6 +133,35 @@ const ProductDetail = () => {
         return newIndex;
       });
     }
+  };
+
+  // Touch swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndRef.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartRef.current || !touchEndRef.current) return;
+    
+    const distance = touchStartRef.current - touchEndRef.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(distance) > minSwipeDistance) {
+      if (distance > 0) {
+        // Swiped left - go next
+        handleNextImage();
+      } else {
+        // Swiped right - go prev
+        handlePrevImage();
+      }
+    }
+
+    touchStartRef.current = null;
+    touchEndRef.current = null;
   };
 
   const handleNextImage = () => {
@@ -311,7 +342,12 @@ const ProductDetail = () => {
           <div className="py-6 lg:py-0">
             <div className="lg:sticky lg:top-20 space-y-6">
               {/* Image with swipe arrows for colors */}
-              <div className="relative">
+              <div 
+                className="relative"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
                 <div className="aspect-[4/5] w-full max-w-lg mx-auto lg:max-w-none bg-muted/40 rounded-3xl overflow-hidden shadow-lg">
                   {currentImage ? (
                     <img
