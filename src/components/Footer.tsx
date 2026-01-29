@@ -233,12 +233,12 @@ const Footer = () => {
                 <ul className="space-y-2">
                   <li>
                     <Link to="/categories" className="text-sm text-background/70 hover:text-background transition-colors">
-                      Shop
+                      Browse Products
                     </Link>
                   </li>
                   <li>
                     <Link to="/support" className="text-sm text-background/70 hover:text-background transition-colors">
-                      Support
+                      Help Center
                     </Link>
                   </li>
                   <li>
@@ -286,19 +286,9 @@ const Footer = () => {
       {/* Bottom Bar - Copyright */}
       <div className="border-t border-background/10">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-background/60 text-center sm:text-left">
-              {settings?.footer_copyright || "© 2024 RC Joy. All rights reserved."}
-            </p>
-            <div className="flex items-center gap-6">
-              <Link to="/support" className="text-sm text-background/60 hover:text-background transition-colors">
-                Help Center
-              </Link>
-              <Link to="/categories" className="text-sm text-background/60 hover:text-background transition-colors">
-                Browse Products
-              </Link>
-            </div>
-          </div>
+          <p className="text-sm text-background/60 text-center">
+            {settings?.footer_copyright || "© 2024 RC Joy. All rights reserved."}
+          </p>
         </div>
       </div>
     </footer>
