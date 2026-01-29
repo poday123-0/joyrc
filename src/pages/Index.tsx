@@ -102,7 +102,7 @@ const Index = () => {
       </section>
 
       {/* Hero Text Section */}
-      <section className="py-10 lg:py-16">
+      <section className="py-10 lg:py-[26px]">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8 text-center">
           <div className="space-y-4">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
