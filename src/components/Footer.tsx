@@ -58,7 +58,18 @@ const Footer = () => {
       setSettings(data);
     }
   }, []);
+  useEffect(() => {
+    const fetchLogo = async () => {
+      const { data } = await supabase.from("system_settings").select("logo_url").limit(1).maybeSingle();
 
+      if (data?.logo_url) {
+        setLogoUrl(data.logo_url);
+      }
+      setLogoLoaded(true);
+    };
+
+    fetchLogo();
+  }, []);
   const fetchLinks = useCallback(async () => {
     const { data } = await supabase
       .from("footer_links")
