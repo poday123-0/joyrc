@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo, useCallback } from "react";
+import { useState, useRef, useEffect, memo, useCallback, forwardRef } from "react";
 import { 
   getOptimizedImageUrl, 
   getResponsiveSrcSet, 
@@ -37,7 +37,7 @@ export const preloadImage = (src: string, width?: number): Promise<void> => {
   });
 };
 
-const OptimizedImage = memo(({ 
+const OptimizedImage = memo(forwardRef<HTMLDivElement, OptimizedImageProps>(({ 
   src, 
   alt, 
   className = "", 
@@ -47,7 +47,7 @@ const OptimizedImage = memo(({
   width,
   quality = 80,
   onLoad
-}: OptimizedImageProps) => {
+}, ref) => {
   const [loaded, setLoaded] = useState(() => imageCache.has(src));
   const [inView, setInView] = useState(priority || imageCache.has(src));
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,7 +115,7 @@ const OptimizedImage = memo(({
 
   return (
     <div 
-      ref={containerRef} 
+      ref={ref || containerRef} 
       className={`relative overflow-hidden ${fill ? 'w-full h-full' : ''}`}
     >
       {/* Skeleton placeholder - only show if not cached */}
@@ -148,7 +148,7 @@ const OptimizedImage = memo(({
       )}
     </div>
   );
-});
+}));
 
 OptimizedImage.displayName = 'OptimizedImage';
 
