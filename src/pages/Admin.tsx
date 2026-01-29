@@ -2070,7 +2070,7 @@ const SettingsTab = ({
                       <li>Create a new project or select existing one</li>
                       <li>Go to <span className="font-medium text-foreground">APIs & Services → OAuth consent screen</span></li>
                       <li>Set <span className="font-medium text-foreground">App name</span> to "RC Joy"</li>
-                      <li>Add your domains: rcjoy.store, lovable.app</li>
+                      <li>Add your domain: <span className="font-medium text-foreground">rcjoy.store</span></li>
                       <li>Configure scopes: email, profile, openid</li>
                     </ul>
                   </div>
