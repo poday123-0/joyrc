@@ -77,6 +77,21 @@ const PaymentOrdersTab = () => {
     }
   };
 
+  const sendOrderEmail = async (orderId: string, templateKey: string) => {
+    try {
+      await supabase.functions.invoke("send-email", {
+        body: {
+          type: "order_update",
+          template_key: templateKey,
+          order_id: orderId,
+        },
+      });
+      console.log(`Email sent: ${templateKey} for order ${orderId}`);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+    }
+  };
+
   const handleConfirmPayment = async () => {
     if (!selectedOrderId) return;
 
@@ -117,6 +132,9 @@ const PaymentOrdersTab = () => {
         type: "success",
         link: "/profile",
       });
+
+      // Send confirmation email to customer
+      sendOrderEmail(selectedOrderId, "payment_confirmed");
 
       toast({
         title: "Payment Confirmed",
