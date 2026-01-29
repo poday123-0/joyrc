@@ -316,45 +316,50 @@ const Categories = () => {
             )}
 
             {/* Mobile Category Pills - Circle Design */}
-            <div className="lg:hidden mb-5">
-              <h3 className="text-xs font-medium text-muted-foreground mb-2">Browse by Category</h3>
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategoryChange(category.id)}
-                    className="flex flex-col items-center gap-1 flex-shrink-0"
-                  >
-                    <div
-                      className={`w-11 h-11 rounded-full overflow-hidden transition-all ${
-                        activeCategory === category.id
-                          ? "ring-2 ring-primary ring-offset-1 ring-offset-background"
-                          : "shadow-soft"
-                      }`}
+            <div className="lg:hidden mb-6">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Browse by Category</h3>
+              <div className="flex gap-5 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4">
+                {categories.map((category) => {
+                  const isActive = activeCategory === category.id;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryChange(category.id)}
+                      className="flex flex-col items-center gap-2 flex-shrink-0 group"
                     >
-                      {category.image_url ? (
-                        <img 
-                          src={category.image_url} 
-                          alt={category.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className={`w-full h-full flex items-center justify-center ${
-                          activeCategory === category.id
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        }`}>
-                          <span className="text-sm">{category.icon}</span>
-                        </div>
-                      )}
-                    </div>
-                    <span className={`text-[10px] font-medium text-center w-11 truncate ${
-                      activeCategory === category.id ? "text-primary" : "text-muted-foreground"
-                    }`}>
-                      {category.name}
-                    </span>
-                  </button>
-                ))}
+                      <div
+                        className={`w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 ${
+                          isActive
+                            ? "bg-primary shadow-lg scale-105"
+                            : "bg-muted/80 shadow-soft group-hover:shadow-md group-hover:scale-102"
+                        }`}
+                      >
+                        {category.image_url ? (
+                          <img 
+                            src={category.image_url} 
+                            alt={category.name} 
+                            className={`w-full h-full object-cover transition-opacity ${
+                              isActive ? "opacity-90" : "opacity-100"
+                            }`}
+                          />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center transition-colors ${
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground group-hover:bg-accent"
+                          }`}>
+                            <span className="text-2xl">{category.icon}</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className={`text-xs font-medium text-center max-w-16 truncate transition-colors ${
+                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                      }`}>
+                        {category.name}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
