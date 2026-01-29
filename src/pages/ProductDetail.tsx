@@ -445,8 +445,8 @@ const ProductDetail = () => {
                 );
               })()}
 
-              {/* Price Card with Product Name and Add to Cart */}
-              <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border space-y-4">
+              {/* Price, Product Name and Add to Cart */}
+              <div className="text-center lg:text-left space-y-3">
                 {/* Price */}
                 <div className="flex items-center justify-center lg:justify-start gap-3">
                   <p className="text-2xl font-bold text-foreground">
@@ -459,13 +459,13 @@ const ProductDetail = () => {
                   )}
                 </div>
                 
-                {/* Product Name - Under Price */}
-                <div className="pt-2 border-t border-border">
+                {/* Product Name */}
+                <div>
                   <h1 className="text-xl lg:text-2xl font-bold text-foreground">{product.name}</h1>
                   <p className="text-sm text-muted-foreground mt-0.5">{product.category}</p>
                 </div>
                 
-                {/* Add to Cart - Under Product Name */}
+                {/* Add to Cart */}
                 <button
                   onClick={handleAddToCart}
                   className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
