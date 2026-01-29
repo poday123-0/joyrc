@@ -116,6 +116,32 @@ const Checkout = () => {
 
       await supabase.from("order_items").insert(orderItems);
 
+      // Send order confirmation email to customer
+      try {
+        await supabase.functions.invoke("send-email", {
+          body: {
+            type: "order_notification",
+            template_key: "order_confirmation",
+            order_id: order.id,
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send order confirmation email:", emailError);
+      }
+
+      // Send new order notification to admin
+      try {
+        await supabase.functions.invoke("send-email", {
+          body: {
+            type: "order_notification",
+            template_key: "new_order_admin",
+            order_id: order.id,
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send admin notification email:", emailError);
+      }
+
       // Success!
       setCurrentStep(4);
       setOrderSuccess(true);

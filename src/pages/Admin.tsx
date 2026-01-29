@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,8 @@ import UsersManagementTab from "@/components/UsersManagementTab";
 import ExistingImagesDialog from "@/components/ExistingImagesDialog";
 import HomeContentTab from "@/components/HomeContentTab";
 import StorageManagementTab from "@/components/StorageManagementTab";
+import EmailTemplatesTab from "@/components/EmailTemplatesTab";
+import MarketingEmailsTab from "@/components/MarketingEmailsTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface Product {
@@ -84,7 +86,7 @@ interface SystemSettings {
   google_login_enabled: boolean;
 }
 
-type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "settings";
+type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -101,6 +103,8 @@ const tabs = [
   { id: "hero", label: "Hero", icon: ImageIcon },
   { id: "home-content", label: "Home", icon: FolderOpen },
   { id: "storage", label: "Storage", icon: HardDrive },
+  { id: "email-templates", label: "Templates", icon: Mail },
+  { id: "marketing", label: "Marketing", icon: Send },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -295,6 +299,8 @@ const Admin = () => {
             {activeTab === "hero" && <HeroBackgroundsTab />}
             {activeTab === "home-content" && <HomeContentTab />}
             {activeTab === "storage" && <StorageManagementTab />}
+            {activeTab === "email-templates" && <EmailTemplatesTab />}
+            {activeTab === "marketing" && <MarketingEmailsTab />}
             {activeTab === "settings" && settings && (
               <SettingsTab 
                 settings={settings} 

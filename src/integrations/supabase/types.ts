@@ -145,6 +145,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          html_content: string
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at: string
+          variables: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at?: string
+          variables?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       featured_products: {
         Row: {
           category_id: string | null
@@ -229,6 +268,33 @@ export type Database = {
           subtitle?: string | null
           title?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_emails: {
+        Row: {
+          created_at: string
+          html_content: string
+          id: string
+          sent_by: string
+          sent_to_count: number | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          html_content: string
+          id?: string
+          sent_by: string
+          sent_to_count?: number | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          html_content?: string
+          id?: string
+          sent_by?: string
+          sent_to_count?: number | null
+          subject?: string
         }
         Relationships: []
       }
