@@ -75,6 +75,7 @@ const VideoShowcase = () => {
   const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
   const currentVideo = videos[currentIndex];
@@ -166,6 +167,28 @@ const VideoShowcase = () => {
       transitionToNext();
     }
   }, [videos.length, transitionToNext]);
+
+  // Auto-advance timer for YouTube videos (since they loop and don't trigger onEnded)
+  useEffect(() => {
+    // Clear any existing timer
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+
+    // Only set auto-advance timer for YouTube videos with multiple videos
+    if (isCurrentYoutube && videos.length > 1 && videoReady) {
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        transitionToNext();
+      }, 15000); // 15 seconds per YouTube video
+    }
+
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, [currentIndex, isCurrentYoutube, videos.length, videoReady, transitionToNext]);
 
   const goToVideo = useCallback((index: number) => {
     if (index === currentIndex) return;
