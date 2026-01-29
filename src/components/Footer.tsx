@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Facebook, Instagram, Twitter, Youtube, Linkedin, MapPin, Phone, Mail } from "lucide-react";
+import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 
 interface FooterSettings {
   footer_copyright: string | null;
