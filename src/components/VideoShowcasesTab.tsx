@@ -35,6 +35,26 @@ const VideoShowcasesTab = () => {
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [videoSource, setVideoSource] = useState<"upload" | "youtube">("upload");
+
+  // Convert YouTube URL to embed format
+  const getYoutubeEmbedUrl = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return `https://www.youtube.com/embed/${match[1]}?autoplay=1&mute=1&loop=1&playlist=${match[1]}&controls=0&modestbranding=1&playsinline=1`;
+      }
+    }
+    return null;
+  };
+
+  const isYoutubeUrl = (url: string): boolean => {
+    return /(?:youtube\.com|youtu\.be)/.test(url);
+  };
 
   useEffect(() => {
     fetchData();
@@ -56,6 +76,8 @@ const VideoShowcasesTab = () => {
     setFormData({ title: "", description: "", product_id: "", is_active: true });
     setVideoFile(null);
     setThumbnailFile(null);
+    setYoutubeUrl("");
+    setVideoSource("upload");
     setEditingVideo(null);
     setShowForm(false);
   };
@@ -68,15 +90,35 @@ const VideoShowcasesTab = () => {
       product_id: video.product_id || "",
       is_active: video.is_active,
     });
+    // Check if existing video is YouTube
+    if (isYoutubeUrl(video.video_url)) {
+      setVideoSource("youtube");
+      setYoutubeUrl(video.video_url);
+    } else {
+      setVideoSource("upload");
+      setYoutubeUrl("");
+    }
     setShowForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!editingVideo && !videoFile) {
-      toast({ title: "Please select a video file", variant: "destructive" });
-      return;
+    if (videoSource === "youtube") {
+      if (!youtubeUrl.trim() && !editingVideo) {
+        toast({ title: "Please enter a YouTube URL", variant: "destructive" });
+        return;
+      }
+      const embedUrl = getYoutubeEmbedUrl(youtubeUrl);
+      if (youtubeUrl.trim() && !embedUrl) {
+        toast({ title: "Invalid YouTube URL", description: "Please enter a valid YouTube or Shorts link", variant: "destructive" });
+        return;
+      }
+    } else {
+      if (!editingVideo && !videoFile) {
+        toast({ title: "Please select a video file", variant: "destructive" });
+        return;
+      }
     }
 
     setSaving(true);
@@ -85,8 +127,11 @@ const VideoShowcasesTab = () => {
       let videoUrl = editingVideo?.video_url || "";
       let thumbnailUrl = editingVideo?.thumbnail_url || null;
 
-      // Upload video if provided
-      if (videoFile) {
+      if (videoSource === "youtube" && youtubeUrl.trim()) {
+        // Use YouTube embed URL
+        videoUrl = getYoutubeEmbedUrl(youtubeUrl) || youtubeUrl;
+      } else if (videoSource === "upload" && videoFile) {
+        // Upload video file
         const fileName = `${Date.now()}-${videoFile.name}`;
         const { error: uploadError } = await supabase.storage
           .from("videos")
@@ -233,35 +278,81 @@ const VideoShowcasesTab = () => {
               className="w-full px-4 py-2.5 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent resize-none h-20"
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Video File {!editingVideo && <span className="text-destructive">*</span>}
-                </label>
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                  className="text-sm w-full"
-                />
-                {editingVideo && !videoFile && (
-                  <p className="text-xs text-muted-foreground">Current video will be kept if no new file selected</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Thumbnail Image (optional)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
-                  className="text-sm w-full"
-                />
-              </div>
+            {/* Video Source Toggle */}
+            <div className="flex gap-2 p-1 bg-muted rounded-xl">
+              <button
+                type="button"
+                onClick={() => setVideoSource("upload")}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                  videoSource === "upload"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Upload className="w-4 h-4 inline mr-2" />
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => setVideoSource("youtube")}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                  videoSource === "youtube"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Play className="w-4 h-4 inline mr-2" />
+                YouTube Link
+              </button>
             </div>
+
+            {videoSource === "youtube" ? (
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">
+                  YouTube URL {!editingVideo && <span className="text-destructive">*</span>}
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://youtube.com/watch?v=... or https://youtube.com/shorts/..."
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Supports YouTube videos and Shorts links
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Video File {!editingVideo && <span className="text-destructive">*</span>}
+                  </label>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                    className="text-sm w-full"
+                  />
+                  {editingVideo && !videoFile && (
+                    <p className="text-xs text-muted-foreground">Current video will be kept if no new file selected</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Thumbnail Image (optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
+                    className="text-sm w-full"
+                  />
+                </div>
+              </div>
+            )}
 
             <label className="flex items-center gap-2 cursor-pointer">
               <input
