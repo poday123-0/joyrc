@@ -332,7 +332,9 @@ const ProductDetail = () => {
 
   const currentImage = getCurrentImage();
   const selectedColorImages = selectedColorId ? getImagesForColor(selectedColorId) : [];
-  const showArrows = userSelectedColor ? selectedColorImages.length > 1 : productColors.length > 1;
+  const totalImages = userSelectedColor ? selectedColorImages.length : productColors.length;
+  const currentIndex = userSelectedColor ? selectedColorImageIndex : colorImageIndex;
+  const showArrows = totalImages > 1;
 
   // Feature icons for specifications display
   const getSpecIcon = (name: string) => {
@@ -379,21 +381,30 @@ const ProductDetail = () => {
                   )}
                 </div>
                 
-                {/* Image swipe arrows */}
+                {/* Elegant swipe buttons */}
                 {showArrows && (
                   <>
                     <button
                       onClick={handlePrevImage}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-sm"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-background/95 backdrop-blur-md flex items-center justify-center shadow-lg hover:scale-110 hover:bg-background transition-all duration-200 group border border-border/30"
+                      aria-label="Previous image"
                     >
-                      <ChevronLeft className="w-5 h-5 text-foreground" />
+                      <ChevronLeft className="w-6 h-6 text-foreground/80 group-hover:text-primary transition-colors" />
                     </button>
                     <button
                       onClick={handleNextImage}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-sm"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-background/95 backdrop-blur-md flex items-center justify-center shadow-lg hover:scale-110 hover:bg-background transition-all duration-200 group border border-border/30"
+                      aria-label="Next image"
                     >
-                      <ChevronRight className="w-5 h-5 text-foreground" />
+                      <ChevronRight className="w-6 h-6 text-foreground/80 group-hover:text-primary transition-colors" />
                     </button>
+                    
+                    {/* Image counter indicator */}
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-foreground/60 backdrop-blur-sm">
+                      <span className="text-xs font-medium text-background">
+                        {currentIndex + 1} / {totalImages}
+                      </span>
+                    </div>
                   </>
                 )}
               </div>
