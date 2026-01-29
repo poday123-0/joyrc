@@ -110,6 +110,24 @@ const FooterSettingsTab = () => {
 
   const handleSaveSettings = async () => {
     setSaving(true);
+    
+    // First get the actual settings ID
+    const { data: existingSettings } = await supabase
+      .from("system_settings")
+      .select("id")
+      .limit(1)
+      .maybeSingle();
+    
+    if (!existingSettings) {
+      toast({
+        title: "Error",
+        description: "No settings found to update",
+        variant: "destructive",
+      });
+      setSaving(false);
+      return;
+    }
+
     const { error } = await supabase
       .from("system_settings")
       .update({
@@ -125,7 +143,7 @@ const FooterSettingsTab = () => {
         footer_social_linkedin: settings.footer_social_linkedin || null,
         footer_social_pinterest: settings.footer_social_pinterest || null,
       })
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+      .eq("id", existingSettings.id);
 
     if (error) {
       toast({
