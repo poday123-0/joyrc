@@ -284,46 +284,80 @@ const VideoShowcase = () => {
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
         <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 lg:pb-10">
           <div className="space-y-0">
-            {videos.map((video, index) => {
-              const isActive = index === currentIndex;
+            {(() => {
+              // Get inactive videos and split them to place current in middle
+              const inactiveVideos = videos.filter((_, i) => i !== currentIndex);
+              const midPoint = Math.floor(inactiveVideos.length / 2);
+              const beforeVideos = inactiveVideos.slice(0, midPoint);
+              const afterVideos = inactiveVideos.slice(midPoint);
               
               return (
-                <div 
-                  key={video.id} 
-                  className={`transition-all duration-500 ease-out ${
-                    isActive ? 'pointer-events-none' : 'pointer-events-auto'
-                  }`}
-                  style={{
-                    transform: isActive ? 'translateY(0)' : 'translateY(0)',
-                    opacity: isTransitioning ? 0 : 1,
-                    transitionDelay: `${index * 30}ms`
-                  }}
-                >
-                  {isActive ? (
-                    <div className="py-1.5 transition-all duration-500 ease-out animate-fade-in">
-                      <p className="text-[10px] sm:text-xs text-primary font-medium truncate max-w-md transition-all duration-300">
-                        {video.description || ''}
+                <>
+                  {/* Videos before current (top half) */}
+                  {beforeVideos.map((video) => {
+                    const originalIndex = videos.findIndex(v => v.id === video.id);
+                    return (
+                      <div 
+                        key={video.id} 
+                        className="pointer-events-auto transition-all duration-500 ease-out"
+                        style={{ opacity: isTransitioning ? 0 : 1 }}
+                      >
+                        <button
+                          onClick={() => goToVideo(originalIndex)}
+                          className="block text-left w-full max-w-md py-0.5 transition-all duration-300 opacity-40 hover:opacity-70"
+                        >
+                          <p className="text-[9px] sm:text-[10px] text-white/60 truncate leading-tight">
+                            {video.description || ''}
+                          </p>
+                          <p className="text-xs sm:text-sm font-medium text-white/70 truncate leading-tight">
+                            {video.title || 'Featured Video'}
+                          </p>
+                        </button>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Current video - in the middle */}
+                  {currentVideo && (
+                    <div 
+                      className="py-1.5 transition-all duration-500 ease-out animate-fade-in"
+                      style={{ opacity: isTransitioning ? 0 : 1 }}
+                    >
+                      <p className="text-[10px] sm:text-xs text-primary font-medium truncate max-w-md">
+                        {currentVideo.description || ''}
                       </p>
-                      <p className="text-sm sm:text-base lg:text-lg font-bold text-white truncate max-w-md transition-all duration-300">
-                        {video.title || 'Featured Video'}
+                      <p className="text-sm sm:text-base lg:text-lg font-bold text-white truncate max-w-md">
+                        {currentVideo.title || 'Featured Video'}
                       </p>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => goToVideo(index)}
-                      className="block text-left w-full max-w-md py-0.5 transition-all duration-300 opacity-40 hover:opacity-70"
-                    >
-                      <p className="text-[9px] sm:text-[10px] text-white/60 truncate leading-tight">
-                        {video.description || ''}
-                      </p>
-                      <p className="text-xs sm:text-sm font-medium text-white/70 truncate leading-tight">
-                        {video.title || 'Featured Video'}
-                      </p>
-                    </button>
                   )}
-                </div>
+                  
+                  {/* Videos after current (bottom half) */}
+                  {afterVideos.map((video) => {
+                    const originalIndex = videos.findIndex(v => v.id === video.id);
+                    return (
+                      <div 
+                        key={video.id} 
+                        className="pointer-events-auto transition-all duration-500 ease-out"
+                        style={{ opacity: isTransitioning ? 0 : 1 }}
+                      >
+                        <button
+                          onClick={() => goToVideo(originalIndex)}
+                          className="block text-left w-full max-w-md py-0.5 transition-all duration-300 opacity-40 hover:opacity-70"
+                        >
+                          <p className="text-[9px] sm:text-[10px] text-white/60 truncate leading-tight">
+                            {video.description || ''}
+                          </p>
+                          <p className="text-xs sm:text-sm font-medium text-white/70 truncate leading-tight">
+                            {video.title || 'Featured Video'}
+                          </p>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </>
               );
-            })}
+            })()}
           </div>
         </div>
       </div>
