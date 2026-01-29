@@ -505,9 +505,9 @@ const ProductDetail = () => {
                   Add to Cart
                 </button>
                 
-                {/* Product Name */}
-                <div>
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">{product.name}</h1>
+                {/* Product Name - Mobile only */}
+                <div className="lg:hidden">
+                  <h1 className="text-xl font-bold text-foreground">{product.name}</h1>
                 </div>
               </div>
             </div>
@@ -515,8 +515,13 @@ const ProductDetail = () => {
 
           {/* Right Column - Product Info */}
           <div className="lg:py-0">
+            {/* Product Name - Desktop only, above specs */}
+            <div className="hidden lg:block pb-4">
+              <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
+            </div>
+            
             {/* Specifications as Feature List */}
-            <div className="py-6 space-y-0">
+            <div className="py-6 lg:pt-0 space-y-0">
               {specs.length > 0 ? (
                 specs.map((spec, index) => {
                   const IconComponent = getSpecIcon(spec.icon, spec.name);
