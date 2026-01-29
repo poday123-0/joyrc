@@ -1,9 +1,10 @@
+import { forwardRef } from "react";
 import { Home, Grid3X3, ShoppingCart, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 
-const BottomNavigation = () => {
+const BottomNavigation = forwardRef<HTMLElement>((_, ref) => {
   const location = useLocation();
   const { user } = useAuth();
   const { totalItems } = useCart();
@@ -16,7 +17,7 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+    <nav ref={ref} className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
       {/* Apple-style tab bar */}
       <div className="bg-background/80 backdrop-blur-xl border-t border-border/30 pb-safe">
         <div className="flex items-center justify-around h-12">
@@ -54,6 +55,8 @@ const BottomNavigation = () => {
       </div>
     </nav>
   );
-};
+});
+
+BottomNavigation.displayName = 'BottomNavigation';
 
 export default BottomNavigation;
