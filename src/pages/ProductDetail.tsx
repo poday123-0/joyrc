@@ -13,6 +13,7 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
+  old_price: number | null;
   image_url: string | null;
   rating: number | null;
   category?: string;
@@ -330,9 +331,16 @@ const ProductDetail = () => {
               <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border space-y-4">
                 {/* Price */}
                 <div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {formatMVR(product.price)}
-                  </p>
+                  <div className="flex items-center justify-center lg:justify-start gap-3">
+                    <p className="text-2xl font-bold text-foreground">
+                      {formatMVR(product.price)}
+                    </p>
+                    {product.old_price && product.old_price > product.price && (
+                      <p className="text-lg text-muted-foreground line-through">
+                        {formatMVR(product.old_price)}
+                      </p>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground mt-1">
                     Free shipping on orders over MVR 500
                   </p>
