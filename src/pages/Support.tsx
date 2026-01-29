@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 interface FAQItem {
   id: string;
   title: string;
@@ -34,6 +35,7 @@ const Support = () => {
   });
   const [sending, setSending] = useState(false);
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: "",
     phone: "",
