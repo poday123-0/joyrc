@@ -399,29 +399,35 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Color Options - Smaller circles */}
-              {productColors.length > 0 && (
-                <div className="text-center lg:text-left">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {productColors.length} colors available
-                  </p>
-                  <div className="flex justify-center lg:justify-start gap-2">
-                    {productColors.map((color, index) => (
-                      <button
-                        key={color.id}
-                        onClick={() => handleColorSelect(color.id)}
-                        className={`w-6 h-6 rounded-full transition-all duration-300 ${
-                          selectedColorId === color.id
-                            ? 'ring-2 ring-offset-2 ring-primary scale-110'
-                            : 'opacity-60 hover:opacity-100 hover:scale-105'
-                        }`}
-                        style={{ backgroundColor: color.color_hex }}
-                        title={color.color_name}
-                      />
-                    ))}
+              {/* Color Options - Unique colors only */}
+              {productColors.length > 0 && (() => {
+                // Deduplicate colors by color_hex
+                const uniqueColors = productColors.filter((color, index, self) =>
+                  index === self.findIndex(c => c.color_hex.toLowerCase() === color.color_hex.toLowerCase())
+                );
+                return (
+                  <div className="text-center lg:text-left">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {uniqueColors.length} color{uniqueColors.length !== 1 ? 's' : ''} available
+                    </p>
+                    <div className="flex justify-center lg:justify-start gap-2">
+                      {uniqueColors.map((color) => (
+                        <button
+                          key={color.id}
+                          onClick={() => handleColorSelect(color.id)}
+                          className={`w-6 h-6 rounded-full transition-all duration-300 ${
+                            selectedColorId === color.id
+                              ? 'ring-2 ring-offset-2 ring-primary scale-110'
+                              : 'opacity-60 hover:opacity-100 hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: color.color_hex }}
+                          title={color.color_name}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Price Card with Product Name and Add to Cart */}
               <div className="text-center lg:text-left bg-card rounded-2xl p-6 border border-border space-y-4">
