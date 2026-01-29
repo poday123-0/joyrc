@@ -372,6 +372,7 @@ const ProductsTab = ({
   // Specifications state
   const [specifications, setSpecifications] = useState<ProductSpecification[]>([]);
   const [newSpec, setNewSpec] = useState({ name: "", value: "", icon: "box" });
+  const [editingSpec, setEditingSpec] = useState<ProductSpecification | null>(null);
   const [loadingSpecs, setLoadingSpecs] = useState(false);
 
   // Gallery images state
@@ -603,6 +604,36 @@ const ProductsTab = ({
       toast({ 
         title: "Specification Removed",
         description: `${specName} has been removed.`,
+      });
+    }
+  };
+
+  const handleUpdateSpec = async () => {
+    if (!editingSpec) return;
+    
+    const { error } = await supabase
+      .from("product_specifications")
+      .update({
+        spec_name: editingSpec.spec_name,
+        spec_value: editingSpec.spec_value,
+        icon: editingSpec.icon,
+      })
+      .eq("id", editingSpec.id);
+    
+    if (error) {
+      toast({ 
+        title: "Failed to update specification", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } else {
+      setSpecifications(specifications.map(s => 
+        s.id === editingSpec.id ? editingSpec : s
+      ));
+      setEditingSpec(null);
+      toast({ 
+        title: "Specification Updated",
+        description: `${editingSpec.spec_name} has been updated.`,
       });
     }
   };
@@ -960,15 +991,85 @@ const ProductsTab = ({
                   <p className="text-sm text-muted-foreground">Loading specifications...</p>
                 ) : (
                   <>
-                    <div className="grid gap-2 mb-3 md:grid-cols-2">
+                    <div className="grid gap-2 mb-3 md:grid-cols-1">
                       {specifications.map((spec) => {
-                        const iconOption = specIconOptions.find(o => o.value === spec.icon) || specIconOptions.find(o => o.value === "box");
+                        const isEditing = editingSpec?.id === spec.id;
+                        const iconOption = specIconOptions.find(o => o.value === (isEditing ? editingSpec.icon : spec.icon)) || specIconOptions.find(o => o.value === "box");
                         const IconComponent = iconOption?.Icon || Box;
+                        
+                        if (isEditing) {
+                          return (
+                            <div key={spec.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-primary/10 rounded-lg p-3 border border-primary/30">
+                              <Select
+                                value={editingSpec.icon || "box"}
+                                onValueChange={(value) => setEditingSpec({ ...editingSpec, icon: value })}
+                              >
+                                <SelectTrigger className="w-full sm:w-[120px] bg-background h-9">
+                                  <SelectValue>
+                                    {(() => {
+                                      const selOption = specIconOptions.find(o => o.value === editingSpec.icon);
+                                      const SelIcon = selOption?.Icon || Box;
+                                      return <SelIcon className="w-4 h-4" />;
+                                    })()}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {specIconOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      <span className="flex items-center gap-2">
+                                        <option.Icon className="w-4 h-4" />
+                                        <span>{option.label}</span>
+                                      </span>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <input
+                                type="text"
+                                value={editingSpec.spec_name}
+                                onChange={(e) => setEditingSpec({ ...editingSpec, spec_name: e.target.value })}
+                                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm h-9"
+                                placeholder="Name"
+                              />
+                              <input
+                                type="text"
+                                value={editingSpec.spec_value}
+                                onChange={(e) => setEditingSpec({ ...editingSpec, spec_value: e.target.value })}
+                                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm h-9"
+                                placeholder="Value"
+                              />
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={handleUpdateSpec}
+                                  className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center hover:bg-primary/30"
+                                >
+                                  <Save className="w-4 h-4 text-primary" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingSpec(null)}
+                                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
+                                >
+                                  <X className="w-4 h-4 text-muted-foreground" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        }
+                        
                         return (
                           <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
                             <IconComponent className="w-4 h-4 text-primary" />
                             <span className="font-medium text-sm flex-1">{spec.spec_name}</span>
                             <span className="text-sm text-muted-foreground flex-1">{spec.spec_value}</span>
+                            <button
+                              type="button"
+                              onClick={() => setEditingSpec(spec)}
+                              className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20"
+                            >
+                              <Pencil className="w-3 h-3 text-primary" />
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteSpec(spec.id, spec.spec_name)}
