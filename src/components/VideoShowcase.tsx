@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play } from "lucide-react";
+import { Play, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VideoShowcaseData {
@@ -34,23 +34,23 @@ const VideoTitleButton = memo(({
 }) => (
   <button
     onClick={onClick}
-    className={`block text-left w-full max-w-md transition-all duration-300 ${
+    className={`block w-full max-w-md transition-all duration-300 ${
       isActive 
-        ? 'opacity-100' 
-        : 'opacity-40 hover:opacity-60'
+        ? 'opacity-100 text-center' 
+        : 'opacity-40 hover:opacity-60 text-left'
     }`}
   >
     <p className={`transition-all duration-300 truncate ${
       isActive 
-        ? 'text-xs sm:text-sm text-primary font-medium' 
-        : 'text-[10px] sm:text-xs text-white/60'
+        ? 'text-[10px] sm:text-xs text-primary font-medium' 
+        : 'text-[9px] sm:text-[10px] text-white/60'
     }`}>
       {video.description || ''}
     </p>
     <p className={`transition-all duration-300 truncate ${
       isActive 
-        ? 'text-base sm:text-lg lg:text-xl font-bold text-white' 
-        : 'text-sm sm:text-base font-medium text-white/70'
+        ? 'text-sm sm:text-base lg:text-lg font-bold text-white' 
+        : 'text-xs sm:text-sm font-medium text-white/70'
     }`}>
       {video.title || 'Featured Video'}
     </p>
@@ -63,6 +63,7 @@ const VideoShowcase = () => {
   const [videos, setVideos] = useState<VideoShowcaseData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
@@ -107,6 +108,15 @@ const VideoShowcase = () => {
     }
     setIsPlaying(!isPlaying);
   }, [isPlaying]);
+
+  const handleMuteToggle = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!videoRef.current) return;
+    
+    const newMutedState = !isMuted;
+    videoRef.current.muted = newMutedState;
+    setIsMuted(newMutedState);
+  }, [isMuted]);
 
   const handleVideoClick = useCallback(() => {
     if (currentVideo?.product_id) {
@@ -227,12 +237,27 @@ const VideoShowcase = () => {
       {/* Gradient overlay - stronger at bottom for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
 
+      {/* Mute/Unmute button - bottom left */}
+      <button
+        onClick={handleMuteToggle}
+        className={`absolute bottom-4 sm:bottom-6 left-4 sm:left-6 lg:left-8 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-black/50 transition-all duration-200 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
+        aria-label={isMuted ? "Unmute video" : "Mute video"}
+      >
+        {isMuted ? (
+          <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+        ) : (
+          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+        )}
+      </button>
+
       {/* Bottom content - Stacked titles */}
       <div className={`absolute bottom-0 left-0 right-0 pointer-events-none transition-opacity duration-300 ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}>
         <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 lg:pb-10">
-          <div className="space-y-0.5 sm:space-y-1">
+          <div className="space-y-0.5 sm:space-y-1 flex flex-col items-center">
             {videos.map((video, index) => (
               <div key={video.id} className="pointer-events-auto">
                 <VideoTitleButton
