@@ -204,8 +204,8 @@ const Support = () => {
                 href={`tel:${contactInfo.phone.replace(/\s/g, '')}`}
                 className="glass-card rounded-2xl p-5 flex items-center gap-4 hover:shadow-card transition-all group"
               >
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
-                  <Phone className="w-5 h-5 text-accent" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Phone className="w-5 h-5 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground">Call Us</p>
@@ -352,7 +352,7 @@ const Support = () => {
                     <Button
                       type="submit"
                       disabled={sending}
-                      className="w-full gradient-cta text-white font-semibold h-12 rounded-xl"
+                      className="w-full bg-primary text-primary-foreground font-semibold h-12 rounded-xl hover:bg-primary/90"
                     >
                       <Send className="w-4 h-4 mr-2" />
                       {sending ? "Sending..." : "Send Message"}
@@ -410,8 +410,8 @@ const Support = () => {
               {/* Quick Help */}
               <Card className="glass-card border-0 shadow-soft">
                 <CardContent className="p-5 text-center">
-                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
-                    <Phone className="w-5 h-5 text-accent" />
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Phone className="w-5 h-5 text-primary" />
                   </div>
                   <h4 className="font-semibold text-foreground mb-1">Need Quick Help?</h4>
                   <p className="text-sm text-muted-foreground mb-3">
@@ -420,7 +420,7 @@ const Support = () => {
                   {contactInfo.phone && (
                     <a
                       href={`tel:${contactInfo.phone.replace(/\s/g, '')}`}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
                     >
                       <Phone className="w-4 h-4" />
                       Call Now
