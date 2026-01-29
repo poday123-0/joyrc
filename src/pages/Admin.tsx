@@ -138,8 +138,8 @@ const Admin = () => {
     }
   }, [isAdmin]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     const [productsRes, categoriesRes, settingsRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("sort_order"),
@@ -149,7 +149,7 @@ const Admin = () => {
     if (productsRes.data) setProducts(productsRes.data);
     if (categoriesRes.data) setCategories(categoriesRes.data);
     if (settingsRes.data) setSettings(settingsRes.data);
-    setLoading(false);
+    if (showLoading) setLoading(false);
   };
 
   if (authLoading || loading) {
@@ -307,7 +307,7 @@ const Admin = () => {
             {activeTab === "settings" && settings && (
               <SettingsTab 
                 settings={settings} 
-                onRefresh={fetchData} 
+                onRefresh={() => fetchData(false)} 
               />
             )}
           </div>
@@ -1672,13 +1672,29 @@ const SettingsTab = ({
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [uploadingOgImage, setUploadingOgImage] = useState(false);
+  const [showGoogleSetupGuide, setShowGoogleSetupGuide] = useState(false);
 
-  // Track settings ID to only sync on actual data refresh, not every re-render
-  const [lastSettingsId, setLastSettingsId] = useState(settings.id);
+  // Track last synced values to detect actual data changes from server
+  const [lastSyncedData, setLastSyncedData] = useState({
+    site_title: settings.site_title || "",
+    favicon_url: settings.favicon_url || "",
+    og_image_url: settings.og_image_url || "",
+  });
   
-  // Sync form data only when settings ID changes (after actual DB refresh)
+  // Sync form data when settings prop changes with new data from server
   useEffect(() => {
-    if (settings.id !== lastSettingsId) {
+    const serverData = {
+      site_title: settings.site_title || "",
+      favicon_url: settings.favicon_url || "",
+      og_image_url: settings.og_image_url || "",
+    };
+    
+    // Only update if server data actually changed (indicating a real refresh)
+    if (
+      serverData.site_title !== lastSyncedData.site_title ||
+      serverData.favicon_url !== lastSyncedData.favicon_url ||
+      serverData.og_image_url !== lastSyncedData.og_image_url
+    ) {
       setFormData({
         site_name: settings.site_name,
         logo_url: settings.logo_url || "",
@@ -1693,9 +1709,9 @@ const SettingsTab = ({
         favicon_url: settings.favicon_url || "",
         og_image_url: settings.og_image_url || "",
       });
-      setLastSettingsId(settings.id);
+      setLastSyncedData(serverData);
     }
-  }, [settings, lastSettingsId]);
+  }, [settings]);
 
   const handleLogoUpload = async (file: File | null) => {
     if (!file) return;
@@ -1999,14 +2015,24 @@ const SettingsTab = ({
           {/* Google Login Toggle */}
           <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-foreground">Google Login</h4>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-foreground">Google Login</h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowGoogleSetupGuide(!showGoogleSetupGuide)}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                    title="Setup guide for custom branding"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                  </button>
+                </div>
                 <p className="text-xs text-muted-foreground">Allow users to sign in with Google</p>
               </div>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, google_login_enabled: !formData.google_login_enabled })}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
                   formData.google_login_enabled ? "bg-primary" : "bg-muted"
                 }`}
               >
@@ -2017,6 +2043,66 @@ const SettingsTab = ({
                 />
               </button>
             </div>
+
+            {/* Google OAuth Setup Guide */}
+            {showGoogleSetupGuide && (
+              <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border space-y-4">
+                <div className="flex items-start justify-between">
+                  <h5 className="font-medium text-foreground text-sm">Custom Branding Setup Guide</h5>
+                  <button
+                    type="button"
+                    onClick={() => setShowGoogleSetupGuide(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <p className="text-xs text-muted-foreground">
+                  By default, users see "Sign in to Lovable" on Google's consent screen. To show "Sign in to RC Joy" instead, follow these steps:
+                </p>
+
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-background border border-border">
+                    <h6 className="text-xs font-semibold text-foreground mb-2">1. Google Cloud Console</h6>
+                    <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                      <li>Go to <span className="font-medium text-foreground">console.cloud.google.com</span></li>
+                      <li>Create a new project or select existing one</li>
+                      <li>Go to <span className="font-medium text-foreground">APIs & Services → OAuth consent screen</span></li>
+                      <li>Set <span className="font-medium text-foreground">App name</span> to "RC Joy"</li>
+                      <li>Add your domains: rcjoy.store, lovable.app</li>
+                      <li>Configure scopes: email, profile, openid</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-background border border-border">
+                    <h6 className="text-xs font-semibold text-foreground mb-2">2. Create OAuth Credentials</h6>
+                    <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                      <li>Go to <span className="font-medium text-foreground">APIs & Services → Credentials</span></li>
+                      <li>Click <span className="font-medium text-foreground">Create Credentials → OAuth Client ID</span></li>
+                      <li>Application type: <span className="font-medium text-foreground">Web application</span></li>
+                      <li>Name: "RC Joy Web"</li>
+                      <li>Add the <span className="font-medium text-foreground">Authorized redirect URI</span> from Cloud Dashboard</li>
+                      <li>Copy your <span className="font-medium text-foreground">Client ID</span> and <span className="font-medium text-foreground">Client Secret</span></li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-background border border-border">
+                    <h6 className="text-xs font-semibold text-foreground mb-2">3. Add to Cloud Dashboard</h6>
+                    <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                      <li>Open your Lovable Cloud Dashboard</li>
+                      <li>Go to <span className="font-medium text-foreground">Users → Auth Settings → Google</span></li>
+                      <li>Copy the redirect URL shown → paste into Google Console</li>
+                      <li>Enter your Client ID and Client Secret</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground italic">
+                  💡 Tip: Users will now see "Sign in to RC Joy" on Google's consent screen instead of Lovable branding.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Website Info Section */}
