@@ -22,7 +22,6 @@ interface FeaturedProduct {
     description: string | null;
   };
 }
-
 interface HomeContent {
   hero_title: string | null;
   hero_subtitle: string | null;
@@ -39,30 +38,22 @@ interface HomeContent {
   cta_subtitle: string | null;
   cta_button_text: string | null;
 }
-
 import OptimizedImage, { preloadImage } from "@/components/OptimizedImage";
 import { preloadImages } from "@/lib/imageOptimization";
 
 // Preload featured product images
 const preloadFeaturedImages = (products: FeaturedProduct[]) => {
-  const urls = products
-    .map(fp => fp.product.image_url)
-    .filter((url): url is string => !!url);
+  const urls = products.map(fp => fp.product.image_url).filter((url): url is string => !!url);
   preloadImages(urls, 640);
 };
-
 const Index = () => {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [homeContent, setHomeContent] = useState<HomeContent | null>(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchData = async () => {
-      const [featuredRes, contentRes] = await Promise.all([
-        supabase
-          .from("featured_products")
-          .select(`
+      const [featuredRes, contentRes] = await Promise.all([supabase.from("featured_products").select(`
             id,
             product_id,
             category_id,
@@ -76,12 +67,7 @@ const Index = () => {
               rating,
               description
             )
-          `)
-          .eq("is_active", true)
-          .order("sort_order"),
-        supabase
-          .from("system_settings")
-          .select(`
+          `).eq("is_active", true).order("sort_order"), supabase.from("system_settings").select(`
             hero_title,
             hero_subtitle,
             feature_1_icon,
@@ -96,11 +82,7 @@ const Index = () => {
             cta_title,
             cta_subtitle,
             cta_button_text
-          `)
-          .limit(1)
-          .maybeSingle()
-      ]);
-
+          `).limit(1).maybeSingle()]);
       if (featuredRes.data) {
         setFeaturedProducts(featuredRes.data as unknown as FeaturedProduct[]);
       }
@@ -109,12 +91,9 @@ const Index = () => {
       }
       setLoading(false);
     };
-
     fetchData();
   }, []);
-
-  return (
-    <div className="min-h-screen bg-background pb-20 lg:pb-8">
+  return <div className="min-h-screen bg-background lg:pb-8 py-0 my-0 pb-[48px]">
       <Header />
 
       {/* Video Showcase - Full Width */}
@@ -139,28 +118,19 @@ const Index = () => {
       {/* Featured Products Section */}
       <section className="py-6 lg:py-12">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8">
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="aspect-[4/5] bg-muted animate-pulse" />
-              ))}
-            </div>
-          ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              {featuredProducts.map((featured, index) => (
-                <div
-                  key={featured.id}
-                  onClick={() => {
-                    // Navigate to categories page with category filter
-                    if (featured.category_id) {
-                      navigate(`/categories?category=${featured.category_id}`);
-                    } else {
-                      navigate('/categories');
-                    }
-                  }}
-                  className="group block relative overflow-hidden rounded-2xl animate-fade-in cursor-pointer"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
+          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              {[1, 2, 3].map(i => <div key={i} className="aspect-[4/5] bg-muted animate-pulse" />)}
+            </div> : featuredProducts.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              {featuredProducts.map((featured, index) => <div key={featured.id} onClick={() => {
+            // Navigate to categories page with category filter
+            if (featured.category_id) {
+              navigate(`/categories?category=${featured.category_id}`);
+            } else {
+              navigate('/categories');
+            }
+          }} className="group block relative overflow-hidden rounded-2xl animate-fade-in cursor-pointer" style={{
+            animationDelay: `${index * 0.1}s`
+          }}>
                   {/* Title label at top */}
                   <div className="absolute top-4 left-0 right-0 z-10 text-center">
                     <span className="text-xs sm:text-sm font-medium tracking-widest text-foreground/80 uppercase">
@@ -170,23 +140,10 @@ const Index = () => {
 
                   {/* Full-bleed image */}
                   <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
-                    {featured.product.image_url ? (
-                      <OptimizedImage
-                        src={featured.product.image_url}
-                        alt={featured.product.name}
-                        priority={index === 0}
-                        fill
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">📦</div>
-                    )}
+                    {featured.product.image_url ? <OptimizedImage src={featured.product.image_url} alt={featured.product.name} priority={index === 0} fill className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">📦</div>}
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 bg-muted/30 rounded-xl">
+                </div>)}
+            </div> : <div className="text-center py-16 bg-muted/30 rounded-xl">
               <div className="text-6xl mb-4">🎮</div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 No Featured Products Yet
@@ -199,8 +156,7 @@ const Index = () => {
                   Browse All Products
                 </button>
               </Link>
-            </div>
-          )}
+            </div>}
         </div>
       </section>
 
@@ -243,18 +199,14 @@ const Index = () => {
       <section className="py-20 lg:py-32">
         <div className="container max-w-4xl mx-auto px-4 lg:px-8 text-center space-y-8">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-            {homeContent?.cta_title?.split('\n').map((line, i) => (
-              <span key={i}>
+            {homeContent?.cta_title?.split('\n').map((line, i) => <span key={i}>
                 {i > 0 && <br />}
                 {i === 1 ? <span className="text-primary">{line}</span> : line}
-              </span>
-            )) || (
-              <>
+              </span>) || <>
                 Ready to start your
                 <br />
                 <span className="text-primary">RC adventure?</span>
-              </>
-            )}
+              </>}
           </h2>
           <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto">
             {homeContent?.cta_subtitle || "Join thousands of happy customers who've discovered the thrill of remote control."}
@@ -274,8 +226,6 @@ const Index = () => {
       <Footer />
 
       <BottomNavigation />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
