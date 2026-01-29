@@ -30,6 +30,8 @@ interface FooterLink {
 const Footer = () => {
   const [settings, setSettings] = useState<FooterSettings | null>(null);
   const [footerLinks, setFooterLinks] = useState<FooterLink[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoLoaded, setLogoLoaded] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     const { data } = await supabase
