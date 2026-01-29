@@ -497,11 +497,6 @@ const ProductDetail = () => {
                   )}
                 </div>
                 
-                {/* Product Name */}
-                <div>
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">{product.name}</h1>
-                </div>
-                
                 {/* Add to Cart */}
                 <button
                   onClick={handleAddToCart}
@@ -509,6 +504,11 @@ const ProductDetail = () => {
                 >
                   Add to Cart
                 </button>
+                
+                {/* Product Name */}
+                <div>
+                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">{product.name}</h1>
+                </div>
               </div>
             </div>
           </div>
