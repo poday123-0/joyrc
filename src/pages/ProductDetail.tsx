@@ -31,6 +31,12 @@ interface Specification {
   value: string;
 }
 
+interface ColorImage {
+  id: string;
+  image_url: string;
+  color_id: string | null;
+}
+
 const ProductDetail = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
@@ -39,67 +45,108 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [specs, setSpecs] = useState<Specification[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [colorImages, setColorImages] = useState<ColorImage[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [productColors, setProductColors] = useState<ProductColor[]>([]);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [userSelectedColor, setUserSelectedColor] = useState(false);
   const [colorImageIndex, setColorImageIndex] = useState(0);
+  const [selectedColorImageIndex, setSelectedColorImageIndex] = useState(0);
   const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get all images for a specific color (for now, each color has one image)
-  const getColorImages = useCallback((colorId: string) => {
-    const color = productColors.find(c => c.id === colorId);
-    return color?.image_url ? [color.image_url] : [];
-  }, [productColors]);
-
-  // Auto-slide through color images when user hasn't selected
-  useEffect(() => {
-    if (productColors.length === 0 || userSelectedColor) {
-      if (autoSlideRef.current) {
-        clearInterval(autoSlideRef.current);
-        autoSlideRef.current = null;
+  // Get all images for a specific color
+  const getImagesForColor = useCallback((colorId: string): string[] => {
+    const images: string[] = [];
+    
+    // First add images from product_images table that are linked to this color
+    colorImages
+      .filter(img => img.color_id === colorId)
+      .forEach(img => images.push(img.image_url));
+    
+    // If no linked images, use the color's main image
+    if (images.length === 0) {
+      const color = productColors.find(c => c.id === colorId);
+      if (color?.image_url) {
+        images.push(color.image_url);
       }
-      return;
+    }
+    
+    return images;
+  }, [colorImages, productColors]);
+
+  // Auto-slide logic
+  useEffect(() => {
+    if (autoSlideRef.current) {
+      clearInterval(autoSlideRef.current);
+      autoSlideRef.current = null;
     }
 
-    autoSlideRef.current = setInterval(() => {
-      setColorImageIndex(prev => {
-        const nextIndex = (prev + 1) % productColors.length;
-        setSelectedColorId(productColors[nextIndex].id);
-        return nextIndex;
-      });
-    }, 3000);
+    if (productColors.length === 0) return;
+
+    if (userSelectedColor && selectedColorId) {
+      // User selected a color - auto-swipe through that color's images
+      const colorImgs = getImagesForColor(selectedColorId);
+      if (colorImgs.length > 1) {
+        autoSlideRef.current = setInterval(() => {
+          setSelectedColorImageIndex(prev => (prev + 1) % colorImgs.length);
+        }, 3000);
+      }
+    } else {
+      // No color selected - auto-swipe through different colors
+      autoSlideRef.current = setInterval(() => {
+        setColorImageIndex(prev => {
+          const nextIndex = (prev + 1) % productColors.length;
+          setSelectedColorId(productColors[nextIndex].id);
+          return nextIndex;
+        });
+      }, 3000);
+    }
 
     return () => {
       if (autoSlideRef.current) {
         clearInterval(autoSlideRef.current);
       }
     };
-  }, [productColors, userSelectedColor]);
+  }, [productColors, userSelectedColor, selectedColorId, getImagesForColor]);
 
   const handleColorSelect = (colorId: string) => {
     setUserSelectedColor(true);
     setSelectedColorId(colorId);
+    setSelectedColorImageIndex(0);
     const index = productColors.findIndex(c => c.id === colorId);
     if (index !== -1) setColorImageIndex(index);
   };
 
-  const handlePrevColorImage = () => {
-    setUserSelectedColor(true);
-    setColorImageIndex(prev => {
-      const newIndex = prev === 0 ? productColors.length - 1 : prev - 1;
-      setSelectedColorId(productColors[newIndex].id);
-      return newIndex;
-    });
+  const handlePrevImage = () => {
+    if (userSelectedColor && selectedColorId) {
+      const colorImgs = getImagesForColor(selectedColorId);
+      if (colorImgs.length > 1) {
+        setSelectedColorImageIndex(prev => prev === 0 ? colorImgs.length - 1 : prev - 1);
+      }
+    } else {
+      setUserSelectedColor(true);
+      setColorImageIndex(prev => {
+        const newIndex = prev === 0 ? productColors.length - 1 : prev - 1;
+        setSelectedColorId(productColors[newIndex].id);
+        return newIndex;
+      });
+    }
   };
 
-  const handleNextColorImage = () => {
-    setUserSelectedColor(true);
-    setColorImageIndex(prev => {
-      const newIndex = (prev + 1) % productColors.length;
-      setSelectedColorId(productColors[newIndex].id);
-      return newIndex;
-    });
+  const handleNextImage = () => {
+    if (userSelectedColor && selectedColorId) {
+      const colorImgs = getImagesForColor(selectedColorId);
+      if (colorImgs.length > 1) {
+        setSelectedColorImageIndex(prev => (prev + 1) % colorImgs.length);
+      }
+    } else {
+      setUserSelectedColor(true);
+      setColorImageIndex(prev => {
+        const newIndex = (prev + 1) % productColors.length;
+        setSelectedColorId(productColors[newIndex].id);
+        return newIndex;
+      });
+    }
   };
 
   useEffect(() => {
@@ -132,10 +179,10 @@ const ProductDetail = () => {
           })));
         }
 
-        // Fetch gallery images
+        // Fetch gallery images (including color associations)
         const { data: imagesData } = await supabase
           .from("product_images")
-          .select("*")
+          .select("id, image_url, color_id")
           .eq("product_id", id)
           .order("sort_order");
 
@@ -144,6 +191,7 @@ const ProductDetail = () => {
           images.push(dbProduct.image_url);
         }
         if (imagesData) {
+          setColorImages(imagesData as ColorImage[]);
           imagesData.forEach(img => {
             if (!images.includes(img.image_url)) {
               images.push(img.image_url);
@@ -208,6 +256,16 @@ const ProductDetail = () => {
     );
   }
 
+  // Get current display image
+  const getCurrentImage = () => {
+    if (userSelectedColor && selectedColorId) {
+      const colorImgs = getImagesForColor(selectedColorId);
+      return colorImgs[selectedColorImageIndex] || colorImgs[0] || product?.image_url;
+    }
+    const selectedColor = productColors.find(c => c.id === selectedColorId);
+    return selectedColor?.image_url || galleryImages[currentImageIndex] || product?.image_url;
+  };
+
   if (!product) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
@@ -225,8 +283,9 @@ const ProductDetail = () => {
     );
   }
 
-  const selectedColor = productColors.find(c => c.id === selectedColorId);
-  const currentImage = selectedColor?.image_url || galleryImages[currentImageIndex] || product.image_url;
+  const currentImage = getCurrentImage();
+  const selectedColorImages = selectedColorId ? getImagesForColor(selectedColorId) : [];
+  const showArrows = userSelectedColor ? selectedColorImages.length > 1 : productColors.length > 1;
 
   // Feature icons for specifications display
   const getSpecIcon = (name: string) => {
@@ -268,17 +327,17 @@ const ProductDetail = () => {
                   )}
                 </div>
                 
-                {/* Color swipe arrows */}
-                {productColors.length > 1 && (
+                {/* Image swipe arrows */}
+                {showArrows && (
                   <>
                     <button
-                      onClick={handlePrevColorImage}
+                      onClick={handlePrevImage}
                       className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-sm"
                     >
                       <ChevronLeft className="w-5 h-5 text-foreground" />
                     </button>
                     <button
-                      onClick={handleNextColorImage}
+                      onClick={handleNextImage}
                       className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-background transition-colors shadow-sm"
                     >
                       <ChevronRight className="w-5 h-5 text-foreground" />
