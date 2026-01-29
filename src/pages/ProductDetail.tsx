@@ -56,22 +56,38 @@ const ProductDetail = () => {
   const touchStartRef = useRef<number | null>(null);
   const touchEndRef = useRef<number | null>(null);
 
-  // Get all images for a specific color
+  // Get all images for a specific color (including all entries with same hex)
   const getImagesForColor = useCallback((colorId: string): string[] => {
     const images: string[] = [];
     
-    // First add images from product_images table that are linked to this color
-    colorImages
-      .filter(img => img.color_id === colorId)
-      .forEach(img => images.push(img.image_url));
+    // Find the selected color's hex value
+    const selectedColor = productColors.find(c => c.id === colorId);
+    if (!selectedColor) return images;
     
-    // If no linked images, use the color's main image
-    if (images.length === 0) {
-      const color = productColors.find(c => c.id === colorId);
-      if (color?.image_url) {
-        images.push(color.image_url);
-      }
-    }
+    const selectedHex = selectedColor.color_hex.toLowerCase();
+    
+    // Get all color IDs that share the same hex value
+    const matchingColorIds = productColors
+      .filter(c => c.color_hex.toLowerCase() === selectedHex)
+      .map(c => c.id);
+    
+    // Add images from product_images table linked to any matching color
+    colorImages
+      .filter(img => img.color_id && matchingColorIds.includes(img.color_id))
+      .forEach(img => {
+        if (!images.includes(img.image_url)) {
+          images.push(img.image_url);
+        }
+      });
+    
+    // Also add main images from all matching colors
+    productColors
+      .filter(c => c.color_hex.toLowerCase() === selectedHex)
+      .forEach(c => {
+        if (c.image_url && !images.includes(c.image_url)) {
+          images.push(c.image_url);
+        }
+      });
     
     return images;
   }, [colorImages, productColors]);
