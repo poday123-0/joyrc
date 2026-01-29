@@ -3,8 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
-  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send
+  Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -46,7 +54,24 @@ interface ProductSpecification {
   spec_name: string;
   spec_value: string;
   sort_order: number | null;
+  icon: string | null;
 }
+
+// Available icons for specification selection
+const specIconOptions = [
+  { value: "zap", label: "Zap (Speed/Power)", icon: "⚡" },
+  { value: "battery", label: "Battery", icon: "🔋" },
+  { value: "gauge", label: "Gauge (Range)", icon: "📊" },
+  { value: "radio", label: "Radio (Control)", icon: "📻" },
+  { value: "box", label: "Box (Default)", icon: "📦" },
+  { value: "clock", label: "Clock (Time)", icon: "🕐" },
+  { value: "ruler", label: "Ruler (Size)", icon: "📏" },
+  { value: "weight", label: "Weight", icon: "⚖️" },
+  { value: "thermometer", label: "Temperature", icon: "🌡️" },
+  { value: "wifi", label: "Wifi (Signal)", icon: "📶" },
+  { value: "camera", label: "Camera", icon: "📷" },
+  { value: "star", label: "Star (Rating)", icon: "⭐" },
+];
 
 interface ProductImage {
   id: string;
@@ -346,7 +371,7 @@ const ProductsTab = ({
   
   // Specifications state
   const [specifications, setSpecifications] = useState<ProductSpecification[]>([]);
-  const [newSpec, setNewSpec] = useState({ name: "", value: "" });
+  const [newSpec, setNewSpec] = useState({ name: "", value: "", icon: "box" });
   const [loadingSpecs, setLoadingSpecs] = useState(false);
 
   // Gallery images state
@@ -428,7 +453,7 @@ const ProductsTab = ({
     setSpecifications([]);
     setGalleryImages([]);
     setProductColors([]);
-    setNewSpec({ name: "", value: "" });
+    setNewSpec({ name: "", value: "", icon: "box" });
     setNewColor({ name: "", hex: "#000000" });
     setColorImageFile(null);
     setColorImageUrl(null);
@@ -540,6 +565,7 @@ const ProductsTab = ({
         spec_name: newSpec.name.trim(),
         spec_value: newSpec.value.trim(),
         sort_order: specifications.length,
+        icon: newSpec.icon || "box",
       })
       .select()
       .single();
@@ -552,7 +578,7 @@ const ProductsTab = ({
       });
     } else if (data) {
       setSpecifications([...specifications, data]);
-      setNewSpec({ name: "", value: "" });
+      setNewSpec({ name: "", value: "", icon: "box" });
       toast({ 
         title: "Specification Added",
         description: `${data.spec_name} has been added successfully.`,
@@ -935,38 +961,65 @@ const ProductsTab = ({
                 ) : (
                   <>
                     <div className="grid gap-2 mb-3 md:grid-cols-2">
-                      {specifications.map((spec) => (
-                        <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                          <span className="font-medium text-sm flex-1">{spec.spec_name}</span>
-                          <span className="text-sm text-muted-foreground flex-1">{spec.spec_value}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSpec(spec.id, spec.spec_name)}
-                            className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
-                          >
-                            <X className="w-3 h-3 text-destructive" />
-                          </button>
-                        </div>
-                      ))}
+                      {specifications.map((spec) => {
+                        const iconOption = specIconOptions.find(o => o.value === spec.icon) || specIconOptions.find(o => o.value === "box");
+                        return (
+                          <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                            <span className="text-lg">{iconOption?.icon || "📦"}</span>
+                            <span className="font-medium text-sm flex-1">{spec.spec_name}</span>
+                            <span className="text-sm text-muted-foreground flex-1">{spec.spec_value}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSpec(spec.id, spec.spec_name)}
+                              className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                            >
+                              <X className="w-3 h-3 text-destructive" />
+                            </button>
+                          </div>
+                        );
+                      })}
                       {specifications.length === 0 && (
                         <p className="text-sm text-muted-foreground col-span-2">No specifications yet.</p>
                       )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
+                      <Select
+                        value={newSpec.icon}
+                        onValueChange={(value) => setNewSpec({ ...newSpec, icon: value })}
+                      >
+                        <SelectTrigger className="w-full sm:w-[140px] bg-background">
+                          <SelectValue placeholder="Icon">
+                            <span className="flex items-center gap-2">
+                              <span>{specIconOptions.find(o => o.value === newSpec.icon)?.icon || "📦"}</span>
+                              <span className="text-xs truncate">{specIconOptions.find(o => o.value === newSpec.icon)?.value || "box"}</span>
+                            </span>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {specIconOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <span className="flex items-center gap-2">
+                                <span>{option.icon}</span>
+                                <span>{option.label}</span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <input
                         type="text"
                         placeholder="Spec name (e.g., Speed)"
                         value={newSpec.name}
                         onChange={(e) => setNewSpec({ ...newSpec, name: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                       />
                       <input
                         type="text"
                         placeholder="Value (e.g., 45 km/h)"
                         value={newSpec.value}
                         onChange={(e) => setNewSpec({ ...newSpec, value: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                       />
                       <button
                         type="button"

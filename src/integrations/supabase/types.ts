@@ -509,6 +509,7 @@ export type Database = {
       }
       product_specifications: {
         Row: {
+          icon: string | null
           id: string
           product_id: string
           sort_order: number | null
@@ -516,6 +517,7 @@ export type Database = {
           spec_value: string
         }
         Insert: {
+          icon?: string | null
           id?: string
           product_id: string
           sort_order?: number | null
@@ -523,6 +525,7 @@ export type Database = {
           spec_value: string
         }
         Update: {
+          icon?: string | null
           id?: string
           product_id?: string
           sort_order?: number | null

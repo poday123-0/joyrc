@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ShoppingBag, Zap, Battery, Gauge, Radio, Box, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingBag, Zap, Battery, Gauge, Radio, Box, ChevronLeft, ChevronRight, Clock, Ruler, Scale, Thermometer, Wifi, Camera, Star, LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
@@ -29,7 +29,24 @@ interface ProductColor {
 interface Specification {
   name: string;
   value: string;
+  icon: string | null;
 }
+
+// Icon mapping from database value to Lucide component
+const iconMap: Record<string, LucideIcon> = {
+  zap: Zap,
+  battery: Battery,
+  gauge: Gauge,
+  radio: Radio,
+  box: Box,
+  clock: Clock,
+  ruler: Ruler,
+  weight: Scale,
+  thermometer: Thermometer,
+  wifi: Wifi,
+  camera: Camera,
+  star: Star,
+};
 
 interface ColorImage {
   id: string;
@@ -222,7 +239,8 @@ const ProductDetail = () => {
         if (specsData && specsData.length > 0) {
           setSpecs(specsData.map(s => ({
             name: s.spec_name,
-            value: s.spec_value
+            value: s.spec_value,
+            icon: s.icon || null
           })));
         }
 
@@ -336,8 +354,13 @@ const ProductDetail = () => {
   const currentIndex = userSelectedColor ? selectedColorImageIndex : colorImageIndex;
   const showArrows = totalImages > 1;
 
-  // Feature icons for specifications display
-  const getSpecIcon = (name: string) => {
+  // Feature icons for specifications display - uses stored icon or falls back to auto-detection
+  const getSpecIcon = (iconValue: string | null, name: string): LucideIcon => {
+    // First try to use the stored icon
+    if (iconValue && iconMap[iconValue]) {
+      return iconMap[iconValue];
+    }
+    // Fallback to auto-detection for backwards compatibility
     const lowerName = name.toLowerCase();
     if (lowerName.includes('speed') || lowerName.includes('fast')) return Zap;
     if (lowerName.includes('battery') || lowerName.includes('power')) return Battery;
@@ -493,7 +516,7 @@ const ProductDetail = () => {
             <div className="py-6 space-y-0">
               {specs.length > 0 ? (
                 specs.map((spec, index) => {
-                  const IconComponent = getSpecIcon(spec.name);
+                  const IconComponent = getSpecIcon(spec.icon, spec.name);
                   return (
                     <div
                       key={index}
