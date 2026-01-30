@@ -1,0 +1,472 @@
+import { useState, useEffect } from "react";
+import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { formatMVR } from "@/lib/currency";
+
+interface Product {
+  id: string;
+  name: string;
+  image_url: string | null;
+  price: number;
+  stock_quantity: number;
+  in_stock: boolean;
+  category?: { name: string } | null;
+}
+
+interface StockHistoryItem {
+  id: string;
+  product_id: string;
+  previous_quantity: number;
+  new_quantity: number;
+  change_amount: number;
+  change_type: string;
+  notes: string | null;
+  created_at: string;
+}
+
+const StockManagementTab = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [adjustmentAmount, setAdjustmentAmount] = useState<Record<string, number>>({});
+  const [adjustmentNotes, setAdjustmentNotes] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, image_url, price, stock_quantity, in_stock, category:categories(name)")
+        .order("name");
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load products",
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
+
+  const fetchStockHistory = async (productId: string) => {
+    setHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("stock_history")
+        .select("*")
+        .eq("product_id", productId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setStockHistory(data || []);
+    } catch (error) {
+      console.error("Error fetching stock history:", error);
+    }
+    setHistoryLoading(false);
+  };
+
+  const handleExpandProduct = (productId: string) => {
+    if (expandedProductId === productId) {
+      setExpandedProductId(null);
+      setStockHistory([]);
+    } else {
+      setExpandedProductId(productId);
+      fetchStockHistory(productId);
+    }
+  };
+
+  const handleAdjustStock = async (productId: string, currentQty: number, change: number) => {
+    const newQty = Math.max(0, currentQty + change);
+    const notes = adjustmentNotes[productId] || null;
+    
+    setSaving(productId);
+    try {
+      // Update product stock
+      const { error: updateError } = await supabase
+        .from("products")
+        .update({ 
+          stock_quantity: newQty,
+          in_stock: newQty > 0
+        })
+        .eq("id", productId);
+
+      if (updateError) throw updateError;
+
+      // Record history
+      const { error: historyError } = await supabase
+        .from("stock_history")
+        .insert({
+          product_id: productId,
+          previous_quantity: currentQty,
+          new_quantity: newQty,
+          change_amount: change,
+          change_type: change > 0 ? "restock" : "manual_adjustment",
+          notes,
+        });
+
+      if (historyError) throw historyError;
+
+      toast({ 
+        title: "Stock Updated", 
+        description: `Stock changed by ${change > 0 ? "+" : ""}${change}` 
+      });
+      
+      // Reset inputs
+      setAdjustmentAmount(prev => ({ ...prev, [productId]: 0 }));
+      setAdjustmentNotes(prev => ({ ...prev, [productId]: "" }));
+      
+      fetchProducts();
+      if (expandedProductId === productId) {
+        fetchStockHistory(productId);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update stock",
+        variant: "destructive",
+      });
+    }
+    setSaving(null);
+  };
+
+  const handleSetStock = async (productId: string, currentQty: number, newQty: number) => {
+    const notes = adjustmentNotes[productId] || null;
+    
+    setSaving(productId);
+    try {
+      const { error: updateError } = await supabase
+        .from("products")
+        .update({ 
+          stock_quantity: newQty,
+          in_stock: newQty > 0
+        })
+        .eq("id", productId);
+
+      if (updateError) throw updateError;
+
+      const { error: historyError } = await supabase
+        .from("stock_history")
+        .insert({
+          product_id: productId,
+          previous_quantity: currentQty,
+          new_quantity: newQty,
+          change_amount: newQty - currentQty,
+          change_type: "manual_adjustment",
+          notes,
+        });
+
+      if (historyError) throw historyError;
+
+      toast({ title: "Stock Updated" });
+      setAdjustmentAmount(prev => ({ ...prev, [productId]: 0 }));
+      setAdjustmentNotes(prev => ({ ...prev, [productId]: "" }));
+      
+      fetchProducts();
+      if (expandedProductId === productId) {
+        fetchStockHistory(productId);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update stock",
+        variant: "destructive",
+      });
+    }
+    setSaving(null);
+  };
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const lowStockProducts = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5);
+  const outOfStockProducts = products.filter(p => p.stock_quantity === 0);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getChangeTypeLabel = (type: string) => {
+    switch (type) {
+      case "restock": return "Restock";
+      case "sale": return "Sale";
+      case "manual_adjustment": return "Manual";
+      case "initial": return "Initial";
+      default: return type;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Stock Management</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Track and manage product inventory
+          </p>
+        </div>
+        <button
+          onClick={fetchProducts}
+          className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refresh
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="p-4 bg-muted/30 rounded-xl">
+          <p className="text-2xl font-bold text-foreground">{products.length}</p>
+          <p className="text-sm text-muted-foreground">Total Products</p>
+        </div>
+        <div className="p-4 bg-muted/30 rounded-xl">
+          <p className="text-2xl font-bold text-primary">
+            {products.reduce((sum, p) => sum + p.stock_quantity, 0)}
+          </p>
+          <p className="text-sm text-muted-foreground">Total Stock</p>
+        </div>
+        <div className="p-4 bg-amber-500/10 rounded-xl">
+          <p className="text-2xl font-bold text-amber-500">{lowStockProducts.length}</p>
+          <p className="text-sm text-muted-foreground">Low Stock</p>
+        </div>
+        <div className="p-4 bg-destructive/10 rounded-xl">
+          <p className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</p>
+          <p className="text-sm text-muted-foreground">Out of Stock</p>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && (
+        <div className="space-y-2">
+          {outOfStockProducts.length > 0 && (
+            <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
+              <p className="text-sm text-destructive">
+                {outOfStockProducts.length} product(s) out of stock: {outOfStockProducts.slice(0, 3).map(p => p.name).join(", ")}
+                {outOfStockProducts.length > 3 && ` and ${outOfStockProducts.length - 3} more`}
+              </p>
+            </div>
+          )}
+          {lowStockProducts.length > 0 && (
+            <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <p className="text-sm text-amber-600">
+                {lowStockProducts.length} product(s) with low stock (≤5 items)
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+
+      {/* Products List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>No products found</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredProducts.map((product) => (
+            <div key={product.id} className="bg-muted/30 rounded-xl border border-border/50 overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground truncate">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {product.category?.name || "Uncategorized"} • {formatMVR(product.price)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Stock Display */}
+                  <div className={`px-3 py-1.5 rounded-lg text-center min-w-[80px] ${
+                    product.stock_quantity === 0
+                      ? "bg-destructive/10 text-destructive"
+                      : product.stock_quantity <= 5
+                      ? "bg-amber-500/10 text-amber-600"
+                      : "bg-primary/10 text-primary"
+                  }`}>
+                    <p className="text-lg font-bold">{product.stock_quantity}</p>
+                    <p className="text-xs">in stock</p>
+                  </div>
+
+                  {/* Quick Adjust Buttons */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleAdjustStock(product.id, product.stock_quantity, -1)}
+                      disabled={saving === product.id || product.stock_quantity === 0}
+                      className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleAdjustStock(product.id, product.stock_quantity, 1)}
+                      disabled={saving === product.id}
+                      className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Expand Button */}
+                  <button
+                    onClick={() => handleExpandProduct(product.id)}
+                    className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                  >
+                    {expandedProductId === product.id ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Expanded Section */}
+              {expandedProductId === product.id && (
+                <div className="p-4 bg-background border-t border-border space-y-4">
+                  {/* Bulk Adjustment */}
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Set Stock To</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={adjustmentAmount[product.id] || ""}
+                        onChange={(e) => setAdjustmentAmount(prev => ({ 
+                          ...prev, 
+                          [product.id]: parseInt(e.target.value) || 0 
+                        }))}
+                        placeholder="Qty"
+                        className="w-20 px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[150px]">
+                      <label className="block text-xs text-muted-foreground mb-1">Notes (optional)</label>
+                      <input
+                        type="text"
+                        value={adjustmentNotes[product.id] || ""}
+                        onChange={(e) => setAdjustmentNotes(prev => ({ 
+                          ...prev, 
+                          [product.id]: e.target.value 
+                        }))}
+                        placeholder="Reason for adjustment"
+                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleSetStock(
+                        product.id, 
+                        product.stock_quantity, 
+                        adjustmentAmount[product.id] || 0
+                      )}
+                      disabled={saving === product.id || adjustmentAmount[product.id] === undefined}
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {saving === product.id ? "Saving..." : "Update"}
+                    </button>
+                  </div>
+
+                  {/* Stock History */}
+                  <div>
+                    <h4 className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                      <History className="w-4 h-4" />
+                      Stock History
+                    </h4>
+                    {historyLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : stockHistory.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-2">No history recorded yet</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {stockHistory.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg text-sm">
+                            <div className="flex items-center gap-3">
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                item.change_amount > 0 
+                                  ? "bg-emerald-500/10 text-emerald-600" 
+                                  : "bg-rose-500/10 text-rose-500"
+                              }`}>
+                                {item.change_amount > 0 ? "+" : ""}{item.change_amount}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {item.previous_quantity} → {item.new_quantity}
+                              </span>
+                              <span className="px-2 py-0.5 bg-muted rounded text-xs">
+                                {getChangeTypeLabel(item.change_type)}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
+                              {item.notes && (
+                                <p className="text-xs text-muted-foreground truncate max-w-[150px]">{item.notes}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default StockManagementTab;

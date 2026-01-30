@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon, ArrowLeft } from "luc
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 
 const Login = () => {
@@ -57,11 +58,8 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
       if (error) {
         toast({

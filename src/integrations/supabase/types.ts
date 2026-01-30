@@ -590,6 +590,7 @@ export type Database = {
           old_price: number | null
           price: number
           rating: number | null
+          stock_quantity: number
           updated_at: string
         }
         Insert: {
@@ -603,6 +604,7 @@ export type Database = {
           old_price?: number | null
           price: number
           rating?: number | null
+          stock_quantity?: number
           updated_at?: string
         }
         Update: {
@@ -616,6 +618,7 @@ export type Database = {
           old_price?: number | null
           price?: number
           rating?: number | null
+          stock_quantity?: number
           updated_at?: string
         }
         Relationships: [
@@ -654,6 +657,74 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      staff_permissions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          permission_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          permission_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          permission_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stock_history: {
+        Row: {
+          change_amount: number
+          change_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          new_quantity: number
+          notes: string | null
+          previous_quantity: number
+          product_id: string
+        }
+        Insert: {
+          change_amount: number
+          change_type: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_quantity: number
+          notes?: string | null
+          previous_quantity: number
+          product_id: string
+        }
+        Update: {
+          change_amount?: number
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_quantity?: number
+          notes?: string | null
+          previous_quantity?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_content: {
         Row: {
@@ -925,6 +996,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

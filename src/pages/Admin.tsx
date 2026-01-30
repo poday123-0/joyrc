@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3
 } from "lucide-react";
 import {
   Select,
@@ -35,6 +35,9 @@ import StorageManagementTab from "@/components/StorageManagementTab";
 import EmailTemplatesTab from "@/components/EmailTemplatesTab";
 import MarketingEmailsTab from "@/components/MarketingEmailsTab";
 import FooterSettingsTab from "@/components/FooterSettingsTab";
+import StaffManagementTab from "@/components/StaffManagementTab";
+import StockManagementTab from "@/components/StockManagementTab";
+import SalesReportsTab from "@/components/SalesReportsTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface Product {
@@ -115,19 +118,22 @@ interface SystemSettings {
   og_image_url: string | null;
 }
 
-type Tab = "dashboard" | "products" | "featured" | "videos" | "categories" | "orders" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "products" | "stock" | "featured" | "videos" | "categories" | "orders" | "reports" | "bank" | "messages" | "support" | "admins" | "staff" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "products", label: "Products", icon: Package },
+  { id: "stock", label: "Stock", icon: PackageSearch },
   { id: "featured", label: "Featured", icon: Star },
   { id: "videos", label: "Videos", icon: Video },
   { id: "categories", label: "Categories", icon: Grid3X3 },
   { id: "orders", label: "Orders", icon: CreditCard },
+  { id: "reports", label: "Reports", icon: BarChart3 },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "bank", label: "Bank", icon: Building2 },
   { id: "support", label: "Support", icon: HelpCircle },
   { id: "admins", label: "Admins", icon: Users },
+  { id: "staff", label: "Staff", icon: UserCog },
   { id: "users", label: "Users", icon: User },
   { id: "hero", label: "Hero", icon: ImageIcon },
   { id: "home-content", label: "Home", icon: FolderOpen },
@@ -312,6 +318,7 @@ const Admin = () => {
                 onRefresh={fetchData} 
               />
             )}
+            {activeTab === "stock" && <StockManagementTab />}
             {activeTab === "featured" && <FeaturedProductsTab />}
             {activeTab === "videos" && <VideoShowcasesTab />}
             {activeTab === "categories" && (
@@ -321,10 +328,12 @@ const Admin = () => {
               />
             )}
             {activeTab === "orders" && <PaymentOrdersTab />}
+            {activeTab === "reports" && <SalesReportsTab />}
             {activeTab === "messages" && <ContactMessagesTab />}
             {activeTab === "bank" && <BankSettingsTab />}
             {activeTab === "support" && <SupportContentTab />}
             {activeTab === "admins" && <AdminManagementTab />}
+            {activeTab === "staff" && <StaffManagementTab />}
             {activeTab === "users" && <UsersManagementTab />}
             {activeTab === "hero" && <HeroBackgroundsTab />}
             {activeTab === "home-content" && <HomeContentTab />}
