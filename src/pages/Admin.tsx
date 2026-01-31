@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote
 } from "lucide-react";
 import {
   DndContext,
@@ -58,6 +58,7 @@ import SalesReportsTab from "@/components/SalesReportsTab";
 import TransactionsTab from "@/components/TransactionsTab";
 import PreordersTab from "@/components/PreordersTab";
 import DeliveryTab from "@/components/DeliveryTab";
+import QuickPOSTab from "@/components/QuickPOSTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -145,10 +146,11 @@ interface TabItem {
   icon: any;
 }
 
-type Tab = "dashboard" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
 const defaultTabs: TabItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "pos", label: "Quick POS", icon: Banknote },
   { id: "products", label: "Products", icon: Package },
   { id: "stock", label: "Stock", icon: PackageSearch },
   { id: "transactions", label: "Transactions", icon: CreditCard },
@@ -175,7 +177,7 @@ const defaultTabs: TabItem[] = [
 
 // Icon map to resolve icons from saved order
 const iconMap: Record<string, any> = {
-  LayoutDashboard, Package, PackageSearch, CreditCard, Star, Video,
+  LayoutDashboard, Banknote, Package, PackageSearch, CreditCard, Star, Video,
   Grid3X3, ShoppingCart, BarChart3, MessageSquare, Building2,
   HelpCircle, Users, UserCog, User, ImageIcon, FolderOpen,
   HardDrive, Mail, Send, Settings, Bell, Truck,
@@ -575,6 +577,7 @@ const Admin = () => {
 
             {/* Content */}
             {activeTab === "dashboard" && <AdminDashboard onTabChange={(tab) => setActiveTab(tab as Tab)} />}
+            {activeTab === "pos" && <QuickPOSTab />}
             {activeTab === "products" && (
               <ProductsTab 
                 products={products} 
