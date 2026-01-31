@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -17,6 +17,8 @@ interface Order {
   payment_status: string | null;
   payment_method: string | null;
   receipt_url: string | null;
+  assigned_to: string | null;
+  assigned_at: string | null;
 }
 
 interface OrderItem {
@@ -24,6 +26,11 @@ interface OrderItem {
   product_name: string;
   product_price: number;
   quantity: number;
+}
+
+interface StaffProfile {
+  user_id: string;
+  full_name: string | null;
 }
 
 interface OrdersTabProps {
@@ -37,12 +44,13 @@ const paymentStatusColors: Record<string, { bg: string; text: string; icon: any;
   rejected: { bg: "bg-coral/20", text: "text-coral", icon: XCircle, label: "Payment Rejected" },
 };
 
-const statusColors: Record<string, { bg: string; text: string; icon: any }> = {
-  pending: { bg: "bg-gold/20", text: "text-gold", icon: Clock },
-  processing: { bg: "bg-cyan-light/50", text: "text-teal", icon: Package },
-  shipped: { bg: "bg-mint/30", text: "text-primary", icon: Truck },
-  delivered: { bg: "bg-primary/20", text: "text-primary", icon: CheckCircle },
-  cancelled: { bg: "bg-coral/20", text: "text-coral", icon: XCircle },
+const statusColors: Record<string, { bg: string; text: string; icon: any; label: string }> = {
+  pending: { bg: "bg-gold/20", text: "text-gold", icon: Clock, label: "Pending" },
+  processing: { bg: "bg-cyan-light/50", text: "text-teal", icon: Package, label: "Processing" },
+  on_delivery: { bg: "bg-cyan-light/50", text: "text-teal", icon: Truck, label: "Out for Delivery" },
+  shipped: { bg: "bg-mint/30", text: "text-primary", icon: Truck, label: "Shipped" },
+  delivered: { bg: "bg-primary/20", text: "text-primary", icon: CheckCircle, label: "Delivered" },
+  cancelled: { bg: "bg-coral/20", text: "text-coral", icon: XCircle, label: "Cancelled" },
 };
 
 const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
@@ -51,6 +59,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [uploading, setUploading] = useState<string | null>(null);
+  const [staffProfiles, setStaffProfiles] = useState<Record<string, string>>({});
   const { user } = useAuth();
 
   useEffect(() => {
@@ -81,6 +90,21 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       setOrders(data || []);
+      
+      // Fetch staff profiles for assigned orders
+      const assignedStaffIds = [...new Set(data?.filter(o => o.assigned_to).map(o => o.assigned_to) || [])];
+      if (assignedStaffIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", assignedStaffIds);
+        
+        const profileMap: Record<string, string> = {};
+        profiles?.forEach(p => {
+          profileMap[p.user_id] = p.full_name || "Staff Member";
+        });
+        setStaffProfiles(profileMap);
+      }
     }
     setLoading(false);
   };
@@ -283,8 +307,8 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                   <span className="font-semibold text-foreground">
                     #{order.id.slice(0, 8).toUpperCase()}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text} capitalize`}>
-                    {order.status}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text}`}>
+                    {statusConfig.label}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -369,11 +393,39 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                     )}
 
                     {/* Show uploaded receipt */}
+                    {/* Delivery Assignment Info for Customers */}
+                    {!isAdmin && order.assigned_to && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase">Delivery Assignment</h4>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <Truck className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              {staffProfiles[order.assigned_to] || "Delivery Staff"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Assigned {order.assigned_at ? new Date(order.assigned_at).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }) : ""}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {order.receipt_url && (
                       <div className="mt-3 pt-3 border-t border-border">
                         <p className="text-xs text-muted-foreground mb-2">Receipt uploaded:</p>
                         <a 
-                          href={order.receipt_url} 
+                          href={order.receipt_url}
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-sm text-primary underline hover:no-underline"
