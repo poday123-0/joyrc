@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, LogOut, User, Settings, ShoppingBag, Mail, Save, Package, ChevronRight, MessageSquare } from "lucide-react";
+import { ChevronLeft, LogOut, User, Settings, ShoppingBag, Mail, Save, Package, ChevronRight, MessageSquare, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import OrdersTab from "@/components/OrdersTab";
 import CustomerMessagesTab from "@/components/CustomerMessagesTab";
+import SendMessageTab from "@/components/SendMessageTab";
 
 interface Profile {
   id: string;
@@ -21,7 +22,8 @@ const Profile = () => {
   const [fullName, setFullName] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages" | "send-message">("profile");
+  const [messagesKey, setMessagesKey] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -178,36 +180,47 @@ const Profile = () => {
               <div className="flex gap-2 mb-6 p-1 bg-muted/50 rounded-xl backdrop-blur-sm overflow-x-auto">
                 <button
                   onClick={() => setActiveTab("profile")}
-                  className={`flex-1 md:flex-none md:px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                  className={`flex-1 md:flex-none md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                     activeTab === "profile"
                       ? "bg-card text-foreground shadow-sm border border-border/50"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <User className="w-4 h-4" />
-                  Profile
+                  <span className="hidden sm:inline">Profile</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("orders")}
-                  className={`flex-1 md:flex-none md:px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                  className={`flex-1 md:flex-none md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                     activeTab === "orders"
                       ? "bg-card text-foreground shadow-sm border border-border/50"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Package className="w-4 h-4" />
-                  Orders
+                  <span className="hidden sm:inline">Orders</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("send-message")}
+                  className={`flex-1 md:flex-none md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                    activeTab === "send-message"
+                      ? "bg-card text-foreground shadow-sm border border-border/50"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Send className="w-4 h-4" />
+                  <span className="hidden sm:inline">Send Message</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("messages")}
-                  className={`flex-1 md:flex-none md:px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                  className={`flex-1 md:flex-none md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                     activeTab === "messages"
                       ? "bg-card text-foreground shadow-sm border border-border/50"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
-                  Messages
+                  <span className="hidden sm:inline">Messages</span>
                 </button>
               </div>
             ) : (
@@ -308,9 +321,16 @@ const Profile = () => {
               <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-4 md:p-6 shadow-sm">
                 <OrdersTab />
               </div>
+            ) : activeTab === "send-message" && !isAdmin ? (
+              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-4 md:p-6 shadow-sm">
+                <SendMessageTab onMessageSent={() => {
+                  setMessagesKey(prev => prev + 1);
+                  setActiveTab("messages");
+                }} />
+              </div>
             ) : activeTab === "messages" && !isAdmin ? (
               <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-4 md:p-6 shadow-sm">
-                <CustomerMessagesTab />
+                <CustomerMessagesTab key={messagesKey} />
               </div>
             ) : null}
           </div>
