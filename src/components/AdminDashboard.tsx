@@ -84,6 +84,63 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Set up real-time subscriptions for dashboard updates
+    const ordersChannel = supabase
+      .channel('dashboard-orders')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          console.log('Orders changed, refreshing dashboard...');
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    const transactionsChannel = supabase
+      .channel('dashboard-transactions')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        () => {
+          console.log('Transactions changed, refreshing dashboard...');
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    const productsChannel = supabase
+      .channel('dashboard-products')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          console.log('Products changed, refreshing dashboard...');
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    const stockChannel = supabase
+      .channel('dashboard-stock')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stock_history' },
+        () => {
+          console.log('Stock history changed, refreshing dashboard...');
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(transactionsChannel);
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(stockChannel);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
