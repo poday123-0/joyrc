@@ -501,29 +501,6 @@ const Admin = () => {
             <h1 className="font-semibold text-lg text-foreground">Admin</h1>
           </div>
 
-          {/* Super Admin Reorder Toggle */}
-          {isSuperAdmin && (
-            <div className="mb-4 pb-4 border-b border-border">
-              <Button
-                variant={isReordering ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  if (isReordering) {
-                    toast({
-                      title: "Menu Order Saved",
-                      description: "The new menu order has been saved.",
-                    });
-                  }
-                  setIsReordering(!isReordering);
-                }}
-                className="w-full gap-2"
-              >
-                <GripVertical className="w-4 h-4" />
-                {isReordering ? "Done Reordering" : "Reorder Menu"}
-              </Button>
-            </div>
-          )}
-
           {isReordering ? (
             <DndContext
               sensors={sensors}
@@ -614,7 +591,18 @@ const Admin = () => {
             {activeTab === "settings" && settings && (
               <SettingsTab 
                 settings={settings} 
-                onRefresh={() => fetchData(false)} 
+                onRefresh={() => fetchData(false)}
+                isSuperAdmin={isSuperAdmin}
+                isReordering={isReordering}
+                onToggleReorder={() => {
+                  if (isReordering) {
+                    toast({
+                      title: "Menu Order Saved",
+                      description: "The new menu order has been saved.",
+                    });
+                  }
+                  setIsReordering(!isReordering);
+                }}
               />
             )}
           </div>
@@ -2216,10 +2204,16 @@ const CategoriesTab = ({
 // Settings Tab Component
 const SettingsTab = ({ 
   settings, 
-  onRefresh 
+  onRefresh,
+  isSuperAdmin,
+  isReordering,
+  onToggleReorder,
 }: { 
   settings: SystemSettings; 
   onRefresh: () => void;
+  isSuperAdmin: boolean;
+  isReordering: boolean;
+  onToggleReorder: () => void;
 }) => {
   const [formData, setFormData] = useState({
     site_name: settings.site_name,
@@ -2437,9 +2431,22 @@ const SettingsTab = ({
   return (
     <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
       <div>
-        <div className="mb-4">
-          <h2 className="font-semibold text-foreground">System Settings</h2>
-          <p className="text-xs text-muted-foreground">Configure your site appearance</p>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-foreground">System Settings</h2>
+            <p className="text-xs text-muted-foreground">Configure your site appearance</p>
+          </div>
+          {isSuperAdmin && (
+            <Button
+              variant={isReordering ? "default" : "outline"}
+              size="sm"
+              onClick={onToggleReorder}
+              className="gap-2"
+            >
+              <GripVertical className="w-4 h-4" />
+              {isReordering ? "Done" : "Reorder Menu"}
+            </Button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-4 md:p-5 space-y-4">
