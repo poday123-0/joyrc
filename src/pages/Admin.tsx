@@ -52,7 +52,7 @@ import StorageManagementTab from "@/components/StorageManagementTab";
 import EmailTemplatesTab from "@/components/EmailTemplatesTab";
 import MarketingEmailsTab from "@/components/MarketingEmailsTab";
 import FooterSettingsTab from "@/components/FooterSettingsTab";
-import StaffManagementTab from "@/components/StaffManagementTab";
+import SystemUsersTab from "@/components/SystemUsersTab";
 import StockManagementTab from "@/components/StockManagementTab";
 import SalesReportsTab from "@/components/SalesReportsTab";
 import TransactionsTab from "@/components/TransactionsTab";
@@ -145,7 +145,7 @@ interface TabItem {
   icon: any;
 }
 
-type Tab = "dashboard" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "staff" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
 const defaultTabs: TabItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -162,9 +162,8 @@ const defaultTabs: TabItem[] = [
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "bank", label: "Bank", icon: Building2 },
   { id: "support", label: "Support", icon: HelpCircle },
-  { id: "admins", label: "Admins", icon: Users },
-  { id: "staff", label: "Staff", icon: UserCog },
-  { id: "users", label: "Users", icon: User },
+  { id: "admins", label: "System Users", icon: Users },
+  { id: "users", label: "Customers", icon: User },
   { id: "hero", label: "Hero", icon: ImageIcon },
   { id: "home-content", label: "Home", icon: FolderOpen },
   { id: "storage", label: "Storage", icon: HardDrive },
@@ -600,8 +599,7 @@ const Admin = () => {
             {activeTab === "messages" && <ContactMessagesTab />}
             {activeTab === "bank" && <BankSettingsTab />}
             {activeTab === "support" && <SupportContentTab />}
-            {activeTab === "admins" && <AdminManagementTab />}
-            {activeTab === "staff" && <StaffManagementTab />}
+            {activeTab === "admins" && <SystemUsersTab />}
             {activeTab === "users" && <UsersManagementTab />}
             {activeTab === "hero" && <HeroBackgroundsTab />}
             {activeTab === "home-content" && <HomeContentTab />}
