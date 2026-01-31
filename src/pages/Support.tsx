@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import BottomNavigation from "@/components/BottomNavigation";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,10 +26,12 @@ interface BusinessHours {
   [key: string]: string;
 }
 const Support = () => {
+  const { user } = useAuth();
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
+    email: "",
     subject: "",
     message: ""
   });
@@ -41,6 +44,13 @@ const Support = () => {
   });
   const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [loading, setLoading] = useState(true);
+
+  // Pre-fill email if user is logged in
+  useEffect(() => {
+    if (user?.email) {
+      setFormData(prev => ({ ...prev, email: user.email || "" }));
+    }
+  }, [user]);
   const fetchSupportContent = useCallback(async () => {
     const {
       data
@@ -101,22 +111,41 @@ const Support = () => {
     }
     setSending(true);
     try {
-      const {
-        error
-      } = await supabase.from("contact_messages").insert({
+      const { data, error } = await supabase.from("contact_messages").insert({
         name: formData.name.trim(),
         mobile: formData.mobile.trim(),
+        email: formData.email.trim() || null,
         subject: formData.subject.trim(),
-        message: formData.message.trim()
-      });
+        message: formData.message.trim(),
+        user_id: user?.id || null,
+      }).select().single();
+      
       if (error) throw error;
+
+      // Send email notification to admin
+      try {
+        await supabase.functions.invoke("send-email", {
+          body: {
+            type: "new_contact_message",
+            customer_name: formData.name.trim(),
+            customer_email: formData.email.trim() || null,
+            customer_mobile: formData.mobile.trim(),
+            subject: formData.subject.trim(),
+            message: formData.message.trim(),
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send admin notification:", emailError);
+      }
+
       toast({
         title: "Message Sent!",
-        description: "We'll get back to you soon. You can expect a call from us."
+        description: user ? "Check your Messages tab for replies." : "We'll get back to you soon."
       });
       setFormData({
         name: "",
         mobile: "",
+        email: user?.email || "",
         subject: "",
         message: ""
       });
@@ -260,6 +289,13 @@ const Support = () => {
                         mobile: e.target.value
                       })} className="bg-card border-border focus-visible:ring-accent" required />
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address (for reply notifications)</Label>
+                      <Input id="email" type="email" placeholder="Enter your email (optional)" value={formData.email} onChange={e => setFormData({
+                      ...formData,
+                      email: e.target.value
+                    })} className="bg-card border-border focus-visible:ring-accent" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject</Label>

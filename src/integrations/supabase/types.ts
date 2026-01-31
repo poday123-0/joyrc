@@ -134,6 +134,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           created_at: string
+          email: string | null
           id: string
           message: string
           mobile: string
@@ -141,10 +142,12 @@ export type Database = {
           status: string | null
           subject: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           admin_notes?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           message: string
           mobile: string
@@ -152,10 +155,12 @@ export type Database = {
           status?: string | null
           subject: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           admin_notes?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           message?: string
           mobile?: string
@@ -163,6 +168,7 @@ export type Database = {
           status?: string | null
           subject?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -354,6 +360,41 @@ export type Database = {
           subject?: string
         }
         Relationships: []
+      }
+      message_replies: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_admin_reply: boolean | null
+          message_id: string
+          replied_by: string | null
+          reply_text: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_admin_reply?: boolean | null
+          message_id: string
+          replied_by?: string | null
+          reply_text: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_admin_reply?: boolean | null
+          message_id?: string
+          replied_by?: string | null
+          reply_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_replies_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "contact_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
