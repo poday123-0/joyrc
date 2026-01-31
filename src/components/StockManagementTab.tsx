@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -23,6 +23,17 @@ interface StockHistoryItem {
   change_type: string;
   notes: string | null;
   created_at: string;
+  unit_purchase_price: number | null;
+  shipping_cost: number | null;
+  other_expenses: number | null;
+  total_expense: number | null;
+}
+
+interface StockCosts {
+  unitPurchasePrice: number;
+  shippingCost: number;
+  otherExpenses: number;
+  expenseNotes: string;
 }
 
 const StockManagementTab = () => {
@@ -34,6 +45,8 @@ const StockManagementTab = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [adjustmentAmount, setAdjustmentAmount] = useState<Record<string, number>>({});
   const [adjustmentNotes, setAdjustmentNotes] = useState<Record<string, string>>({});
+  const [stockCosts, setStockCosts] = useState<Record<string, StockCosts>>({});
+  const [showCostFields, setShowCostFields] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
@@ -143,8 +156,18 @@ const StockManagementTab = () => {
     setSaving(null);
   };
 
-  const handleSetStock = async (productId: string, currentQty: number, newQty: number) => {
+  const handleSetStock = async (productId: string, currentQty: number, newQty: number, productName: string) => {
     const notes = adjustmentNotes[productId] || null;
+    const costs = stockCosts[productId];
+    const isRestock = newQty > currentQty;
+    const changeAmount = newQty - currentQty;
+    
+    // Calculate total expense
+    let totalExpense = 0;
+    if (costs && isRestock) {
+      const purchaseTotal = (costs.unitPurchasePrice || 0) * changeAmount;
+      totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+    }
     
     setSaving(productId);
     try {
@@ -158,22 +181,61 @@ const StockManagementTab = () => {
 
       if (updateError) throw updateError;
 
+      // Record stock history with costs
+      const historyData: any = {
+        product_id: productId,
+        previous_quantity: currentQty,
+        new_quantity: newQty,
+        change_amount: changeAmount,
+        change_type: isRestock ? "restock" : "manual_adjustment",
+        notes,
+      };
+
+      // Add cost data if this is a restock with costs
+      if (costs && isRestock && totalExpense > 0) {
+        historyData.unit_purchase_price = costs.unitPurchasePrice || null;
+        historyData.shipping_cost = costs.shippingCost || null;
+        historyData.other_expenses = costs.otherExpenses || null;
+        historyData.expense_notes = costs.expenseNotes || null;
+        historyData.total_expense = totalExpense;
+      }
+
       const { error: historyError } = await supabase
         .from("stock_history")
-        .insert({
-          product_id: productId,
-          previous_quantity: currentQty,
-          new_quantity: newQty,
-          change_amount: newQty - currentQty,
-          change_type: "manual_adjustment",
-          notes,
-        });
+        .insert(historyData);
 
       if (historyError) throw historyError;
 
-      toast({ title: "Stock Updated" });
+      // Auto-create expense transaction if there are costs
+      if (costs && isRestock && totalExpense > 0) {
+        const expenseDescription = `Stock purchase: ${productName} (${changeAmount} units @ ${formatMVR(costs.unitPurchasePrice || 0)})${costs.shippingCost ? ` + Shipping: ${formatMVR(costs.shippingCost)}` : ""}${costs.otherExpenses ? ` + Other: ${formatMVR(costs.otherExpenses)}` : ""}`;
+        
+        const { error: transactionError } = await supabase
+          .from("transactions")
+          .insert({
+            type: "expense",
+            category: "inventory",
+            amount: totalExpense,
+            description: costs.expenseNotes || expenseDescription,
+          });
+
+        if (transactionError) {
+          console.error("Failed to create transaction:", transactionError);
+        }
+      }
+
+      toast({ 
+        title: "Stock Updated",
+        description: totalExpense > 0 
+          ? `Added ${changeAmount} units. Expense of ${formatMVR(totalExpense)} recorded.`
+          : undefined
+      });
+      
+      // Reset all inputs
       setAdjustmentAmount(prev => ({ ...prev, [productId]: 0 }));
       setAdjustmentNotes(prev => ({ ...prev, [productId]: "" }));
+      setStockCosts(prev => ({ ...prev, [productId]: { unitPurchasePrice: 0, shippingCost: 0, otherExpenses: 0, expenseNotes: "" } }));
+      setShowCostFields(prev => ({ ...prev, [productId]: false }));
       
       fetchProducts();
       if (expandedProductId === productId) {
@@ -376,44 +438,183 @@ const StockManagementTab = () => {
               {expandedProductId === product.id && (
                 <div className="p-4 bg-background border-t border-border space-y-4">
                   {/* Bulk Adjustment */}
-                  <div className="flex flex-wrap items-end gap-3">
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">Set Stock To</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={adjustmentAmount[product.id] || ""}
-                        onChange={(e) => setAdjustmentAmount(prev => ({ 
-                          ...prev, 
-                          [product.id]: parseInt(e.target.value) || 0 
-                        }))}
-                        placeholder="Qty"
-                        className="w-20 px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      />
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-end gap-3">
+                      <div>
+                        <label className="block text-xs text-muted-foreground mb-1">Set Stock To</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={adjustmentAmount[product.id] || ""}
+                          onChange={(e) => setAdjustmentAmount(prev => ({ 
+                            ...prev, 
+                            [product.id]: parseInt(e.target.value) || 0 
+                          }))}
+                          placeholder="Qty"
+                          className="w-20 px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-[150px]">
+                        <label className="block text-xs text-muted-foreground mb-1">Notes (optional)</label>
+                        <input
+                          type="text"
+                          value={adjustmentNotes[product.id] || ""}
+                          onChange={(e) => setAdjustmentNotes(prev => ({ 
+                            ...prev, 
+                            [product.id]: e.target.value 
+                          }))}
+                          placeholder="Reason for adjustment"
+                          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-[150px]">
-                      <label className="block text-xs text-muted-foreground mb-1">Notes (optional)</label>
-                      <input
-                        type="text"
-                        value={adjustmentNotes[product.id] || ""}
-                        onChange={(e) => setAdjustmentNotes(prev => ({ 
-                          ...prev, 
-                          [product.id]: e.target.value 
-                        }))}
-                        placeholder="Reason for adjustment"
-                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
+
+                    {/* Cost Fields Toggle */}
+                    {(adjustmentAmount[product.id] || 0) > product.stock_quantity && (
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowCostFields(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
+                          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80"
+                        >
+                          <Receipt className="w-4 h-4" />
+                          {showCostFields[product.id] ? "Hide" : "Add"} Purchase Costs & Expenses
+                        </button>
+
+                        {showCostFields[product.id] && (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                <DollarSign className="w-3 h-3" />
+                                Unit Purchase Price
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={stockCosts[product.id]?.unitPurchasePrice || ""}
+                                onChange={(e) => setStockCosts(prev => ({ 
+                                  ...prev, 
+                                  [product.id]: {
+                                    ...prev[product.id],
+                                    unitPurchasePrice: parseFloat(e.target.value) || 0,
+                                    shippingCost: prev[product.id]?.shippingCost || 0,
+                                    otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                    expenseNotes: prev[product.id]?.expenseNotes || ""
+                                  }
+                                }))}
+                                placeholder="0.00"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                <Truck className="w-3 h-3" />
+                                Shipping Cost
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={stockCosts[product.id]?.shippingCost || ""}
+                                onChange={(e) => setStockCosts(prev => ({ 
+                                  ...prev, 
+                                  [product.id]: {
+                                    ...prev[product.id],
+                                    unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                    shippingCost: parseFloat(e.target.value) || 0,
+                                    otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                    expenseNotes: prev[product.id]?.expenseNotes || ""
+                                  }
+                                }))}
+                                placeholder="0.00"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                <Receipt className="w-3 h-3" />
+                                Other Expenses
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={stockCosts[product.id]?.otherExpenses || ""}
+                                onChange={(e) => setStockCosts(prev => ({ 
+                                  ...prev, 
+                                  [product.id]: {
+                                    ...prev[product.id],
+                                    unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                    shippingCost: prev[product.id]?.shippingCost || 0,
+                                    otherExpenses: parseFloat(e.target.value) || 0,
+                                    expenseNotes: prev[product.id]?.expenseNotes || ""
+                                  }
+                                }))}
+                                placeholder="0.00"
+                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                            </div>
+                            <div className="sm:col-span-3">
+                              <label className="block text-xs text-muted-foreground mb-1">
+                                Expense Description (optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={stockCosts[product.id]?.expenseNotes || ""}
+                                onChange={(e) => setStockCosts(prev => ({ 
+                                  ...prev, 
+                                  [product.id]: {
+                                    ...prev[product.id],
+                                    unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                    shippingCost: prev[product.id]?.shippingCost || 0,
+                                    otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                    expenseNotes: e.target.value
+                                  }
+                                }))}
+                                placeholder="e.g., Supplier invoice #123, customs fees, etc."
+                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                            </div>
+                            
+                            {/* Total Expense Preview */}
+                            {(() => {
+                              const costs = stockCosts[product.id];
+                              const changeAmount = (adjustmentAmount[product.id] || 0) - product.stock_quantity;
+                              if (!costs || changeAmount <= 0) return null;
+                              const purchaseTotal = (costs.unitPurchasePrice || 0) * changeAmount;
+                              const totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+                              if (totalExpense <= 0) return null;
+                              return (
+                                <div className="sm:col-span-3 p-2 bg-primary/10 rounded-lg">
+                                  <p className="text-sm text-foreground">
+                                    <span className="font-medium">Total Expense:</span> {formatMVR(totalExpense)}
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                      ({changeAmount} units × {formatMVR(costs.unitPurchasePrice || 0)} + shipping + other)
+                                    </span>
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    This will be automatically added to Transactions as an expense.
+                                  </p>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <button
                       onClick={() => handleSetStock(
                         product.id, 
                         product.stock_quantity, 
-                        adjustmentAmount[product.id] || 0
+                        adjustmentAmount[product.id] || 0,
+                        product.name
                       )}
                       disabled={saving === product.id || adjustmentAmount[product.id] === undefined}
                       className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50"
                     >
-                      {saving === product.id ? "Saving..." : "Update"}
+                      {saving === product.id ? "Saving..." : "Update Stock"}
                     </button>
                   </div>
 
@@ -432,28 +633,54 @@ const StockManagementTab = () => {
                     ) : (
                       <div className="space-y-2 max-h-48 overflow-y-auto">
                         {stockHistory.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg text-sm">
-                            <div className="flex items-center gap-3">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                item.change_amount > 0 
-                                  ? "bg-emerald-500/10 text-emerald-600" 
-                                  : "bg-rose-500/10 text-rose-500"
-                              }`}>
-                                {item.change_amount > 0 ? "+" : ""}{item.change_amount}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {item.previous_quantity} → {item.new_quantity}
-                              </span>
-                              <span className="px-2 py-0.5 bg-muted rounded text-xs">
-                                {getChangeTypeLabel(item.change_type)}
-                              </span>
+                          <div key={item.id} className="p-2 bg-muted/50 rounded-lg text-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                  item.change_amount > 0 
+                                    ? "bg-emerald-500/10 text-emerald-600" 
+                                    : "bg-rose-500/10 text-rose-500"
+                                }`}>
+                                  {item.change_amount > 0 ? "+" : ""}{item.change_amount}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {item.previous_quantity} → {item.new_quantity}
+                                </span>
+                                <span className="px-2 py-0.5 bg-muted rounded text-xs">
+                                  {getChangeTypeLabel(item.change_type)}
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
+                                {item.notes && (
+                                  <p className="text-xs text-muted-foreground truncate max-w-[150px]">{item.notes}</p>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
-                              {item.notes && (
-                                <p className="text-xs text-muted-foreground truncate max-w-[150px]">{item.notes}</p>
-                              )}
-                            </div>
+                            {/* Show cost details if available */}
+                            {item.total_expense && item.total_expense > 0 && (
+                              <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-4 text-xs">
+                                <span className="text-muted-foreground flex items-center gap-1">
+                                  <DollarSign className="w-3 h-3" />
+                                  {formatMVR(item.unit_purchase_price || 0)}/unit
+                                </span>
+                                {item.shipping_cost && item.shipping_cost > 0 && (
+                                  <span className="text-muted-foreground flex items-center gap-1">
+                                    <Truck className="w-3 h-3" />
+                                    {formatMVR(item.shipping_cost)}
+                                  </span>
+                                )}
+                                {item.other_expenses && item.other_expenses > 0 && (
+                                  <span className="text-muted-foreground flex items-center gap-1">
+                                    <Receipt className="w-3 h-3" />
+                                    {formatMVR(item.other_expenses)}
+                                  </span>
+                                )}
+                                <span className="font-medium text-primary ml-auto">
+                                  Total: {formatMVR(item.total_expense)}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
