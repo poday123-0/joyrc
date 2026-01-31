@@ -73,9 +73,11 @@ const VideoShowcase = () => {
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const youtubeStartTimeRef = useRef<number>(0);
   const navigate = useNavigate();
 
   const currentVideo = videos[currentIndex];
@@ -147,6 +149,7 @@ const VideoShowcase = () => {
   const transitionToNext = useCallback(() => {
     setIsTransitioning(true);
     setVideoReady(false);
+    setProgress(0);
     
     const nextIndex = currentIndex === videos.length - 1 ? 0 : currentIndex + 1;
     
@@ -168,7 +171,7 @@ const VideoShowcase = () => {
     }
   }, [videos.length, transitionToNext]);
 
-  // Auto-advance timer for YouTube videos (since they loop and don't trigger onEnded)
+  // Auto-advance timer for YouTube videos and progress tracking
   useEffect(() => {
     // Clear any existing timer
     if (autoAdvanceTimerRef.current) {
@@ -178,9 +181,27 @@ const VideoShowcase = () => {
 
     // Only set auto-advance timer for YouTube videos with multiple videos
     if (isCurrentYoutube && videos.length > 1 && videoReady) {
+      youtubeStartTimeRef.current = Date.now();
+      const duration = 15000; // 15 seconds per YouTube video
+      
+      // Progress interval for YouTube
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - youtubeStartTimeRef.current;
+        const newProgress = Math.min((elapsed / duration) * 100, 100);
+        setProgress(newProgress);
+      }, 100);
+
       autoAdvanceTimerRef.current = setTimeout(() => {
+        clearInterval(progressInterval);
         transitionToNext();
-      }, 15000); // 15 seconds per YouTube video
+      }, duration);
+
+      return () => {
+        clearInterval(progressInterval);
+        if (autoAdvanceTimerRef.current) {
+          clearTimeout(autoAdvanceTimerRef.current);
+        }
+      };
     }
 
     return () => {
@@ -190,10 +211,27 @@ const VideoShowcase = () => {
     };
   }, [currentIndex, isCurrentYoutube, videos.length, videoReady, transitionToNext]);
 
+  // Progress tracking for regular videos
+  useEffect(() => {
+    if (isCurrentYoutube || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const handleTimeUpdate = () => {
+      if (video.duration) {
+        setProgress((video.currentTime / video.duration) * 100);
+      }
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+
+  }, [isCurrentYoutube, currentIndex]);
+
   const goToVideo = useCallback((index: number) => {
     if (index === currentIndex) return;
     setIsTransitioning(true);
     setVideoReady(false);
+    setProgress(0);
     
     // Preload target video
     if (videos[index]?.video_url) {
@@ -208,6 +246,8 @@ const VideoShowcase = () => {
 
   // Auto-play video when component mounts or video changes (only for non-YouTube)
   useEffect(() => {
+    setProgress(0);
+    
     if (isCurrentYoutube) {
       // YouTube videos auto-play via iframe params
       setVideoReady(true);
@@ -402,19 +442,26 @@ const VideoShowcase = () => {
           )}
         </button>
         
-        {/* Video indicators */}
+        {/* Video indicators with progress */}
         {videos.length > 1 && (
           <div className="flex items-center gap-1.5">
             {videos.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToVideo(index)}
-                className={`transition-all duration-300 rounded-full ${
+                className={`relative transition-all duration-300 rounded-full overflow-hidden ${
                   index === currentIndex
-                    ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-white"
+                    ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-white/30"
                     : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/60"
                 }`}
-              />
+              >
+                {index === currentIndex && (
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-white rounded-full transition-all duration-100"
+                    style={{ width: `${progress}%` }}
+                  />
+                )}
+              </button>
             ))}
           </div>
         )}
