@@ -176,33 +176,33 @@ const QuickPOSTab = () => {
 
     setSearchingCustomers(true);
     try {
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, mobile_number")
-        .or(`full_name.ilike.%${query}%,mobile_number.ilike.%${query}%`)
-        .limit(10);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Use edge function to get customers with emails
+      const { data: customerData, error } = await supabase.functions.invoke('get-customer-users', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
 
       if (error) throw error;
 
-      // Get emails for these users via edge function
-      const { data: { session } } = await supabase.auth.getSession();
-      const customersWithEmail: ExistingCustomer[] = [];
+      // Filter customers by search query
+      const queryLower = query.toLowerCase();
+      const filteredCustomers = (customerData?.customers || [])
+        .filter((c: any) => 
+          c.full_name?.toLowerCase().includes(queryLower) ||
+          c.mobile_number?.toLowerCase().includes(queryLower) ||
+          c.email?.toLowerCase().includes(queryLower)
+        )
+        .slice(0, 10)
+        .map((c: any) => ({
+          user_id: c.user_id,
+          full_name: c.full_name,
+          mobile_number: c.mobile_number,
+          email: c.email,
+        }));
 
-      for (const profile of profiles || []) {
-        // Try to get email from lookup function
-        const { data: emailData } = await supabase.functions.invoke('lookup-email-by-mobile', {
-          body: { userId: profile.user_id },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        });
-
-        customersWithEmail.push({
-          ...profile,
-          email: emailData?.email || undefined,
-        });
-      }
-
-      setCustomerResults(customersWithEmail);
-      setShowCustomerDropdown(customersWithEmail.length > 0);
+      setCustomerResults(filteredCustomers);
+      setShowCustomerDropdown(filteredCustomers.length > 0);
     } catch (error) {
       console.error("Error searching customers:", error);
     } finally {
