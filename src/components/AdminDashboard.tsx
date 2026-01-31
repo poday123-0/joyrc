@@ -32,6 +32,13 @@ interface DashboardStats {
   lowStockProducts: number;
   monthlyRevenue: number;
   monthlyExpenses: number;
+  // New stats
+  totalCustomers: number;
+  weeklyRevenue: number;
+  weeklyExpenses: number;
+  stockValueCost: number;
+  stockValueSelling: number;
+  totalStockItems: number;
 }
 
 const AdminDashboard = () => {
@@ -49,6 +56,13 @@ const AdminDashboard = () => {
     lowStockProducts: 0,
     monthlyRevenue: 0,
     monthlyExpenses: 0,
+    // New stats
+    totalCustomers: 0,
+    weeklyRevenue: 0,
+    weeklyExpenses: 0,
+    stockValueCost: 0,
+    stockValueSelling: 0,
+    totalStockItems: 0,
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,23 +162,33 @@ const AdminDashboard = () => {
     
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const startOfWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
     
     const [
       ordersRes,
       productsRes,
       transactionsRes,
-      monthlyTransactionsRes
+      monthlyTransactionsRes,
+      weeklyTransactionsRes,
+      stockHistoryRes,
+      profilesRes
     ] = await Promise.all([
       supabase.from("orders").select("*"),
-      supabase.from("products").select("id, stock_quantity"),
+      supabase.from("products").select("id, stock_quantity, price"),
       supabase.from("transactions").select("*").order("created_at", { ascending: false }),
       supabase.from("transactions").select("*").gte("created_at", startOfMonth),
+      supabase.from("transactions").select("*").gte("created_at", startOfWeek),
+      supabase.from("stock_history").select("product_id, unit_purchase_price, change_amount, change_type").eq("change_type", "restock"),
+      supabase.from("profiles").select("id")
     ]);
 
     const orders = ordersRes.data || [];
     const products = productsRes.data || [];
     const allTransactions = transactionsRes.data || [];
     const monthlyTxns = monthlyTransactionsRes.data || [];
+    const weeklyTxns = weeklyTransactionsRes.data || [];
+    const stockHistory = stockHistoryRes.data || [];
+    const profiles = profilesRes.data || [];
 
     const totalRevenue = allTransactions
       .filter(t => t.type === "income")
@@ -182,14 +206,44 @@ const AdminDashboard = () => {
       .filter(t => t.type === "expense")
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
+    const weeklyRevenue = weeklyTxns
+      .filter(t => t.type === "income")
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const weeklyExpenses = weeklyTxns
+      .filter(t => t.type === "expense")
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
     // Count orders by status
     const pendingPaymentOrders = orders.filter(o => o.payment_status === "pending" || o.payment_status === "uploaded").length;
     const confirmedPaymentOrders = orders.filter(o => o.payment_status === "confirmed").length;
     const onDeliveryOrders = orders.filter(o => o.status === "on_delivery" || o.status === "shipped").length;
     const deliveredOrders = orders.filter(o => o.status === "delivered").length;
     
-    // Count low stock products (stock <= 5)
+    // Count low stock products (stock <= 5 and stock > 0, or stock = 0)
     const lowStockCount = products.filter(p => p.stock_quantity <= 5).length;
+
+    // Calculate total stock items
+    const totalStockItems = products.reduce((sum, p) => sum + (p.stock_quantity || 0), 0);
+
+    // Calculate stock value at selling price
+    const stockValueSelling = products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * Number(p.price || 0)), 0);
+
+    // Calculate stock value at cost price (using latest unit_purchase_price from stock_history)
+    const productCostMap = new Map<string, number>();
+    stockHistory.forEach(sh => {
+      if (sh.unit_purchase_price && !productCostMap.has(sh.product_id)) {
+        productCostMap.set(sh.product_id, Number(sh.unit_purchase_price));
+      }
+    });
+
+    const stockValueCost = products.reduce((sum, p) => {
+      const unitCost = productCostMap.get(p.id) || 0;
+      return sum + ((p.stock_quantity || 0) * unitCost);
+    }, 0);
+
+    // Count unique customers from profiles
+    const totalCustomers = profiles.length;
 
     setStats({
       totalRevenue,
@@ -203,6 +257,12 @@ const AdminDashboard = () => {
       lowStockProducts: lowStockCount,
       monthlyRevenue,
       monthlyExpenses,
+      totalCustomers,
+      weeklyRevenue,
+      weeklyExpenses,
+      stockValueCost,
+      stockValueSelling,
+      totalStockItems,
     });
 
     setTransactions(allTransactions as Transaction[]);
@@ -315,6 +375,7 @@ const AdminDashboard = () => {
 
   const netProfit = stats.totalRevenue - stats.totalExpenses;
   const monthlyNetProfit = stats.monthlyRevenue - stats.monthlyExpenses;
+  const weeklyNetProfit = stats.weeklyRevenue - stats.weeklyExpenses;
 
   return (
     <div className="space-y-5">
@@ -355,13 +416,19 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Secondary Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Business Stats Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <MiniStatCard
+          title="Customers"
+          value={stats.totalCustomers.toString()}
+          icon={Users}
+          subtitle="Registered users"
+        />
         <MiniStatCard
           title="Total Orders"
           value={stats.totalOrders.toString()}
           icon={ShoppingCart}
-          subtitle={`${stats.pendingOrders} awaiting payment`}
+          subtitle={`${stats.pendingOrders} pending`}
         />
         <MiniStatCard
           title="On Delivery"
@@ -370,25 +437,101 @@ const AdminDashboard = () => {
           subtitle={`${stats.deliveredOrders} delivered`}
         />
         <MiniStatCard
-          title="Products"
-          value={stats.totalProducts.toString()}
-          icon={Package}
-          subtitle={stats.lowStockProducts > 0 ? `${stats.lowStockProducts} low stock` : "All stocked"}
-        />
-        <MiniStatCard
           title="Confirmed"
           value={stats.confirmedOrders.toString()}
           icon={CheckCircle2}
           subtitle="Paid orders"
         />
+        <MiniStatCard
+          title="Products"
+          value={stats.totalProducts.toString()}
+          icon={Package}
+          subtitle={`${stats.totalStockItems} in stock`}
+        />
+        <MiniStatCard
+          title="Low Stock"
+          value={stats.lowStockProducts.toString()}
+          icon={Package}
+          subtitle="Need restock"
+          highlight={stats.lowStockProducts > 0}
+        />
       </div>
+
+      {/* Stock Value & Weekly Summary - Financial data only for full admins */}
+      {isFullAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Stock Values Card */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Package className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Stock Value</p>
+                <p className="text-xs text-muted-foreground">{stats.totalStockItems} items in stock</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-xl bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-1">Cost Price</p>
+                <p className="text-lg font-bold text-foreground">{formatMVR(stats.stockValueCost)}</p>
+                <p className="text-[10px] text-muted-foreground">Purchase value</p>
+              </div>
+              <div className="p-3 rounded-xl bg-primary/5">
+                <p className="text-xs text-muted-foreground mb-1">Selling Price</p>
+                <p className="text-lg font-bold text-primary">{formatMVR(stats.stockValueSelling)}</p>
+                <p className="text-[10px] text-muted-foreground">Potential revenue</p>
+              </div>
+            </div>
+            
+            {stats.stockValueCost > 0 && (
+              <div className="mt-3 p-2 rounded-lg bg-muted/20 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Potential Profit: <span className="font-semibold text-primary">{formatMVR(stats.stockValueSelling - stats.stockValueCost)}</span>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Weekly Summary Card */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">This Week</p>
+                <p className="text-xs text-muted-foreground">Last 7 days performance</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3 rounded-xl bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-1">Income</p>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatMVR(stats.weeklyRevenue)}</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-1">Expenses</p>
+                <p className="text-sm font-bold text-rose-500 dark:text-rose-400">{formatMVR(stats.weeklyExpenses)}</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-primary/5">
+                <p className="text-xs text-muted-foreground mb-1">Net</p>
+                <p className={`text-sm font-bold ${weeklyNetProfit >= 0 ? "text-primary" : "text-rose-500 dark:text-rose-400"}`}>
+                  {weeklyNetProfit >= 0 ? "+" : ""}{formatMVR(weeklyNetProfit)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Monthly Summary Card - Financial data only for full admins */}
       {isFullAdmin && (
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-primary" />
+              <PieChart className="w-4 h-4 text-primary" />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Monthly Summary</p>
@@ -399,15 +542,15 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-3 rounded-xl bg-muted/30">
               <p className="text-xs text-muted-foreground mb-1">Income</p>
-              <p className="text-sm font-bold text-emerald-600">{formatMVR(stats.monthlyRevenue)}</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatMVR(stats.monthlyRevenue)}</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-muted/30">
               <p className="text-xs text-muted-foreground mb-1">Expenses</p>
-              <p className="text-sm font-bold text-rose-500">{formatMVR(stats.monthlyExpenses)}</p>
+              <p className="text-sm font-bold text-rose-500 dark:text-rose-400">{formatMVR(stats.monthlyExpenses)}</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-primary/5">
               <p className="text-xs text-muted-foreground mb-1">Net</p>
-              <p className={`text-sm font-bold ${monthlyNetProfit >= 0 ? "text-primary" : "text-rose-500"}`}>
+              <p className={`text-sm font-bold ${monthlyNetProfit >= 0 ? "text-primary" : "text-rose-500 dark:text-rose-400"}`}>
                 {monthlyNetProfit >= 0 ? "+" : ""}{formatMVR(monthlyNetProfit)}
               </p>
             </div>
@@ -638,18 +781,20 @@ const MiniStatCard = ({
   value,
   icon: Icon,
   subtitle,
+  highlight = false,
 }: {
   title: string;
   value: string;
   icon: any;
   subtitle: string;
+  highlight?: boolean;
 }) => {
   return (
-    <div className="bg-card border border-border rounded-xl p-3 text-center">
-      <div className="w-8 h-8 rounded-lg bg-muted mx-auto mb-2 flex items-center justify-center">
-        <Icon className="w-4 h-4 text-muted-foreground" />
+    <div className={`bg-card border rounded-xl p-3 text-center ${highlight ? "border-destructive/50 bg-destructive/5" : "border-border"}`}>
+      <div className={`w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center ${highlight ? "bg-destructive/10" : "bg-muted"}`}>
+        <Icon className={`w-4 h-4 ${highlight ? "text-destructive" : "text-muted-foreground"}`} />
       </div>
-      <p className="text-lg font-bold text-foreground">{value}</p>
+      <p className={`text-lg font-bold ${highlight ? "text-destructive" : "text-foreground"}`}>{value}</p>
       <p className="text-[10px] text-muted-foreground">{title}</p>
       <p className="text-[9px] text-muted-foreground/70 mt-0.5">{subtitle}</p>
     </div>
