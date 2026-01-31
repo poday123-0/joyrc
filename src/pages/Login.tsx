@@ -432,7 +432,7 @@ const Login = () => {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password.."
+                placeholder={isLogin ? "Enter password.." : "Create new password.."}
                 className="w-full px-4 py-3 pl-10 pr-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
                 required
               />
