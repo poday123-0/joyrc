@@ -4,7 +4,7 @@ import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon, ArrowLeft } from "luc
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { lovable } from "@/integrations/lovable/index";
 import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 
 const Login = () => {
