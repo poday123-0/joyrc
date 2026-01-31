@@ -700,6 +700,42 @@ const QuickPOSTab = () => {
               </div>
             </div>
 
+            {/* Selected Items Summary - Inline below customer */}
+            {cart.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium text-foreground">Items ({cart.reduce((acc, item) => acc + item.quantity, 0)})</span>
+                  </div>
+                  <span className="text-xs font-semibold text-primary">{formatMVR(cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0))}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                  {cart.map(item => (
+                    <div 
+                      key={`${item.product.id}-${item.selectedColor?.id || 'default'}`}
+                      className="flex items-center gap-1.5 bg-muted/70 rounded-lg px-2 py-1 text-xs"
+                    >
+                      {item.selectedColor && (
+                        <div 
+                          className="w-3 h-3 rounded-full border border-border flex-shrink-0"
+                          style={{ backgroundColor: item.selectedColor.color_hex }}
+                        />
+                      )}
+                      <span className="font-medium truncate max-w-[80px]">{item.product.name}</span>
+                      <span className="text-muted-foreground">×{item.quantity}</span>
+                      <button
+                        onClick={() => removeFromCart(item.product.id, item.selectedColor?.id)}
+                        className="p-0.5 hover:bg-destructive/20 rounded text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Product Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
