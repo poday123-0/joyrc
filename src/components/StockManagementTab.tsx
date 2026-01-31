@@ -614,17 +614,16 @@ const StockManagementTab = () => {
                       </div>
                     </div>
 
-                    {/* Cost Fields Toggle */}
-                    {(adjustmentAmount[product.id] || 0) > product.stock_quantity && (
-                      <div className="space-y-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowCostFields(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
-                          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80"
-                        >
-                          <Receipt className="w-4 h-4" />
-                          {showCostFields[product.id] ? "Hide" : "Add"} Purchase Costs & Expenses
-                        </button>
+                    {/* Cost Fields - Always visible when expanded */}
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowCostFields(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
+                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80"
+                      >
+                        <Receipt className="w-4 h-4" />
+                        {showCostFields[product.id] ? "Hide" : "Add"} Purchase Costs & Expenses
+                      </button>
 
                         {showCostFields[product.id] && (
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/30 rounded-lg border border-border">
@@ -747,7 +746,6 @@ const StockManagementTab = () => {
                           </div>
                         )}
                       </div>
-                    )}
 
                     <button
                       onClick={() => handleSetStock(
