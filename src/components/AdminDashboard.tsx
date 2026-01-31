@@ -26,7 +26,10 @@ interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
   confirmedOrders: number;
+  onDeliveryOrders: number;
+  deliveredOrders: number;
   totalProducts: number;
+  lowStockProducts: number;
   monthlyRevenue: number;
   monthlyExpenses: number;
 }
@@ -40,7 +43,10 @@ const AdminDashboard = () => {
     totalOrders: 0,
     pendingOrders: 0,
     confirmedOrders: 0,
+    onDeliveryOrders: 0,
+    deliveredOrders: 0,
     totalProducts: 0,
+    lowStockProducts: 0,
     monthlyRevenue: 0,
     monthlyExpenses: 0,
   });
@@ -93,12 +99,13 @@ const AdminDashboard = () => {
       monthlyTransactionsRes
     ] = await Promise.all([
       supabase.from("orders").select("*"),
-      supabase.from("products").select("id", { count: "exact" }),
+      supabase.from("products").select("id, stock_quantity"),
       supabase.from("transactions").select("*").order("created_at", { ascending: false }),
       supabase.from("transactions").select("*").gte("created_at", startOfMonth),
     ]);
 
     const orders = ordersRes.data || [];
+    const products = productsRes.data || [];
     const allTransactions = transactionsRes.data || [];
     const monthlyTxns = monthlyTransactionsRes.data || [];
 
@@ -118,13 +125,25 @@ const AdminDashboard = () => {
       .filter(t => t.type === "expense")
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
+    // Count orders by status
+    const pendingPaymentOrders = orders.filter(o => o.payment_status === "pending" || o.payment_status === "uploaded").length;
+    const confirmedPaymentOrders = orders.filter(o => o.payment_status === "confirmed").length;
+    const onDeliveryOrders = orders.filter(o => o.status === "on_delivery" || o.status === "shipped").length;
+    const deliveredOrders = orders.filter(o => o.status === "delivered").length;
+    
+    // Count low stock products (stock <= 5)
+    const lowStockCount = products.filter(p => p.stock_quantity <= 5).length;
+
     setStats({
       totalRevenue,
       totalExpenses,
       totalOrders: orders.length,
-      pendingOrders: orders.filter(o => o.status === "pending" || o.payment_status === "pending").length,
-      confirmedOrders: orders.filter(o => o.payment_status === "confirmed").length,
-      totalProducts: productsRes.count || 0,
+      pendingOrders: pendingPaymentOrders,
+      confirmedOrders: confirmedPaymentOrders,
+      onDeliveryOrders,
+      deliveredOrders,
+      totalProducts: products.length,
+      lowStockProducts: lowStockCount,
       monthlyRevenue,
       monthlyExpenses,
     });
@@ -280,18 +299,24 @@ const AdminDashboard = () => {
       )}
 
       {/* Secondary Stats Row */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <MiniStatCard
-          title="Orders"
+          title="Total Orders"
           value={stats.totalOrders.toString()}
           icon={ShoppingCart}
-          subtitle={`${stats.pendingOrders} pending`}
+          subtitle={`${stats.pendingOrders} awaiting payment`}
+        />
+        <MiniStatCard
+          title="On Delivery"
+          value={stats.onDeliveryOrders.toString()}
+          icon={Package}
+          subtitle={`${stats.deliveredOrders} delivered`}
         />
         <MiniStatCard
           title="Products"
           value={stats.totalProducts.toString()}
           icon={Package}
-          subtitle="In catalog"
+          subtitle={stats.lowStockProducts > 0 ? `${stats.lowStockProducts} low stock` : "All stocked"}
         />
         <MiniStatCard
           title="Confirmed"
