@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Package, User, Phone, MapPin, Calendar, X, ShoppingCart, Palette } from "lucide-react";
+import { Plus, Trash2, Package, User, Phone, MapPin, Calendar, X, ShoppingCart, Palette, Mail, Hash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -32,6 +32,7 @@ interface ProductColor {
 interface OrderItem {
   productId: string;
   productName: string;
+  productCode: string | null;
   quantity: number;
   unitPrice: number;
   colorId?: string;
@@ -60,13 +61,14 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
   
   // Order form state
   const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [orderDate, setOrderDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("confirmed");
   const [orderStatus, setOrderStatus] = useState("delivered");
-  const [items, setItems] = useState<OrderItem[]>([{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
+  const [items, setItems] = useState<OrderItem[]>([{ productId: "", productName: "", productCode: null, quantity: 1, unitPrice: 0 }]);
 
   useEffect(() => {
     if (open) {
@@ -98,17 +100,18 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
 
   const resetForm = () => {
     setCustomerName("");
+    setCustomerEmail("");
     setCustomerPhone("");
     setShippingAddress("");
     setOrderDate(new Date().toISOString().split("T")[0]);
     setNotes("");
     setPaymentStatus("confirmed");
     setOrderStatus("delivered");
-    setItems([{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
+    setItems([{ productId: "", productName: "", productCode: null, quantity: 1, unitPrice: 0 }]);
   };
 
   const addItem = () => {
-    setItems([...items, { productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
+    setItems([...items, { productId: "", productName: "", productCode: null, quantity: 1, unitPrice: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -131,6 +134,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
         ...newItems[index], 
         productId: product.id,
         productName: product.name,
+        productCode: product.item_code,
         unitPrice: product.price,
         colorId: undefined,
         colorName: undefined,
@@ -178,7 +182,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
 
     try {
       const total = calculateTotal(validItems);
-      const orderNotes = `[MANUAL ORDER] Customer: ${customerName}\nPhone: ${customerPhone}\n${notes}`.trim();
+      const orderNotes = `[MANUAL ORDER] Customer: ${customerName}${customerEmail ? `\nEmail: ${customerEmail}` : ''}\nPhone: ${customerPhone}\n${notes}`.trim();
 
       // Create order
       const { data: newOrder, error: orderError } = await supabase
@@ -256,7 +260,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
 
         <form onSubmit={handleSubmitSingle} className="space-y-4">
             {/* Customer Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label className="flex items-center gap-1 mb-1.5">
                   <User className="w-3.5 h-3.5" /> Customer Name
@@ -266,6 +270,17 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Enter customer name"
                   required
+                />
+              </div>
+              <div>
+                <Label className="flex items-center gap-1 mb-1.5">
+                  <Mail className="w-3.5 h-3.5" /> Email
+                </Label>
+                <Input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="Email (optional)"
                 />
               </div>
               <div>
@@ -368,6 +383,12 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
                             placeholder="Or type product name"
                             className="mt-1 text-xs"
                           />
+                          {item.productCode && (
+                            <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <Hash className="w-3 h-3" />
+                              <span className="font-mono">{item.productCode}</span>
+                            </div>
+                          )}
                         </div>
                         <Input
                           type="number"
