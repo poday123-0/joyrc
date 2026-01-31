@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search
 } from "lucide-react";
 import {
   DndContext,
@@ -592,6 +592,17 @@ const ProductsTab = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  
+  // Filtered products
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || product.category_id === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+  
   // Specifications state
   const [specifications, setSpecifications] = useState<ProductSpecification[]>([]);
   const [newSpec, setNewSpec] = useState({ name: "", value: "", icon: "box" });
@@ -1165,10 +1176,12 @@ const ProductsTab = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="font-semibold text-foreground">Products</h2>
-          <p className="text-xs text-muted-foreground">{products.length} items</p>
+          <p className="text-xs text-muted-foreground">
+            {filteredProducts.length} of {products.length} items
+          </p>
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -1176,6 +1189,33 @@ const ProductsTab = ({
         >
           <Plus className="w-4 h-4" /> Add
         </button>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+          />
+        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-full sm:w-48 rounded-xl">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.icon} {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {showForm && (
@@ -1641,7 +1681,7 @@ const ProductsTab = ({
       )}
 
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <div key={product.id} className="bg-card border border-border rounded-xl p-3">
             <div className="flex items-start gap-3">
               <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -1674,12 +1714,16 @@ const ProductsTab = ({
             </div>
           </div>
         ))}
-        {products.length === 0 && (
+        {filteredProducts.length === 0 && (
           <div className="col-span-full text-center py-12">
             <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
               <Package className="w-6 h-6 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground">No products yet. Add your first product!</p>
+            <p className="text-sm text-muted-foreground">
+              {searchQuery || categoryFilter !== "all" 
+                ? "No products match your search or filter criteria." 
+                : "No products yet. Add your first product!"}
+            </p>
           </div>
         )}
       </div>
