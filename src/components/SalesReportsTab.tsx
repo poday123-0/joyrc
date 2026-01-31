@@ -287,7 +287,7 @@ const SalesReportsTab = () => {
                 <DollarSign className="w-5 h-5 text-emerald-600" />
                 <span className="text-sm text-muted-foreground">Total Revenue</span>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{formatMVRCompact(totalRevenue)}</p>
+              <p className="text-2xl font-bold text-emerald-600">{formatMVR(totalRevenue)}</p>
               <p className="text-xs text-muted-foreground mt-1">{getDateRangeLabel()}</p>
             </div>
             <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
