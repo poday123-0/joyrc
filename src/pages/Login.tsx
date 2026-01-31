@@ -38,35 +38,51 @@ const Login = () => {
     fetchSettings();
   }, []);
 
-  // Check if user is already logged in on mount
+  // Single effect to handle auth state - set up listener FIRST, then check session
   useEffect(() => {
-    const checkExistingSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        navigate("/home", { replace: true });
-      }
-    };
-    checkExistingSession();
-  }, [navigate]);
-
-  // Listen for auth state changes (handles OAuth callback automatically)
-  useEffect(() => {
+    let mounted = true;
+    
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
+        if (!mounted) return;
+        
+        if (session?.user) {
           setGoogleLoading(false);
-          toast({
-            title: "Welcome!",
-            description: `Logged in as ${session.user.email}`,
-          });
-          navigate("/home", { replace: true });
+          // Use setTimeout to avoid potential Supabase deadlock
+          setTimeout(() => {
+            if (mounted) {
+              toast({
+                title: "Welcome!",
+                description: `Logged in as ${session.user.email}`,
+              });
+              navigate("/home", { replace: true });
+            }
+          }, 0);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    // THEN check for existing session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && mounted) {
+          navigate("/home", { replace: true });
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      }
+    };
+    
+    checkSession();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleForgotPassword = async () => {
@@ -114,17 +130,26 @@ const Login = () => {
         return;
       }
       
-      // OAuth was successful - the onAuthStateChange listener should handle navigation
-      // But let's also manually check and navigate as a fallback
-      console.log("OAuth successful, checking session...");
+      // OAuth was successful - session should be set by lovable.auth
+      // The onAuthStateChange listener will handle navigation
+      console.log("OAuth successful, session should be set...");
       
-      // Give time for the session to be set
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Force a session refresh to trigger auth state change
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Session after OAuth:", session?.user?.email);
+      if (sessionError) {
+        console.error("Error getting session after OAuth:", sessionError);
+        toast({
+          title: "Login incomplete",
+          description: "Please try again",
+          variant: "destructive",
+        });
+        setGoogleLoading(false);
+        return;
+      }
       
       if (session?.user) {
+        console.log("Session confirmed:", session.user.email);
         toast({
           title: "Welcome!",
           description: `Logged in as ${session.user.email}`,
