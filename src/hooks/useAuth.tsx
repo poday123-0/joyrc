@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
@@ -33,13 +35,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) {
         console.error("Error checking admin role:", error);
         setIsAdmin(false);
+        setIsSuperAdmin(false);
         return;
       }
       
-      setIsAdmin(data && data.length > 0);
+      const hasAdminRole = data && data.length > 0;
+      const hasSuperAdminRole = data?.some(r => r.role === 'super_admin') || false;
+      
+      setIsAdmin(hasAdminRole);
+      setIsSuperAdmin(hasSuperAdminRole);
     } catch (error) {
       console.error("Error checking admin role:", error);
       setIsAdmin(false);
+      setIsSuperAdmin(false);
     }
   };
 
@@ -86,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsSuperAdmin(false);
         }
         
         // Only update loading if we've already initialized
@@ -133,6 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         session,
         isAdmin,
+        isSuperAdmin,
         loading,
         signIn,
         signUp,
