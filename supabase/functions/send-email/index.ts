@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface SendEmailRequest {
-  type: "order_notification" | "order_update" | "marketing" | "admin_notification";
+  type: "order_notification" | "order_update" | "marketing" | "admin_notification" | "new_contact_message" | "customer_reply_notification";
   template_key?: string;
   order_id?: string;
   recipient_email?: string;
@@ -17,6 +17,12 @@ interface SendEmailRequest {
   subject?: string;
   html_content?: string;
   variables?: Record<string, string>;
+  // For contact message notifications
+  customer_name?: string;
+  customer_email?: string;
+  customer_mobile?: string;
+  message?: string;
+  reply_text?: string;
 }
 
 // Replace variables in template
@@ -66,8 +72,99 @@ serve(async (req: Request): Promise<Response> => {
     const adminEmail = settings?.notification_email;
     
     // Use verified domain email or fallback to resend.dev
-    // When you have a verified domain, replace onboarding@resend.dev with your domain
     const fromEmail = adminEmail ? `${senderName} <${adminEmail}>` : `${senderName} <onboarding@resend.dev>`;
+
+    // Handle new contact message notification (to admin)
+    if (body.type === "new_contact_message") {
+      if (!adminEmail) {
+        console.log("No admin email configured, skipping notification");
+        return new Response(
+          JSON.stringify({ success: false, message: "No admin email configured" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">New Contact Message</h2>
+          <p>You have received a new message from the support form:</p>
+          
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Name:</strong> ${body.customer_name}</p>
+            <p><strong>Mobile:</strong> ${body.customer_mobile}</p>
+            ${body.customer_email ? `<p><strong>Email:</strong> ${body.customer_email}</p>` : ''}
+            <p><strong>Subject:</strong> ${body.subject}</p>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
+            <p><strong>Message:</strong></p>
+            <p style="white-space: pre-wrap;">${body.message}</p>
+          </div>
+          
+          <p style="color: #666; font-size: 14px;">
+            Reply to this message from your admin dashboard.
+          </p>
+        </div>
+      `;
+
+      console.log(`Sending new contact message notification to ${adminEmail}`);
+
+      const emailResult = await resend.emails.send({
+        from: fromEmail,
+        to: [adminEmail],
+        subject: `New Contact: ${body.subject}`,
+        html: htmlContent,
+      });
+
+      console.log("Admin notification sent:", emailResult);
+      return new Response(
+        JSON.stringify({ success: true, result: emailResult }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Handle customer reply notification (when admin replies)
+    if (body.type === "customer_reply_notification") {
+      if (!body.recipient_email) {
+        console.log("No customer email provided, skipping notification");
+        return new Response(
+          JSON.stringify({ success: false, message: "No customer email provided" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Reply to Your Message</h2>
+          <p>Hi ${body.customer_name || 'there'},</p>
+          <p>We have replied to your message regarding: <strong>${body.subject}</strong></p>
+          
+          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; border-left: 4px solid #0ea5e9; margin: 20px 0;">
+            <p style="white-space: pre-wrap; margin: 0;">${body.reply_text}</p>
+          </div>
+          
+          <p>If you have any further questions, feel free to reply through our support page.</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            Best regards,<br>
+            ${senderName} Support Team
+          </p>
+        </div>
+      `;
+
+      console.log(`Sending reply notification to customer: ${body.recipient_email}`);
+
+      const emailResult = await resend.emails.send({
+        from: fromEmail,
+        to: [body.recipient_email],
+        subject: `Re: ${body.subject} - ${senderName}`,
+        html: htmlContent,
+      });
+
+      console.log("Customer notification sent:", emailResult);
+      return new Response(
+        JSON.stringify({ success: true, result: emailResult }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // For marketing emails - send to multiple recipients
     if (body.type === "marketing") {
