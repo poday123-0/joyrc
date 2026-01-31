@@ -1,12 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Clock, CheckCircle, XCircle, Receipt, Eye, 
-  ChevronDown, ChevronUp, CreditCard, AlertCircle
+  ChevronDown, ChevronUp, CreditCard, AlertCircle,
+  Trash2, Edit, Download, Upload, FileSpreadsheet
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
+import { useAuth } from "@/hooks/useAuth";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface Order {
   id: string;
@@ -18,6 +24,7 @@ interface Order {
   receipt_url: string | null;
   shipping_address: string | null;
   phone: string | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -28,15 +35,39 @@ interface OrderItem {
   quantity: number;
 }
 
+interface ImportOrder {
+  order_number: string;
+  customer_name: string;
+  customer_phone: string;
+  shipping_address: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  order_date: string;
+  notes?: string;
+}
+
 const PaymentOrdersTab = () => {
+  const { user, isSuperAdmin, isAdmin } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
+  
+  // Edit state
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editComment, setEditComment] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  
+  // Import state
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -99,11 +130,9 @@ const PaymentOrdersTab = () => {
     if (!order) return;
 
     try {
-      // Get current user for tracking who confirmed
       const { data: { user } } = await supabase.auth.getUser();
       const confirmedBy = user?.id || null;
 
-      // Get order items to deduct stock
       const { data: items, error: itemsError } = await supabase
         .from("order_items")
         .select("product_id, product_name, quantity")
@@ -111,9 +140,7 @@ const PaymentOrdersTab = () => {
 
       if (itemsError) throw itemsError;
 
-      // Deduct stock for each item and record history
       for (const item of items || []) {
-        // Get current stock
         const { data: product, error: productError } = await supabase
           .from("products")
           .select("stock_quantity")
@@ -128,7 +155,6 @@ const PaymentOrdersTab = () => {
         const currentQty = product.stock_quantity || 0;
         const newQty = Math.max(0, currentQty - item.quantity);
 
-        // Update product stock
         const { error: updateError } = await supabase
           .from("products")
           .update({ 
@@ -142,7 +168,6 @@ const PaymentOrdersTab = () => {
           continue;
         }
 
-        // Record stock history with order reference
         const { error: historyError } = await supabase
           .from("stock_history")
           .insert({
@@ -161,7 +186,6 @@ const PaymentOrdersTab = () => {
         }
       }
 
-      // Update order status
       const { error: orderError } = await supabase
         .from("orders")
         .update({
@@ -173,7 +197,6 @@ const PaymentOrdersTab = () => {
 
       if (orderError) throw orderError;
 
-      // Add income transaction
       const { error: txError } = await supabase
         .from("transactions")
         .insert({
@@ -186,7 +209,6 @@ const PaymentOrdersTab = () => {
 
       if (txError) console.error("Failed to create transaction:", txError);
 
-      // Create notification for user
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Payment Confirmed! 🎉",
@@ -195,7 +217,6 @@ const PaymentOrdersTab = () => {
         link: "/profile",
       });
 
-      // Send confirmation email to customer
       sendOrderEmail(selectedOrderId, "payment_confirmed");
 
       toast({
@@ -233,7 +254,6 @@ const PaymentOrdersTab = () => {
 
       if (error) throw error;
 
-      // Notify user
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Payment Issue",
@@ -260,6 +280,244 @@ const PaymentOrdersTab = () => {
     setSelectedOrderId(null);
   };
 
+  const handleDeleteOrder = async () => {
+    if (!selectedOrderId || !isSuperAdmin) return;
+
+    try {
+      // First delete order items
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .delete()
+        .eq("order_id", selectedOrderId);
+
+      if (itemsError) throw itemsError;
+
+      // Then delete the order
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", selectedOrderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Deleted",
+        description: "Order has been permanently deleted.",
+      });
+
+      fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    setDeleteDialogOpen(false);
+    setSelectedOrderId(null);
+  };
+
+  const handleEditOrder = (order: Order) => {
+    setEditingOrderId(order.id);
+    setEditNotes(order.notes || "");
+    setEditComment("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingOrderId) return;
+
+    try {
+      const timestamp = new Date().toISOString();
+      const currentNotes = orders.find(o => o.id === editingOrderId)?.notes || "";
+      const newNotes = `${currentNotes}\n\n[${timestamp}] Edit by admin: ${editComment}\nUpdated notes: ${editNotes}`.trim();
+
+      const { error } = await supabase
+        .from("orders")
+        .update({ notes: newNotes })
+        .eq("id", editingOrderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Updated",
+        description: "Order notes have been updated with your comment.",
+      });
+
+      setEditingOrderId(null);
+      setEditComment("");
+      setEditNotes("");
+      fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadTemplate = () => {
+    const headers = [
+      "order_number",
+      "customer_name", 
+      "customer_phone",
+      "shipping_address",
+      "product_name",
+      "quantity",
+      "unit_price",
+      "order_date",
+      "notes"
+    ];
+    
+    const sampleData = [
+      "ORD-001",
+      "Ahmed Ali",
+      "+960 7123456",
+      "Male, Maldives",
+      "RC Monster Truck",
+      "2",
+      "1500",
+      "2025-01-15",
+      "Old system order"
+    ];
+
+    const csvContent = [
+      headers.join(","),
+      sampleData.join(",")
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "order_import_template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const generateOrderNumber = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+
+    try {
+      const text = await file.text();
+      const lines = text.split("\n").filter(line => line.trim());
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+      
+      const importedOrders: ImportOrder[] = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(",").map(v => v.trim());
+        const order: ImportOrder = {
+          order_number: values[headers.indexOf("order_number")] || generateOrderNumber(),
+          customer_name: values[headers.indexOf("customer_name")] || "Unknown",
+          customer_phone: values[headers.indexOf("customer_phone")] || "",
+          shipping_address: values[headers.indexOf("shipping_address")] || "",
+          product_name: values[headers.indexOf("product_name")] || "Imported Product",
+          quantity: parseInt(values[headers.indexOf("quantity")]) || 1,
+          unit_price: parseFloat(values[headers.indexOf("unit_price")]) || 0,
+          order_date: values[headers.indexOf("order_date")] || new Date().toISOString(),
+          notes: values[headers.indexOf("notes")] || "Imported from CSV",
+        };
+        importedOrders.push(order);
+      }
+
+      // Group by order number
+      const groupedOrders = importedOrders.reduce((acc, item) => {
+        if (!acc[item.order_number]) {
+          acc[item.order_number] = {
+            ...item,
+            items: [{ name: item.product_name, quantity: item.quantity, price: item.unit_price }],
+            total: item.quantity * item.unit_price
+          };
+        } else {
+          acc[item.order_number].items.push({ name: item.product_name, quantity: item.quantity, price: item.unit_price });
+          acc[item.order_number].total += item.quantity * item.unit_price;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      let importCount = 0;
+
+      for (const [orderNum, orderData] of Object.entries(groupedOrders)) {
+        // Create order with auto-generated ID
+        const { data: newOrder, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            user_id: user?.id, // Use current admin as owner for imported orders
+            status: "delivered",
+            payment_status: "confirmed",
+            payment_method: "imported",
+            total_amount: orderData.total,
+            shipping_address: orderData.shipping_address,
+            phone: orderData.customer_phone,
+            notes: `[IMPORTED] Original Order: ${orderNum}\nCustomer: ${orderData.customer_name}\n${orderData.notes}`,
+            created_at: new Date(orderData.order_date).toISOString(),
+          })
+          .select()
+          .single();
+
+        if (orderError) {
+          console.error("Failed to import order:", orderError);
+          continue;
+        }
+
+        // Create order items
+        for (const item of orderData.items) {
+          await supabase.from("order_items").insert({
+            order_id: newOrder.id,
+            product_id: newOrder.id, // Use order ID as placeholder since no product exists
+            product_name: item.name,
+            product_price: item.price,
+            quantity: item.quantity,
+          });
+        }
+
+        // Create transaction record
+        await supabase.from("transactions").insert({
+          type: "income",
+          category: "Imported Sales",
+          amount: orderData.total,
+          description: `Imported Order: ${orderNum}`,
+          order_id: newOrder.id,
+        });
+
+        importCount++;
+      }
+
+      toast({
+        title: "Import Successful",
+        description: `Successfully imported ${importCount} orders.`,
+      });
+
+      setShowImportDialog(false);
+      fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: "Import Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const getPaymentStatusConfig = (status: string) => {
     switch (status) {
       case "pending":
@@ -270,6 +528,8 @@ const PaymentOrdersTab = () => {
         return { bg: "bg-mint/20", text: "text-mint", icon: CheckCircle, label: "Confirmed" };
       case "rejected":
         return { bg: "bg-coral/20", text: "text-coral", icon: XCircle, label: "Rejected" };
+      case "imported":
+        return { bg: "bg-primary/20", text: "text-primary", icon: FileSpreadsheet, label: "Imported" };
       default:
         return { bg: "bg-muted", text: "text-muted-foreground", icon: AlertCircle, label: status };
     }
@@ -288,6 +548,71 @@ const PaymentOrdersTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Super Admin Actions */}
+      {isSuperAdmin && (
+        <div className="flex items-center gap-3 p-4 glass-card rounded-2xl">
+          <FileSpreadsheet className="w-5 h-5 text-primary" />
+          <span className="text-sm text-foreground font-medium">Import Old Orders</span>
+          <div className="flex-1" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadTemplate}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download Template
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setShowImportDialog(true)}
+            className="gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </Button>
+        </div>
+      )}
+
+      {/* Import Dialog */}
+      {showImportDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowImportDialog(false)}>
+          <div className="bg-background rounded-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="font-semibold text-lg mb-4">Import Orders from CSV</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upload a CSV file with your old orders. Order numbers will be auto-generated if not provided.
+            </p>
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-muted-foreground/30 rounded-xl p-6 text-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImportCSV}
+                  className="hidden"
+                  id="csv-upload"
+                />
+                <label htmlFor="csv-upload" className="cursor-pointer">
+                  <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {importing ? "Importing..." : "Click to upload CSV file"}
+                  </p>
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowImportDialog(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button variant="outline" onClick={downloadTemplate} className="flex-1 gap-2">
+                  <Download className="w-4 h-4" />
+                  Get Template
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pending Payments requiring action */}
       {pendingPayments.length > 0 && (
         <div>
@@ -302,6 +627,10 @@ const PaymentOrdersTab = () => {
                 order={order}
                 isExpanded={expandedOrder === order.id}
                 items={orderItems[order.id] || []}
+                isSuperAdmin={isSuperAdmin}
+                isEditing={editingOrderId === order.id}
+                editNotes={editNotes}
+                editComment={editComment}
                 onToggle={() => handleToggleExpand(order.id)}
                 onConfirm={() => {
                   setSelectedOrderId(order.id);
@@ -311,6 +640,19 @@ const PaymentOrdersTab = () => {
                   setSelectedOrderId(order.id);
                   setRejectDialogOpen(true);
                 }}
+                onDelete={() => {
+                  setSelectedOrderId(order.id);
+                  setDeleteDialogOpen(true);
+                }}
+                onEdit={() => handleEditOrder(order)}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={() => {
+                  setEditingOrderId(null);
+                  setEditComment("");
+                  setEditNotes("");
+                }}
+                onEditNotesChange={setEditNotes}
+                onEditCommentChange={setEditComment}
                 onViewReceipt={(url) => setViewingReceipt(url)}
                 getPaymentStatusConfig={getPaymentStatusConfig}
               />
@@ -329,7 +671,24 @@ const PaymentOrdersTab = () => {
               order={order}
               isExpanded={expandedOrder === order.id}
               items={orderItems[order.id] || []}
+              isSuperAdmin={isSuperAdmin}
+              isEditing={editingOrderId === order.id}
+              editNotes={editNotes}
+              editComment={editComment}
               onToggle={() => handleToggleExpand(order.id)}
+              onDelete={() => {
+                setSelectedOrderId(order.id);
+                setDeleteDialogOpen(true);
+              }}
+              onEdit={() => handleEditOrder(order)}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={() => {
+                setEditingOrderId(null);
+                setEditComment("");
+                setEditNotes("");
+              }}
+              onEditNotesChange={setEditNotes}
+              onEditCommentChange={setEditComment}
               getPaymentStatusConfig={getPaymentStatusConfig}
             />
           ))}
@@ -380,6 +739,16 @@ const PaymentOrdersTab = () => {
         variant="destructive"
         onConfirm={handleRejectPayment}
       />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Order?"
+        description="This will permanently delete this order and all its items. This action cannot be undone."
+        confirmText="Delete Order"
+        variant="destructive"
+        onConfirm={handleDeleteOrder}
+      />
     </div>
   );
 };
@@ -388,18 +757,38 @@ const OrderCard = ({
   order,
   isExpanded,
   items,
+  isSuperAdmin,
+  isEditing,
+  editNotes,
+  editComment,
   onToggle,
   onConfirm,
   onReject,
+  onDelete,
+  onEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onEditNotesChange,
+  onEditCommentChange,
   onViewReceipt,
   getPaymentStatusConfig,
 }: {
   order: Order;
   isExpanded: boolean;
   items: OrderItem[];
+  isSuperAdmin: boolean;
+  isEditing: boolean;
+  editNotes: string;
+  editComment: string;
   onToggle: () => void;
   onConfirm?: () => void;
   onReject?: () => void;
+  onDelete?: () => void;
+  onEdit?: () => void;
+  onSaveEdit?: () => void;
+  onCancelEdit?: () => void;
+  onEditNotesChange?: (value: string) => void;
+  onEditCommentChange?: (value: string) => void;
   onViewReceipt?: (url: string) => void;
   getPaymentStatusConfig: (status: string) => any;
 }) => {
@@ -470,6 +859,48 @@ const OrderCard = ({
               </div>
             )}
 
+            {/* Notes */}
+            {order.notes && !isEditing && (
+              <div>
+                <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Notes</h5>
+                <p className="text-sm whitespace-pre-wrap">{order.notes}</p>
+              </div>
+            )}
+
+            {/* Edit form */}
+            {isEditing && onEditNotesChange && onEditCommentChange && onSaveEdit && onCancelEdit && (
+              <div className="space-y-3 p-3 bg-muted/30 rounded-xl">
+                <div>
+                  <Label htmlFor="edit-comment" className="text-xs">Edit Comment (required)</Label>
+                  <Input
+                    id="edit-comment"
+                    placeholder="Reason for editing..."
+                    value={editComment}
+                    onChange={(e) => onEditCommentChange(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-notes" className="text-xs">Order Notes</Label>
+                  <Textarea
+                    id="edit-notes"
+                    value={editNotes}
+                    onChange={(e) => onEditNotesChange(e.target.value)}
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={onSaveEdit} disabled={!editComment.trim()}>
+                    Save Changes
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={onCancelEdit}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Receipt */}
             {order.receipt_url && onViewReceipt && (
               <button
@@ -498,6 +929,34 @@ const OrderCard = ({
                   <XCircle className="w-4 h-4" />
                   Reject
                 </button>
+              </div>
+            )}
+
+            {/* Admin actions */}
+            {!isEditing && (
+              <div className="flex gap-2 pt-2 border-t border-border">
+                {onEdit && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onEdit}
+                    className="gap-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit with Comment
+                  </Button>
+                )}
+                {isSuperAdmin && onDelete && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={onDelete}
+                    className="gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </Button>
+                )}
               </div>
             )}
           </div>
