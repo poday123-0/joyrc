@@ -38,15 +38,84 @@ const Login = () => {
     fetchSettings();
   }, []);
 
-  // Check if user is already logged in and redirect
+  // Handle OAuth callback and check if user is already logged in
   useEffect(() => {
-    const checkAuthAndRedirect = async () => {
+    const handleAuthCallback = async () => {
+      // Check if this is an OAuth callback (returning from Google)
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasCode = urlParams.has('code');
+      const hasError = urlParams.has('error');
+      
+      if (hasCode && !hasError) {
+        console.log("OAuth callback detected, processing...");
+        setGoogleLoading(true);
+        
+        try {
+          // Process the OAuth callback
+          const result = await lovable.auth.signInWithOAuth("google", {
+            redirect_uri: window.location.origin,
+          });
+          
+          console.log("OAuth callback result:", result);
+          
+          if (result.error) {
+            console.error("OAuth callback error:", result.error);
+            toast({
+              title: "Login failed",
+              description: result.error.message || "Could not complete Google login",
+              variant: "destructive",
+            });
+            // Clear URL params to avoid re-processing
+            window.history.replaceState({}, '', window.location.pathname);
+            setGoogleLoading(false);
+            return;
+          }
+          
+          // Wait for session to be established
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            toast({
+              title: "Welcome!",
+              description: "You have successfully logged in with Google.",
+            });
+            navigate("/home", { replace: true });
+          } else {
+            setGoogleLoading(false);
+          }
+        } catch (error: any) {
+          console.error("OAuth callback exception:", error);
+          toast({
+            title: "Login error",
+            description: error.message || "An unexpected error occurred",
+            variant: "destructive",
+          });
+          window.history.replaceState({}, '', window.location.pathname);
+          setGoogleLoading(false);
+        }
+        return;
+      }
+      
+      if (hasError) {
+        const errorDesc = urlParams.get('error_description') || 'Login was cancelled';
+        toast({
+          title: "Login cancelled",
+          description: errorDesc,
+          variant: "destructive",
+        });
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+      
+      // Check if user is already logged in
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         navigate("/home", { replace: true });
       }
     };
-    checkAuthAndRedirect();
+    
+    handleAuthCallback();
   }, [navigate]);
 
   const handleForgotPassword = async () => {
