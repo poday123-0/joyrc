@@ -73,6 +73,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsStaff(false);
     }
   };
+  // Ensure profile exists for user (especially for OAuth users)
+  const ensureProfileExists = async (userId: string, userMetadata: any) => {
+    try {
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        const fullName = userMetadata?.name || userMetadata?.full_name || "";
+        const avatarUrl = userMetadata?.avatar_url || userMetadata?.picture || "";
+        
+        await supabase.from("profiles").insert({
+          user_id: userId,
+          full_name: fullName,
+          avatar_url: avatarUrl,
+        });
+        console.log("Profile created for user:", userId);
+      }
+
+      // Also ensure user_roles entry exists
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!existingRole) {
+        await supabase.from("user_roles").insert({
+          user_id: userId,
+          role: "user",
+        });
+        console.log("User role created for user:", userId);
+      }
+    } catch (error) {
+      console.error("Error ensuring profile exists:", error);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -88,6 +127,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Ensure profile exists first
+          await ensureProfileExists(session.user.id, session.user.user_metadata);
           await checkAdminRole(session.user.id);
         }
       } catch (error) {
@@ -112,8 +153,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (session?.user) {
           // Use setTimeout to prevent potential deadlock with Supabase client
-          setTimeout(() => {
-            if (mounted) checkAdminRole(session.user.id);
+          setTimeout(async () => {
+            if (mounted) {
+              await ensureProfileExists(session.user.id, session.user.user_metadata);
+              await checkAdminRole(session.user.id);
+            }
           }, 0);
         } else {
           setIsAdmin(false);
