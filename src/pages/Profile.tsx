@@ -35,15 +35,36 @@ const Profile = () => {
     const fetchProfile = async () => {
       if (!user) return;
 
-      const { data, error } = await supabase
+      // Try to fetch the profile
+      let { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
+      // If no profile exists (e.g., trigger didn't fire for OAuth user), create one
+      if (!data && !error) {
+        const googleName = user.user_metadata?.name || user.user_metadata?.full_name || "";
+        const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+        
+        const { data: newProfile, error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: user.id,
+            full_name: googleName,
+            avatar_url: avatarUrl,
+          })
+          .select()
+          .single();
+
+        if (!insertError && newProfile) {
+          data = newProfile;
+        }
+      }
+
       if (data) {
         setProfile(data);
-        setFullName(data.full_name || "");
+        setFullName(data.full_name || user.user_metadata?.name || "");
       }
       setLoading(false);
     };
