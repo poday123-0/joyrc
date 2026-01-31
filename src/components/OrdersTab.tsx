@@ -3,6 +3,7 @@ import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Up
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Order {
   id: string;
@@ -50,17 +51,31 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [uploading, setUploading] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (user) {
+      fetchOrders();
+    }
+  }, [user, isAdmin]);
 
   const fetchOrders = async () => {
+    if (!user) return;
+    
     setLoading(true);
-    const { data, error } = await supabase
+    
+    // When viewing from Profile page (isAdmin=false), only show current user's orders
+    // When viewing from Admin dashboard (isAdmin=true), show all orders
+    let query = supabase
       .from("orders")
       .select("*")
       .order("created_at", { ascending: false });
+    
+    if (!isAdmin) {
+      query = query.eq("user_id", user.id);
+    }
+    
+    const { data, error } = await query;
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
