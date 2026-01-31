@@ -472,24 +472,44 @@ const StockManagementTab = () => {
         </div>
       </div>
 
-      {/* Alerts */}
+      {/* Stock Alerts */}
       {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {outOfStockProducts.length > 0 && (
-            <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
-              <p className="text-sm text-destructive">
-                {outOfStockProducts.length} product(s) out of stock: {outOfStockProducts.slice(0, 3).map(p => p.name).join(", ")}
-                {outOfStockProducts.length > 3 && ` and ${outOfStockProducts.length - 3} more`}
-              </p>
+            <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg font-bold text-destructive">{outOfStockProducts.length}</span>
+                    <span className="text-sm font-medium text-foreground">Out of Stock</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {outOfStockProducts.slice(0, 2).map(p => p.name).join(", ")}
+                    {outOfStockProducts.length > 2 && ` +${outOfStockProducts.length - 2} more`}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
           {lowStockProducts.length > 0 && (
-            <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              <p className="text-sm text-amber-600">
-                {lowStockProducts.length} product(s) with low stock (≤5 items)
-              </p>
+            <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg font-bold text-amber-600">{lowStockProducts.length}</span>
+                    <span className="text-sm font-medium text-foreground">Low Stock</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Products with ≤5 items remaining
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
