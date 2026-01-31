@@ -15,6 +15,8 @@ interface ProductCardProps {
     image?: string;
     image_url?: string;
     description?: string | null;
+    stock_quantity?: number;
+    in_stock?: boolean | null;
   };
   size?: "large" | "small";
   priority?: boolean;
@@ -24,6 +26,11 @@ const ProductCard = memo(({ product, size = "large", priority = false }: Product
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const imageSrc = product.image_url || product.image || "/placeholder.svg";
+  
+  // Check if product is out of stock
+  const isOutOfStock = product.stock_quantity !== undefined 
+    ? product.stock_quantity <= 0 
+    : product.in_stock === false;
 
   const handleClick = () => {
     setIsFlipped(!isFlipped);
@@ -61,11 +68,22 @@ const ProductCard = memo(({ product, size = "large", priority = false }: Product
               alt={product.name}
               priority={priority}
               fill
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 will-change-transform"
+              className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 will-change-transform ${
+                isOutOfStock ? "opacity-70 grayscale-[30%]" : ""
+              }`}
             />
             {/* Gradient overlay for text readability - only at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
           </div>
+
+          {/* Out of Stock Badge */}
+          {isOutOfStock && (
+            <div className="absolute top-3 right-3 z-10">
+              <span className="px-2.5 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded-full shadow-md">
+                Out of Stock
+              </span>
+            </div>
+          )}
 
           {/* Product name overlay at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-3 lg:p-4">

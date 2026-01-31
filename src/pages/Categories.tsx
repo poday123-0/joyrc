@@ -15,6 +15,7 @@ interface Product {
   category_id: string | null;
   rating: number | null;
   in_stock: boolean | null;
+  stock_quantity: number;
   category?: string;
   image?: string;
 }
@@ -78,6 +79,7 @@ const Categories = () => {
             category_id: null,
             rating: p.rating,
             in_stock: true,
+            stock_quantity: 10,
             category: p.category,
             image: p.image,
           }))

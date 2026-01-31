@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell
 } from "lucide-react";
 import {
   DndContext,
@@ -56,6 +56,7 @@ import StaffManagementTab from "@/components/StaffManagementTab";
 import StockManagementTab from "@/components/StockManagementTab";
 import SalesReportsTab from "@/components/SalesReportsTab";
 import TransactionsTab from "@/components/TransactionsTab";
+import PreordersTab from "@/components/PreordersTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -143,7 +144,7 @@ interface TabItem {
   icon: any;
 }
 
-type Tab = "dashboard" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "reports" | "bank" | "messages" | "support" | "admins" | "staff" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "preorders" | "reports" | "bank" | "messages" | "support" | "admins" | "staff" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
 const defaultTabs: TabItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -154,6 +155,7 @@ const defaultTabs: TabItem[] = [
   { id: "videos", label: "Videos", icon: Video },
   { id: "categories", label: "Categories", icon: Grid3X3 },
   { id: "orders", label: "Orders", icon: ShoppingCart },
+  { id: "preorders", label: "Pre-orders", icon: Bell },
   { id: "reports", label: "Reports", icon: BarChart3 },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "bank", label: "Bank", icon: Building2 },
@@ -175,7 +177,7 @@ const iconMap: Record<string, any> = {
   LayoutDashboard, Package, PackageSearch, CreditCard, Star, Video,
   Grid3X3, ShoppingCart, BarChart3, MessageSquare, Building2,
   HelpCircle, Users, UserCog, User, ImageIcon, FolderOpen,
-  HardDrive, Mail, Send, Settings,
+  HardDrive, Mail, Send, Settings, Bell,
 };
 
 // Sortable menu item component
@@ -536,6 +538,7 @@ const Admin = () => {
               />
             )}
             {activeTab === "orders" && <PaymentOrdersTab />}
+            {activeTab === "preorders" && <PreordersTab />}
             {activeTab === "reports" && <SalesReportsTab />}
             {activeTab === "messages" && <ContactMessagesTab />}
             {activeTab === "bank" && <BankSettingsTab />}

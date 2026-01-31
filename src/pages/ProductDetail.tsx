@@ -1,12 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ShoppingBag, Zap, Battery, Gauge, Radio, Box, ChevronLeft, ChevronRight, Clock, Ruler, Scale, Thermometer, Wifi, Camera, Star, LucideIcon } from "lucide-react";
+import { ShoppingBag, Zap, Battery, Gauge, Radio, Box, ChevronLeft, ChevronRight, Clock, Ruler, Scale, Thermometer, Wifi, Camera, Star, LucideIcon, AlertCircle, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
 interface Product {
   id: string;
   name: string;
@@ -15,6 +22,8 @@ interface Product {
   old_price: number | null;
   image_url: string | null;
   rating: number | null;
+  stock_quantity: number;
+  in_stock: boolean | null;
   category?: string;
 }
 interface ProductColor {
@@ -60,6 +69,7 @@ const ProductDetail = () => {
   const {
     addToCart
   } = useCart();
+  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +85,18 @@ const ProductDetail = () => {
   const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartRef = useRef<number | null>(null);
   const touchEndRef = useRef<number | null>(null);
+  
+  // Pre-order state
+  const [showPreorderDialog, setShowPreorderDialog] = useState(false);
+  const [preorderName, setPreorderName] = useState("");
+  const [preorderPhone, setPreorderPhone] = useState("");
+  const [preorderEmail, setPreorderEmail] = useState("");
+  const [preorderNotes, setPreorderNotes] = useState("");
+  const [preorderQuantity, setPreorderQuantity] = useState(1);
+  const [submittingPreorder, setSubmittingPreorder] = useState(false);
+
+  // Check if product is out of stock
+  const isOutOfStock = product ? product.stock_quantity <= 0 : false;
 
   // Get all images for a specific color (including all entries with same hex)
   const getImagesForColor = useCallback((colorId: string): string[] => {
@@ -264,6 +286,10 @@ const ProductDetail = () => {
   }, [id]);
   const handleAddToCart = () => {
     if (product) {
+      if (isOutOfStock) {
+        setShowPreorderDialog(true);
+        return;
+      }
       const imageSrc = galleryImages[0] || product.image_url || "";
       addToCart({
         id: product.id,
@@ -275,6 +301,75 @@ const ProductDetail = () => {
         title: "Added to Cart",
         description: `${product.name} has been added to your cart.`
       });
+    }
+  };
+
+  const handlePreorderSubmit = async () => {
+    if (!product) return;
+    if (!preorderName.trim() || !preorderPhone.trim()) {
+      toast({
+        title: "Required Fields",
+        description: "Please enter your name and phone number.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSubmittingPreorder(true);
+    try {
+      // Insert preorder request
+      const { error: preorderError } = await supabase
+        .from("preorders")
+        .insert({
+          product_id: product.id,
+          user_id: user?.id || null,
+          customer_name: preorderName,
+          customer_email: preorderEmail || null,
+          customer_phone: preorderPhone,
+          quantity: preorderQuantity,
+          notes: preorderNotes || null,
+          status: "pending"
+        });
+
+      if (preorderError) throw preorderError;
+
+      // Send email notification to admin
+      await supabase.functions.invoke("send-email", {
+        body: {
+          type: "admin_notification",
+          template_key: "preorder_notification",
+          variables: {
+            product_name: product.name,
+            product_price: formatMVR(product.price),
+            customer_name: preorderName,
+            customer_phone: preorderPhone,
+            customer_email: preorderEmail || "Not provided",
+            quantity: String(preorderQuantity),
+            notes: preorderNotes || "None"
+          }
+        }
+      });
+
+      toast({
+        title: "Pre-order Submitted!",
+        description: "We'll notify you when this product is back in stock."
+      });
+
+      setShowPreorderDialog(false);
+      setPreorderName("");
+      setPreorderPhone("");
+      setPreorderEmail("");
+      setPreorderNotes("");
+      setPreorderQuantity(1);
+    } catch (error: any) {
+      console.error("Error submitting preorder:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit pre-order. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmittingPreorder(false);
     }
   };
   if (loading) {
@@ -381,9 +476,17 @@ const ProductDetail = () => {
 
               {/* Price, Product Name and Add to Cart */}
               <div className="text-center lg:text-left space-y-3">
+                {/* Stock Status */}
+                {isOutOfStock && (
+                  <div className="flex items-center justify-center lg:justify-start gap-2 text-destructive">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">Out of Stock</span>
+                  </div>
+                )}
+
                 {/* Price */}
                 <div className="flex items-center justify-center lg:justify-start gap-3">
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className={`text-2xl font-bold ${isOutOfStock ? "text-muted-foreground" : "text-foreground"}`}>
                     {formatMVR(product.price)}
                   </p>
                   {product.old_price && product.old_price > product.price && <p className="text-lg text-muted-foreground line-through">
@@ -396,10 +499,23 @@ const ProductDetail = () => {
                   <h1 className="text-xl font-bold text-foreground">{product.name}</h1>
                 </div>
                 
-                {/* Add to Cart */}
-                <button onClick={handleAddToCart} className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all">
-                  Add to Cart
-                </button>
+                {/* Add to Cart or Pre-order */}
+                {isOutOfStock ? (
+                  <button 
+                    onClick={() => setShowPreorderDialog(true)} 
+                    className="w-full py-3.5 rounded-full bg-secondary text-secondary-foreground font-medium text-base hover:bg-secondary/90 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Bell className="w-4 h-4" />
+                    Request Pre-order
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleAddToCart} 
+                    className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium text-base hover:bg-primary/90 transition-all"
+                  >
+                    Add to Cart
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -485,6 +601,101 @@ const ProductDetail = () => {
             </div>
           </div>}
       </div>
+
+      {/* Pre-order Dialog */}
+      <Dialog open={showPreorderDialog} onOpenChange={setShowPreorderDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              Request Pre-order
+            </DialogTitle>
+            <DialogDescription>
+              This product is currently out of stock. Submit your details and we'll notify you when it's available.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="preorder-name">Name *</Label>
+              <Input
+                id="preorder-name"
+                placeholder="Your full name"
+                value={preorderName}
+                onChange={(e) => setPreorderName(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="preorder-phone">Phone Number *</Label>
+              <Input
+                id="preorder-phone"
+                placeholder="Your phone number"
+                value={preorderPhone}
+                onChange={(e) => setPreorderPhone(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="preorder-email">Email (optional)</Label>
+              <Input
+                id="preorder-email"
+                type="email"
+                placeholder="Your email address"
+                value={preorderEmail}
+                onChange={(e) => setPreorderEmail(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="preorder-quantity">Quantity</Label>
+              <Input
+                id="preorder-quantity"
+                type="number"
+                min="1"
+                value={preorderQuantity}
+                onChange={(e) => setPreorderQuantity(parseInt(e.target.value) || 1)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="preorder-notes">Notes (optional)</Label>
+              <Textarea
+                id="preorder-notes"
+                placeholder="Any special requests or notes"
+                value={preorderNotes}
+                onChange={(e) => setPreorderNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+            
+            {/* Product Summary */}
+            <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+              <p className="text-sm font-medium text-foreground">{product?.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {formatMVR(product?.price || 0)} × {preorderQuantity} = {formatMVR((product?.price || 0) * preorderQuantity)}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowPreorderDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handlePreorderSubmit}
+              disabled={submittingPreorder}
+            >
+              {submittingPreorder ? "Submitting..." : "Submit Pre-order"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BottomNavigation />
     </div>;
