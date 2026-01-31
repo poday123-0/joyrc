@@ -213,19 +213,25 @@ const VideoShowcase = () => {
 
   // Progress tracking for regular videos
   useEffect(() => {
-    if (isCurrentYoutube || !videoRef.current) return;
+    if (isCurrentYoutube) return;
 
-    const video = videoRef.current;
     const handleTimeUpdate = () => {
-      if (video.duration) {
-        setProgress((video.currentTime / video.duration) * 100);
+      const video = videoRef.current;
+      if (video && video.duration && !isNaN(video.duration)) {
+        const currentProgress = (video.currentTime / video.duration) * 100;
+        setProgress(currentProgress);
       }
     };
 
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+    // Use interval for more reliable progress updates
+    const progressInterval = setInterval(() => {
+      handleTimeUpdate();
+    }, 100);
 
-  }, [isCurrentYoutube, currentIndex]);
+    return () => {
+      clearInterval(progressInterval);
+    };
+  }, [isCurrentYoutube, currentIndex, videoReady]);
 
   const goToVideo = useCallback((index: number) => {
     if (index === currentIndex) return;
