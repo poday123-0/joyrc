@@ -55,7 +55,8 @@ const Login = () => {
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
-        if (event === 'SIGNED_IN' && session?.user) {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
+          setGoogleLoading(false);
           toast({
             title: "Welcome!",
             description: `Logged in as ${session.user.email}`,
@@ -88,7 +89,6 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      // Use the current page origin for redirect
       const currentOrigin = window.location.origin;
       console.log("Starting Google OAuth with redirect_uri:", currentOrigin);
       
@@ -114,19 +114,24 @@ const Login = () => {
         return;
       }
       
-      // If we get here, login was successful (returned from OAuth with tokens)
-      // Wait a moment for the session to be set
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // OAuth was successful - the onAuthStateChange listener should handle navigation
+      // But let's also manually check and navigate as a fallback
+      console.log("OAuth successful, checking session...");
       
-      // Verify the session was actually set
+      // Give time for the session to be set
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Session after OAuth:", session?.user?.email);
+      
       if (session?.user) {
         toast({
           title: "Welcome!",
-          description: "You have successfully logged in with Google.",
+          description: `Logged in as ${session.user.email}`,
         });
         navigate("/home", { replace: true });
       } else {
+        console.error("No session found after OAuth");
         toast({
           title: "Login incomplete",
           description: "Please try again",
