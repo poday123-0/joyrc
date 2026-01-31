@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_menu_order: {
+        Row: {
+          created_at: string
+          id: string
+          menu_items: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_items?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_items?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bank_settings: {
         Row: {
           account_name: string
