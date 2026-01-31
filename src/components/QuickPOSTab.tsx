@@ -185,13 +185,12 @@ const QuickPOSTab = () => {
 
       if (error) throw error;
 
-      // Filter customers by search query
+      // Filter customers by search query (name and mobile only)
       const queryLower = query.toLowerCase();
       const filteredCustomers = (customerData?.customers || [])
         .filter((c: any) => 
           c.full_name?.toLowerCase().includes(queryLower) ||
-          c.mobile_number?.toLowerCase().includes(queryLower) ||
-          c.email?.toLowerCase().includes(queryLower)
+          c.mobile_number?.toLowerCase().includes(queryLower)
         )
         .slice(0, 10)
         .map((c: any) => ({
@@ -461,7 +460,103 @@ const QuickPOSTab = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 h-full">
         {/* Products Panel */}
         <div className="lg:col-span-2 flex flex-col bg-card border border-border rounded-xl overflow-hidden">
-          <div className="p-3 border-b border-border bg-muted/30">
+          <div className="p-3 border-b border-border bg-muted/30 space-y-3">
+            {/* Customer Search Section - Above product search */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium text-foreground">Customer</span>
+                {selectedCustomerId && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-full flex items-center gap-1">
+                    <Check className="w-2.5 h-2.5" />
+                    Selected
+                  </span>
+                )}
+              </div>
+              
+              <div className="relative">
+                <UserSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search customer by name or phone..."
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    if (selectedCustomerId) {
+                      clearSelectedCustomer();
+                    }
+                  }}
+                  className="pl-9 h-9 text-sm pr-9"
+                />
+                {searchingCustomers && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                {selectedCustomerId && (
+                  <button
+                    onClick={clearSelectedCustomer}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-muted rounded"
+                  >
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                )}
+                
+                {/* Customer Search Results Dropdown */}
+                {showCustomerDropdown && customerResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+                    {customerResults.map((customer) => (
+                      <button
+                        key={customer.user_id}
+                        onClick={() => selectCustomer(customer)}
+                        className="w-full px-3 py-2.5 text-left hover:bg-muted flex items-center gap-2 border-b border-border last:border-0"
+                      >
+                        <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">{customer.full_name || "No name"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{customer.mobile_number || "No phone"}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Manual Customer Entry (when no customer selected) */}
+              {!selectedCustomerId && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Customer name"
+                      value={customerDetails.name}
+                      onChange={(e) => setCustomerDetails({ ...customerDetails, name: e.target.value })}
+                      className="pl-9 h-9 text-sm"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Phone number"
+                      value={customerDetails.phone}
+                      onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+                      className="pl-9 h-9 text-sm"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Email (creates account)"
+                      value={customerDetails.email}
+                      onChange={(e) => setCustomerDetails({ ...customerDetails, email: e.target.value })}
+                      className="pl-9 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Product Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -613,7 +708,7 @@ const QuickPOSTab = () => {
               ))
             )}
 
-            {/* Customer & Delivery Details */}
+            {/* Delivery Details */}
             {cart.length > 0 && (
               <div className="pt-2 border-t border-border space-y-2">
                 <div className="flex items-center justify-between">
@@ -623,96 +718,14 @@ const QuickPOSTab = () => {
                   </div>
                   <Switch checked={isDelivery} onCheckedChange={setIsDelivery} />
                 </div>
-                
-                {/* Customer Search */}
-                <div className="relative">
-                  <UserSearch className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Search existing customer (name/phone)..."
-                    value={customerSearch}
-                    onChange={(e) => {
-                      setCustomerSearch(e.target.value);
-                      if (selectedCustomerId) {
-                        clearSelectedCustomer();
-                      }
-                    }}
-                    className="pl-8 h-8 text-xs pr-8"
-                  />
-                  {searchingCustomers && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                      <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
-                  {selectedCustomerId && (
-                    <button
-                      onClick={clearSelectedCustomer}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-muted rounded"
-                    >
-                      <X className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                  )}
-                  
-                  {/* Search Results Dropdown */}
-                  {showCustomerDropdown && customerResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
-                      {customerResults.map((customer) => (
-                        <button
-                          key={customer.user_id}
-                          onClick={() => selectCustomer(customer)}
-                          className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 border-b border-border last:border-0"
-                        >
-                          <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-foreground truncate">{customer.full_name || "No name"}</p>
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {customer.mobile_number || "No phone"} {customer.email && `• ${customer.email}`}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
-                {/* Selected customer indicator */}
-                {selectedCustomerId && (
-                  <div className="flex items-center gap-2 px-2 py-1.5 bg-primary/10 rounded-lg">
-                    <Check className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-xs text-primary font-medium">Existing customer selected</span>
-                  </div>
-                )}
-                
-                {/* Manual entry fields (shown when no customer selected) */}
-                {!selectedCustomerId && (
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <User className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
-                        placeholder="Customer name"
-                        value={customerDetails.name}
-                        onChange={(e) => setCustomerDetails({ ...customerDetails, name: e.target.value })}
-                        className="pl-8 h-8 text-xs"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Phone className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
-                        placeholder="Phone number"
-                        value={customerDetails.phone}
-                        onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-                        className="pl-8 h-8 text-xs"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Mail className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="Email (creates customer account)"
-                        value={customerDetails.email}
-                        onChange={(e) => setCustomerDetails({ ...customerDetails, email: e.target.value })}
-                        className="pl-8 h-8 text-xs"
-                      />
-                    </div>
+                {/* Show customer summary if selected */}
+                {(selectedCustomerId || customerDetails.name) && (
+                  <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/50 rounded-lg">
+                    <User className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs text-foreground truncate">
+                      {customerDetails.name || "Customer"} {customerDetails.phone && `• ${customerDetails.phone}`}
+                    </span>
                   </div>
                 )}
 
