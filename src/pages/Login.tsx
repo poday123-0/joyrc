@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Check, User as UserIcon, ArrowLeft, Phone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -196,7 +197,7 @@ const Login = () => {
           navigate("/");
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        const { error, user } = await signUp(email, password, fullName);
         if (error) {
           toast({
             title: "Sign up failed",
@@ -204,6 +205,13 @@ const Login = () => {
             variant: "destructive",
           });
         } else {
+          // Save mobile number to profile after signup
+          if (user && mobileNumber) {
+            await supabase
+              .from("profiles")
+              .update({ mobile_number: mobileNumber })
+              .eq("user_id", user.id);
+          }
           toast({
             title: "Account created!",
             description: "Welcome to RC Joy!",
@@ -312,20 +320,36 @@ const Login = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
-            <div>
-              <label className="text-sm text-muted-foreground">Full Name</label>
-              <div className="mt-1 relative">
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Your full name"
-                className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
-                required={!isLogin}
-              />
-                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <>
+              <div>
+                <label className="text-sm text-muted-foreground">Full Name</label>
+                <div className="mt-1 relative">
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
+                    required={!isLogin}
+                  />
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
               </div>
-            </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Mobile Number</label>
+                <div className="mt-1 relative">
+                  <input
+                    type="tel"
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    placeholder="Your mobile number"
+                    className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
+                    required={!isLogin}
+                  />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
+            </>
           )}
 
           <div>

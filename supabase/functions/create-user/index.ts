@@ -59,7 +59,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { email, full_name, password = "123456", make_admin = false } = await req.json();
+    const { email, full_name, password = "123456", make_admin = false, mobile_number } = await req.json();
 
     if (!email) {
       return new Response(
@@ -119,6 +119,14 @@ serve(async (req) => {
         JSON.stringify({ error: createError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Update profile with mobile_number if provided
+    if (mobile_number && newUser.user) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ mobile_number })
+        .eq("user_id", newUser.user.id);
     }
 
     // If make_admin is true, add admin role
