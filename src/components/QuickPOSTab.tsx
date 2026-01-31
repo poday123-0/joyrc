@@ -557,49 +557,55 @@ const QuickPOSTab = () => {
               cart.map(item => (
                 <div
                   key={`${item.product.id}-${item.selectedColor?.id || 'default'}`}
-                  className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg"
+                  className="flex gap-2 p-2 bg-muted/50 rounded-lg"
                 >
-                  <div className="w-10 h-10 rounded-md bg-background overflow-hidden flex-shrink-0">
+                  {/* Product Image */}
+                  <div className="w-14 h-14 rounded-md bg-background overflow-hidden flex-shrink-0">
                     {item.selectedColor?.image_url || item.product.image_url ? (
                       <img src={item.selectedColor?.image_url || item.product.image_url || ''} alt={item.product.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-4 h-4 text-muted-foreground" />
+                        <Package className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}
                   </div>
 
+                  {/* Product Details */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{item.product.name}</p>
+                    <p className="text-xs font-medium text-foreground leading-tight">{item.product.name}</p>
                     {item.selectedColor && (
-                      <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex items-center gap-1 mt-1">
                         <div className="w-2.5 h-2.5 rounded-full border border-border" style={{ backgroundColor: item.selectedColor.color_hex }} />
                         <span className="text-[10px] text-muted-foreground">{item.selectedColor.color_name}</span>
                       </div>
                     )}
+                    
+                    {/* Price and Controls Row */}
+                    <div className="flex items-center justify-between mt-1.5">
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
+                          className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
+                          className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                      
+                      <p className="text-xs font-semibold text-foreground">{formatMVR(item.product.price * item.quantity)}</p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-0.5">
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
-                      className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
-                      className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  <p className="text-xs font-semibold text-foreground w-14 text-right">{formatMVR(item.product.price * item.quantity)}</p>
-
+                  {/* Delete Button */}
                   <button
                     onClick={() => removeFromCart(item.product.id, item.selectedColor?.id || null)}
-                    className="w-6 h-6 rounded bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                    className="w-6 h-6 rounded bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 flex-shrink-0 self-start"
                   >
                     <Trash2 className="w-3 h-3 text-destructive" />
                   </button>
