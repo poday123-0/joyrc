@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Transaction {
   id: string;
@@ -26,6 +27,7 @@ interface Transaction {
 }
 
 const TransactionsTab = () => {
+  const { isSuperAdmin } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -400,12 +402,14 @@ const TransactionsTab = () => {
                       >
                         <Edit2 className="w-4 h-4 text-muted-foreground" />
                       </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(tx.id); }}
-                        className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </button>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteClick(tx.id); }}
+                          className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
