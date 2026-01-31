@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   TrendingUp, TrendingDown, Package, ShoppingCart, 
   DollarSign, Users, Plus, X, Trash2, Edit2, CheckCircle2,
-  ArrowUpRight, ArrowDownRight, Calendar, PieChart, Wallet, ChevronDown
+  ArrowUpRight, ArrowDownRight, Calendar, PieChart, Wallet, ChevronDown, Search
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -102,7 +102,12 @@ const AdminDashboard = () => {
     selling_price: number;
     total_cost: number;
     total_selling: number;
+    category_id: string | null;
+    category_name: string;
   }>>([]);
+  const [stockSearchQuery, setStockSearchQuery] = useState("");
+  const [stockCategoryFilter, setStockCategoryFilter] = useState("all");
+  const [stockCategories, setStockCategories] = useState<Array<{ id: string; name: string }>>([]);
 
   // Check if user is a full admin (admin role) vs staff with permissions
   useEffect(() => {
@@ -362,13 +367,19 @@ const AdminDashboard = () => {
 
   // Fetch stock details for dialog
   const fetchStockDetails = async () => {
-    const [productsRes, stockHistoryRes] = await Promise.all([
-      supabase.from("products").select("id, name, stock_quantity, price"),
-      supabase.from("stock_history").select("product_id, unit_purchase_price").eq("change_type", "restock")
+    const [productsRes, stockHistoryRes, categoriesRes] = await Promise.all([
+      supabase.from("products").select("id, name, stock_quantity, price, category_id"),
+      supabase.from("stock_history").select("product_id, unit_purchase_price").eq("change_type", "restock"),
+      supabase.from("categories").select("id, name").order("name")
     ]);
 
     const products = productsRes.data || [];
     const stockHistory = stockHistoryRes.data || [];
+    const categories = categoriesRes.data || [];
+
+    // Build category map
+    const categoryMap = new Map<string, string>();
+    categories.forEach(c => categoryMap.set(c.id, c.name));
 
     // Build cost price map (latest cost per product)
     const productCostMap = new Map<string, number>();
@@ -392,11 +403,16 @@ const AdminDashboard = () => {
           selling_price: sellingPrice,
           total_cost: stockQty * costPrice,
           total_selling: stockQty * sellingPrice,
+          category_id: p.category_id,
+          category_name: p.category_id ? categoryMap.get(p.category_id) || "Uncategorized" : "Uncategorized",
         };
       })
       .sort((a, b) => b.total_selling - a.total_selling);
 
     setStockDetails(details);
+    setStockCategories(categories);
+    setStockSearchQuery("");
+    setStockCategoryFilter("all");
     setShowStockDetails(true);
   };
 
@@ -916,138 +932,176 @@ const AdminDashboard = () => {
             </DialogTitle>
           </DialogHeader>
           
-          {/* Summary Cards - Stack on mobile */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <div className="p-2 sm:p-3 rounded-xl bg-muted/30 text-center">
-              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Total Cost</p>
-              <p className="text-sm sm:text-lg font-bold text-foreground">
-                {formatMVR(stockDetails.reduce((sum, p) => sum + p.total_cost, 0))}
-              </p>
+          {/* Search and Filter */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={stockSearchQuery}
+                onChange={(e) => setStockSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-sm bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
             </div>
-            <div className="p-2 sm:p-3 rounded-xl bg-primary/10 text-center">
-              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Total Selling</p>
-              <p className="text-sm sm:text-lg font-bold text-primary">
-                {formatMVR(stockDetails.reduce((sum, p) => sum + p.total_selling, 0))}
-              </p>
-            </div>
-            <div className="p-2 sm:p-3 rounded-xl bg-emerald-500/10 text-center">
-              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Profit</p>
-              <p className="text-sm sm:text-lg font-bold text-emerald-600">
-                {formatMVR(stockDetails.reduce((sum, p) => sum + (p.total_selling - p.total_cost), 0))}
-              </p>
-            </div>
+            <select
+              value={stockCategoryFilter}
+              onChange={(e) => setStockCategoryFilter(e.target.value)}
+              className="px-3 py-2 text-sm bg-muted/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="all">All Categories</option>
+              {stockCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Two Tables - Stack on mobile */}
-          <ScrollArea className="h-[calc(100vh-350px)] sm:h-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-              {/* Cost Price Table */}
-              <div className="space-y-2">
-                <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-2">
-                  <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-                  Cost Price
-                </h3>
-                <div className="rounded-lg border border-border overflow-hidden">
-                  <div className="max-h-[200px] sm:max-h-[280px] overflow-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead className="font-semibold text-xs sm:text-sm py-2">Product</TableHead>
-                          <TableHead className="text-center font-semibold text-xs sm:text-sm py-2 w-12 sm:w-16">Qty</TableHead>
-                          <TableHead className="text-right font-semibold text-xs sm:text-sm py-2 hidden sm:table-cell">Unit</TableHead>
-                          <TableHead className="text-right font-semibold text-xs sm:text-sm py-2">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stockDetails.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground text-xs sm:text-sm">
-                              No products
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          stockDetails.map((product) => (
-                            <TableRow key={`cost-${product.id}`} className="hover:bg-muted/20">
-                              <TableCell className="font-medium max-w-[100px] sm:max-w-[150px] truncate text-xs sm:text-sm py-2" title={product.name}>
-                                {product.name}
-                              </TableCell>
-                              <TableCell className="text-center text-xs sm:text-sm py-2">{product.stock_quantity}</TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm text-muted-foreground py-2 hidden sm:table-cell">
-                                {product.cost_price > 0 ? formatMVR(product.cost_price) : "-"}
-                              </TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm font-medium py-2">
-                                {product.total_cost > 0 ? formatMVR(product.total_cost) : "-"}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+          {/* Summary Cards */}
+          {(() => {
+            const filteredDetails = stockDetails.filter(p => {
+              const matchesSearch = p.name.toLowerCase().includes(stockSearchQuery.toLowerCase());
+              const matchesCategory = stockCategoryFilter === "all" || p.category_id === stockCategoryFilter;
+              return matchesSearch && matchesCategory;
+            });
+            
+            return (
+              <>
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
+                  <div className="p-2 sm:p-3 rounded-xl bg-muted/30 text-center">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Total Cost</p>
+                    <p className="text-sm sm:text-lg font-bold text-foreground">
+                      {formatMVR(filteredDetails.reduce((sum, p) => sum + p.total_cost, 0))}
+                    </p>
+                  </div>
+                  <div className="p-2 sm:p-3 rounded-xl bg-primary/10 text-center">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Total Selling</p>
+                    <p className="text-sm sm:text-lg font-bold text-primary">
+                      {formatMVR(filteredDetails.reduce((sum, p) => sum + p.total_selling, 0))}
+                    </p>
+                  </div>
+                  <div className="p-2 sm:p-3 rounded-xl bg-accent/10 text-center">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Profit</p>
+                    <p className="text-sm sm:text-lg font-bold text-accent">
+                      {formatMVR(filteredDetails.reduce((sum, p) => sum + (p.total_selling - p.total_cost), 0))}
+                    </p>
                   </div>
                 </div>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-muted/20 text-center">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    Total: <span className="font-semibold text-foreground">{formatMVR(stockDetails.reduce((sum, p) => sum + p.total_cost, 0))}</span>
-                  </p>
-                </div>
-              </div>
 
-              {/* Selling Price Table */}
-              <div className="space-y-2">
-                <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-2">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-                  Selling Price
-                </h3>
-                <div className="rounded-lg border border-border overflow-hidden">
-                  <div className="max-h-[200px] sm:max-h-[280px] overflow-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-primary/5">
-                          <TableHead className="font-semibold text-xs sm:text-sm py-2">Product</TableHead>
-                          <TableHead className="text-center font-semibold text-xs sm:text-sm py-2 w-12 sm:w-16">Qty</TableHead>
-                          <TableHead className="text-right font-semibold text-xs sm:text-sm py-2 hidden sm:table-cell">Unit</TableHead>
-                          <TableHead className="text-right font-semibold text-xs sm:text-sm py-2">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stockDetails.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground text-xs sm:text-sm">
-                              No products
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          stockDetails.map((product) => (
-                            <TableRow key={`sell-${product.id}`} className="hover:bg-muted/20">
-                              <TableCell className="font-medium max-w-[100px] sm:max-w-[150px] truncate text-xs sm:text-sm py-2" title={product.name}>
-                                {product.name}
-                              </TableCell>
-                              <TableCell className="text-center text-xs sm:text-sm py-2">{product.stock_quantity}</TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm py-2 hidden sm:table-cell">
-                                {formatMVR(product.selling_price)}
-                              </TableCell>
-                              <TableCell className="text-right text-xs sm:text-sm font-medium text-primary py-2">
-                                {formatMVR(product.total_selling)}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                {/* Two Tables */}
+                <ScrollArea className="h-[calc(100vh-420px)] sm:h-auto">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                    {/* Cost Price Table */}
+                    <div className="space-y-2">
+                      <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-2">
+                        <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                        Cost Price
+                      </h3>
+                      <div className="rounded-lg border border-border overflow-hidden">
+                        <div className="max-h-[180px] sm:max-h-[250px] overflow-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-muted/30">
+                                <TableHead className="font-semibold text-xs py-2">Product</TableHead>
+                                <TableHead className="text-center font-semibold text-xs py-2 w-10">Qty</TableHead>
+                                <TableHead className="text-right font-semibold text-xs py-2">Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredDetails.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={3} className="text-center py-4 text-muted-foreground text-xs">
+                                    No products found
+                                  </TableCell>
+                                </TableRow>
+                              ) : (
+                                filteredDetails.map((product) => (
+                                  <TableRow key={`cost-${product.id}`} className="hover:bg-muted/20">
+                                    <TableCell className="py-2 pr-1">
+                                      <div className="text-xs font-medium text-foreground leading-tight">
+                                        {product.name}
+                                      </div>
+                                      <div className="text-[10px] text-muted-foreground">
+                                        {product.cost_price > 0 ? `${formatMVR(product.cost_price)}/unit` : "No cost"}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-center text-xs py-2">{product.stock_quantity}</TableCell>
+                                    <TableCell className="text-right text-xs font-medium py-2">
+                                      {product.total_cost > 0 ? formatMVR(product.total_cost) : "-"}
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-muted/20 text-center">
+                        <p className="text-[10px] text-muted-foreground">
+                          Total: <span className="font-semibold text-foreground">{formatMVR(filteredDetails.reduce((sum, p) => sum + p.total_cost, 0))}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Selling Price Table */}
+                    <div className="space-y-2">
+                      <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-2">
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                        Selling Price
+                      </h3>
+                      <div className="rounded-lg border border-border overflow-hidden">
+                        <div className="max-h-[180px] sm:max-h-[250px] overflow-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-primary/5">
+                                <TableHead className="font-semibold text-xs py-2">Product</TableHead>
+                                <TableHead className="text-center font-semibold text-xs py-2 w-10">Qty</TableHead>
+                                <TableHead className="text-right font-semibold text-xs py-2">Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredDetails.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={3} className="text-center py-4 text-muted-foreground text-xs">
+                                    No products found
+                                  </TableCell>
+                                </TableRow>
+                              ) : (
+                                filteredDetails.map((product) => (
+                                  <TableRow key={`sell-${product.id}`} className="hover:bg-muted/20">
+                                    <TableCell className="py-2 pr-1">
+                                      <div className="text-xs font-medium text-foreground leading-tight">
+                                        {product.name}
+                                      </div>
+                                      <div className="text-[10px] text-muted-foreground">
+                                        {formatMVR(product.selling_price)}/unit
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-center text-xs py-2">{product.stock_quantity}</TableCell>
+                                    <TableCell className="text-right text-xs font-medium text-primary py-2">
+                                      {formatMVR(product.total_selling)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-primary/10 text-center">
+                        <p className="text-[10px] text-muted-foreground">
+                          Total: <span className="font-semibold text-primary">{formatMVR(filteredDetails.reduce((sum, p) => sum + p.total_selling, 0))}</span>
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-center">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    Total: <span className="font-semibold text-primary">{formatMVR(stockDetails.reduce((sum, p) => sum + p.total_selling, 0))}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-          
-          <p className="text-[10px] sm:text-xs text-muted-foreground text-center mt-1 sm:mt-2">
-            {stockDetails.length} products with stock
-          </p>
+                </ScrollArea>
+                
+                <p className="text-[10px] text-muted-foreground text-center mt-1">
+                  {filteredDetails.length} of {stockDetails.length} products
+                </p>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
