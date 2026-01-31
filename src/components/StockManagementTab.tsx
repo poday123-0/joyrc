@@ -340,6 +340,14 @@ const StockManagementTab = () => {
         return;
       }
 
+      // Reset all product stock quantities to 0
+      const { error: resetError } = await supabase
+        .from("products")
+        .update({ stock_quantity: 0, in_stock: false })
+        .neq("id", "00000000-0000-0000-0000-000000000000"); // Update all rows
+
+      if (resetError) throw resetError;
+
       // Delete all stock history
       const { error: deleteError } = await supabase
         .from("stock_history")
@@ -349,17 +357,18 @@ const StockManagementTab = () => {
       if (deleteError) throw deleteError;
 
       toast({
-        title: "History Cleared",
-        description: "All stock history has been deleted.",
+        title: "Stock & History Cleared",
+        description: "All stock quantities reset to 0 and history deleted.",
       });
 
       setShowClearDialog(false);
       setClearPassword("");
       setStockHistory([]);
+      fetchProducts(); // Refresh to show updated quantities
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to clear history",
+        description: error.message || "Failed to clear stock and history",
         variant: "destructive",
       });
     }
