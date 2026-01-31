@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical
 } from "lucide-react";
 import {
   Select,
@@ -650,6 +650,58 @@ const ProductsTab = ({
     }
   };
 
+  // Drag reordering state for specifications
+  const [draggingSpecIndex, setDraggingSpecIndex] = useState<number | null>(null);
+  const [dragOverSpecIndex, setDragOverSpecIndex] = useState<number | null>(null);
+
+  const handleSpecDragStart = (e: React.DragEvent, index: number) => {
+    setDraggingSpecIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleSpecDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggingSpecIndex !== null && draggingSpecIndex !== index) {
+      setDragOverSpecIndex(index);
+    }
+  };
+
+  const handleSpecDragEnd = async () => {
+    if (draggingSpecIndex === null || dragOverSpecIndex === null || draggingSpecIndex === dragOverSpecIndex) {
+      setDraggingSpecIndex(null);
+      setDragOverSpecIndex(null);
+      return;
+    }
+
+    // Reorder locally first
+    const newSpecs = [...specifications];
+    const [movedSpec] = newSpecs.splice(draggingSpecIndex, 1);
+    newSpecs.splice(dragOverSpecIndex, 0, movedSpec);
+
+    // Update sort_order values
+    const updatedSpecs = newSpecs.map((spec, idx) => ({
+      ...spec,
+      sort_order: idx
+    }));
+
+    setSpecifications(updatedSpecs);
+    setDraggingSpecIndex(null);
+    setDragOverSpecIndex(null);
+
+    // Save new order to database
+    for (let i = 0; i < updatedSpecs.length; i++) {
+      await supabase
+        .from("product_specifications")
+        .update({ sort_order: i })
+        .eq("id", updatedSpecs[i].id);
+    }
+
+    toast({
+      title: "Order Updated",
+      description: "Specification order has been saved.",
+    });
+  };
+
   const handleGalleryUpload = async (files: FileList | null, is360: boolean = false) => {
     if (!files || !editingProduct) return;
     
@@ -1004,10 +1056,12 @@ const ProductsTab = ({
                 ) : (
                   <>
                     <div className="grid gap-2 mb-3 md:grid-cols-1">
-                      {specifications.map((spec) => {
+                      {specifications.map((spec, index) => {
                         const isEditing = editingSpec?.id === spec.id;
                         const iconOption = specIconOptions.find(o => o.value === (isEditing ? editingSpec.icon : spec.icon)) || specIconOptions.find(o => o.value === "box");
                         const IconComponent = iconOption?.Icon || Box;
+                        const isDragging = draggingSpecIndex === index;
+                        const isDragOver = dragOverSpecIndex === index;
                         
                         if (isEditing) {
                           return (
@@ -1071,8 +1125,18 @@ const ProductsTab = ({
                         }
                         
                         return (
-                          <div key={spec.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                            <IconComponent className="w-4 h-4 text-primary" />
+                          <div 
+                            key={spec.id} 
+                            draggable
+                            onDragStart={(e) => handleSpecDragStart(e, index)}
+                            onDragOver={(e) => handleSpecDragOver(e, index)}
+                            onDragEnd={handleSpecDragEnd}
+                            className={`flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 cursor-grab active:cursor-grabbing transition-all ${
+                              isDragging ? 'opacity-50 scale-95' : ''
+                            } ${isDragOver ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                          >
+                            <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            <IconComponent className="w-4 h-4 text-primary flex-shrink-0" />
                             <span className="font-medium text-sm flex-1">{spec.spec_name}</span>
                             <span className="text-sm text-muted-foreground flex-1">{spec.spec_value}</span>
                             <button
