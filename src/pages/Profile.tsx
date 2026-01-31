@@ -28,7 +28,7 @@ const Profile = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages" | "send-message">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages">("profile");
   const [messagesKey, setMessagesKey] = useState(0);
 
   useEffect(() => {
@@ -184,16 +184,14 @@ const Profile = () => {
               <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
                 <OrdersTab />
               </div>
-            ) : activeTab === "send-message" && !isAdmin ? (
-              <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                <SendMessageTab onMessageSent={() => {
-                  setMessagesKey(prev => prev + 1);
-                  setActiveTab("messages");
-                }} />
-              </div>
             ) : activeTab === "messages" && !isAdmin ? (
-              <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                <CustomerMessagesTab key={messagesKey} />
+              <div className="space-y-6">
+                <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                  <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
+                </div>
+                <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                  <CustomerMessagesTab key={messagesKey} />
+                </div>
               </div>
             ) : null}
           </div>
