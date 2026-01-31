@@ -688,33 +688,48 @@ export type Database = {
           change_type: string
           created_at: string
           created_by: string | null
+          expense_notes: string | null
           id: string
           new_quantity: number
           notes: string | null
+          other_expenses: number | null
           previous_quantity: number
           product_id: string
+          shipping_cost: number | null
+          total_expense: number | null
+          unit_purchase_price: number | null
         }
         Insert: {
           change_amount: number
           change_type: string
           created_at?: string
           created_by?: string | null
+          expense_notes?: string | null
           id?: string
           new_quantity: number
           notes?: string | null
+          other_expenses?: number | null
           previous_quantity: number
           product_id: string
+          shipping_cost?: number | null
+          total_expense?: number | null
+          unit_purchase_price?: number | null
         }
         Update: {
           change_amount?: number
           change_type?: string
           created_at?: string
           created_by?: string | null
+          expense_notes?: string | null
           id?: string
           new_quantity?: number
           notes?: string | null
+          other_expenses?: number | null
           previous_quantity?: number
           product_id?: string
+          shipping_cost?: number | null
+          total_expense?: number | null
+          unit_purchase_price?: number | null
         }
         Relationships: [
           {
