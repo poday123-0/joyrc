@@ -3,7 +3,7 @@ import {
   Clock, CheckCircle, XCircle, Receipt, Eye, 
   ChevronDown, ChevronUp, CreditCard, AlertCircle,
   Trash2, Edit, Download, Upload, FileSpreadsheet,
-  Truck, UserPlus
+  Truck, UserPlus, Plus
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import AddOrderDialog from "@/components/AddOrderDialog";
 
 interface Order {
   id: string;
@@ -89,6 +90,9 @@ const PaymentOrdersTab = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [customerProfiles, setCustomerProfiles] = useState<Record<string, { full_name: string | null }>>({});
+  
+  // Add order dialog state
+  const [showAddOrderDialog, setShowAddOrderDialog] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -799,31 +803,53 @@ const PaymentOrdersTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Super Admin Actions */}
-      {isSuperAdmin && (
-        <div className="flex items-center gap-3 p-4 glass-card rounded-2xl">
-          <FileSpreadsheet className="w-5 h-5 text-primary" />
-          <span className="text-sm text-foreground font-medium">Import Old Orders</span>
+      {/* Admin Actions - Add Order & Import */}
+      {(isSuperAdmin || isAdmin) && (
+        <div className="flex flex-wrap items-center gap-3 p-4 glass-card rounded-2xl">
+          <div className="flex items-center gap-2">
+            <Plus className="w-5 h-5 text-primary" />
+            <span className="text-sm text-foreground font-medium">Manage Orders</span>
+          </div>
           <div className="flex-1" />
           <Button
-            variant="outline"
             size="sm"
-            onClick={downloadTemplate}
+            onClick={() => setShowAddOrderDialog(true)}
             className="gap-2"
           >
-            <Download className="w-4 h-4" />
-            Download Template
+            <Plus className="w-4 h-4" />
+            Add Order
           </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowImportDialog(true)}
-            className="gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import CSV
-          </Button>
+          {isSuperAdmin && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadTemplate}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Template
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowImportDialog(true)}
+                className="gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Import CSV
+              </Button>
+            </>
+          )}
         </div>
       )}
+
+      {/* Add Order Dialog */}
+      <AddOrderDialog
+        open={showAddOrderDialog}
+        onOpenChange={setShowAddOrderDialog}
+        onOrderCreated={fetchOrders}
+      />
 
       {/* Import Dialog */}
       {showImportDialog && (
