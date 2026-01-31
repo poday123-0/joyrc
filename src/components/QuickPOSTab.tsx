@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -39,6 +39,13 @@ interface CustomerDetails {
   notes: string;
 }
 
+interface ExistingCustomer {
+  user_id: string;
+  full_name: string | null;
+  mobile_number: string | null;
+  email?: string;
+}
+
 const QuickPOSTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -55,6 +62,11 @@ const QuickPOSTab = () => {
     notes: "",
   });
   const [showCart, setShowCart] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerResults, setCustomerResults] = useState<ExistingCustomer[]>([]);
+  const [searchingCustomers, setSearchingCustomers] = useState(false);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -149,6 +161,81 @@ const QuickPOSTab = () => {
     setCart([]);
     setCustomerDetails({ name: "", email: "", phone: "", address: "", notes: "" });
     setIsDelivery(false);
+    setCustomerSearch("");
+    setCustomerResults([]);
+    setSelectedCustomerId(null);
+  };
+
+  // Search existing customers by name or phone
+  const searchCustomers = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setCustomerResults([]);
+      setShowCustomerDropdown(false);
+      return;
+    }
+
+    setSearchingCustomers(true);
+    try {
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, mobile_number")
+        .or(`full_name.ilike.%${query}%,mobile_number.ilike.%${query}%`)
+        .limit(10);
+
+      if (error) throw error;
+
+      // Get emails for these users via edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      const customersWithEmail: ExistingCustomer[] = [];
+
+      for (const profile of profiles || []) {
+        // Try to get email from lookup function
+        const { data: emailData } = await supabase.functions.invoke('lookup-email-by-mobile', {
+          body: { userId: profile.user_id },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+
+        customersWithEmail.push({
+          ...profile,
+          email: emailData?.email || undefined,
+        });
+      }
+
+      setCustomerResults(customersWithEmail);
+      setShowCustomerDropdown(customersWithEmail.length > 0);
+    } catch (error) {
+      console.error("Error searching customers:", error);
+    } finally {
+      setSearchingCustomers(false);
+    }
+  }, []);
+
+  // Debounce customer search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (customerSearch) {
+        searchCustomers(customerSearch);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [customerSearch, searchCustomers]);
+
+  const selectCustomer = (customer: ExistingCustomer) => {
+    setSelectedCustomerId(customer.user_id);
+    setCustomerDetails({
+      ...customerDetails,
+      name: customer.full_name || "",
+      phone: customer.mobile_number || "",
+      email: customer.email || "",
+    });
+    setCustomerSearch(customer.full_name || customer.mobile_number || "");
+    setShowCustomerDropdown(false);
+  };
+
+  const clearSelectedCustomer = () => {
+    setSelectedCustomerId(null);
+    setCustomerSearch("");
+    setCustomerDetails({ name: "", email: "", phone: "", address: "", notes: "" });
   };
 
   const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -172,10 +259,14 @@ const QuickPOSTab = () => {
       // Get auth session for edge function call
       const { data: { session } } = await supabase.auth.getSession();
 
-      // Determine customer user ID - create account if email provided
+      // Determine customer user ID - use selected existing customer, create new if email provided, or default to admin
       let customerUserId = user.id; // Default to admin
       
-      if (isDelivery && customerDetails.email.trim()) {
+      if (selectedCustomerId) {
+        // Use existing selected customer
+        customerUserId = selectedCustomerId;
+        console.log("Using existing customer:", selectedCustomerId);
+      } else if (isDelivery && customerDetails.email.trim()) {
         // Create customer account using edge function
         const { data: createData, error: createError } = await supabase.functions.invoke('create-user', {
           body: {
@@ -527,58 +618,120 @@ const QuickPOSTab = () => {
                   <Switch checked={isDelivery} onCheckedChange={setIsDelivery} />
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="relative">
-                    <User className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                    <Input
-                      placeholder="Customer name"
-                      value={customerDetails.name}
-                      onChange={(e) => setCustomerDetails({ ...customerDetails, name: e.target.value })}
-                      className="pl-8 h-8 text-xs"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Phone className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                    <Input
-                      placeholder="Phone number"
-                      value={customerDetails.phone}
-                      onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-                      className="pl-8 h-8 text-xs"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Mail className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      placeholder="Email (creates customer account)"
-                      value={customerDetails.email}
-                      onChange={(e) => setCustomerDetails({ ...customerDetails, email: e.target.value })}
-                      className="pl-8 h-8 text-xs"
-                    />
-                  </div>
-                  {isDelivery && (
-                    <>
-                      <div className="relative">
-                        <MapPin className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
-                        <Textarea
-                          placeholder="Delivery address"
-                          value={customerDetails.address}
-                          onChange={(e) => setCustomerDetails({ ...customerDetails, address: e.target.value })}
-                          className="pl-8 text-xs min-h-[60px] resize-none"
-                        />
-                      </div>
-                      <div className="relative">
-                        <FileText className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
-                        <Textarea
-                          placeholder="Notes (optional)"
-                          value={customerDetails.notes}
-                          onChange={(e) => setCustomerDetails({ ...customerDetails, notes: e.target.value })}
-                          className="pl-8 text-xs min-h-[50px] resize-none"
-                        />
-                      </div>
-                    </>
+                {/* Customer Search */}
+                <div className="relative">
+                  <UserSearch className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search existing customer (name/phone)..."
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      if (selectedCustomerId) {
+                        clearSelectedCustomer();
+                      }
+                    }}
+                    className="pl-8 h-8 text-xs pr-8"
+                  />
+                  {searchingCustomers && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                  {selectedCustomerId && (
+                    <button
+                      onClick={clearSelectedCustomer}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-muted rounded"
+                    >
+                      <X className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  )}
+                  
+                  {/* Search Results Dropdown */}
+                  {showCustomerDropdown && customerResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                      {customerResults.map((customer) => (
+                        <button
+                          key={customer.user_id}
+                          onClick={() => selectCustomer(customer)}
+                          className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 border-b border-border last:border-0"
+                        >
+                          <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-foreground truncate">{customer.full_name || "No name"}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {customer.mobile_number || "No phone"} {customer.email && `• ${customer.email}`}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
+
+                {/* Selected customer indicator */}
+                {selectedCustomerId && (
+                  <div className="flex items-center gap-2 px-2 py-1.5 bg-primary/10 rounded-lg">
+                    <Check className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-xs text-primary font-medium">Existing customer selected</span>
+                  </div>
+                )}
+                
+                {/* Manual entry fields (shown when no customer selected) */}
+                {!selectedCustomerId && (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <User className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Customer name"
+                        value={customerDetails.name}
+                        onChange={(e) => setCustomerDetails({ ...customerDetails, name: e.target.value })}
+                        className="pl-8 h-8 text-xs"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Phone className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Phone number"
+                        value={customerDetails.phone}
+                        onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+                        className="pl-8 h-8 text-xs"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Mail className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        type="email"
+                        placeholder="Email (creates customer account)"
+                        value={customerDetails.email}
+                        onChange={(e) => setCustomerDetails({ ...customerDetails, email: e.target.value })}
+                        className="pl-8 h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {isDelivery && (
+                  <>
+                    <div className="relative">
+                      <MapPin className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+                      <Textarea
+                        placeholder="Delivery address"
+                        value={customerDetails.address}
+                        onChange={(e) => setCustomerDetails({ ...customerDetails, address: e.target.value })}
+                        className="pl-8 text-xs min-h-[60px] resize-none"
+                      />
+                    </div>
+                    <div className="relative">
+                      <FileText className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+                      <Textarea
+                        placeholder="Notes (optional)"
+                        value={customerDetails.notes}
+                        onChange={(e) => setCustomerDetails({ ...customerDetails, notes: e.target.value })}
+                        className="pl-8 text-xs min-h-[50px] resize-none"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
