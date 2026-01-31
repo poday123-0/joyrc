@@ -16,12 +16,39 @@ interface UserProfile {
   permissions?: string[];
 }
 
-// Define available permission areas
+// Define available permission areas - granular per tab
 const PERMISSION_AREAS = [
-  { key: "products", label: "Products & Categories", description: "Manage inventory, add/edit products and categories" },
-  { key: "orders", label: "Orders & Payments", description: "View and manage customer orders and payment confirmations" },
-  { key: "content", label: "Content Management", description: "Hero banners, featured products, videos, support content" },
-  { key: "users", label: "User Management", description: "View users, manage roles (not create other admins)" },
+  // Products & Inventory
+  { key: "tab_products", label: "Products", description: "Add, edit and manage products" },
+  { key: "tab_categories", label: "Categories", description: "Manage product categories" },
+  { key: "tab_stock", label: "Stock Management", description: "View and update inventory levels" },
+  { key: "tab_featured", label: "Featured Products", description: "Manage featured product highlights" },
+  
+  // Orders & Delivery
+  { key: "tab_orders", label: "Orders", description: "View and manage customer orders" },
+  { key: "tab_preorders", label: "Pre-orders", description: "Manage pre-order requests" },
+  { key: "tab_deliveries", label: "Deliveries", description: "Manage delivery assignments" },
+  
+  // Content & Media
+  { key: "tab_hero", label: "Hero Banners", description: "Manage homepage hero backgrounds" },
+  { key: "tab_videos", label: "Videos", description: "Manage video showcases" },
+  { key: "tab_home-content", label: "Home Content", description: "Edit homepage features and CTA" },
+  { key: "tab_support", label: "Support Content", description: "Manage FAQ and support articles" },
+  { key: "tab_footer", label: "Footer Settings", description: "Configure footer links and info" },
+  { key: "tab_storage", label: "Storage", description: "Manage uploaded files and images" },
+  
+  // Communication
+  { key: "tab_messages", label: "Messages", description: "View and respond to contact messages" },
+  { key: "tab_email-templates", label: "Email Templates", description: "Manage email templates" },
+  { key: "tab_marketing", label: "Marketing Emails", description: "Send marketing campaigns" },
+  
+  // Financial (Admin only usually)
+  { key: "tab_transactions", label: "Transactions", description: "View financial transactions" },
+  { key: "tab_reports", label: "Reports", description: "View sales reports and analytics" },
+  { key: "tab_bank", label: "Bank Settings", description: "Manage bank account details" },
+  
+  // User Management
+  { key: "tab_users", label: "Users", description: "View and manage customer accounts" },
 ];
 
 const StaffManagementTab = () => {
