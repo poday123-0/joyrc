@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Plus, X, Trash2, Edit2, ArrowUpRight, ArrowDownRight, 
-  Search, Filter, Calendar, Download
+  Search, Filter, Calendar, Download, Package, Truck, User, ChevronDown, ChevronUp
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -16,6 +16,13 @@ interface Transaction {
   description: string | null;
   order_id: string | null;
   created_at: string;
+  product_name: string | null;
+  unit_purchase_price: number | null;
+  shipping_cost: number | null;
+  other_costs: number | null;
+  quantity: number | null;
+  added_by: string | null;
+  profile?: { full_name: string | null } | null;
 }
 
 const TransactionsTab = () => {
@@ -34,6 +41,7 @@ const TransactionsTab = () => {
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -53,7 +61,22 @@ const TransactionsTab = () => {
         variant: "destructive",
       });
     } else {
-      setTransactions(data as Transaction[]);
+      // Fetch profile names for added_by users
+      const transactionsWithProfiles = await Promise.all(
+        (data || []).map(async (tx) => {
+          let profile = null;
+          if (tx.added_by) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("user_id", tx.added_by)
+              .single();
+            profile = profileData;
+          }
+          return { ...tx, profile };
+        })
+      );
+      setTransactions(transactionsWithProfiles as Transaction[]);
     }
     setLoading(false);
   };
@@ -321,46 +344,118 @@ const TransactionsTab = () => {
         </div>
         
         <div className="divide-y divide-border max-h-[60vh] overflow-y-auto">
-          {filteredTransactions.map((tx) => (
-            <div key={tx.id} className="flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                tx.type === "income" ? "bg-emerald-500/10" : "bg-rose-500/10"
-              }`}>
-                {tx.type === "income" ? (
-                  <ArrowUpRight className="w-5 h-5 text-emerald-600" />
-                ) : (
-                  <ArrowDownRight className="w-5 h-5 text-rose-500" />
+          {filteredTransactions.map((tx) => {
+            const hasStockDetails = tx.product_name || tx.unit_purchase_price || tx.shipping_cost || tx.other_costs;
+            const isExpanded = expandedId === tx.id;
+            
+            return (
+              <div key={tx.id} className="hover:bg-muted/30 transition-colors">
+                <div 
+                  className={`flex items-center gap-3 p-4 ${hasStockDetails ? "cursor-pointer" : ""}`}
+                  onClick={() => hasStockDetails && setExpandedId(isExpanded ? null : tx.id)}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    tx.type === "income" ? "bg-emerald-500/10" : "bg-rose-500/10"
+                  }`}>
+                    {tx.type === "income" ? (
+                      <ArrowUpRight className="w-5 h-5 text-emerald-600" />
+                    ) : (
+                      <ArrowDownRight className="w-5 h-5 text-rose-500" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-foreground truncate">{tx.category}</p>
+                      {tx.product_name && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full truncate max-w-[120px]">
+                          {tx.product_name}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {tx.description || "No description"} • {new Date(tx.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <p className={`font-semibold ${tx.type === "income" ? "text-emerald-600" : "text-rose-500"}`}>
+                      {tx.type === "income" ? "+" : "-"}{formatMVR(tx.amount)}
+                    </p>
+                    {hasStockDetails && (
+                      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                    )}
+                    <div className="flex gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEdit(tx); }}
+                        className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(tx.id); }}
+                        className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Expanded Stock Details */}
+                {isExpanded && hasStockDetails && (
+                  <div className="px-4 pb-4 pt-0">
+                    <div className="ml-[52px] p-3 bg-muted/50 rounded-xl space-y-2">
+                      {tx.product_name && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Product:</span>
+                          <span className="font-medium text-foreground">{tx.product_name}</span>
+                          {tx.quantity && (
+                            <span className="text-muted-foreground">× {tx.quantity} units</span>
+                          )}
+                        </div>
+                      )}
+                      {tx.unit_purchase_price !== null && tx.unit_purchase_price > 0 && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="w-4 h-4 text-center text-muted-foreground">💰</span>
+                          <span className="text-muted-foreground">Cost Price:</span>
+                          <span className="font-medium text-foreground">{formatMVR(tx.unit_purchase_price)}/unit</span>
+                        </div>
+                      )}
+                      {tx.shipping_cost !== null && tx.shipping_cost > 0 && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Truck className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Shipping:</span>
+                          <span className="font-medium text-foreground">{formatMVR(tx.shipping_cost)}</span>
+                        </div>
+                      )}
+                      {tx.other_costs !== null && tx.other_costs > 0 && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="w-4 h-4 text-center text-muted-foreground">📦</span>
+                          <span className="text-muted-foreground">Other Costs:</span>
+                          <span className="font-medium text-foreground">{formatMVR(tx.other_costs)}</span>
+                        </div>
+                      )}
+                      {tx.profile?.full_name && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Added by:</span>
+                          <span className="font-medium text-foreground">{tx.profile.full_name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-              
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground truncate">{tx.category}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {tx.description || "No description"} • {new Date(tx.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <p className={`font-semibold ${tx.type === "income" ? "text-emerald-600" : "text-rose-500"}`}>
-                  {tx.type === "income" ? "+" : "-"}{formatMVR(tx.amount)}
-                </p>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => handleEdit(tx)}
-                    className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
-                  >
-                    <Edit2 className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(tx.id)}
-                    className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           
           {filteredTransactions.length === 0 && (
             <div className="text-center py-12">

@@ -217,15 +217,22 @@ const StockManagementTab = () => {
 
       // Auto-create expense transaction if there are costs
       if (costs && isRestock && totalExpense > 0) {
-        const expenseDescription = `Stock purchase: ${productName} (${changeAmount} units @ ${formatMVR(costs.unitPurchasePrice || 0)})${costs.shippingCost ? ` + Shipping: ${formatMVR(costs.shippingCost)}` : ""}${costs.otherExpenses ? ` + Other: ${formatMVR(costs.otherExpenses)}` : ""}`;
+        // Get current user for added_by field
+        const { data: { user } } = await supabase.auth.getUser();
         
         const { error: transactionError } = await supabase
           .from("transactions")
           .insert({
             type: "expense",
-            category: "inventory",
+            category: "Inventory",
             amount: totalExpense,
-            description: costs.expenseNotes || expenseDescription,
+            description: costs.expenseNotes || null,
+            product_name: productName,
+            unit_purchase_price: costs.unitPurchasePrice || null,
+            shipping_cost: costs.shippingCost || null,
+            other_costs: costs.otherExpenses || null,
+            quantity: changeAmount,
+            added_by: user?.id || null,
           });
 
         if (transactionError) {

@@ -980,33 +980,51 @@ export type Database = {
       }
       transactions: {
         Row: {
+          added_by: string | null
           amount: number
           category: string
           created_at: string
           description: string | null
           id: string
           order_id: string | null
+          other_costs: number | null
+          product_name: string | null
+          quantity: number | null
+          shipping_cost: number | null
           type: string
+          unit_purchase_price: number | null
           updated_at: string
         }
         Insert: {
+          added_by?: string | null
           amount: number
           category: string
           created_at?: string
           description?: string | null
           id?: string
           order_id?: string | null
+          other_costs?: number | null
+          product_name?: string | null
+          quantity?: number | null
+          shipping_cost?: number | null
           type: string
+          unit_purchase_price?: number | null
           updated_at?: string
         }
         Update: {
+          added_by?: string | null
           amount?: number
           category?: string
           created_at?: string
           description?: string | null
           id?: string
           order_id?: string | null
+          other_costs?: number | null
+          product_name?: string | null
+          quantity?: number | null
+          shipping_cost?: number | null
           type?: string
+          unit_purchase_price?: number | null
           updated_at?: string
         }
         Relationships: [
