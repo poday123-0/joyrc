@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart
 } from "lucide-react";
 import {
   Select,
@@ -38,6 +38,7 @@ import FooterSettingsTab from "@/components/FooterSettingsTab";
 import StaffManagementTab from "@/components/StaffManagementTab";
 import StockManagementTab from "@/components/StockManagementTab";
 import SalesReportsTab from "@/components/SalesReportsTab";
+import TransactionsTab from "@/components/TransactionsTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface Product {
@@ -118,16 +119,17 @@ interface SystemSettings {
   og_image_url: string | null;
 }
 
-type Tab = "dashboard" | "products" | "stock" | "featured" | "videos" | "categories" | "orders" | "reports" | "bank" | "messages" | "support" | "admins" | "staff" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "reports" | "bank" | "messages" | "support" | "admins" | "staff" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "products", label: "Products", icon: Package },
   { id: "stock", label: "Stock", icon: PackageSearch },
+  { id: "transactions", label: "Transactions", icon: CreditCard },
   { id: "featured", label: "Featured", icon: Star },
   { id: "videos", label: "Videos", icon: Video },
   { id: "categories", label: "Categories", icon: Grid3X3 },
-  { id: "orders", label: "Orders", icon: CreditCard },
+  { id: "orders", label: "Orders", icon: ShoppingCart },
   { id: "reports", label: "Reports", icon: BarChart3 },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "bank", label: "Bank", icon: Building2 },
@@ -319,6 +321,7 @@ const Admin = () => {
               />
             )}
             {activeTab === "stock" && <StockManagementTab />}
+            {activeTab === "transactions" && <TransactionsTab />}
             {activeTab === "featured" && <FeaturedProductsTab />}
             {activeTab === "videos" && <VideoShowcasesTab />}
             {activeTab === "categories" && (
