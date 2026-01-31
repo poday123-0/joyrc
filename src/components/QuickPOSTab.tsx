@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -33,6 +33,7 @@ interface CartItem {
 
 interface CustomerDetails {
   name: string;
+  email: string;
   phone: string;
   address: string;
   notes: string;
@@ -48,6 +49,7 @@ const QuickPOSTab = () => {
   const [isDelivery, setIsDelivery] = useState(false);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     name: "",
+    email: "",
     phone: "",
     address: "",
     notes: "",
@@ -145,7 +147,7 @@ const QuickPOSTab = () => {
 
   const clearCart = () => {
     setCart([]);
-    setCustomerDetails({ name: "", phone: "", address: "", notes: "" });
+    setCustomerDetails({ name: "", email: "", phone: "", address: "", notes: "" });
     setIsDelivery(false);
   };
 
@@ -167,17 +169,51 @@ const QuickPOSTab = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Get auth session for edge function call
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Determine customer user ID - create account if email provided
+      let customerUserId = user.id; // Default to admin
+      
+      if (isDelivery && customerDetails.email.trim()) {
+        // Create customer account using edge function
+        const { data: createData, error: createError } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: customerDetails.email.trim(),
+            full_name: customerDetails.name.trim(),
+            mobile_number: customerDetails.phone.trim(),
+            password: "123456", // Default password - customer will reset
+            make_admin: false,
+          },
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        });
+
+        if (createError) {
+          console.error("Error creating customer:", createError);
+          // Continue with admin as user_id if customer creation fails
+        } else if (createData?.user?.id) {
+          customerUserId = createData.user.id;
+          console.log("Created customer account:", createData.user.email);
+        }
+      }
+
       // Build order notes
       let orderNotes = isDelivery ? "POS Delivery Order" : "Walk-in POS Sale";
       if (customerDetails.notes.trim()) {
         orderNotes += ` | Notes: ${customerDetails.notes.trim()}`;
+      }
+      if (customerDetails.name.trim() && customerUserId === user.id) {
+        // Add customer name to notes if order is under admin's account
+        orderNotes += ` | Customer: ${customerDetails.name.trim()}`;
       }
 
       // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-          user_id: user.id,
+          user_id: customerUserId,
           total_amount: totalAmount,
           status: isDelivery ? "processing" : "completed",
           payment_status: "confirmed",
@@ -246,9 +282,24 @@ const QuickPOSTab = () => {
         added_by: user.id,
       });
 
+      // Send email notification to customer if they have an account
+      if (isDelivery && customerDetails.email.trim() && customerUserId !== user.id) {
+        try {
+          await supabase.functions.invoke('send-order-notification', {
+            body: {
+              orderId: order.id,
+              type: 'payment_confirmed',
+              customerUserId: customerUserId,
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send customer email:", emailError);
+        }
+      }
+
       toast({
         title: isDelivery ? "Order Created! 📦" : "Sale Complete! 🎉",
-        description: `${formatMVR(totalAmount)} - ${totalItems} item(s)${customerDetails.name ? ` for ${customerDetails.name}` : ''}`,
+        description: `${formatMVR(totalAmount)} - ${totalItems} item(s)${customerDetails.name ? ` for ${customerDetails.name}` : ''}${customerDetails.email ? ' (Account created)' : ''}`,
       });
 
       clearCart();
@@ -492,6 +543,16 @@ const QuickPOSTab = () => {
                       placeholder="Phone number"
                       value={customerDetails.phone}
                       onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+                      className="pl-8 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Email (creates customer account)"
+                      value={customerDetails.email}
+                      onChange={(e) => setCustomerDetails({ ...customerDetails, email: e.target.value })}
                       className="pl-8 h-8 text-xs"
                     />
                   </div>
