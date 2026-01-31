@@ -783,33 +783,44 @@ const StockManagementTab = () => {
                     ) : (
                       <div className="space-y-2 max-h-48 overflow-y-auto">
                         {stockHistory.map((item) => (
-                          <div key={item.id} className="p-2 bg-muted/50 rounded-lg text-sm">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                  item.change_amount > 0 
-                                    ? "bg-emerald-500/10 text-emerald-600" 
-                                    : "bg-rose-500/10 text-rose-500"
-                                }`}>
-                                  {item.change_amount > 0 ? "+" : ""}{item.change_amount}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {item.previous_quantity} → {item.new_quantity}
-                                </span>
-                                <span className="px-2 py-0.5 bg-muted rounded text-xs">
-                                  {getChangeTypeLabel(item.change_type)}
-                                </span>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
+                          <div key={item.id} className="p-3 bg-muted/50 rounded-lg text-sm">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-col gap-1.5">
+                                {/* Change badge and type */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                    item.change_amount > 0 
+                                      ? "bg-emerald-500/10 text-emerald-600" 
+                                      : "bg-rose-500/10 text-rose-500"
+                                  }`}>
+                                    {item.change_amount > 0 ? "+" : ""}{item.change_amount}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                    item.change_type === "sale" 
+                                      ? "bg-blue-500/10 text-blue-600"
+                                      : item.change_type === "restock"
+                                      ? "bg-emerald-500/10 text-emerald-600"
+                                      : "bg-muted text-muted-foreground"
+                                  }`}>
+                                    {getChangeTypeLabel(item.change_type)}
+                                  </span>
+                                </div>
+                                {/* Quantity change */}
+                                <p className="text-xs text-muted-foreground">
+                                  Stock: <span className="font-medium text-foreground">{item.previous_quantity}</span> → <span className="font-medium text-foreground">{item.new_quantity}</span>
+                                </p>
+                                {/* Notes if available */}
                                 {item.notes && (
-                                  <p className="text-xs text-muted-foreground truncate max-w-[150px]">{item.notes}</p>
+                                  <p className="text-xs text-muted-foreground italic">"{item.notes}"</p>
                                 )}
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
                               </div>
                             </div>
                             {/* Show cost details if available */}
                             {item.total_expense && item.total_expense > 0 && (
-                              <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-4 text-xs">
+                              <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-4 text-xs flex-wrap">
                                 <span className="text-muted-foreground flex items-center gap-1">
                                   <DollarSign className="w-3 h-3" />
                                   {formatMVR(item.unit_purchase_price || 0)}/unit
