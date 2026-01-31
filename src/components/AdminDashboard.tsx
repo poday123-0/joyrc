@@ -48,7 +48,11 @@ interface DashboardStats {
   totalStockItems: number;
 }
 
-const AdminDashboard = () => {
+interface AdminDashboardProps {
+  onTabChange?: (tab: string) => void;
+}
+
+const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
   const { isSuperAdmin, isAdmin, user } = useAuth();
   const [isFullAdmin, setIsFullAdmin] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
@@ -542,6 +546,7 @@ const AdminDashboard = () => {
             trend={`${formatMVR(stats.monthlyRevenue)} this month`}
             trendUp={true}
             variant="success"
+            onClick={() => onTabChange?.("transactions")}
           />
           <StatCard
             title="Total Expenses"
@@ -550,6 +555,7 @@ const AdminDashboard = () => {
             trend={`${formatMVR(stats.monthlyExpenses)} this month`}
             trendUp={false}
             variant="danger"
+            onClick={() => onTabChange?.("transactions")}
           />
           <StatCard
             title="Net Profit"
@@ -559,6 +565,7 @@ const AdminDashboard = () => {
             trendUp={monthlyNetProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
             className="col-span-2 lg:col-span-1"
+            onClick={() => onTabChange?.("reports")}
           />
         </div>
       )}
@@ -570,30 +577,35 @@ const AdminDashboard = () => {
           value={stats.totalCustomers.toString()}
           icon={Users}
           subtitle="Registered users"
+          onClick={() => onTabChange?.("users")}
         />
         <MiniStatCard
           title="Total Orders"
           value={stats.totalOrders.toString()}
           icon={ShoppingCart}
           subtitle={`${stats.pendingOrders} pending`}
+          onClick={() => onTabChange?.("orders")}
         />
         <MiniStatCard
           title="On Delivery"
           value={stats.onDeliveryOrders.toString()}
           icon={Package}
           subtitle={`${stats.deliveredOrders} delivered`}
+          onClick={() => onTabChange?.("deliveries")}
         />
         <MiniStatCard
           title="Confirmed"
           value={stats.confirmedOrders.toString()}
           icon={CheckCircle2}
           subtitle="Paid orders"
+          onClick={() => onTabChange?.("orders")}
         />
         <MiniStatCard
           title="Products"
           value={stats.totalProducts.toString()}
           icon={Package}
           subtitle={`${stats.totalStockItems} in stock`}
+          onClick={() => onTabChange?.("products")}
         />
         <MiniStatCard
           title="Low Stock"
@@ -601,6 +613,7 @@ const AdminDashboard = () => {
           icon={Package}
           subtitle="Need restock"
           highlight={stats.lowStockProducts > 0}
+          onClick={() => onTabChange?.("stock")}
         />
       </div>
 
@@ -1127,6 +1140,7 @@ const StatCard = ({
   trendUp,
   variant,
   className = "",
+  onClick,
 }: {
   title: string;
   value: string;
@@ -1135,21 +1149,25 @@ const StatCard = ({
   trendUp?: boolean;
   variant: "success" | "danger" | "primary";
   className?: string;
+  onClick?: () => void;
 }) => {
   const variantStyles = {
-    success: "bg-emerald-500/10 text-emerald-600",
-    danger: "bg-rose-500/10 text-rose-500",
+    success: "bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))]",
+    danger: "bg-destructive/10 text-destructive",
     primary: "bg-primary/10 text-primary",
   };
 
   return (
-    <div className={`bg-card border border-border rounded-2xl p-4 ${className}`}>
+    <div 
+      className={`bg-card border border-border rounded-2xl p-4 ${onClick ? "cursor-pointer hover:border-primary/50 transition-colors" : ""} ${className}`}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between mb-3">
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${variantStyles[variant]}`}>
           <Icon className="w-4 h-4" />
         </div>
         {trendUp !== undefined && (
-          <div className={`flex items-center gap-0.5 text-xs ${trendUp ? "text-emerald-600" : "text-rose-500"}`}>
+          <div className={`flex items-center gap-0.5 text-xs ${trendUp ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
             {trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
           </div>
         )}
@@ -1168,15 +1186,20 @@ const MiniStatCard = ({
   icon: Icon,
   subtitle,
   highlight = false,
+  onClick,
 }: {
   title: string;
   value: string;
   icon: any;
   subtitle: string;
   highlight?: boolean;
+  onClick?: () => void;
 }) => {
   return (
-    <div className={`bg-card border rounded-xl p-3 text-center ${highlight ? "border-destructive/50 bg-destructive/5" : "border-border"}`}>
+    <div 
+      className={`bg-card border rounded-xl p-3 text-center ${highlight ? "border-destructive/50 bg-destructive/5" : "border-border"} ${onClick ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}`}
+      onClick={onClick}
+    >
       <div className={`w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center ${highlight ? "bg-destructive/10" : "bg-muted"}`}>
         <Icon className={`w-4 h-4 ${highlight ? "text-destructive" : "text-muted-foreground"}`} />
       </div>
