@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2, User } from "lucide-react";
+import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2, User, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Order {
   id: string;
@@ -60,7 +61,9 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const [staffProfiles, setStaffProfiles] = useState<Record<string, string>>({});
-  const { user } = useAuth();
+  const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { user, isSuperAdmin } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -255,6 +258,37 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       });
     } finally {
       setUploading(null);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!deleteOrderId) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", deleteOrderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Deleted",
+        description: "The order and all associated data have been permanently removed.",
+      });
+      
+      setOrders(prev => prev.filter(o => o.id !== deleteOrderId));
+      setExpandedOrder(null);
+    } catch (error: any) {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteOrderId(null);
     }
   };
 
@@ -482,7 +516,18 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                 {/* Admin status controls */}
                 {isAdmin && (
                   <div className="mt-4 pt-3 border-t border-border">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Update Status</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase">Update Status</h4>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => setDeleteOrderId(order.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete Order
+                        </button>
+                      )}
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {["pending", "processing", "shipped", "delivered", "cancelled"].map((status) => (
                         <button
@@ -506,6 +551,16 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
           </div>
         );
       })}
+
+      <ConfirmDialog
+        open={!!deleteOrderId}
+        onOpenChange={(open) => !open && setDeleteOrderId(null)}
+        onConfirm={handleDeleteOrder}
+        title="Delete Order"
+        description="Are you sure you want to permanently delete this order? This will also remove all associated transactions and order items. This action cannot be undone."
+        confirmText={deleting ? "Deleting..." : "Delete Order"}
+        variant="destructive"
+      />
     </div>
   );
 };
