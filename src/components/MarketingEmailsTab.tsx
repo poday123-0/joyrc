@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
-import { Send, Users, Mail, Eye, History } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Send, Users, Mail, Eye, History, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "./ConfirmDialog";
+import { Input } from "./ui/input";
 
 interface UserEmail {
   id: string;
   email: string;
   full_name: string | null;
+  mobile_number?: string | null;
 }
 
 interface SentEmail {
@@ -26,6 +28,7 @@ const MarketingEmailsTab = () => {
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [formData, setFormData] = useState({
     subject: "",
@@ -40,40 +43,49 @@ const MarketingEmailsTab = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Get all profiles with user emails
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("user_id, full_name");
-
-      if (error) throw error;
-
-      // Get user emails via edge function
-      const { data: adminUsers, error: adminError } = await supabase.functions.invoke("get-admin-users");
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (adminError) {
-        console.error("Error fetching admin users:", adminError);
+      // Fetch customer users via edge function
+      const { data: customerData, error: customerError } = await supabase.functions.invoke("get-customer-users", {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      
+      if (customerError) {
+        console.error("Error fetching customer users:", customerError);
+        throw customerError;
       }
 
-      // Combine profile data with emails
-      const userEmails: UserEmail[] = [];
-      if (adminUsers?.users) {
-        for (const user of adminUsers.users) {
-          const profile = profiles?.find((p) => p.user_id === user.id);
-          userEmails.push({
-            id: user.id,
-            email: user.email,
-            full_name: profile?.full_name || null,
-          });
-        }
-      }
+      // Map customers to user email format
+      const userEmails: UserEmail[] = (customerData?.customers || [])
+        .filter((c: any) => c.email) // Only include users with email
+        .map((customer: any) => ({
+          id: customer.user_id,
+          email: customer.email,
+          full_name: customer.full_name,
+          mobile_number: customer.mobile_number,
+        }));
 
       setUsers(userEmails);
     } catch (error: any) {
       console.error("Error fetching users:", error);
-      toast({ title: "Error", description: "Failed to load users", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to load customers", variant: "destructive" });
     }
     setLoading(false);
   };
+
+  // Filter users based on search query
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const query = searchQuery.toLowerCase();
+    return users.filter(
+      (user) =>
+        user.full_name?.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.mobile_number?.toLowerCase().includes(query)
+    );
+  }, [users, searchQuery]);
 
   const fetchSentEmails = async () => {
     const { data } = await supabase
@@ -86,10 +98,20 @@ const MarketingEmailsTab = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedUsers.size === users.length) {
-      setSelectedUsers(new Set());
+    // Toggle based on filtered users
+    const filteredIds = new Set(filteredUsers.map((u) => u.id));
+    const allFilteredSelected = filteredUsers.every((u) => selectedUsers.has(u.id));
+    
+    if (allFilteredSelected) {
+      // Deselect all filtered users
+      const newSelected = new Set(selectedUsers);
+      filteredIds.forEach((id) => newSelected.delete(id));
+      setSelectedUsers(newSelected);
     } else {
-      setSelectedUsers(new Set(users.map((u) => u.id)));
+      // Select all filtered users
+      const newSelected = new Set(selectedUsers);
+      filteredIds.forEach((id) => newSelected.add(id));
+      setSelectedUsers(newSelected);
     }
   };
 
@@ -101,6 +123,14 @@ const MarketingEmailsTab = () => {
       newSelected.add(userId);
     }
     setSelectedUsers(newSelected);
+  };
+
+  const selectAllUsers = () => {
+    setSelectedUsers(new Set(users.map((u) => u.id)));
+  };
+
+  const deselectAllUsers = () => {
+    setSelectedUsers(new Set());
   };
 
   const handleSend = async () => {
@@ -263,16 +293,51 @@ const MarketingEmailsTab = () => {
               ({selectedUsers.size} of {users.length} selected)
             </span>
           </div>
-          <button
-            onClick={toggleSelectAll}
-            className="text-xs text-primary hover:text-primary/80 font-medium"
-          >
-            {selectedUsers.size === users.length ? "Deselect All" : "Select All"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={selectAllUsers}
+              className="text-xs text-primary hover:text-primary/80 font-medium"
+            >
+              Select All
+            </button>
+            <span className="text-muted-foreground">|</span>
+            <button
+              onClick={deselectAllUsers}
+              className="text-xs text-muted-foreground hover:text-foreground font-medium"
+            >
+              Clear
+            </button>
+          </div>
         </div>
 
+        {/* Search Input */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 text-sm"
+          />
+        </div>
+
+        {/* Filtered toggle */}
+        {searchQuery && filteredUsers.length > 0 && (
+          <div className="flex items-center justify-between mb-2 px-1">
+            <span className="text-xs text-muted-foreground">
+              Showing {filteredUsers.length} of {users.length} customers
+            </span>
+            <button
+              onClick={toggleSelectAll}
+              className="text-xs text-primary hover:text-primary/80 font-medium"
+            >
+              {filteredUsers.every((u) => selectedUsers.has(u.id)) ? "Deselect Filtered" : "Select Filtered"}
+            </button>
+          </div>
+        )}
+
         <div className="max-h-60 overflow-y-auto space-y-1">
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <label
               key={user.id}
               className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
@@ -289,14 +354,20 @@ const MarketingEmailsTab = () => {
                 <p className="text-sm font-medium text-foreground truncate">
                   {user.full_name || "Unknown"}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email} {user.mobile_number && `• ${user.mobile_number}`}
+                </p>
               </div>
             </label>
           ))}
         </div>
 
         {users.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-4">No users found</p>
+          <p className="text-center text-sm text-muted-foreground py-4">No customers found</p>
+        )}
+        
+        {users.length > 0 && filteredUsers.length === 0 && searchQuery && (
+          <p className="text-center text-sm text-muted-foreground py-4">No customers match your search</p>
         )}
       </div>
 
