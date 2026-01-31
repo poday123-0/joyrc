@@ -12,6 +12,7 @@ interface Product {
   price: number;
   stock_quantity: number;
   in_stock: boolean;
+  category_id: string | null;
   category?: { name: string } | null;
 }
 
@@ -37,10 +38,17 @@ interface StockCosts {
   expenseNotes: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 const StockManagementTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -59,8 +67,23 @@ const StockManagementTab = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
     checkSuperAdmin();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .order("sort_order");
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   const checkSuperAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -75,7 +98,7 @@ const StockManagementTab = () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, image_url, price, stock_quantity, in_stock, category:categories(name)")
+        .select("id, name, image_url, price, stock_quantity, in_stock, category_id, category:categories(name)")
         .order("name");
 
       if (error) throw error;
@@ -268,9 +291,11 @@ const StockManagementTab = () => {
     setSaving(null);
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || p.category_id === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const lowStockProducts = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5);
   const outOfStockProducts = products.filter(p => p.stock_quantity === 0);
@@ -485,16 +510,28 @@ const StockManagementTab = () => {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
+      {/* Search and Category Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[150px]"
+        >
+          <option value="all">All Categories</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Products List */}
