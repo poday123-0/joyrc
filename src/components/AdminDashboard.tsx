@@ -1010,7 +1010,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
                         Cost Price
                       </h3>
                       <div className="rounded-lg border border-border overflow-hidden">
-                        <div className="max-h-[180px] sm:max-h-[250px] overflow-auto">
+                        <div className="max-h-[250px] sm:max-h-[350px] overflow-y-auto scrollbar-thin">
                           <Table>
                             <TableHeader>
                               <TableRow className="bg-muted/30">
@@ -1062,7 +1062,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
                         Selling Price
                       </h3>
                       <div className="rounded-lg border border-border overflow-hidden">
-                        <div className="max-h-[180px] sm:max-h-[250px] overflow-auto">
+                        <div className="max-h-[250px] sm:max-h-[350px] overflow-y-auto scrollbar-thin">
                           <Table>
                             <TableHeader>
                               <TableRow className="bg-primary/5">
