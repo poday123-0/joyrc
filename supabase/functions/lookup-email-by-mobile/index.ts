@@ -22,11 +22,28 @@ serve(async (req) => {
       },
     });
 
-    const { mobile_number } = await req.json();
+    const { mobile_number, userId } = await req.json();
+
+    // Support lookup by userId directly
+    if (userId) {
+      const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      
+      if (userError || !user?.email) {
+        return new Response(
+          JSON.stringify({ error: "No email found for this user" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ email: user.email }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!mobile_number) {
       return new Response(
-        JSON.stringify({ error: "Mobile number is required" }),
+        JSON.stringify({ error: "Mobile number or userId is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
