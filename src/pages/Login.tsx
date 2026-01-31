@@ -38,6 +38,17 @@ const Login = () => {
     fetchSettings();
   }, []);
 
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        navigate("/home", { replace: true });
+      }
+    };
+    checkAuthAndRedirect();
+  }, [navigate]);
+
   const handleForgotPassword = async () => {
     if (!email) {
       toast({ title: "Enter your email", description: "Please enter your email address first.", variant: "destructive" });
@@ -58,23 +69,37 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
+      const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
-      if (error) {
+      
+      // If redirected to Google, the page will redirect - nothing more to do
+      if (result.redirected) {
+        return;
+      }
+      
+      if (result.error) {
         toast({
           title: "Google login failed",
-          description: error.message,
+          description: result.error.message,
           variant: "destructive",
         });
+        setGoogleLoading(false);
+        return;
       }
+      
+      // If we get here, login was successful (returned from OAuth with tokens)
+      toast({
+        title: "Welcome!",
+        description: "You have successfully logged in with Google.",
+      });
+      navigate("/home");
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setGoogleLoading(false);
     }
   };
