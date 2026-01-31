@@ -351,31 +351,33 @@ const TransactionsTab = () => {
             return (
               <div key={tx.id} className="hover:bg-muted/30 transition-colors">
                 <div 
-                  className={`flex items-center gap-3 p-4 ${hasStockDetails ? "cursor-pointer" : ""}`}
+                  className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 ${hasStockDetails ? "cursor-pointer" : ""}`}
                   onClick={() => hasStockDetails && setExpandedId(isExpanded ? null : tx.id)}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    tx.type === "income" ? "bg-emerald-500/10" : "bg-rose-500/10"
-                  }`}>
-                    {tx.type === "income" ? (
-                      <ArrowUpRight className="w-5 h-5 text-emerald-600" />
-                    ) : (
-                      <ArrowDownRight className="w-5 h-5 text-rose-500" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-foreground truncate">{tx.category}</p>
-                      {tx.product_name && (
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                          {tx.product_name}
-                        </span>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      tx.type === "income" ? "bg-emerald-500/10" : "bg-rose-500/10"
+                    }`}>
+                      {tx.type === "income" ? (
+                        <ArrowUpRight className="w-5 h-5 text-emerald-600" />
+                      ) : (
+                        <ArrowDownRight className="w-5 h-5 text-rose-500" />
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {tx.description || "No description"} • {new Date(tx.created_at).toLocaleDateString()}
-                    </p>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                        <p className="font-medium text-foreground">{tx.category}</p>
+                        {tx.product_name && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full break-words">
+                            {tx.product_name}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2 sm:truncate">
+                        {tx.description || "No description"} • {new Date(tx.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-3">
