@@ -142,59 +142,6 @@ const StockManagementTab = () => {
     }
   };
 
-  const handleAdjustStock = async (productId: string, currentQty: number, change: number) => {
-    const newQty = Math.max(0, currentQty + change);
-    const notes = adjustmentNotes[productId] || null;
-    
-    setSaving(productId);
-    try {
-      // Update product stock
-      const { error: updateError } = await supabase
-        .from("products")
-        .update({ 
-          stock_quantity: newQty,
-          in_stock: newQty > 0
-        })
-        .eq("id", productId);
-
-      if (updateError) throw updateError;
-
-      // Record history
-      const { error: historyError } = await supabase
-        .from("stock_history")
-        .insert({
-          product_id: productId,
-          previous_quantity: currentQty,
-          new_quantity: newQty,
-          change_amount: change,
-          change_type: change > 0 ? "restock" : "manual_adjustment",
-          notes,
-        });
-
-      if (historyError) throw historyError;
-
-      toast({ 
-        title: "Stock Updated", 
-        description: `Stock changed by ${change > 0 ? "+" : ""}${change}` 
-      });
-      
-      // Reset inputs
-      setAdjustmentAmount(prev => ({ ...prev, [productId]: 0 }));
-      setAdjustmentNotes(prev => ({ ...prev, [productId]: "" }));
-      
-      fetchProducts();
-      if (expandedProductId === productId) {
-        fetchStockHistory(productId);
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update stock",
-        variant: "destructive",
-      });
-    }
-    setSaving(null);
-  };
 
   const handleSetStock = async (productId: string, currentQty: number, newQty: number, productName: string) => {
     const notes = adjustmentNotes[productId] || null;
@@ -557,7 +504,11 @@ const StockManagementTab = () => {
         <div className="space-y-3">
           {filteredProducts.map((product) => (
             <div key={product.id} className="bg-muted/30 rounded-xl border border-border/50 overflow-hidden">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4">
+              {/* Clickable Product Card */}
+              <button
+                onClick={() => handleExpandProduct(product.id)}
+                className="w-full flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 hover:bg-muted/50 transition-colors text-left"
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                     {product.image_url ? (
@@ -593,57 +544,67 @@ const StockManagementTab = () => {
                     <p className="text-xs">in stock</p>
                   </div>
 
-                  {/* Quick Adjust Buttons */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleAdjustStock(product.id, product.stock_quantity, -1)}
-                      disabled={saving === product.id || product.stock_quantity === 0}
-                      className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleAdjustStock(product.id, product.stock_quantity, 1)}
-                      disabled={saving === product.id}
-                      className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Expand Button */}
-                  <button
-                    onClick={() => handleExpandProduct(product.id)}
-                    className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                  >
+                  {/* Expand Indicator */}
+                  <div className="p-2 bg-muted rounded-lg">
                     {expandedProductId === product.id ? (
                       <ChevronUp className="w-4 h-4" />
                     ) : (
                       <ChevronDown className="w-4 h-4" />
                     )}
-                  </button>
+                  </div>
                 </div>
-              </div>
+              </button>
 
               {/* Expanded Section */}
               {expandedProductId === product.id && (
                 <div className="p-4 bg-background border-t border-border space-y-4">
-                  {/* Bulk Adjustment */}
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-end gap-3">
+                  {/* Stock Adjustment */}
+                  <div className="space-y-4">
+                    {/* Quantity with +/- buttons */}
+                    <div className="flex flex-wrap items-end gap-4">
                       <div>
                         <label className="block text-xs text-muted-foreground mb-1">Set Stock To</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={adjustmentAmount[product.id] || ""}
-                          onChange={(e) => setAdjustmentAmount(prev => ({ 
-                            ...prev, 
-                            [product.id]: parseInt(e.target.value) || 0 
-                          }))}
-                          placeholder="Qty"
-                          className="w-20 px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const current = adjustmentAmount[product.id] ?? product.stock_quantity;
+                              setAdjustmentAmount(prev => ({ 
+                                ...prev, 
+                                [product.id]: Math.max(0, current - 1)
+                              }));
+                            }}
+                            disabled={saving === product.id || (adjustmentAmount[product.id] ?? product.stock_quantity) === 0}
+                            className="p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={adjustmentAmount[product.id] ?? product.stock_quantity}
+                            onChange={(e) => setAdjustmentAmount(prev => ({ 
+                              ...prev, 
+                              [product.id]: parseInt(e.target.value) || 0 
+                            }))}
+                            placeholder="Qty"
+                            className="w-20 px-3 py-2 bg-muted border border-border rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const current = adjustmentAmount[product.id] ?? product.stock_quantity;
+                              setAdjustmentAmount(prev => ({ 
+                                ...prev, 
+                                [product.id]: current + 1
+                              }));
+                            }}
+                            disabled={saving === product.id}
+                            className="p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex-1 min-w-[150px]">
                         <label className="block text-xs text-muted-foreground mb-1">Notes (optional)</label>
@@ -797,10 +758,10 @@ const StockManagementTab = () => {
                       onClick={() => handleSetStock(
                         product.id, 
                         product.stock_quantity, 
-                        adjustmentAmount[product.id] || 0,
+                        adjustmentAmount[product.id] ?? product.stock_quantity,
                         product.name
                       )}
-                      disabled={saving === product.id || adjustmentAmount[product.id] === undefined}
+                      disabled={saving === product.id || (adjustmentAmount[product.id] ?? product.stock_quantity) === product.stock_quantity}
                       className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50"
                     >
                       {saving === product.id ? "Saving..." : "Update Stock"}
