@@ -231,7 +231,7 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <StatCard
           title="Total Revenue"
-          value={formatMVRCompact(stats.totalRevenue)}
+          value={formatMVR(stats.totalRevenue)}
           icon={TrendingUp}
           trend={`${formatMVR(stats.monthlyRevenue)} this month`}
           trendUp={true}
@@ -239,7 +239,7 @@ const AdminDashboard = () => {
         />
         <StatCard
           title="Total Expenses"
-          value={formatMVRCompact(stats.totalExpenses)}
+          value={formatMVR(stats.totalExpenses)}
           icon={TrendingDown}
           trend={`${formatMVR(stats.monthlyExpenses)} this month`}
           trendUp={false}
@@ -247,7 +247,7 @@ const AdminDashboard = () => {
         />
         <StatCard
           title="Net Profit"
-          value={formatMVRCompact(netProfit)}
+          value={formatMVR(netProfit)}
           icon={Wallet}
           trend={`${formatMVR(monthlyNetProfit)} this month`}
           trendUp={monthlyNetProfit > 0}
@@ -293,16 +293,16 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-3 rounded-xl bg-muted/30">
             <p className="text-xs text-muted-foreground mb-1">Income</p>
-            <p className="text-sm font-bold text-emerald-600">{formatMVRCompact(stats.monthlyRevenue)}</p>
+            <p className="text-sm font-bold text-emerald-600">{formatMVR(stats.monthlyRevenue)}</p>
           </div>
           <div className="text-center p-3 rounded-xl bg-muted/30">
             <p className="text-xs text-muted-foreground mb-1">Expenses</p>
-            <p className="text-sm font-bold text-rose-500">{formatMVRCompact(stats.monthlyExpenses)}</p>
+            <p className="text-sm font-bold text-rose-500">{formatMVR(stats.monthlyExpenses)}</p>
           </div>
           <div className="text-center p-3 rounded-xl bg-primary/5">
             <p className="text-xs text-muted-foreground mb-1">Net</p>
             <p className={`text-sm font-bold ${monthlyNetProfit >= 0 ? "text-primary" : "text-rose-500"}`}>
-              {monthlyNetProfit >= 0 ? "+" : ""}{formatMVRCompact(monthlyNetProfit)}
+              {monthlyNetProfit >= 0 ? "+" : ""}{formatMVR(monthlyNetProfit)}
             </p>
           </div>
         </div>
