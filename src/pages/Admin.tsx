@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
@@ -6,6 +6,23 @@ import {
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
   Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Select,
   SelectContent,
@@ -40,6 +57,7 @@ import StockManagementTab from "@/components/StockManagementTab";
 import SalesReportsTab from "@/components/SalesReportsTab";
 import TransactionsTab from "@/components/TransactionsTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 interface Product {
   id: string;
@@ -119,9 +137,15 @@ interface SystemSettings {
   og_image_url: string | null;
 }
 
+interface TabItem {
+  id: string;
+  label: string;
+  icon: any;
+}
+
 type Tab = "dashboard" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "reports" | "bank" | "messages" | "support" | "admins" | "staff" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
-const tabs = [
+const defaultTabs: TabItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "products", label: "Products", icon: Package },
   { id: "stock", label: "Stock", icon: PackageSearch },
@@ -146,8 +170,76 @@ const tabs = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
+// Icon map to resolve icons from saved order
+const iconMap: Record<string, any> = {
+  LayoutDashboard, Package, PackageSearch, CreditCard, Star, Video,
+  Grid3X3, ShoppingCart, BarChart3, MessageSquare, Building2,
+  HelpCircle, Users, UserCog, User, ImageIcon, FolderOpen,
+  HardDrive, Mail, Send, Settings,
+};
+
+// Sortable menu item component
+const SortableMenuItem = ({ 
+  tab, 
+  isActive, 
+  onClick, 
+  isReordering 
+}: { 
+  tab: TabItem; 
+  isActive: boolean; 
+  onClick: () => void;
+  isReordering: boolean;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tab.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const TabIcon = tab.icon;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
+        isActive
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      } ${isDragging ? "z-50 shadow-lg" : ""}`}
+    >
+      {isReordering && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 -ml-1"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+      )}
+      <button
+        onClick={onClick}
+        className="flex items-center gap-3 flex-1"
+        disabled={isReordering}
+      >
+        <TabIcon className="w-4 h-4" />
+        <span className="font-medium">{tab.label}</span>
+      </button>
+    </div>
+  );
+};
+
 const Admin = () => {
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, isSuperAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
@@ -155,6 +247,16 @@ const Admin = () => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tabs, setTabs] = useState<TabItem[]>(defaultTabs);
+  const [isReordering, setIsReordering] = useState(false);
+  const [menuOrderId, setMenuOrderId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -170,8 +272,63 @@ const Admin = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchData();
+      fetchMenuOrder();
     }
   }, [isAdmin]);
+
+  const fetchMenuOrder = async () => {
+    const { data, error } = await supabase
+      .from("admin_menu_order")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      setMenuOrderId(data.id);
+      const savedOrder = data.menu_items as string[];
+      if (savedOrder && savedOrder.length > 0) {
+        // Reorder tabs based on saved order
+        const orderedTabs = savedOrder
+          .map(id => defaultTabs.find(t => t.id === id))
+          .filter(Boolean) as TabItem[];
+        // Add any new tabs that aren't in saved order
+        const newTabs = defaultTabs.filter(t => !savedOrder.includes(t.id));
+        setTabs([...orderedTabs, ...newTabs]);
+      }
+    }
+  };
+
+  const saveMenuOrder = async (newTabs: TabItem[]) => {
+    const menuItems = newTabs.map(t => t.id);
+    
+    if (menuOrderId) {
+      await supabase
+        .from("admin_menu_order")
+        .update({ menu_items: menuItems })
+        .eq("id", menuOrderId);
+    } else {
+      const { data } = await supabase
+        .from("admin_menu_order")
+        .insert({ menu_items: menuItems })
+        .select()
+        .single();
+      if (data) setMenuOrderId(data.id);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setTabs((items) => {
+        const oldIndex = items.findIndex((t) => t.id === active.id);
+        const newIndex = items.findIndex((t) => t.id === over.id);
+        const newTabs = arrayMove(items, oldIndex, newIndex);
+        saveMenuOrder(newTabs);
+        return newTabs;
+      });
+    }
+  };
 
   const fetchData = async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -284,22 +441,70 @@ const Admin = () => {
             <h1 className="font-semibold text-lg text-foreground">Admin</h1>
           </div>
 
-          <nav className="space-y-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as Tab)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
-                  activeTab === tab.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
+          {/* Super Admin Reorder Toggle */}
+          {isSuperAdmin && (
+            <div className="mb-4 pb-4 border-b border-border">
+              <Button
+                variant={isReordering ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  if (isReordering) {
+                    toast({
+                      title: "Menu Order Saved",
+                      description: "The new menu order has been saved.",
+                    });
+                  }
+                  setIsReordering(!isReordering);
+                }}
+                className="w-full gap-2"
               >
-                <tab.icon className="w-4 h-4" />
-                <span className="font-medium">{tab.label}</span>
-              </button>
-            ))}
-          </nav>
+                <GripVertical className="w-4 h-4" />
+                {isReordering ? "Done Reordering" : "Reorder Menu"}
+              </Button>
+            </div>
+          )}
+
+          {isReordering ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={tabs.map(t => t.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <nav className="space-y-1">
+                  {tabs.map((tab) => (
+                    <SortableMenuItem
+                      key={tab.id}
+                      tab={tab}
+                      isActive={activeTab === tab.id}
+                      onClick={() => setActiveTab(tab.id as Tab)}
+                      isReordering={isReordering}
+                    />
+                  ))}
+                </nav>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <nav className="space-y-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as Tab)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          )}
         </aside>
 
         {/* Main Content */}
