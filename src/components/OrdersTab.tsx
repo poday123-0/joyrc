@@ -27,6 +27,9 @@ interface OrderItem {
   product_name: string;
   product_price: number;
   quantity: number;
+  color_id?: string | null;
+  color_name?: string | null;
+  color_hex?: string | null;
 }
 
 interface StaffProfile {
@@ -513,11 +516,22 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                     <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h4>
                     <div className="space-y-2">
                       {items.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm">
-                          <span className="text-foreground">
-                            {item.product_name} <span className="text-muted-foreground">x{item.quantity}</span>
-                          </span>
-                          <span className="font-medium">{formatMVR(item.product_price * item.quantity)}</span>
+                        <div key={item.id} className="flex justify-between text-sm gap-2">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-foreground">
+                              {item.product_name} <span className="text-muted-foreground">x{item.quantity}</span>
+                            </span>
+                            {item.color_name && (
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border"
+                                  style={{ backgroundColor: item.color_hex || '#ccc' }}
+                                />
+                                <span className="text-xs text-muted-foreground">{item.color_name}</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-medium flex-shrink-0">{formatMVR(item.product_price * item.quantity)}</span>
                         </div>
                       ))}
                       {items.length === 0 && (

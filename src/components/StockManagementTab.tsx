@@ -14,6 +14,7 @@ interface Product {
   in_stock: boolean;
   category_id: string | null;
   category?: { name: string } | null;
+  item_code?: string | null;
 }
 
 interface StockHistoryItem {
@@ -102,7 +103,7 @@ const StockManagementTab = () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, image_url, price, stock_quantity, in_stock, category_id, category:categories(name)")
+        .select("id, name, image_url, price, stock_quantity, in_stock, category_id, item_code, category:categories(name)")
         .order("name");
 
       if (error) throw error;
@@ -268,7 +269,8 @@ const StockManagementTab = () => {
   };
 
   const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.item_code && p.item_code.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === "all" || p.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -574,6 +576,9 @@ const StockManagementTab = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium text-foreground truncate">{product.name}</p>
+                    {product.item_code && (
+                      <p className="text-xs text-primary font-mono">{product.item_code}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {product.category?.name || "Uncategorized"} • {formatMVR(product.price)}
                     </p>

@@ -74,7 +74,7 @@ const Cart = () => {
           <div className="flex-1 space-y-4">
             {items.map((item) => (
               <div
-                key={item.id}
+                key={`${item.id}-${item.colorId || 'default'}`}
                 className="glass-card rounded-2xl p-4 shadow-soft"
               >
                 <div className="flex gap-4">
@@ -89,27 +89,41 @@ const Cart = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground lg:text-lg truncate">{item.name}</h3>
+                    {/* Show color if selected */}
+                    {item.colorName && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <div 
+                          className="w-4 h-4 rounded-full border border-border shadow-sm" 
+                          style={{ backgroundColor: item.colorHex || '#ccc' }}
+                        />
+                        <span className="text-sm text-muted-foreground">{item.colorName}</span>
+                      </div>
+                    )}
+                    {/* Show item code if available */}
+                    {item.itemCode && (
+                      <span className="text-xs text-muted-foreground font-mono">SKU: {item.itemCode}</span>
+                    )}
                     <p className="text-xl lg:text-2xl font-bold text-primary mt-1">
                       {formatMVR(item.price)}
                     </p>
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.colorId)}
                           className="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
                         >
                           <Minus className="w-4 h-4 text-foreground" />
                         </button>
                         <span className="font-semibold w-8 text-center lg:text-lg text-foreground">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.colorId)}
                           className="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
                         >
                           <Plus className="w-4 h-4 text-foreground" />
                         </button>
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => removeFromCart(item.id, item.colorId)}
                         className="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-destructive/10 hover:bg-destructive/20 flex items-center justify-center transition-colors"
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
