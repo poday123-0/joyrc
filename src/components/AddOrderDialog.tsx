@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Package, User, Phone, MapPin, Calendar, X, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, Package, User, Phone, MapPin, Calendar, X, ShoppingCart, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -22,16 +22,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface ProductColor {
+  id: string;
+  color_name: string;
+  color_hex: string;
+  product_id: string;
+}
+
 interface OrderItem {
+  productId: string;
   productName: string;
   quantity: number;
   unitPrice: number;
+  colorId?: string;
+  colorName?: string;
+  colorHex?: string;
 }
 
 interface Product {
   id: string;
   name: string;
   price: number;
+  item_code: string | null;
 }
 
 interface AddOrderDialogProps {
@@ -45,6 +57,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
   const [mode, setMode] = useState<"single" | "bulk">("single");
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productColors, setProductColors] = useState<Record<string, ProductColor[]>>({});
   
   // Single order form state
   const [customerName, setCustomerName] = useState("");
@@ -54,7 +67,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
   const [notes, setNotes] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("confirmed");
   const [orderStatus, setOrderStatus] = useState("delivered");
-  const [items, setItems] = useState<OrderItem[]>([{ productName: "", quantity: 1, unitPrice: 0 }]);
+  const [items, setItems] = useState<OrderItem[]>([{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
 
   // Bulk order form state
   const [bulkOrders, setBulkOrders] = useState<Array<{
@@ -70,7 +83,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
     shippingAddress: "",
     orderDate: new Date().toISOString().split("T")[0],
     notes: "",
-    items: [{ productName: "", quantity: 1, unitPrice: 0 }]
+    items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]
   }]);
 
   useEffect(() => {
@@ -82,9 +95,23 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
   const fetchProducts = async () => {
     const { data } = await supabase
       .from("products")
-      .select("id, name, price")
+      .select("id, name, price, item_code")
       .order("name");
     if (data) setProducts(data);
+  };
+
+  const fetchColorsForProduct = async (productId: string) => {
+    if (productColors[productId]) return; // Already fetched
+    
+    const { data } = await supabase
+      .from("product_colors")
+      .select("id, color_name, color_hex, product_id")
+      .eq("product_id", productId)
+      .order("sort_order");
+    
+    if (data) {
+      setProductColors(prev => ({ ...prev, [productId]: data }));
+    }
   };
 
   const resetForm = () => {
@@ -95,19 +122,19 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
     setNotes("");
     setPaymentStatus("confirmed");
     setOrderStatus("delivered");
-    setItems([{ productName: "", quantity: 1, unitPrice: 0 }]);
+    setItems([{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
     setBulkOrders([{
       customerName: "",
       customerPhone: "",
       shippingAddress: "",
       orderDate: new Date().toISOString().split("T")[0],
       notes: "",
-      items: [{ productName: "", quantity: 1, unitPrice: 0 }]
+      items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]
     }]);
   };
 
   const addItem = () => {
-    setItems([...items, { productName: "", quantity: 1, unitPrice: 0 }]);
+    setItems([...items, { productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -122,14 +149,38 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
     setItems(newItems);
   };
 
-  const selectProduct = (index: number, productId: string) => {
+  const selectProduct = async (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
     if (product) {
       const newItems = [...items];
       newItems[index] = { 
         ...newItems[index], 
+        productId: product.id,
         productName: product.name,
-        unitPrice: product.price 
+        unitPrice: product.price,
+        colorId: undefined,
+        colorName: undefined,
+        colorHex: undefined,
+      };
+      setItems(newItems);
+      
+      // Fetch colors for this product
+      await fetchColorsForProduct(productId);
+    }
+  };
+
+  const selectColor = (index: number, colorId: string) => {
+    const item = items[index];
+    const colors = productColors[item.productId] || [];
+    const color = colors.find(c => c.id === colorId);
+    
+    if (color) {
+      const newItems = [...items];
+      newItems[index] = {
+        ...newItems[index],
+        colorId: color.id,
+        colorName: color.color_name,
+        colorHex: color.color_hex,
       };
       setItems(newItems);
     }
@@ -174,14 +225,17 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
 
       if (orderError) throw orderError;
 
-      // Create order items
+      // Create order items with color info
       for (const item of validItems) {
         await supabase.from("order_items").insert({
           order_id: newOrder.id,
-          product_id: newOrder.id, // Placeholder if no product match
+          product_id: item.productId || newOrder.id,
           product_name: item.productName,
           product_price: item.unitPrice,
           quantity: item.quantity,
+          color_id: item.colorId || null,
+          color_name: item.colorName || null,
+          color_hex: item.colorHex || null,
         });
       }
 
@@ -223,7 +277,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
       shippingAddress: "",
       orderDate: new Date().toISOString().split("T")[0],
       notes: "",
-      items: [{ productName: "", quantity: 1, unitPrice: 0 }]
+      items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]
     }]);
   };
 
@@ -241,7 +295,7 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
 
   const addBulkOrderItem = (orderIndex: number) => {
     const newOrders = [...bulkOrders];
-    newOrders[orderIndex].items.push({ productName: "", quantity: 1, unitPrice: 0 });
+    newOrders[orderIndex].items.push({ productId: "", productName: "", quantity: 1, unitPrice: 0 });
     setBulkOrders(newOrders);
   };
 
@@ -260,6 +314,42 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
       [field]: value 
     };
     setBulkOrders(newOrders);
+  };
+
+  const selectBulkProduct = async (orderIndex: number, itemIndex: number, productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const newOrders = [...bulkOrders];
+      newOrders[orderIndex].items[itemIndex] = {
+        ...newOrders[orderIndex].items[itemIndex],
+        productId: product.id,
+        productName: product.name,
+        unitPrice: product.price,
+        colorId: undefined,
+        colorName: undefined,
+        colorHex: undefined,
+      };
+      setBulkOrders(newOrders);
+      
+      await fetchColorsForProduct(productId);
+    }
+  };
+
+  const selectBulkColor = (orderIndex: number, itemIndex: number, colorId: string) => {
+    const item = bulkOrders[orderIndex].items[itemIndex];
+    const colors = productColors[item.productId] || [];
+    const color = colors.find(c => c.id === colorId);
+    
+    if (color) {
+      const newOrders = [...bulkOrders];
+      newOrders[orderIndex].items[itemIndex] = {
+        ...newOrders[orderIndex].items[itemIndex],
+        colorId: color.id,
+        colorName: color.color_name,
+        colorHex: color.color_hex,
+      };
+      setBulkOrders(newOrders);
+    }
   };
 
   const handleSubmitBulk = async (e: React.FormEvent) => {
@@ -310,10 +400,13 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
         for (const item of validItems) {
           await supabase.from("order_items").insert({
             order_id: newOrder.id,
-            product_id: newOrder.id,
+            product_id: item.productId || newOrder.id,
             product_name: item.productName,
             product_price: item.unitPrice,
             quantity: item.quantity,
+            color_id: item.colorId || null,
+            color_name: item.colorName || null,
+            color_hex: item.colorHex || null,
           });
         }
 
@@ -465,60 +558,104 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
                 </Button>
               </div>
 
-              {items.map((item, index) => (
-                <div key={index} className="flex gap-2 items-start p-3 bg-muted/30 rounded-lg">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div className="md:col-span-1">
-                      <Select onValueChange={(v) => selectProduct(index, v)}>
-                        <SelectTrigger className="text-xs">
-                          <SelectValue placeholder="Select product" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.name} - {formatMVR(p.price)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        value={item.productName}
-                        onChange={(e) => updateItem(index, "productName", e.target.value)}
-                        placeholder="Or type product name"
-                        className="mt-1 text-xs"
-                      />
+              {items.map((item, index) => {
+                const colors = productColors[item.productId] || [];
+                const hasColors = colors.length > 0;
+                
+                return (
+                  <div key={index} className="p-3 bg-muted/30 rounded-lg space-y-2">
+                    <div className="flex gap-2 items-start">
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div className="md:col-span-1">
+                          <Select onValueChange={(v) => selectProduct(index, v)}>
+                            <SelectTrigger className="text-xs">
+                              <SelectValue placeholder="Select product" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.item_code ? `[${p.item_code}] ` : ""}{p.name} - {formatMVR(p.price)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={item.productName}
+                            onChange={(e) => updateItem(index, "productName", e.target.value)}
+                            placeholder="Or type product name"
+                            className="mt-1 text-xs"
+                          />
+                        </div>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 1)}
+                          placeholder="Qty"
+                          className="text-xs"
+                        />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={item.unitPrice}
+                          onChange={(e) => updateItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
+                          placeholder="Price"
+                          className="text-xs"
+                        />
+                      </div>
+                      {items.length > 1 && (
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => removeItem(index)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 1)}
-                      placeholder="Qty"
-                      className="text-xs"
-                    />
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={item.unitPrice}
-                      onChange={(e) => updateItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
-                      placeholder="Price"
-                      className="text-xs"
-                    />
+                    
+                    {/* Color Selection */}
+                    {hasColors && (
+                      <div className="flex items-center gap-2 pl-1">
+                        <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+                        <Select 
+                          value={item.colorId || ""} 
+                          onValueChange={(v) => selectColor(index, v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs flex-1 max-w-xs">
+                            <SelectValue placeholder="Select color (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {colors.map((color) => (
+                              <SelectItem key={color.id} value={color.id}>
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-border"
+                                    style={{ backgroundColor: color.color_hex }}
+                                  />
+                                  {color.color_name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {item.colorName && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <div 
+                              className="w-3 h-3 rounded-full border"
+                              style={{ backgroundColor: item.colorHex }}
+                            />
+                            {item.colorName}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {items.length > 1 && (
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => removeItem(index)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
 
               <div className="text-right font-semibold text-lg text-primary">
                 Total: {formatMVR(calculateTotal(items))}
@@ -605,43 +742,84 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
                       <Plus className="w-3 h-3 mr-1" /> Item
                     </Button>
                   </div>
-                  {order.items.map((item, itemIndex) => (
-                    <div key={itemIndex} className="flex gap-1 items-center">
-                      <Input
-                        value={item.productName}
-                        onChange={(e) => updateBulkOrderItem(orderIndex, itemIndex, "productName", e.target.value)}
-                        placeholder="Product"
-                        className="flex-1 text-xs"
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => updateBulkOrderItem(orderIndex, itemIndex, "quantity", parseInt(e.target.value) || 1)}
-                        placeholder="Qty"
-                        className="w-16 text-xs"
-                      />
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={item.unitPrice}
-                        onChange={(e) => updateBulkOrderItem(orderIndex, itemIndex, "unitPrice", parseFloat(e.target.value) || 0)}
-                        placeholder="Price"
-                        className="w-24 text-xs"
-                      />
-                      {order.items.length > 1 && (
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon"
-                          className="w-6 h-6"
-                          onClick={() => removeBulkOrderItem(orderIndex, itemIndex)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                  {order.items.map((item, itemIndex) => {
+                    const colors = productColors[item.productId] || [];
+                    const hasColors = colors.length > 0;
+                    
+                    return (
+                      <div key={itemIndex} className="space-y-1.5 p-2 bg-muted/20 rounded-lg">
+                        <div className="flex gap-1 items-center">
+                          <Select onValueChange={(v) => selectBulkProduct(orderIndex, itemIndex, v)}>
+                            <SelectTrigger className="flex-1 text-xs h-8">
+                              <SelectValue placeholder="Select product" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.item_code ? `[${p.item_code}] ` : ""}{p.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateBulkOrderItem(orderIndex, itemIndex, "quantity", parseInt(e.target.value) || 1)}
+                            placeholder="Qty"
+                            className="w-16 text-xs"
+                          />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.unitPrice}
+                            onChange={(e) => updateBulkOrderItem(orderIndex, itemIndex, "unitPrice", parseFloat(e.target.value) || 0)}
+                            placeholder="Price"
+                            className="w-24 text-xs"
+                          />
+                          {order.items.length > 1 && (
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon"
+                              className="w-6 h-6"
+                              onClick={() => removeBulkOrderItem(orderIndex, itemIndex)}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Color Selection for Bulk */}
+                        {hasColors && (
+                          <div className="flex items-center gap-2 pl-1">
+                            <Palette className="w-3 h-3 text-muted-foreground" />
+                            <Select 
+                              value={item.colorId || ""} 
+                              onValueChange={(v) => selectBulkColor(orderIndex, itemIndex, v)}
+                            >
+                              <SelectTrigger className="h-7 text-xs flex-1">
+                                <SelectValue placeholder="Color (optional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {colors.map((color) => (
+                                  <SelectItem key={color.id} value={color.id}>
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="w-3 h-3 rounded-full border border-border"
+                                        style={{ backgroundColor: color.color_hex }}
+                                      />
+                                      {color.color_name}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div className="text-right text-sm font-medium text-primary">
