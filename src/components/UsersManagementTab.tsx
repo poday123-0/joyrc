@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { User, Trash2, Search, RefreshCw, UserPlus, X, KeyRound, Phone, Mail } from "lucide-react";
+import { User, Trash2, Search, RefreshCw, UserPlus, X, KeyRound, Phone, Mail, Edit2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "./ConfirmDialog";
+import EditCustomerDialog from "./EditCustomerDialog";
 
 interface UserProfile {
   id: string;
@@ -12,6 +13,7 @@ interface UserProfile {
   created_at: string;
   email?: string;
   is_admin?: boolean;
+  address?: string | null;
 }
 
 const UsersManagementTab = () => {
@@ -25,8 +27,10 @@ const UsersManagementTab = () => {
   const [newUserName, setNewUserName] = useState("");
   const [newUserMobile, setNewUserMobile] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("123456");
+  const [newUserAddress, setNewUserAddress] = useState("");
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -178,6 +182,7 @@ const UsersManagementTab = () => {
       setNewUserName("");
       setNewUserMobile("");
       setNewUserPassword("123456");
+      setNewUserAddress("");
       fetchUsers();
     } catch (error: any) {
       console.error("Error creating user:", error);
@@ -280,6 +285,18 @@ const UsersManagementTab = () => {
               />
               <p className="text-xs text-muted-foreground mt-1">Default: 123456</p>
             </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Address <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <textarea
+                value={newUserAddress}
+                onChange={(e) => setNewUserAddress(e.target.value)}
+                placeholder="Enter delivery/shipping address"
+                rows={2}
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+              />
+            </div>
           </div>
           
           <div className="flex justify-end gap-2 pt-2">
@@ -356,6 +373,12 @@ const UsersManagementTab = () => {
                         {user.email}
                       </span>
                     )}
+                    {user.address && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        <span className="truncate max-w-[150px]">{user.address}</span>
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Joined {formatDate(user.created_at)}
@@ -364,6 +387,13 @@ const UsersManagementTab = () => {
               </div>
               
               <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                <button
+                  onClick={() => setEditingCustomer(user)}
+                  className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                  title="Edit customer"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => setResetPasswordUserId(user.user_id)}
                   className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
@@ -401,6 +431,13 @@ const UsersManagementTab = () => {
         title="Reset Password"
         description="This will reset the user's password to '123456'. They can change it after logging in."
         confirmText="Reset Password"
+      />
+
+      <EditCustomerDialog
+        open={!!editingCustomer}
+        onOpenChange={(open) => !open && setEditingCustomer(null)}
+        customer={editingCustomer}
+        onSuccess={fetchUsers}
       />
     </div>
   );
