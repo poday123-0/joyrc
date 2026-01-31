@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt } from "lucide-react";
+import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt, Trash2, ShieldAlert, X, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Product {
   id: string;
@@ -48,10 +49,26 @@ const StockManagementTab = () => {
   const [stockCosts, setStockCosts] = useState<Record<string, StockCosts>>({});
   const [showCostFields, setShowCostFields] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  
+  // Clear history state
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [clearPassword, setClearPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     fetchProducts();
+    checkSuperAdmin();
   }, []);
+
+  const checkSuperAdmin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.rpc("is_super_admin", { _user_id: user.id });
+      setIsSuperAdmin(!!data);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -267,6 +284,63 @@ const StockManagementTab = () => {
     });
   };
 
+  const handleClearAllHistory = async () => {
+    if (!clearPassword.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter your password to confirm.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setClearing(true);
+    try {
+      // Verify password by re-authenticating
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("User not found");
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: clearPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Invalid Password",
+          description: "The password you entered is incorrect.",
+          variant: "destructive",
+        });
+        setClearing(false);
+        return;
+      }
+
+      // Delete all stock history
+      const { error: deleteError } = await supabase
+        .from("stock_history")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all rows
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: "History Cleared",
+        description: "All stock history has been deleted.",
+      });
+
+      setShowClearDialog(false);
+      setClearPassword("");
+      setStockHistory([]);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to clear history",
+        variant: "destructive",
+      });
+    }
+    setClearing(false);
+  };
+
   const getChangeTypeLabel = (type: string) => {
     switch (type) {
       case "restock": return "Restock";
@@ -286,14 +360,85 @@ const StockManagementTab = () => {
             Track and manage product inventory
           </p>
         </div>
-        <button
-          onClick={fetchProducts}
-          className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {isSuperAdmin && (
+            <button
+              onClick={() => setShowClearDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Clear History
+            </button>
+          )}
+          <button
+            onClick={fetchProducts}
+            className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {/* Clear History Dialog */}
+      {showClearDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <ShieldAlert className="w-5 h-5 text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Clear All Stock History</h3>
+                <p className="text-sm text-muted-foreground">This action cannot be undone</p>
+              </div>
+              <button
+                onClick={() => { setShowClearDialog(false); setClearPassword(""); }}
+                className="ml-auto p-2 hover:bg-muted rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4">
+              Enter your Super Admin password to confirm deletion of all stock history records.
+            </p>
+            
+            <div className="relative mb-4">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={clearPassword}
+                onChange={(e) => setClearPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full px-4 py-3 pr-12 bg-muted border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-destructive/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowClearDialog(false); setClearPassword(""); }}
+                className="flex-1 px-4 py-2.5 bg-muted text-foreground rounded-xl hover:bg-muted/80 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearAllHistory}
+                disabled={clearing || !clearPassword.trim()}
+                className="flex-1 px-4 py-2.5 bg-destructive text-destructive-foreground rounded-xl hover:bg-destructive/90 transition-colors disabled:opacity-50"
+              >
+                {clearing ? "Clearing..." : "Clear All History"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
