@@ -102,7 +102,7 @@ const Index = () => {
       </section>
 
       {/* Hero Text Section */}
-      <section className="py-10 lg:py-[26px]">
+      <section className="py-10 lg:py-[26px] my-0">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8 text-center">
           <div className="space-y-4">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
@@ -116,7 +116,7 @@ const Index = () => {
       </section>
 
       {/* Featured Products Section */}
-      <section className="py-6 lg:py-12">
+      <section className="py-6 lg:py-12 my-0">
         <div className="container max-w-7xl mx-auto px-4 lg:px-8">
           {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {[1, 2, 3].map(i => <div key={i} className="aspect-[4/5] bg-muted animate-pulse" />)}
