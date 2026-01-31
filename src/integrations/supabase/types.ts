@@ -431,6 +431,9 @@ export type Database = {
       }
       order_items: {
         Row: {
+          color_hex: string | null
+          color_id: string | null
+          color_name: string | null
           created_at: string
           id: string
           order_id: string
@@ -440,6 +443,9 @@ export type Database = {
           quantity: number
         }
         Insert: {
+          color_hex?: string | null
+          color_id?: string | null
+          color_name?: string | null
           created_at?: string
           id?: string
           order_id: string
@@ -449,6 +455,9 @@ export type Database = {
           quantity?: number
         }
         Update: {
+          color_hex?: string | null
+          color_id?: string | null
+          color_name?: string | null
           created_at?: string
           id?: string
           order_id?: string
@@ -458,6 +467,13 @@ export type Database = {
           quantity?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "order_items_color_id_fkey"
+            columns: ["color_id"]
+            isOneToOne: false
+            referencedRelation: "product_colors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
@@ -704,6 +720,7 @@ export type Database = {
           id: string
           image_url: string | null
           in_stock: boolean | null
+          item_code: string | null
           name: string
           old_price: number | null
           price: number
@@ -718,6 +735,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
+          item_code?: string | null
           name: string
           old_price?: number | null
           price: number
@@ -732,6 +750,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
+          item_code?: string | null
           name?: string
           old_price?: number | null
           price?: number

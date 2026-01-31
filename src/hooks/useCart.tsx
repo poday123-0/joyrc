@@ -6,13 +6,17 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  colorId?: string | null;
+  colorName?: string | null;
+  colorHex?: string | null;
+  itemCode?: string | null;
 }
 
 interface CartContextType {
   items: CartItem[];
   addToCart: (item: Omit<CartItem, "quantity">) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  removeFromCart: (id: string, colorId?: string | null) => void;
+  updateQuantity: (id: string, quantity: number, colorId?: string | null) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -34,27 +38,39 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+      // Find existing item with same id AND same color
+      const existing = prev.find((i) => 
+        i.id === item.id && 
+        (i.colorId || null) === (item.colorId || null)
+      );
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id && (i.colorId || null) === (item.colorId || null)
+            ? { ...i, quantity: i.quantity + 1 } 
+            : i
         );
       }
       return [...prev, { ...item, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeFromCart = (id: string, colorId?: string | null) => {
+    setItems((prev) => prev.filter((i) => 
+      !(i.id === id && (i.colorId || null) === (colorId || null))
+    ));
   };
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number, colorId?: string | null) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      removeFromCart(id, colorId);
       return;
     }
     setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, quantity } : i))
+      prev.map((i) => 
+        i.id === id && (i.colorId || null) === (colorId || null)
+          ? { ...i, quantity } 
+          : i
+      )
     );
   };
 

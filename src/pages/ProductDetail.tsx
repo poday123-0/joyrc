@@ -25,6 +25,7 @@ interface Product {
   stock_quantity: number;
   in_stock: boolean | null;
   category?: string;
+  item_code?: string | null;
 }
 interface ProductColor {
   id: string;
@@ -290,16 +291,25 @@ const ProductDetail = () => {
         setShowPreorderDialog(true);
         return;
       }
-      const imageSrc = galleryImages[0] || product.image_url || "";
+      // Get image for selected color or default
+      const selectedColor = productColors.find(c => c.id === selectedColorId);
+      const imageSrc = selectedColor?.image_url || galleryImages[0] || product.image_url || "";
+      
       addToCart({
         id: product.id,
         name: product.name,
         price: product.price,
-        image: imageSrc
+        image: imageSrc,
+        colorId: selectedColorId,
+        colorName: selectedColor?.color_name || null,
+        colorHex: selectedColor?.color_hex || null,
+        itemCode: (product as any).item_code || null,
       });
+      
+      const colorText = selectedColor ? ` (${selectedColor.color_name})` : '';
       toast({
         title: "Added to Cart",
-        description: `${product.name} has been added to your cart.`
+        description: `${product.name}${colorText} has been added to your cart.`
       });
     }
   };

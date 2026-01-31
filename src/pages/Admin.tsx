@@ -72,6 +72,7 @@ interface Product {
   category_id: string | null;
   rating: number | null;
   in_stock: boolean | null;
+  item_code: string | null;
 }
 
 interface ProductSpecification {
@@ -644,6 +645,7 @@ const ProductsTab = ({
     category_id: "",
     rating: "4.5",
     in_stock: true,
+    item_code: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -656,7 +658,8 @@ const ProductsTab = ({
   
   // Filtered products
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.item_code && product.item_code.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = categoryFilter === "all" || product.category_id === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -740,7 +743,7 @@ const ProductsTab = ({
   };
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", price: "", old_price: "", category_id: "", rating: "4.5", in_stock: true });
+    setFormData({ name: "", description: "", price: "", old_price: "", category_id: "", rating: "4.5", in_stock: true, item_code: "" });
     setImageFile(null);
     setEditingProduct(null);
     setSpecifications([]);
@@ -833,6 +836,7 @@ const ProductsTab = ({
       category_id: product.category_id || "",
       rating: (product.rating || 4.5).toString(),
       in_stock: product.in_stock ?? true,
+      item_code: product.item_code || "",
     });
     setShowForm(true);
     
@@ -1166,6 +1170,7 @@ const ProductsTab = ({
         rating: parseFloat(formData.rating),
         in_stock: formData.in_stock,
         image_url: imageUrl,
+        item_code: formData.item_code.trim() || null,
       };
 
       if (editingProduct) {
@@ -1286,14 +1291,23 @@ const ProductsTab = ({
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="md:grid md:grid-cols-2 md:gap-4 space-y-4 md:space-y-0">
-              <input
-                type="text"
-                placeholder="Product name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-                required
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Product name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Item Code / SKU"
+                  value={formData.item_code}
+                  onChange={(e) => setFormData({ ...formData, item_code: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+                />
+              </div>
               <div className="grid grid-cols-3 gap-3">
                 <input
                   type="number"
@@ -1751,6 +1765,9 @@ const ProductsTab = ({
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-foreground text-sm line-clamp-2">{product.name}</h4>
+                {product.item_code && (
+                  <p className="text-xs text-primary font-mono">{product.item_code}</p>
+                )}
                 <p className="text-primary font-semibold text-sm mt-0.5">{formatMVR(product.price)}</p>
               </div>
             </div>

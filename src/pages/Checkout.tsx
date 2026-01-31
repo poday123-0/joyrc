@@ -112,6 +112,9 @@ const Checkout = () => {
         product_name: item.name,
         product_price: item.price,
         quantity: item.quantity,
+        color_id: item.colorId || null,
+        color_name: item.colorName || null,
+        color_hex: item.colorHex || null,
       }));
 
       await supabase.from("order_items").insert(orderItems);
