@@ -614,10 +614,6 @@ const QuickPOSTab = () => {
         </div>
       )}
 
-      {/* Mobile Cart Overlay */}
-      {showCart && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setShowCart(false)} />
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 h-full">
         {/* Products Panel */}
@@ -763,18 +759,10 @@ const QuickPOSTab = () => {
           </div>
         </div>
 
-        {/* Cart Panel - Sliding on mobile */}
-        <div className={`
-          fixed lg:relative inset-y-0 right-0 w-[85%] max-w-sm lg:w-auto lg:max-w-none
-          flex flex-col bg-card border-l lg:border border-border lg:rounded-xl overflow-hidden
-          transform transition-transform duration-300 ease-out z-50
-          ${showCart ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-        `}>
+        {/* Cart Section - Inline on mobile, sidebar on desktop */}
+        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden">
           <div className="p-3 border-b border-border bg-muted/30 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <button onClick={() => setShowCart(false)} className="lg:hidden p-1 hover:bg-muted rounded">
-                <X className="w-4 h-4" />
-              </button>
               <ShoppingBag className="w-4 h-4 text-primary" />
               <span className="font-semibold text-foreground text-sm">Cart</span>
               {totalItems > 0 && (
@@ -786,14 +774,14 @@ const QuickPOSTab = () => {
             )}
           </div>
 
-          {/* Selected Items Summary - At top of cart */}
+          {/* Selected Items Summary */}
           {cart.length > 0 && (
             <div className="px-3 py-2 border-b border-border bg-primary/5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-foreground">Items ({cart.reduce((acc, item) => acc + item.quantity, 0)})</span>
                 <span className="text-xs font-semibold text-primary">{formatMVR(cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0))}</span>
               </div>
-              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+              <div className="space-y-1.5 max-h-32 lg:max-h-40 overflow-y-auto">
                 {cart.map(item => (
                   <div 
                     key={`summary-${item.product.id}-${item.selectedColor?.id || 'default'}`}
@@ -836,7 +824,7 @@ const QuickPOSTab = () => {
           {/* Delivery Details & Complete Section */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-24 text-muted-foreground">
                 <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
                 <p className="text-xs">Cart is empty</p>
               </div>
