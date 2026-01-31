@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 interface ProductColor {
   id: string;
@@ -29,6 +31,13 @@ interface CartItem {
   selectedColor?: ProductColor | null;
 }
 
+interface CustomerDetails {
+  name: string;
+  phone: string;
+  address: string;
+  notes: string;
+}
+
 const QuickPOSTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -36,13 +45,20 @@ const QuickPOSTab = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [colorPickerProduct, setColorPickerProduct] = useState<Product | null>(null);
+  const [isDelivery, setIsDelivery] = useState(false);
+  const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
+    name: "",
+    phone: "",
+    address: "",
+    notes: "",
+  });
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
-    // Fetch products with their colors
     const { data: productsData, error } = await supabase
       .from("products")
       .select("id, name, price, stock_quantity, image_url, category_id, item_code")
@@ -55,7 +71,6 @@ const QuickPOSTab = () => {
       return;
     }
 
-    // Fetch colors for all products
     const productIds = productsData?.map(p => p.id) || [];
     const { data: colorsData } = await supabase
       .from("product_colors")
@@ -63,7 +78,6 @@ const QuickPOSTab = () => {
       .in("product_id", productIds)
       .order("sort_order");
 
-    // Map colors to products
     const productsWithColors = (productsData || []).map(product => ({
       ...product,
       colors: colorsData?.filter(c => c.product_id === product.id) || []
@@ -79,7 +93,6 @@ const QuickPOSTab = () => {
   );
 
   const handleProductClick = (product: Product) => {
-    // If product has colors, show color picker
     if (product.colors && product.colors.length > 0) {
       setColorPickerProduct(product);
     } else {
@@ -88,7 +101,6 @@ const QuickPOSTab = () => {
   };
 
   const addToCart = (product: Product, color: ProductColor | null) => {
-    const cartKey = `${product.id}-${color?.id || 'default'}`;
     const existing = cart.find(item => 
       item.product.id === product.id && 
       (item.selectedColor?.id || null) === (color?.id || null)
@@ -131,18 +143,35 @@ const QuickPOSTab = () => {
     ));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    setCustomerDetails({ name: "", phone: "", address: "", notes: "" });
+    setIsDelivery(false);
+  };
 
   const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const completeSale = async () => {
     if (cart.length === 0) return;
+    
+    // Validate delivery details if delivery is selected
+    if (isDelivery && (!customerDetails.name.trim() || !customerDetails.phone.trim() || !customerDetails.address.trim())) {
+      toast({ title: "Missing Details", description: "Please fill in customer name, phone and address for delivery", variant: "destructive" });
+      return;
+    }
+    
     setProcessing(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+
+      // Build order notes
+      let orderNotes = isDelivery ? "POS Delivery Order" : "Walk-in POS Sale";
+      if (customerDetails.notes.trim()) {
+        orderNotes += ` | Notes: ${customerDetails.notes.trim()}`;
+      }
 
       // Create order
       const { data: order, error: orderError } = await supabase
@@ -150,18 +179,20 @@ const QuickPOSTab = () => {
         .insert({
           user_id: user.id,
           total_amount: totalAmount,
-          status: "completed",
+          status: isDelivery ? "processing" : "completed",
           payment_status: "confirmed",
           payment_method: "cash",
           payment_confirmed_at: new Date().toISOString(),
-          notes: "Walk-in POS Sale",
+          notes: orderNotes,
+          shipping_address: isDelivery ? customerDetails.address.trim() : null,
+          phone: customerDetails.phone.trim() || null,
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Create order items with color info
+      // Create order items
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.product.id,
@@ -179,11 +210,10 @@ const QuickPOSTab = () => {
 
       if (itemsError) throw itemsError;
 
-      // Update stock and create history for each product
+      // Update stock and create history
       for (const item of cart) {
         const newQty = item.product.stock_quantity - item.quantity;
 
-        // Update product stock
         const { error: stockError } = await supabase
           .from("products")
           .update({ 
@@ -194,7 +224,6 @@ const QuickPOSTab = () => {
 
         if (stockError) throw stockError;
 
-        // Create stock history
         await supabase.from("stock_history").insert({
           product_id: item.product.id,
           previous_quantity: item.product.stock_quantity,
@@ -212,18 +241,19 @@ const QuickPOSTab = () => {
         type: "income",
         category: "Product Sales",
         amount: totalAmount,
-        description: `POS Sale - ${totalItems} item(s) - Order #${order.id.slice(0, 8)}`,
+        description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order #${order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
         order_id: order.id,
         added_by: user.id,
       });
 
       toast({
-        title: "Sale Complete! 🎉",
-        description: `${formatMVR(totalAmount)} - ${totalItems} item(s) sold`,
+        title: isDelivery ? "Order Created! 📦" : "Sale Complete! 🎉",
+        description: `${formatMVR(totalAmount)} - ${totalItems} item(s)${customerDetails.name ? ` for ${customerDetails.name}` : ''}`,
       });
 
       clearCart();
-      fetchProducts(); // Refresh stock
+      setShowCart(false);
+      fetchProducts();
     } catch (error: any) {
       toast({
         title: "Sale Failed",
@@ -244,262 +274,294 @@ const QuickPOSTab = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-200px)] min-h-[500px]">
+    <div className="relative h-[calc(100vh-200px)] min-h-[500px]">
       {/* Color Picker Modal */}
       {colorPickerProduct && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card border border-border rounded-2xl p-5 max-w-sm w-full shadow-xl">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-card border border-border rounded-2xl p-4 max-w-sm w-full shadow-xl">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Palette className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-foreground">Select Color</h3>
+                <Palette className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-foreground text-sm">Select Color</h3>
               </div>
-              <button
-                onClick={() => setColorPickerProduct(null)}
-                className="p-2 hover:bg-muted rounded-lg"
-              >
+              <button onClick={() => setColorPickerProduct(null)} className="p-1.5 hover:bg-muted rounded-lg">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
-            <p className="text-sm text-muted-foreground mb-4">{colorPickerProduct.name}</p>
-            
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            <p className="text-xs text-muted-foreground mb-3 truncate">{colorPickerProduct.name}</p>
+            <div className="grid grid-cols-2 gap-2 mb-3">
               {colorPickerProduct.colors?.map(color => (
                 <button
                   key={color.id}
                   onClick={() => addToCart(colorPickerProduct, color)}
-                  className="flex items-center gap-2 p-3 rounded-xl border border-border hover:bg-muted transition-colors"
+                  className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-muted transition-colors"
                 >
-                  <div 
-                    className="w-6 h-6 rounded-full border border-border shadow-sm"
-                    style={{ backgroundColor: color.color_hex }}
-                  />
-                  <span className="text-sm font-medium truncate">{color.color_name}</span>
+                  <div className="w-5 h-5 rounded-full border border-border shadow-sm flex-shrink-0" style={{ backgroundColor: color.color_hex }} />
+                  <span className="text-xs font-medium truncate">{color.color_name}</span>
                 </button>
               ))}
             </div>
-            
             <button
               onClick={() => addToCart(colorPickerProduct, null)}
-              className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
+              className="w-full py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
             >
-              Add without color selection
+              Add without color
             </button>
           </div>
         </div>
       )}
 
-      {/* Products Panel */}
-      <div className="lg:col-span-2 flex flex-col bg-card border border-border rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-border bg-muted/30">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or item code..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+      {/* Mobile Cart Overlay */}
+      {showCart && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setShowCart(false)} />
+      )}
 
-        <div className="flex-1 overflow-y-auto p-4">
-          {filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <Package className="w-12 h-12 mb-2 opacity-50" />
-              <p>No products found</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 h-full">
+        {/* Products Panel */}
+        <div className="lg:col-span-2 flex flex-col bg-card border border-border rounded-xl overflow-hidden">
+          <div className="p-3 border-b border-border bg-muted/30">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {filteredProducts.map(product => (
-                <button
-                  key={product.id}
-                  onClick={() => handleProductClick(product)}
-                  className="flex flex-col p-3 bg-muted/50 hover:bg-muted border border-border rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] text-left relative"
-                >
-                  {/* Color indicator */}
-                  {product.colors && product.colors.length > 0 && (
-                    <div className="absolute top-2 right-2 flex -space-x-1">
-                      {product.colors.slice(0, 3).map(color => (
-                        <div
-                          key={color.id}
-                          className="w-4 h-4 rounded-full border-2 border-card shadow-sm"
-                          style={{ backgroundColor: color.color_hex }}
-                        />
-                      ))}
-                      {product.colors.length > 3 && (
-                        <div className="w-4 h-4 rounded-full bg-muted border-2 border-card flex items-center justify-center">
-                          <span className="text-[8px] font-bold text-muted-foreground">+{product.colors.length - 3}</span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2 sm:p-3">
+            {filteredProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <Package className="w-10 h-10 mb-2 opacity-50" />
+                <p className="text-sm">No products found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                {filteredProducts.map(product => (
+                  <button
+                    key={product.id}
+                    onClick={() => handleProductClick(product)}
+                    className="flex flex-col p-2 bg-muted/50 hover:bg-muted border border-border rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98] text-left relative"
+                  >
+                    {/* Color dots */}
+                    {product.colors && product.colors.length > 0 && (
+                      <div className="absolute top-1 right-1 flex -space-x-0.5">
+                        {product.colors.slice(0, 3).map(color => (
+                          <div
+                            key={color.id}
+                            className="w-3 h-3 rounded-full border border-card shadow-sm"
+                            style={{ backgroundColor: color.color_hex }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="w-full aspect-square rounded-md bg-background mb-1.5 overflow-hidden">
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <Package className="w-5 h-5" />
                         </div>
                       )}
                     </div>
-                  )}
-                  
-                  <div className="w-full aspect-square rounded-lg bg-background mb-2 overflow-hidden">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
+                    <p className="font-medium text-xs text-foreground line-clamp-1">{product.name}</p>
+                    {product.item_code && (
+                      <p className="text-[10px] text-muted-foreground font-mono">{product.item_code}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-0.5">
+                      <p className="text-primary font-semibold text-xs">{formatMVR(product.price)}</p>
+                      <p className="text-[10px] text-muted-foreground">{product.stock_quantity}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Cart Panel - Sliding on mobile */}
+        <div className={`
+          fixed lg:relative inset-y-0 right-0 w-[85%] max-w-sm lg:w-auto lg:max-w-none
+          flex flex-col bg-card border-l lg:border border-border lg:rounded-xl overflow-hidden
+          transform transition-transform duration-300 ease-out z-50
+          ${showCart ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        `}>
+          <div className="p-3 border-b border-border bg-muted/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowCart(false)} className="lg:hidden p-1 hover:bg-muted rounded">
+                <X className="w-4 h-4" />
+              </button>
+              <ShoppingBag className="w-4 h-4 text-primary" />
+              <span className="font-semibold text-foreground text-sm">Cart</span>
+              {totalItems > 0 && (
+                <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">{totalItems}</span>
+              )}
+            </div>
+            {cart.length > 0 && (
+              <button onClick={clearCart} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
+                <p className="text-xs">Cart is empty</p>
+              </div>
+            ) : (
+              cart.map(item => (
+                <div
+                  key={`${item.product.id}-${item.selectedColor?.id || 'default'}`}
+                  className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg"
+                >
+                  <div className="w-10 h-10 rounded-md bg-background overflow-hidden flex-shrink-0">
+                    {item.selectedColor?.image_url || item.product.image_url ? (
+                      <img src={item.selectedColor?.image_url || item.product.image_url || ''} alt={item.product.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        <Package className="w-8 h-8" />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-4 h-4 text-muted-foreground" />
                       </div>
                     )}
                   </div>
-                  <p className="font-medium text-sm text-foreground line-clamp-2 mb-1">
-                    {product.name}
-                  </p>
-                  {product.item_code && (
-                    <p className="text-xs text-muted-foreground font-mono mb-1">
-                      {product.item_code}
-                    </p>
-                  )}
-                  <p className="text-primary font-semibold text-sm">
-                    {formatMVR(product.price)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Stock: {product.stock_quantity}
-                  </p>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Cart Panel */}
-      <div className="flex flex-col bg-card border border-border rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-foreground">Cart</span>
-            {totalItems > 0 && (
-              <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                {totalItems}
-              </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{item.product.name}</p>
+                    {item.selectedColor && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <div className="w-2.5 h-2.5 rounded-full border border-border" style={{ backgroundColor: item.selectedColor.color_hex }} />
+                        <span className="text-[10px] text-muted-foreground">{item.selectedColor.color_name}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
+                      className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
+                      className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <p className="text-xs font-semibold text-foreground w-14 text-right">{formatMVR(item.product.price * item.quantity)}</p>
+
+                  <button
+                    onClick={() => removeFromCart(item.product.id, item.selectedColor?.id || null)}
+                    className="w-6 h-6 rounded bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                  >
+                    <Trash2 className="w-3 h-3 text-destructive" />
+                  </button>
+                </div>
+              ))
             )}
-          </div>
-          {cart.length > 0 && (
-            <button
-              onClick={clearCart}
-              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-            >
-              Clear All
-            </button>
-          )}
-        </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <ShoppingBag className="w-10 h-10 mb-2 opacity-50" />
-              <p className="text-sm">Cart is empty</p>
-              <p className="text-xs">Tap products to add</p>
-            </div>
-          ) : (
-            cart.map(item => (
-              <div
-                key={`${item.product.id}-${item.selectedColor?.id || 'default'}`}
-                className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl"
-              >
-                <div className="w-12 h-12 rounded-lg bg-background overflow-hidden flex-shrink-0">
-                  {item.selectedColor?.image_url || item.product.image_url ? (
-                    <img
-                      src={item.selectedColor?.image_url || item.product.image_url || ''}
-                      alt={item.product.name}
-                      className="w-full h-full object-cover"
+            {/* Customer & Delivery Details */}
+            {cart.length > 0 && (
+              <div className="pt-2 border-t border-border space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground">Delivery Order</span>
+                  </div>
+                  <Switch checked={isDelivery} onCheckedChange={setIsDelivery} />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="relative">
+                    <User className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Customer name"
+                      value={customerDetails.name}
+                      onChange={(e) => setCustomerDetails({ ...customerDetails, name: e.target.value })}
+                      className="pl-8 h-8 text-xs"
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="w-5 h-5 text-muted-foreground" />
-                    </div>
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Phone number"
+                      value={customerDetails.phone}
+                      onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+                      className="pl-8 h-8 text-xs"
+                    />
+                  </div>
+                  {isDelivery && (
+                    <>
+                      <div className="relative">
+                        <MapPin className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+                        <Textarea
+                          placeholder="Delivery address"
+                          value={customerDetails.address}
+                          onChange={(e) => setCustomerDetails({ ...customerDetails, address: e.target.value })}
+                          className="pl-8 text-xs min-h-[60px] resize-none"
+                        />
+                      </div>
+                      <div className="relative">
+                        <FileText className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
+                        <Textarea
+                          placeholder="Notes (optional)"
+                          value={customerDetails.notes}
+                          onChange={(e) => setCustomerDetails({ ...customerDetails, notes: e.target.value })}
+                          className="pl-8 text-xs min-h-[50px] resize-none"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {item.product.name}
-                  </p>
-                  {item.selectedColor && (
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <div 
-                        className="w-3 h-3 rounded-full border border-border"
-                        style={{ backgroundColor: item.selectedColor.color_hex }}
-                      />
-                      <span className="text-xs text-muted-foreground">{item.selectedColor.color_name}</span>
-                    </div>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    {formatMVR(item.product.price)} each
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
-                    className="w-7 h-7 rounded-lg bg-background flex items-center justify-center hover:bg-muted transition-colors"
-                  >
-                    <Minus className="w-3 h-3" />
-                  </button>
-                  <span className="w-8 text-center text-sm font-medium">
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
-                    className="w-7 h-7 rounded-lg bg-background flex items-center justify-center hover:bg-muted transition-colors"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
-                </div>
-
-                <div className="text-right min-w-[70px]">
-                  <p className="text-sm font-semibold text-foreground">
-                    {formatMVR(item.product.price * item.quantity)}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => removeFromCart(item.product.id, item.selectedColor?.id || null)}
-                  className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
-                >
-                  <Trash2 className="w-3 h-3 text-destructive" />
-                </button>
               </div>
-            ))
-          )}
-        </div>
-
-        {/* Total & Complete Sale */}
-        <div className="p-4 border-t border-border bg-muted/30 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Total</span>
-            <span className="text-2xl font-bold text-foreground">
-              {formatMVR(totalAmount)}
-            </span>
+            )}
           </div>
 
-          <button
-            onClick={completeSale}
-            disabled={cart.length === 0 || processing}
-            className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
-          >
-            {processing ? (
-              <>
-                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Check className="w-5 h-5" />
-                Complete Sale
-              </>
-            )}
-          </button>
+          {/* Total & Complete */}
+          <div className="p-3 border-t border-border bg-muted/30 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-xl font-bold text-foreground">{formatMVR(totalAmount)}</span>
+            </div>
+
+            <button
+              onClick={completeSale}
+              disabled={cart.length === 0 || processing}
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+            >
+              {processing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  {isDelivery ? "Create Order" : "Complete Sale"}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Floating Cart Button - Mobile */}
+      {cart.length > 0 && !showCart && (
+        <button
+          onClick={() => setShowCart(true)}
+          className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center z-30"
+        >
+          <ShoppingBag className="w-5 h-5" />
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center font-bold">
+            {totalItems}
+          </span>
+        </button>
+      )}
     </div>
   );
 };
