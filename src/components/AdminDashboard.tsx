@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR, formatMVRCompact } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Transaction {
   id: string;
@@ -31,6 +32,8 @@ interface DashboardStats {
 }
 
 const AdminDashboard = () => {
+  const { isSuperAdmin, isAdmin, user } = useAuth();
+  const [isFullAdmin, setIsFullAdmin] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     totalExpenses: 0,
@@ -54,6 +57,24 @@ const AdminDashboard = () => {
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+
+  // Check if user is a full admin (admin role) vs staff with permissions
+  useEffect(() => {
+    const checkFullAdmin = async () => {
+      if (!user) return;
+      
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      
+      // User is a full admin if they have admin or super_admin role
+      const hasAdminRole = roles?.some(r => r.role === "admin" || r.role === "super_admin");
+      setIsFullAdmin(hasAdminRole || false);
+    };
+    
+    checkFullAdmin();
+  }, [user]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -227,34 +248,36 @@ const AdminDashboard = () => {
         <p className="text-xs text-muted-foreground">Monitor your business performance</p>
       </div>
 
-      {/* Primary Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <StatCard
-          title="Total Revenue"
-          value={formatMVR(stats.totalRevenue)}
-          icon={TrendingUp}
-          trend={`${formatMVR(stats.monthlyRevenue)} this month`}
-          trendUp={true}
-          variant="success"
-        />
-        <StatCard
-          title="Total Expenses"
-          value={formatMVR(stats.totalExpenses)}
-          icon={TrendingDown}
-          trend={`${formatMVR(stats.monthlyExpenses)} this month`}
-          trendUp={false}
-          variant="danger"
-        />
-        <StatCard
-          title="Net Profit"
-          value={formatMVR(netProfit)}
-          icon={Wallet}
-          trend={`${formatMVR(monthlyNetProfit)} this month`}
-          trendUp={monthlyNetProfit > 0}
-          variant={netProfit >= 0 ? "primary" : "danger"}
-          className="col-span-2 lg:col-span-1"
-        />
-      </div>
+      {/* Primary Stats Row - Financial data only for full admins */}
+      {isFullAdmin && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <StatCard
+            title="Total Revenue"
+            value={formatMVR(stats.totalRevenue)}
+            icon={TrendingUp}
+            trend={`${formatMVR(stats.monthlyRevenue)} this month`}
+            trendUp={true}
+            variant="success"
+          />
+          <StatCard
+            title="Total Expenses"
+            value={formatMVR(stats.totalExpenses)}
+            icon={TrendingDown}
+            trend={`${formatMVR(stats.monthlyExpenses)} this month`}
+            trendUp={false}
+            variant="danger"
+          />
+          <StatCard
+            title="Net Profit"
+            value={formatMVR(netProfit)}
+            icon={Wallet}
+            trend={`${formatMVR(monthlyNetProfit)} this month`}
+            trendUp={monthlyNetProfit > 0}
+            variant={netProfit >= 0 ? "primary" : "danger"}
+            className="col-span-2 lg:col-span-1"
+          />
+        </div>
+      )}
 
       {/* Secondary Stats Row */}
       <div className="grid grid-cols-3 gap-3">
@@ -278,37 +301,49 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {/* Monthly Summary Card */}
-      <div className="bg-card border border-border rounded-2xl p-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-primary" />
+      {/* Monthly Summary Card - Financial data only for full admins */}
+      {isFullAdmin && (
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Monthly Summary</p>
+              <p className="text-xs text-muted-foreground">Current month performance</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">Monthly Summary</p>
-            <p className="text-xs text-muted-foreground">Current month performance</p>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 rounded-xl bg-muted/30">
+              <p className="text-xs text-muted-foreground mb-1">Income</p>
+              <p className="text-sm font-bold text-emerald-600">{formatMVR(stats.monthlyRevenue)}</p>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-muted/30">
+              <p className="text-xs text-muted-foreground mb-1">Expenses</p>
+              <p className="text-sm font-bold text-rose-500">{formatMVR(stats.monthlyExpenses)}</p>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-primary/5">
+              <p className="text-xs text-muted-foreground mb-1">Net</p>
+              <p className={`text-sm font-bold ${monthlyNetProfit >= 0 ? "text-primary" : "text-rose-500"}`}>
+                {monthlyNetProfit >= 0 ? "+" : ""}{formatMVR(monthlyNetProfit)}
+              </p>
+            </div>
           </div>
         </div>
-        
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 rounded-xl bg-muted/30">
-            <p className="text-xs text-muted-foreground mb-1">Income</p>
-            <p className="text-sm font-bold text-emerald-600">{formatMVR(stats.monthlyRevenue)}</p>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-muted/30">
-            <p className="text-xs text-muted-foreground mb-1">Expenses</p>
-            <p className="text-sm font-bold text-rose-500">{formatMVR(stats.monthlyExpenses)}</p>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-primary/5">
-            <p className="text-xs text-muted-foreground mb-1">Net</p>
-            <p className={`text-sm font-bold ${monthlyNetProfit >= 0 ? "text-primary" : "text-rose-500"}`}>
-              {monthlyNetProfit >= 0 ? "+" : ""}{formatMVR(monthlyNetProfit)}
-            </p>
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* Transactions Section */}
+      {/* Staff notice */}
+      {!isFullAdmin && (
+        <div className="bg-muted/30 border border-border rounded-2xl p-4">
+          <p className="text-sm text-muted-foreground text-center">
+            Financial details are only visible to administrators
+          </p>
+        </div>
+      )}
+
+      {/* Transactions Section - Only for full admins */}
+      {isFullAdmin && (
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div>
@@ -457,6 +492,7 @@ const AdminDashboard = () => {
           )}
         </div>
       </div>
+      )}
 
       <ConfirmDialog
         open={deleteDialogOpen}

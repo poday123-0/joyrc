@@ -243,7 +243,7 @@ const SortableMenuItem = ({
 };
 
 const Admin = () => {
-  const { isAdmin, isSuperAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, isSuperAdmin, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
@@ -254,6 +254,8 @@ const Admin = () => {
   const [tabs, setTabs] = useState<TabItem[]>(defaultTabs);
   const [isReordering, setIsReordering] = useState(false);
   const [menuOrderId, setMenuOrderId] = useState<string | null>(null);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [isFullAdmin, setIsFullAdmin] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -272,6 +274,34 @@ const Admin = () => {
       navigate("/");
     }
   }, [isAdmin, authLoading, navigate]);
+
+  // Fetch user permissions and check if full admin
+  useEffect(() => {
+    const fetchUserPermissions = async () => {
+      if (!user) return;
+      
+      // Check if user has admin or super_admin role
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      
+      const hasFullAdminRole = roles?.some(r => r.role === "admin" || r.role === "super_admin");
+      setIsFullAdmin(hasFullAdminRole || false);
+      
+      // If not a full admin, fetch granular permissions
+      if (!hasFullAdminRole) {
+        const { data: permissions } = await supabase
+          .from("staff_permissions")
+          .select("permission_key")
+          .eq("user_id", user.id);
+        
+        setUserPermissions(permissions?.map(p => p.permission_key) || []);
+      }
+    };
+    
+    fetchUserPermissions();
+  }, [user]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -348,6 +378,30 @@ const Admin = () => {
     if (showLoading) setLoading(false);
   };
 
+  // Define tabs that are always accessible vs permission-gated
+  const adminOnlyTabs = ["admins", "staff", "settings"]; // Only for full admins
+  
+  // Filter tabs based on user permissions
+  const filteredTabs = useMemo(() => {
+    // Full admins and super admins see all tabs
+    if (isFullAdmin || isSuperAdmin) {
+      return tabs;
+    }
+    
+    // Staff users only see tabs they have permission for
+    return tabs.filter(tab => {
+      // Dashboard is always visible
+      if (tab.id === "dashboard") return true;
+      
+      // Admin-only tabs are hidden from staff
+      if (adminOnlyTabs.includes(tab.id)) return false;
+      
+      // Check if user has permission for this tab
+      const permissionKey = `tab_${tab.id}`;
+      return userPermissions.includes(permissionKey);
+    });
+  }, [tabs, isFullAdmin, isSuperAdmin, userPermissions]);
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center">
@@ -369,7 +423,7 @@ const Admin = () => {
             <SheetTitle className="text-left">Admin Menu</SheetTitle>
           </SheetHeader>
           <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-80px)]">
-            {tabs.map((tab) => (
+            {filteredTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
@@ -413,7 +467,7 @@ const Admin = () => {
         {/* Mobile Tabs - Horizontal scroll */}
         <div className="px-4 pb-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {tabs.map((tab) => (
+            {filteredTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as Tab)}
@@ -493,7 +547,7 @@ const Admin = () => {
             </DndContext>
           ) : (
             <nav className="space-y-1">
-              {tabs.map((tab) => (
+              {filteredTabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as Tab)}
