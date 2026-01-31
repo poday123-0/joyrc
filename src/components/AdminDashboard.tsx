@@ -908,7 +908,7 @@ const AdminDashboard = () => {
 
       {/* Stock Value Details Dialog */}
       <Dialog open={showStockDetails} onOpenChange={setShowStockDetails}>
-        <DialogContent className="max-w-4xl max-h-[85vh]">
+        <DialogContent className="max-w-5xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-primary" />
@@ -916,6 +916,7 @@ const AdminDashboard = () => {
             </DialogTitle>
           </DialogHeader>
           
+          {/* Summary Cards */}
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="p-3 rounded-xl bg-muted/30 text-center">
               <p className="text-xs text-muted-foreground mb-1">Total Cost Value</p>
@@ -937,52 +938,106 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <ScrollArea className="h-[400px] rounded-lg border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead className="font-semibold">Product</TableHead>
-                  <TableHead className="text-center font-semibold">Stock</TableHead>
-                  <TableHead className="text-right font-semibold">Unit Cost</TableHead>
-                  <TableHead className="text-right font-semibold">Unit Price</TableHead>
-                  <TableHead className="text-right font-semibold">Total Cost</TableHead>
-                  <TableHead className="text-right font-semibold">Total Value</TableHead>
-                  <TableHead className="text-right font-semibold">Profit</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stockDetails.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No products in stock
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  stockDetails.map((product) => (
-                    <TableRow key={product.id} className="hover:bg-muted/20">
-                      <TableCell className="font-medium max-w-[200px] truncate" title={product.name}>
-                        {product.name}
-                      </TableCell>
-                      <TableCell className="text-center">{product.stock_quantity}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {product.cost_price > 0 ? formatMVR(product.cost_price) : "-"}
-                      </TableCell>
-                      <TableCell className="text-right">{formatMVR(product.selling_price)}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {product.total_cost > 0 ? formatMVR(product.total_cost) : "-"}
-                      </TableCell>
-                      <TableCell className="text-right font-medium text-primary">
-                        {formatMVR(product.total_selling)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium text-emerald-600">
-                        {product.total_cost > 0 ? formatMVR(product.total_selling - product.total_cost) : "-"}
-                      </TableCell>
+          {/* Two Tables Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Cost Price Table */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                Cost Price (Purchase Value)
+              </h3>
+              <ScrollArea className="h-[300px] rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="font-semibold">Product</TableHead>
+                      <TableHead className="text-center font-semibold">Stock</TableHead>
+                      <TableHead className="text-right font-semibold">Unit Cost</TableHead>
+                      <TableHead className="text-right font-semibold">Total Cost</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                  </TableHeader>
+                  <TableBody>
+                    {stockDetails.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                          No products in stock
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      stockDetails.map((product) => (
+                        <TableRow key={product.id} className="hover:bg-muted/20">
+                          <TableCell className="font-medium max-w-[150px] truncate text-sm" title={product.name}>
+                            {product.name}
+                          </TableCell>
+                          <TableCell className="text-center text-sm">{product.stock_quantity}</TableCell>
+                          <TableCell className="text-right text-sm text-muted-foreground">
+                            {product.cost_price > 0 ? formatMVR(product.cost_price) : "-"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium">
+                            {product.total_cost > 0 ? formatMVR(product.total_cost) : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+              <div className="p-2 rounded-lg bg-muted/20 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Total: <span className="font-semibold text-foreground">{formatMVR(stockDetails.reduce((sum, p) => sum + p.total_cost, 0))}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Selling Price Table */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                Selling Price (Potential Revenue)
+              </h3>
+              <ScrollArea className="h-[300px] rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-primary/5">
+                      <TableHead className="font-semibold">Product</TableHead>
+                      <TableHead className="text-center font-semibold">Stock</TableHead>
+                      <TableHead className="text-right font-semibold">Unit Price</TableHead>
+                      <TableHead className="text-right font-semibold">Total Value</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stockDetails.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                          No products in stock
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      stockDetails.map((product) => (
+                        <TableRow key={product.id} className="hover:bg-muted/20">
+                          <TableCell className="font-medium max-w-[150px] truncate text-sm" title={product.name}>
+                            {product.name}
+                          </TableCell>
+                          <TableCell className="text-center text-sm">{product.stock_quantity}</TableCell>
+                          <TableCell className="text-right text-sm">
+                            {formatMVR(product.selling_price)}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium text-primary">
+                            {formatMVR(product.total_selling)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+              <div className="p-2 rounded-lg bg-primary/10 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Total: <span className="font-semibold text-primary">{formatMVR(stockDetails.reduce((sum, p) => sum + p.total_selling, 0))}</span>
+                </p>
+              </div>
+            </div>
+          </div>
           
           <p className="text-xs text-muted-foreground text-center mt-2">
             Showing {stockDetails.length} products with stock
