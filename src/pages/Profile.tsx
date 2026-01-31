@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, LogOut, User, Settings, ShoppingBag, Mail, Save, Package, ChevronRight, MessageSquare, Send } from "lucide-react";
+import { ChevronLeft, LogOut, User, Settings, ShoppingBag, Mail, Save, Package, ChevronRight, MessageSquare, Send, Phone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ interface Profile {
   user_id: string;
   full_name: string | null;
   avatar_url: string | null;
+  mobile_number: string | null;
 }
 
 const Profile = () => {
@@ -20,6 +21,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages" | "send-message">("profile");
@@ -65,6 +67,7 @@ const Profile = () => {
       if (data) {
         setProfile(data);
         setFullName(data.full_name || user.user_metadata?.name || "");
+        setMobileNumber(data.mobile_number || "");
       }
       setLoading(false);
     };
@@ -81,7 +84,10 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName.trim() })
+        .update({ 
+          full_name: fullName.trim(),
+          mobile_number: mobileNumber.trim() || null
+        })
         .eq("user_id", user.id);
 
       if (error) throw error;
@@ -271,6 +277,19 @@ const Profile = () => {
                         placeholder="Enter your full name"
                         className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                       />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Mobile Number</label>
+                      <div className="relative">
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                          type="tel"
+                          value={mobileNumber}
+                          onChange={(e) => setMobileNumber(e.target.value)}
+                          placeholder="Enter your mobile number"
+                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-border bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>

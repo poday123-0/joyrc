@@ -11,6 +11,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
+  const [emailOrMobile, setEmailOrMobile] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -182,7 +183,45 @@ const Login = () => {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        let loginEmail = emailOrMobile;
+        
+        // Check if input looks like a phone number (not an email)
+        const isEmail = emailOrMobile.includes("@");
+        
+        if (!isEmail) {
+          // Try to look up email by mobile number
+          try {
+            const response = await supabase.functions.invoke("lookup-email-by-mobile", {
+              body: { mobile_number: emailOrMobile },
+            });
+
+            if (response.error) {
+              throw new Error(response.error.message);
+            }
+
+            if (response.data?.error) {
+              toast({
+                title: "Login failed",
+                description: response.data.error,
+                variant: "destructive",
+              });
+              setLoading(false);
+              return;
+            }
+
+            loginEmail = response.data.email;
+          } catch (error: any) {
+            toast({
+              title: "Login failed",
+              description: "No account found with this mobile number",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
+        const { error } = await signIn(loginEmail, password);
         if (error) {
           toast({
             title: "Login failed",
@@ -352,20 +391,37 @@ const Login = () => {
             </>
           )}
 
-          <div>
-            <label className="text-sm text-muted-foreground">Email address</label>
-            <div className="mt-1 relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
-                required
-              />
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          {isLogin ? (
+            <div>
+              <label className="text-sm text-muted-foreground">Email or Mobile Number</label>
+              <div className="mt-1 relative">
+                <input
+                  type="text"
+                  value={emailOrMobile}
+                  onChange={(e) => setEmailOrMobile(e.target.value)}
+                  placeholder="your@email.com or mobile number"
+                  className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
+                  required
+                />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <label className="text-sm text-muted-foreground">Email address</label>
+              <div className="mt-1 relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
+                  required
+                />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="text-sm text-muted-foreground">
