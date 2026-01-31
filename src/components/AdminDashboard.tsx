@@ -1,15 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   TrendingUp, TrendingDown, Package, ShoppingCart, 
   DollarSign, Users, Plus, X, Trash2, Edit2, CheckCircle2,
-  ArrowUpRight, ArrowDownRight, Calendar, PieChart, Wallet
+  ArrowUpRight, ArrowDownRight, Calendar, PieChart, Wallet, ChevronDown
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR, formatMVRCompact } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, subDays } from "date-fns";
 
+type PeriodFilter = "today" | "week" | "month" | "year" | "custom";
 interface Transaction {
   id: string;
   type: "income" | "expense";
@@ -77,6 +82,13 @@ const AdminDashboard = () => {
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  
+  // Period filter state
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("week");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0 });
+  const [periodFilterOpen, setPeriodFilterOpen] = useState(false);
 
   // Check if user is a full admin (admin role) vs staff with permissions
   useEffect(() => {
@@ -156,6 +168,71 @@ const AdminDashboard = () => {
       supabase.removeChannel(stockChannel);
     };
   }, []);
+
+  // Helper to get period date range
+  const getPeriodDateRange = (period: PeriodFilter): { start: Date; end: Date } => {
+    const now = new Date();
+    const end = now;
+    let start: Date;
+    
+    switch (period) {
+      case "today":
+        start = startOfDay(now);
+        break;
+      case "week":
+        start = subDays(now, 7);
+        break;
+      case "month":
+        start = startOfMonth(now);
+        break;
+      case "year":
+        start = startOfYear(now);
+        break;
+      case "custom":
+        start = customStartDate ? new Date(customStartDate) : subDays(now, 7);
+        return { 
+          start, 
+          end: customEndDate ? new Date(customEndDate) : now 
+        };
+      default:
+        start = subDays(now, 7);
+    }
+    
+    return { start, end };
+  };
+
+  // Fetch period-specific data
+  const fetchPeriodData = async () => {
+    const { start, end } = getPeriodDateRange(periodFilter);
+    
+    const { data: periodTxns } = await supabase
+      .from("transactions")
+      .select("type, amount")
+      .gte("created_at", start.toISOString())
+      .lte("created_at", end.toISOString());
+    
+    const txns = periodTxns || [];
+    const income = txns.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
+    const expenses = txns.filter(t => t.type === "expense").reduce((sum, t) => sum + Number(t.amount), 0);
+    
+    setPeriodStats({ income, expenses });
+  };
+
+  // Fetch period data when filter changes
+  useEffect(() => {
+    if (periodFilter !== "custom" || (customStartDate && customEndDate)) {
+      fetchPeriodData();
+    }
+  }, [periodFilter, customStartDate, customEndDate]);
+
+  // Period label for display
+  const periodLabels: Record<PeriodFilter, string> = {
+    today: "Today",
+    week: "This Week",
+    month: "This Month",
+    year: "This Year",
+    custom: "Custom Period"
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -494,31 +571,115 @@ const AdminDashboard = () => {
             )}
           </div>
 
-          {/* Weekly Summary Card */}
+          {/* Period Summary Card with Filter */}
           <div className="bg-card border border-border rounded-2xl p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{periodLabels[periodFilter]}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {periodFilter === "custom" && customStartDate && customEndDate 
+                      ? `${format(new Date(customStartDate), "MMM d")} - ${format(new Date(customEndDate), "MMM d, yyyy")}`
+                      : periodFilter === "today" ? "Today's performance"
+                      : periodFilter === "week" ? "Last 7 days"
+                      : periodFilter === "month" ? "Current month"
+                      : periodFilter === "year" ? "Year to date"
+                      : "Select period"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">This Week</p>
-                <p className="text-xs text-muted-foreground">Last 7 days performance</p>
-              </div>
+              
+              <Popover open={periodFilterOpen} onOpenChange={setPeriodFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 px-2 gap-1">
+                    <span className="text-xs">Filter</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-56 p-2">
+                  <div className="space-y-1">
+                    {(["today", "week", "month", "year"] as PeriodFilter[]).map((period) => (
+                      <button
+                        key={period}
+                        onClick={() => {
+                          setPeriodFilter(period);
+                          setPeriodFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                          periodFilter === period 
+                            ? "bg-primary text-primary-foreground" 
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        {periodLabels[period]}
+                      </button>
+                    ))}
+                    <div className="border-t border-border my-2" />
+                    <button
+                      onClick={() => setPeriodFilter("custom")}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        periodFilter === "custom" 
+                          ? "bg-primary text-primary-foreground" 
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      Custom Range
+                    </button>
+                    
+                    {periodFilter === "custom" && (
+                      <div className="space-y-2 pt-2">
+                        <div>
+                          <label className="text-xs text-muted-foreground">From</label>
+                          <Input
+                            type="date"
+                            value={customStartDate}
+                            onChange={(e) => setCustomStartDate(e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground">To</label>
+                          <Input
+                            type="date"
+                            value={customEndDate}
+                            onChange={(e) => setCustomEndDate(e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <Button 
+                          size="sm" 
+                          className="w-full h-8"
+                          onClick={() => {
+                            fetchPeriodData();
+                            setPeriodFilterOpen(false);
+                          }}
+                          disabled={!customStartDate || !customEndDate}
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center p-3 rounded-xl bg-muted/30">
                 <p className="text-xs text-muted-foreground mb-1">Income</p>
-                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatMVR(stats.weeklyRevenue)}</p>
+                <p className="text-sm font-bold text-[hsl(var(--chart-2))]">{formatMVR(periodStats.income)}</p>
               </div>
               <div className="text-center p-3 rounded-xl bg-muted/30">
                 <p className="text-xs text-muted-foreground mb-1">Expenses</p>
-                <p className="text-sm font-bold text-rose-500 dark:text-rose-400">{formatMVR(stats.weeklyExpenses)}</p>
+                <p className="text-sm font-bold text-destructive">{formatMVR(periodStats.expenses)}</p>
               </div>
               <div className="text-center p-3 rounded-xl bg-primary/5">
                 <p className="text-xs text-muted-foreground mb-1">Net</p>
-                <p className={`text-sm font-bold ${weeklyNetProfit >= 0 ? "text-primary" : "text-rose-500 dark:text-rose-400"}`}>
-                  {weeklyNetProfit >= 0 ? "+" : ""}{formatMVR(weeklyNetProfit)}
+                <p className={`text-sm font-bold ${periodStats.income - periodStats.expenses >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {periodStats.income - periodStats.expenses >= 0 ? "+" : ""}{formatMVR(periodStats.income - periodStats.expenses)}
                 </p>
               </div>
             </div>
