@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,12 +13,15 @@ const corsHeaders = {
 
 interface NotificationRequest {
   orderId: string;
-  type: "payment_confirmed" | "order_shipped" | "order_delivered" | "payment_rejected";
-  customerEmail: string;
+  type: "payment_confirmed" | "order_shipped" | "order_delivered" | "payment_rejected" | "delivery_assigned";
+  customerEmail?: string;
   customerName?: string;
+  customerUserId?: string;
+  staffUserId?: string;
+  staffName?: string;
 }
 
-const getEmailContent = (type: string, orderId: string, customerName: string) => {
+const getEmailContent = (type: string, orderId: string, recipientName: string, staffName?: string) => {
   const templates: Record<string, { subject: string; html: string }> = {
     payment_confirmed: {
       subject: "Payment Confirmed - Order #" + orderId.slice(0, 8),
@@ -25,7 +31,7 @@ const getEmailContent = (type: string, orderId: string, customerName: string) =>
             <h1 style="color: white; margin: 0;">Payment Confirmed! ✓</h1>
           </div>
           <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${customerName},</p>
+            <p style="font-size: 16px;">Dear ${recipientName},</p>
             <p style="font-size: 16px;">Great news! Your payment has been confirmed and your order is now being processed.</p>
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0; color: #6b7280;">Order ID</p>
@@ -45,7 +51,7 @@ const getEmailContent = (type: string, orderId: string, customerName: string) =>
             <h1 style="color: white; margin: 0;">Payment Issue</h1>
           </div>
           <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${customerName},</p>
+            <p style="font-size: 16px;">Dear ${recipientName},</p>
             <p style="font-size: 16px;">Unfortunately, we couldn't verify your payment for order #${orderId.slice(0, 8).toUpperCase()}.</p>
             <p style="font-size: 16px;">Please contact our support team or try uploading a clearer receipt image.</p>
             <p style="font-size: 14px; color: #6b7280;">RC Joy Support Team</p>
@@ -61,7 +67,7 @@ const getEmailContent = (type: string, orderId: string, customerName: string) =>
             <h1 style="color: white; margin: 0;">Your Order is On Its Way! 🚚</h1>
           </div>
           <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${customerName},</p>
+            <p style="font-size: 16px;">Dear ${recipientName},</p>
             <p style="font-size: 16px;">Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way to you!</p>
             <p style="font-size: 14px; color: #6b7280;">Thank you for shopping with RC Joy!</p>
           </div>
@@ -76,9 +82,46 @@ const getEmailContent = (type: string, orderId: string, customerName: string) =>
             <h1 style="color: white; margin: 0;">Order Delivered! 📦</h1>
           </div>
           <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${customerName},</p>
+            <p style="font-size: 16px;">Dear ${recipientName},</p>
             <p style="font-size: 16px;">Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered!</p>
             <p style="font-size: 16px;">We hope you enjoy your purchase. If you have any questions, please don't hesitate to contact us.</p>
+            <p style="font-size: 14px; color: #6b7280;">Thank you for shopping with RC Joy!</p>
+          </div>
+        </div>
+      `,
+    },
+    delivery_assigned_staff: {
+      subject: "New Delivery Assignment - Order #" + orderId.slice(0, 8),
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #f59e0b, #f97316); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0;">New Delivery Assigned! 🚚</h1>
+          </div>
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+            <p style="font-size: 16px;">Hi ${recipientName},</p>
+            <p style="font-size: 16px;">A new delivery has been assigned to you.</p>
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; color: #6b7280;">Order ID</p>
+              <p style="font-size: 18px; font-weight: bold; margin: 5px 0;">#${orderId.slice(0, 8).toUpperCase()}</p>
+            </div>
+            <p style="font-size: 16px;">Please check your dashboard for delivery details and customer information.</p>
+            <p style="font-size: 14px; color: #6b7280;">RC Joy Admin Team</p>
+          </div>
+        </div>
+      `,
+    },
+    delivery_assigned_customer: {
+      subject: "Order Out for Delivery - Order #" + orderId.slice(0, 8),
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #10B981, #06B6D4); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0;">Your Order is Out for Delivery! 🚚</h1>
+          </div>
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+            <p style="font-size: 16px;">Dear ${recipientName},</p>
+            <p style="font-size: 16px;">Great news! Your order #${orderId.slice(0, 8).toUpperCase()} is now out for delivery.</p>
+            ${staffName ? `<p style="font-size: 16px;">Our delivery partner <strong>${staffName}</strong> will be bringing your order to you soon.</p>` : ''}
+            <p style="font-size: 16px;">Please ensure someone is available to receive the package.</p>
             <p style="font-size: 14px; color: #6b7280;">Thank you for shopping with RC Joy!</p>
           </div>
         </div>
@@ -99,41 +142,108 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("RESEND_API_KEY is not configured");
     }
 
-    const { orderId, type, customerEmail, customerName }: NotificationRequest = await req.json();
+    const body: NotificationRequest = await req.json();
+    const { orderId, type, customerEmail, customerName, customerUserId, staffUserId, staffName } = body;
 
-    if (!orderId || !type || !customerEmail) {
+    if (!orderId || !type) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const emailContent = getEmailContent(type, orderId, customerName || "Customer");
+    console.log(`Processing ${type} notification for order ${orderId}`);
 
-    // Send email using Resend API directly
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "RC Joy <onboarding@resend.dev>",
-        to: [customerEmail],
-        subject: emailContent.subject,
-        html: emailContent.html,
-      }),
-    });
+    // Create Supabase client to fetch user emails if needed
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    const emailResponse = await res.json();
+    const emailsToSend: Array<{ to: string; content: { subject: string; html: string } }> = [];
 
-    if (!res.ok) {
-      throw new Error(emailResponse.message || "Failed to send email");
+    // Handle delivery_assigned type - send to both staff and customer
+    if (type === "delivery_assigned") {
+      // Get staff email
+      if (staffUserId) {
+        const { data: staffUser } = await supabase.auth.admin.getUserById(staffUserId);
+        if (staffUser?.user?.email) {
+          const { data: staffProfile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("user_id", staffUserId)
+            .single();
+          
+          emailsToSend.push({
+            to: staffUser.user.email,
+            content: getEmailContent("delivery_assigned_staff", orderId, staffProfile?.full_name || staffName || "Staff"),
+          });
+        }
+      }
+
+      // Get customer email
+      if (customerUserId) {
+        const { data: customerUser } = await supabase.auth.admin.getUserById(customerUserId);
+        if (customerUser?.user?.email) {
+          const { data: customerProfile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("user_id", customerUserId)
+            .single();
+          
+          emailsToSend.push({
+            to: customerUser.user.email,
+            content: getEmailContent("delivery_assigned_customer", orderId, customerProfile?.full_name || customerName || "Customer", staffName),
+          });
+        }
+      }
+    } else {
+      // For other notification types, send to customer
+      let recipientEmail = customerEmail;
+      let recipientName = customerName || "Customer";
+
+      if (!recipientEmail && customerUserId) {
+        const { data: user } = await supabase.auth.admin.getUserById(customerUserId);
+        recipientEmail = user?.user?.email;
+        
+        if (!customerName) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("user_id", customerUserId)
+            .single();
+          recipientName = profile?.full_name || "Customer";
+        }
+      }
+
+      if (recipientEmail) {
+        emailsToSend.push({
+          to: recipientEmail,
+          content: getEmailContent(type, orderId, recipientName),
+        });
+      }
     }
 
-    console.log("Email sent successfully:", emailResponse);
+    // Send all emails
+    const results = [];
+    for (const email of emailsToSend) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: "RC Joy <onboarding@resend.dev>",
+          to: [email.to],
+          subject: email.content.subject,
+          html: email.content.html,
+        }),
+      });
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+      const emailResponse = await res.json();
+      console.log(`Email sent to ${email.to}:`, emailResponse);
+      results.push({ to: email.to, response: emailResponse, success: res.ok });
+    }
+
+    return new Response(JSON.stringify({ success: true, results }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

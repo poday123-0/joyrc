@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { 
   Clock, CheckCircle, XCircle, Receipt, Eye, 
   ChevronDown, ChevronUp, CreditCard, AlertCircle,
-  Trash2, Edit, Download, Upload, FileSpreadsheet
+  Trash2, Edit, Download, Upload, FileSpreadsheet,
+  Truck, UserPlus
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -13,6 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Order {
   id: string;
@@ -26,6 +34,13 @@ interface Order {
   phone: string | null;
   notes: string | null;
   created_at: string;
+  assigned_to: string | null;
+  assigned_at: string | null;
+}
+
+interface DeliveryStaff {
+  user_id: string;
+  full_name: string | null;
 }
 
 interface OrderItem {
@@ -69,8 +84,15 @@ const PaymentOrdersTab = () => {
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Delivery assignment state
+  const [deliveryStaff, setDeliveryStaff] = useState<DeliveryStaff[]>([]);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+  const [customerProfiles, setCustomerProfiles] = useState<Record<string, { full_name: string | null }>>({});
+
   useEffect(() => {
     fetchOrders();
+    fetchDeliveryStaff();
   }, []);
 
   const fetchOrders = async () => {
@@ -82,8 +104,64 @@ const PaymentOrdersTab = () => {
 
     if (!error && data) {
       setOrders(data);
+      
+      // Fetch customer profiles for all orders
+      const userIds = [...new Set(data.map(o => o.user_id))];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", userIds);
+        
+        if (profiles) {
+          const profileMap: Record<string, { full_name: string | null }> = {};
+          profiles.forEach(p => {
+            profileMap[p.user_id] = { full_name: p.full_name };
+          });
+          setCustomerProfiles(profileMap);
+        }
+      }
     }
     setLoading(false);
+  };
+
+  const fetchDeliveryStaff = async () => {
+    // Fetch staff with delivery permission
+    const { data: permissions, error: permError } = await supabase
+      .from("staff_permissions")
+      .select("user_id")
+      .eq("permission_key", "delivery");
+    
+    if (permError || !permissions?.length) {
+      // If no delivery staff, fetch all admins as fallback
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "super_admin"]);
+      
+      if (adminRoles?.length) {
+        const userIds = adminRoles.map(r => r.user_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", userIds);
+        
+        if (profiles) {
+          setDeliveryStaff(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+        }
+      }
+      return;
+    }
+    
+    const userIds = permissions.map(p => p.user_id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, full_name")
+      .in("user_id", userIds);
+    
+    if (profiles) {
+      setDeliveryStaff(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+    }
   };
 
   const fetchOrderItems = async (orderId: string) => {
@@ -316,6 +394,159 @@ const PaymentOrdersTab = () => {
 
     setDeleteDialogOpen(false);
     setSelectedOrderId(null);
+  };
+
+  const handleAssignDelivery = async () => {
+    if (!selectedOrderId || !selectedStaffId) return;
+
+    const order = orders.find(o => o.id === selectedOrderId);
+    if (!order) return;
+
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          assigned_to: selectedStaffId,
+          assigned_at: new Date().toISOString(),
+          status: "on_delivery",
+        })
+        .eq("id", selectedOrderId);
+
+      if (error) throw error;
+
+      // Get staff name for notifications
+      const assignedStaff = deliveryStaff.find(s => s.user_id === selectedStaffId);
+      const staffName = assignedStaff?.full_name || "Delivery Staff";
+
+      // Notify the assigned staff member
+      await supabase.from("notifications").insert({
+        user_id: selectedStaffId,
+        title: "New Delivery Assigned 🚚",
+        message: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} has been assigned to you for delivery.`,
+        type: "info",
+        link: "/admin",
+      });
+
+      // Notify the customer
+      const customerName = customerProfiles[order.user_id]?.full_name || "Customer";
+      await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: "Order Out for Delivery! 🚚",
+        message: `Great news! Your order #${selectedOrderId.slice(0, 8).toUpperCase()} is now out for delivery.`,
+        type: "success",
+        link: "/profile",
+      });
+
+      // Send emails to staff and customer
+      try {
+        await supabase.functions.invoke("send-order-notification", {
+          body: {
+            orderId: selectedOrderId,
+            type: "delivery_assigned",
+            staffUserId: selectedStaffId,
+            staffName,
+            customerUserId: order.user_id,
+            customerName,
+          },
+        });
+      } catch (emailError) {
+        console.log("Email notification skipped:", emailError);
+      }
+
+      toast({
+        title: "Delivery Assigned",
+        description: `Order assigned to ${staffName}. Both staff and customer have been notified.`,
+      });
+
+      fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    setAssignDialogOpen(false);
+    setSelectedOrderId(null);
+    setSelectedStaffId("");
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Send notification to customer based on status change
+      const statusMessages: Record<string, { title: string; message: string; type: string }> = {
+        on_delivery: {
+          title: "Order Out for Delivery! 🚚",
+          message: `Your order #${orderId.slice(0, 8).toUpperCase()} is now out for delivery.`,
+          type: "success",
+        },
+        delivered: {
+          title: "Order Delivered! 📦",
+          message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered. Enjoy!`,
+          type: "success",
+        },
+        shipped: {
+          title: "Order Shipped! 🚚",
+          message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way.`,
+          type: "success",
+        },
+      };
+
+      const notification = statusMessages[newStatus];
+      if (notification) {
+        await supabase.from("notifications").insert({
+          user_id: order.user_id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          link: "/profile",
+        });
+
+        // Send email notification
+        const customerName = customerProfiles[order.user_id]?.full_name || "Customer";
+        const emailType = newStatus === "delivered" ? "order_delivered" : 
+                          newStatus === "shipped" ? "order_shipped" : null;
+        
+        if (emailType) {
+          try {
+            await supabase.functions.invoke("send-order-notification", {
+              body: {
+                orderId,
+                type: emailType,
+                customerUserId: order.user_id,
+                customerName,
+              },
+            });
+          } catch (emailError) {
+            console.log("Email notification skipped:", emailError);
+          }
+        }
+      }
+
+      toast({
+        title: "Status Updated",
+        description: `Order marked as ${newStatus}. Customer notified.`,
+      });
+
+      fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditOrder = (order: Order) => {
@@ -621,25 +852,75 @@ const PaymentOrdersTab = () => {
             Pending Payments ({pendingPayments.length})
           </h3>
           <div className="space-y-3">
-            {pendingPayments.map((order) => (
+            {pendingPayments.map((order) => {
+              const assignedStaff = deliveryStaff.find(s => s.user_id === order.assigned_to);
+              return (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  isExpanded={expandedOrder === order.id}
+                  items={orderItems[order.id] || []}
+                  isSuperAdmin={isSuperAdmin}
+                  isAdmin={isAdmin}
+                  isEditing={editingOrderId === order.id}
+                  editNotes={editNotes}
+                  editComment={editComment}
+                  onToggle={() => handleToggleExpand(order.id)}
+                  onConfirm={() => {
+                    setSelectedOrderId(order.id);
+                    setConfirmDialogOpen(true);
+                  }}
+                  onReject={() => {
+                    setSelectedOrderId(order.id);
+                    setRejectDialogOpen(true);
+                  }}
+                  onDelete={() => {
+                    setSelectedOrderId(order.id);
+                    setDeleteDialogOpen(true);
+                  }}
+                  onEdit={() => handleEditOrder(order)}
+                  onSaveEdit={handleSaveEdit}
+                  onCancelEdit={() => {
+                    setEditingOrderId(null);
+                    setEditComment("");
+                    setEditNotes("");
+                  }}
+                  onEditNotesChange={setEditNotes}
+                  onEditCommentChange={setEditComment}
+                  onViewReceipt={(url) => setViewingReceipt(url)}
+                  onAssignDelivery={() => {
+                    setSelectedOrderId(order.id);
+                    setAssignDialogOpen(true);
+                  }}
+                  onUpdateStatus={(status) => handleUpdateOrderStatus(order.id, status)}
+                  deliveryStaff={deliveryStaff}
+                  assignedStaffName={assignedStaff?.full_name || undefined}
+                  getPaymentStatusConfig={getPaymentStatusConfig}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Other orders */}
+      <div>
+        <h3 className="font-semibold text-foreground mb-3">All Orders ({orders.length})</h3>
+        <div className="space-y-3">
+          {otherOrders.map((order) => {
+            const assignedStaff = deliveryStaff.find(s => s.user_id === order.assigned_to);
+            return (
               <OrderCard
                 key={order.id}
                 order={order}
                 isExpanded={expandedOrder === order.id}
                 items={orderItems[order.id] || []}
                 isSuperAdmin={isSuperAdmin}
+                isAdmin={isAdmin}
                 isEditing={editingOrderId === order.id}
                 editNotes={editNotes}
                 editComment={editComment}
                 onToggle={() => handleToggleExpand(order.id)}
-                onConfirm={() => {
-                  setSelectedOrderId(order.id);
-                  setConfirmDialogOpen(true);
-                }}
-                onReject={() => {
-                  setSelectedOrderId(order.id);
-                  setRejectDialogOpen(true);
-                }}
                 onDelete={() => {
                   setSelectedOrderId(order.id);
                   setDeleteDialogOpen(true);
@@ -653,45 +934,17 @@ const PaymentOrdersTab = () => {
                 }}
                 onEditNotesChange={setEditNotes}
                 onEditCommentChange={setEditComment}
-                onViewReceipt={(url) => setViewingReceipt(url)}
+                onAssignDelivery={() => {
+                  setSelectedOrderId(order.id);
+                  setAssignDialogOpen(true);
+                }}
+                onUpdateStatus={(status) => handleUpdateOrderStatus(order.id, status)}
+                deliveryStaff={deliveryStaff}
+                assignedStaffName={assignedStaff?.full_name || undefined}
                 getPaymentStatusConfig={getPaymentStatusConfig}
               />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Other orders */}
-      <div>
-        <h3 className="font-semibold text-foreground mb-3">All Orders ({orders.length})</h3>
-        <div className="space-y-3">
-          {otherOrders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              isExpanded={expandedOrder === order.id}
-              items={orderItems[order.id] || []}
-              isSuperAdmin={isSuperAdmin}
-              isEditing={editingOrderId === order.id}
-              editNotes={editNotes}
-              editComment={editComment}
-              onToggle={() => handleToggleExpand(order.id)}
-              onDelete={() => {
-                setSelectedOrderId(order.id);
-                setDeleteDialogOpen(true);
-              }}
-              onEdit={() => handleEditOrder(order)}
-              onSaveEdit={handleSaveEdit}
-              onCancelEdit={() => {
-                setEditingOrderId(null);
-                setEditComment("");
-                setEditNotes("");
-              }}
-              onEditNotesChange={setEditNotes}
-              onEditCommentChange={setEditComment}
-              getPaymentStatusConfig={getPaymentStatusConfig}
-            />
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -749,6 +1002,69 @@ const PaymentOrdersTab = () => {
         variant="destructive"
         onConfirm={handleDeleteOrder}
       />
+
+      {/* Assign Delivery Dialog */}
+      {assignDialogOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setAssignDialogOpen(false);
+            setSelectedStaffId("");
+          }}
+        >
+          <div 
+            className="bg-card rounded-2xl p-6 max-w-md w-full shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" />
+              Assign to Delivery
+            </h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Select a staff member to deliver this order. They will be notified via email and in-app notification.
+            </p>
+            
+            <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select delivery staff..." />
+              </SelectTrigger>
+              <SelectContent>
+                {deliveryStaff.map((staff) => (
+                  <SelectItem key={staff.user_id} value={staff.user_id}>
+                    {staff.full_name || "Unknown Staff"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {deliveryStaff.length === 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                No delivery staff available. Add staff with "delivery" permission first.
+              </p>
+            )}
+
+            <div className="flex gap-2 mt-4">
+              <Button 
+                onClick={handleAssignDelivery}
+                disabled={!selectedStaffId}
+                className="flex-1 gap-2"
+              >
+                <Truck className="w-4 h-4" />
+                Assign & Notify
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setAssignDialogOpen(false);
+                  setSelectedStaffId("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -758,6 +1074,7 @@ const OrderCard = ({
   isExpanded,
   items,
   isSuperAdmin,
+  isAdmin,
   isEditing,
   editNotes,
   editComment,
@@ -771,12 +1088,17 @@ const OrderCard = ({
   onEditNotesChange,
   onEditCommentChange,
   onViewReceipt,
+  onAssignDelivery,
+  onUpdateStatus,
+  deliveryStaff,
+  assignedStaffName,
   getPaymentStatusConfig,
 }: {
   order: Order;
   isExpanded: boolean;
   items: OrderItem[];
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   isEditing: boolean;
   editNotes: string;
   editComment: string;
@@ -790,6 +1112,10 @@ const OrderCard = ({
   onEditNotesChange?: (value: string) => void;
   onEditCommentChange?: (value: string) => void;
   onViewReceipt?: (url: string) => void;
+  onAssignDelivery?: () => void;
+  onUpdateStatus?: (status: string) => void;
+  deliveryStaff?: DeliveryStaff[];
+  assignedStaffName?: string;
   getPaymentStatusConfig: (status: string) => any;
 }) => {
   const statusConfig = getPaymentStatusConfig(order.payment_status || "pending");
@@ -929,6 +1255,56 @@ const OrderCard = ({
                   <XCircle className="w-4 h-4" />
                   Reject
                 </button>
+              </div>
+            )}
+
+            {/* Delivery Assignment - Show after payment confirmed */}
+            {order.payment_status === "confirmed" && isAdmin && (
+              <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">Delivery Status</span>
+                  </div>
+                  {order.assigned_to && assignedStaffName && (
+                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
+                      Assigned to: {assignedStaffName}
+                    </span>
+                  )}
+                </div>
+                
+                {/* Assign to delivery button */}
+                {!order.assigned_to && onAssignDelivery && (
+                  <Button
+                    size="sm"
+                    onClick={onAssignDelivery}
+                    className="w-full gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Assign to Delivery Staff
+                  </Button>
+                )}
+
+                {/* Status update buttons */}
+                {onUpdateStatus && (
+                  <div className="flex flex-wrap gap-2">
+                    {["on_delivery", "shipped", "delivered"].map((status) => (
+                      <Button
+                        key={status}
+                        size="sm"
+                        variant={order.status === status ? "default" : "outline"}
+                        onClick={() => onUpdateStatus(status)}
+                        disabled={order.status === status}
+                        className="gap-1"
+                      >
+                        {status === "on_delivery" && <Truck className="w-3 h-3" />}
+                        {status === "shipped" && <Truck className="w-3 h-3" />}
+                        {status === "delivered" && <CheckCircle className="w-3 h-3" />}
+                        {status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

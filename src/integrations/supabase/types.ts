@@ -435,6 +435,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          assigned_at: string | null
+          assigned_to: string | null
           created_at: string
           id: string
           notes: string | null
@@ -450,6 +452,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -465,6 +469,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           created_at?: string
           id?: string
           notes?: string | null
