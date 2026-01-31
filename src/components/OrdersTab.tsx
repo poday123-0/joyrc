@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2, User, Trash2 } from "lucide-react";
+import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2, User, Trash2, Eye, EyeOff, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
-import ConfirmDialog from "./ConfirmDialog";
+import { Input } from "@/components/ui/input";
 
 interface Order {
   id: string;
@@ -63,6 +63,8 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const [staffProfiles, setStaffProfiles] = useState<Record<string, string>>({});
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { user, isSuperAdmin } = useAuth();
 
   useEffect(() => {
@@ -264,8 +266,36 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const handleDeleteOrder = async () => {
     if (!deleteOrderId) return;
     
+    if (!deletePassword.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter your password to confirm.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setDeleting(true);
     try {
+      // Verify password by re-authenticating
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser?.email) throw new Error("User not found");
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: currentUser.email,
+        password: deletePassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Invalid Password",
+          description: "The password you entered is incorrect.",
+          variant: "destructive",
+        });
+        setDeleting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("orders")
         .delete()
@@ -280,6 +310,9 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       
       setOrders(prev => prev.filter(o => o.id !== deleteOrderId));
       setExpandedOrder(null);
+      setDeleteOrderId(null);
+      setDeletePassword("");
+      setShowPassword(false);
     } catch (error: any) {
       toast({
         title: "Delete Failed",
@@ -288,8 +321,13 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       });
     } finally {
       setDeleting(false);
-      setDeleteOrderId(null);
     }
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteOrderId(null);
+    setDeletePassword("");
+    setShowPassword(false);
   };
 
   if (loading) {
@@ -552,15 +590,83 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
         );
       })}
 
-      <ConfirmDialog
-        open={!!deleteOrderId}
-        onOpenChange={(open) => !open && setDeleteOrderId(null)}
-        onConfirm={handleDeleteOrder}
-        title="Delete Order"
-        description="Are you sure you want to permanently delete this order? This will also remove all associated transactions and order items. This action cannot be undone."
-        confirmText={deleting ? "Deleting..." : "Delete Order"}
-        variant="destructive"
-      />
+      {/* Delete Order Password Dialog */}
+      {deleteOrderId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl p-6 max-w-sm w-full shadow-elevated border border-border">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Delete Order</h3>
+                <p className="text-sm text-muted-foreground">Order #{deleteOrderId.slice(0, 8).toUpperCase()}</p>
+              </div>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4">
+              This will permanently delete the order and all associated transactions and order items. This action cannot be undone.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Enter your password to confirm
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="pl-10 pr-10"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && deletePassword.trim()) {
+                        handleDeleteOrder();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeDeleteDialog}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-muted text-foreground rounded-xl hover:bg-muted/80 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteOrder}
+                  disabled={deleting || !deletePassword.trim()}
+                  className="flex-1 px-4 py-2.5 bg-destructive text-destructive-foreground rounded-xl hover:bg-destructive/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-destructive-foreground border-t-transparent rounded-full animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete Order
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
