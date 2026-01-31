@@ -54,12 +54,11 @@ interface AddOrderDialogProps {
 
 const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogProps) => {
   const { user } = useAuth();
-  const [mode, setMode] = useState<"single" | "bulk">("single");
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [productColors, setProductColors] = useState<Record<string, ProductColor[]>>({});
   
-  // Single order form state
+  // Order form state
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
@@ -68,23 +67,6 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
   const [paymentStatus, setPaymentStatus] = useState("confirmed");
   const [orderStatus, setOrderStatus] = useState("delivered");
   const [items, setItems] = useState<OrderItem[]>([{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
-
-  // Bulk order form state
-  const [bulkOrders, setBulkOrders] = useState<Array<{
-    customerName: string;
-    customerPhone: string;
-    shippingAddress: string;
-    orderDate: string;
-    notes: string;
-    items: OrderItem[];
-  }>>([{
-    customerName: "",
-    customerPhone: "",
-    shippingAddress: "",
-    orderDate: new Date().toISOString().split("T")[0],
-    notes: "",
-    items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]
-  }]);
 
   useEffect(() => {
     if (open) {
@@ -123,14 +105,6 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
     setPaymentStatus("confirmed");
     setOrderStatus("delivered");
     setItems([{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]);
-    setBulkOrders([{
-      customerName: "",
-      customerPhone: "",
-      shippingAddress: "",
-      orderDate: new Date().toISOString().split("T")[0],
-      notes: "",
-      items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]
-    }]);
   };
 
   const addItem = () => {
@@ -269,177 +243,6 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
     }
   };
 
-  // Bulk order functions
-  const addBulkOrder = () => {
-    setBulkOrders([...bulkOrders, {
-      customerName: "",
-      customerPhone: "",
-      shippingAddress: "",
-      orderDate: new Date().toISOString().split("T")[0],
-      notes: "",
-      items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }]
-    }]);
-  };
-
-  const removeBulkOrder = (index: number) => {
-    if (bulkOrders.length > 1) {
-      setBulkOrders(bulkOrders.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateBulkOrder = (orderIndex: number, field: string, value: string) => {
-    const newOrders = [...bulkOrders];
-    newOrders[orderIndex] = { ...newOrders[orderIndex], [field]: value };
-    setBulkOrders(newOrders);
-  };
-
-  const addBulkOrderItem = (orderIndex: number) => {
-    const newOrders = [...bulkOrders];
-    newOrders[orderIndex].items.push({ productId: "", productName: "", quantity: 1, unitPrice: 0 });
-    setBulkOrders(newOrders);
-  };
-
-  const removeBulkOrderItem = (orderIndex: number, itemIndex: number) => {
-    const newOrders = [...bulkOrders];
-    if (newOrders[orderIndex].items.length > 1) {
-      newOrders[orderIndex].items = newOrders[orderIndex].items.filter((_, i) => i !== itemIndex);
-      setBulkOrders(newOrders);
-    }
-  };
-
-  const updateBulkOrderItem = (orderIndex: number, itemIndex: number, field: keyof OrderItem, value: string | number) => {
-    const newOrders = [...bulkOrders];
-    newOrders[orderIndex].items[itemIndex] = { 
-      ...newOrders[orderIndex].items[itemIndex], 
-      [field]: value 
-    };
-    setBulkOrders(newOrders);
-  };
-
-  const selectBulkProduct = async (orderIndex: number, itemIndex: number, productId: string) => {
-    const product = products.find(p => p.id === productId);
-    if (product) {
-      const newOrders = [...bulkOrders];
-      newOrders[orderIndex].items[itemIndex] = {
-        ...newOrders[orderIndex].items[itemIndex],
-        productId: product.id,
-        productName: product.name,
-        unitPrice: product.price,
-        colorId: undefined,
-        colorName: undefined,
-        colorHex: undefined,
-      };
-      setBulkOrders(newOrders);
-      
-      await fetchColorsForProduct(productId);
-    }
-  };
-
-  const selectBulkColor = (orderIndex: number, itemIndex: number, colorId: string) => {
-    const item = bulkOrders[orderIndex].items[itemIndex];
-    const colors = productColors[item.productId] || [];
-    const color = colors.find(c => c.id === colorId);
-    
-    if (color) {
-      const newOrders = [...bulkOrders];
-      newOrders[orderIndex].items[itemIndex] = {
-        ...newOrders[orderIndex].items[itemIndex],
-        colorId: color.id,
-        colorName: color.color_name,
-        colorHex: color.color_hex,
-      };
-      setBulkOrders(newOrders);
-    }
-  };
-
-  const handleSubmitBulk = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    const validOrders = bulkOrders.filter(order => 
-      order.customerName && 
-      order.items.some(item => item.productName && item.quantity > 0 && item.unitPrice > 0)
-    );
-
-    if (validOrders.length === 0) {
-      toast({ title: "Error", description: "Please add at least one valid order", variant: "destructive" });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      let successCount = 0;
-
-      for (const order of validOrders) {
-        const validItems = order.items.filter(item => item.productName && item.quantity > 0 && item.unitPrice > 0);
-        const total = calculateTotal(validItems);
-        const orderNotes = `[MANUAL BULK ORDER] Customer: ${order.customerName}\nPhone: ${order.customerPhone}\n${order.notes}`.trim();
-
-        const { data: newOrder, error: orderError } = await supabase
-          .from("orders")
-          .insert({
-            user_id: user.id,
-            status: "delivered",
-            payment_status: "confirmed",
-            payment_method: "manual",
-            total_amount: total,
-            shipping_address: order.shippingAddress,
-            phone: order.customerPhone,
-            notes: orderNotes,
-            created_at: new Date(order.orderDate).toISOString(),
-          })
-          .select()
-          .single();
-
-        if (orderError) {
-          console.error("Failed to create order:", orderError);
-          continue;
-        }
-
-        for (const item of validItems) {
-          await supabase.from("order_items").insert({
-            order_id: newOrder.id,
-            product_id: item.productId || newOrder.id,
-            product_name: item.productName,
-            product_price: item.unitPrice,
-            quantity: item.quantity,
-            color_id: item.colorId || null,
-            color_name: item.colorName || null,
-            color_hex: item.colorHex || null,
-          });
-        }
-
-        await supabase.from("transactions").insert({
-          type: "income",
-          category: "Manual Bulk Order",
-          amount: total,
-          description: `Bulk Order - ${order.customerName}`,
-          order_id: newOrder.id,
-        });
-
-        successCount++;
-      }
-
-      toast({
-        title: "Bulk Orders Created",
-        description: `Successfully created ${successCount} orders.`,
-      });
-
-      resetForm();
-      onOpenChange(false);
-      onOrderCreated();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -450,28 +253,8 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
           </DialogTitle>
         </DialogHeader>
 
-        {/* Mode Toggle */}
-        <div className="flex gap-2 mb-4">
-          <Button
-            type="button"
-            variant={mode === "single" ? "default" : "outline"}
-            onClick={() => setMode("single")}
-            className="flex-1"
-          >
-            Single Order
-          </Button>
-          <Button
-            type="button"
-            variant={mode === "bulk" ? "default" : "outline"}
-            onClick={() => setMode("bulk")}
-            className="flex-1"
-          >
-            Bulk Orders
-          </Button>
-        </div>
 
-        {mode === "single" ? (
-          <form onSubmit={handleSubmitSingle} className="space-y-4">
+        <form onSubmit={handleSubmitSingle} className="space-y-4">
             {/* Customer Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -681,167 +464,6 @@ const AddOrderDialog = ({ open, onOpenChange, onOrderCreated }: AddOrderDialogPr
               </Button>
             </div>
           </form>
-        ) : (
-          <form onSubmit={handleSubmitBulk} className="space-y-4">
-            {bulkOrders.map((order, orderIndex) => (
-              <div key={orderIndex} className="p-4 border border-border rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-sm">Order #{orderIndex + 1}</h4>
-                  {bulkOrders.length > 1 && (
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => removeBulkOrder(orderIndex)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <X className="w-4 h-4 mr-1" /> Remove
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    value={order.customerName}
-                    onChange={(e) => updateBulkOrder(orderIndex, "customerName", e.target.value)}
-                    placeholder="Customer Name"
-                    className="text-sm"
-                  />
-                  <Input
-                    value={order.customerPhone}
-                    onChange={(e) => updateBulkOrder(orderIndex, "customerPhone", e.target.value)}
-                    placeholder="Phone"
-                    className="text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    value={order.shippingAddress}
-                    onChange={(e) => updateBulkOrder(orderIndex, "shippingAddress", e.target.value)}
-                    placeholder="Shipping Address"
-                    className="text-sm"
-                  />
-                  <Input
-                    type="date"
-                    value={order.orderDate}
-                    onChange={(e) => updateBulkOrder(orderIndex, "orderDate", e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Items</span>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => addBulkOrderItem(orderIndex)}
-                    >
-                      <Plus className="w-3 h-3 mr-1" /> Item
-                    </Button>
-                  </div>
-                  {order.items.map((item, itemIndex) => {
-                    const colors = productColors[item.productId] || [];
-                    const hasColors = colors.length > 0;
-                    
-                    return (
-                      <div key={itemIndex} className="space-y-1.5 p-2 bg-muted/20 rounded-lg">
-                        <div className="flex gap-1 items-center">
-                          <Select onValueChange={(v) => selectBulkProduct(orderIndex, itemIndex, v)}>
-                            <SelectTrigger className="flex-1 text-xs h-8">
-                              <SelectValue placeholder="Select product" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {products.map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.item_code ? `[${p.item_code}] ` : ""}{p.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => updateBulkOrderItem(orderIndex, itemIndex, "quantity", parseInt(e.target.value) || 1)}
-                            placeholder="Qty"
-                            className="w-16 text-xs"
-                          />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.unitPrice}
-                            onChange={(e) => updateBulkOrderItem(orderIndex, itemIndex, "unitPrice", parseFloat(e.target.value) || 0)}
-                            placeholder="Price"
-                            className="w-24 text-xs"
-                          />
-                          {order.items.length > 1 && (
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="icon"
-                              className="w-6 h-6"
-                              onClick={() => removeBulkOrderItem(orderIndex, itemIndex)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                        
-                        {/* Color Selection for Bulk */}
-                        {hasColors && (
-                          <div className="flex items-center gap-2 pl-1">
-                            <Palette className="w-3 h-3 text-muted-foreground" />
-                            <Select 
-                              value={item.colorId || ""} 
-                              onValueChange={(v) => selectBulkColor(orderIndex, itemIndex, v)}
-                            >
-                              <SelectTrigger className="h-7 text-xs flex-1">
-                                <SelectValue placeholder="Color (optional)" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {colors.map((color) => (
-                                  <SelectItem key={color.id} value={color.id}>
-                                    <div className="flex items-center gap-2">
-                                      <div 
-                                        className="w-3 h-3 rounded-full border border-border"
-                                        style={{ backgroundColor: color.color_hex }}
-                                      />
-                                      {color.color_name}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="text-right text-sm font-medium text-primary">
-                  Subtotal: {formatMVR(calculateTotal(order.items))}
-                </div>
-              </div>
-            ))}
-
-            <Button type="button" variant="outline" onClick={addBulkOrder} className="w-full">
-              <Plus className="w-4 h-4 mr-1" /> Add Another Order
-            </Button>
-
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : `Create ${bulkOrders.length} Order${bulkOrders.length > 1 ? "s" : ""}`}
-              </Button>
-            </div>
-          </form>
-        )}
       </DialogContent>
     </Dialog>
   );
