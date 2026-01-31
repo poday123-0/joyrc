@@ -69,9 +69,15 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
+      // Use the current page origin for redirect
+      const currentOrigin = window.location.origin;
+      console.log("Starting Google OAuth with redirect_uri:", currentOrigin);
+      
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: currentOrigin,
       });
+      
+      console.log("OAuth result:", result);
       
       // If redirected to Google, the page will redirect - nothing more to do
       if (result.redirected) {
@@ -79,9 +85,10 @@ const Login = () => {
       }
       
       if (result.error) {
+        console.error("Google OAuth error:", result.error);
         toast({
           title: "Google login failed",
-          description: result.error.message,
+          description: result.error.message || "Please try again or use email login",
           variant: "destructive",
         });
         setGoogleLoading(false);
@@ -89,15 +96,30 @@ const Login = () => {
       }
       
       // If we get here, login was successful (returned from OAuth with tokens)
-      toast({
-        title: "Welcome!",
-        description: "You have successfully logged in with Google.",
-      });
-      navigate("/home");
+      // Wait a moment for the session to be set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verify the session was actually set
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        toast({
+          title: "Welcome!",
+          description: "You have successfully logged in with Google.",
+        });
+        navigate("/home", { replace: true });
+      } else {
+        toast({
+          title: "Login incomplete",
+          description: "Please try again",
+          variant: "destructive",
+        });
+        setGoogleLoading(false);
+      }
     } catch (error: any) {
+      console.error("Google login exception:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
       setGoogleLoading(false);
