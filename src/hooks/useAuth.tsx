@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  isStaff: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -20,34 +21,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
   const checkAdminRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // Check for admin/super_admin roles
+      const { data: roleData, error: roleError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .or("role.eq.admin,role.eq.super_admin")
         .limit(1);
       
-      if (error) {
-        console.error("Error checking admin role:", error);
+      if (roleError) {
+        console.error("Error checking admin role:", roleError);
         setIsAdmin(false);
         setIsSuperAdmin(false);
+        setIsStaff(false);
         return;
       }
       
-      const hasAdminRole = data && data.length > 0;
-      const hasSuperAdminRole = data?.some(r => r.role === 'super_admin') || false;
+      const hasAdminRole = roleData && roleData.length > 0;
+      const hasSuperAdminRole = roleData?.some(r => r.role === 'super_admin') || false;
+      
+      // If not admin, check if user has staff permissions
+      if (!hasAdminRole) {
+        const { data: staffData, error: staffError } = await supabase
+          .from("staff_permissions")
+          .select("permission_key")
+          .eq("user_id", userId)
+          .limit(1);
+        
+        if (!staffError && staffData && staffData.length > 0) {
+          // User is a staff member with permissions
+          setIsStaff(true);
+          setIsAdmin(true); // Grant admin panel access
+          setIsSuperAdmin(false);
+          return;
+        }
+      }
       
       setIsAdmin(hasAdminRole);
       setIsSuperAdmin(hasSuperAdminRole);
+      setIsStaff(false);
     } catch (error) {
       console.error("Error checking admin role:", error);
       setIsAdmin(false);
       setIsSuperAdmin(false);
+      setIsStaff(false);
     }
   };
 
@@ -95,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setIsAdmin(false);
           setIsSuperAdmin(false);
+          setIsStaff(false);
         }
         
         // Only update loading if we've already initialized
@@ -143,6 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         isAdmin,
         isSuperAdmin,
+        isStaff,
         loading,
         signIn,
         signUp,
