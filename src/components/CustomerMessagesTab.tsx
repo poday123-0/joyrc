@@ -73,7 +73,7 @@ const CustomerMessagesTab = () => {
     setLoading(false);
   };
 
-  const handleSendReply = async (messageId: string) => {
+  const handleSendReply = async (messageId: string, messageSubject: string) => {
     if (!replyText.trim() || !user) return;
     
     setSending(true);
@@ -90,11 +90,27 @@ const CustomerMessagesTab = () => {
 
       if (error) throw error;
 
-      // Update message status if it was closed
+      // Update message status
       await supabase
         .from("contact_messages")
         .update({ status: "read" })
         .eq("id", messageId);
+
+      // Notify admin about customer reply
+      try {
+        await supabase.functions.invoke("send-email", {
+          body: {
+            type: "new_contact_message",
+            customer_name: user.email?.split("@")[0] || "Customer",
+            customer_email: user.email,
+            customer_mobile: "-",
+            subject: `Re: ${messageSubject}`,
+            message: replyText.trim(),
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send admin notification:", emailError);
+      }
 
       toast({ title: "Reply sent!", description: "Your message has been sent." });
       setReplyText("");
@@ -132,7 +148,7 @@ const CustomerMessagesTab = () => {
         </div>
         <p className="text-muted-foreground mb-2">No messages yet</p>
         <p className="text-sm text-muted-foreground">
-          Messages you send through the Support page will appear here
+          Use the "Send Message" tab to contact our support team
         </p>
       </div>
     );
@@ -140,9 +156,12 @@ const CustomerMessagesTab = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 mb-4">
-        <MessageSquare className="w-5 h-5 text-primary" />
-        <h3 className="font-semibold text-foreground">My Messages</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold text-foreground">My Conversations</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">Click a message to view conversation</p>
       </div>
 
       {messages.map((msg) => {
@@ -246,12 +265,12 @@ const CustomerMessagesTab = () => {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
-                          handleSendReply(msg.id);
+                          handleSendReply(msg.id, msg.subject);
                         }
                       }}
                     />
                     <button
-                      onClick={() => handleSendReply(msg.id)}
+                      onClick={() => handleSendReply(msg.id, msg.subject)}
                       disabled={sending || !replyText.trim()}
                       className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center gap-2 hover:bg-primary/90 transition-colors"
                     >
