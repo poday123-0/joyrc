@@ -362,7 +362,27 @@ const PaymentOrdersTab = () => {
     if (!selectedOrderId || !isSuperAdmin) return;
 
     try {
-      // First delete order items
+      // Delete related transactions first
+      const { error: txError } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("order_id", selectedOrderId);
+
+      if (txError) {
+        console.error("Failed to delete transactions:", txError);
+      }
+
+      // Delete related stock history records
+      const { error: stockError } = await supabase
+        .from("stock_history")
+        .delete()
+        .eq("order_id", selectedOrderId);
+
+      if (stockError) {
+        console.error("Failed to delete stock history:", stockError);
+      }
+
+      // Delete order items
       const { error: itemsError } = await supabase
         .from("order_items")
         .delete()
@@ -370,7 +390,7 @@ const PaymentOrdersTab = () => {
 
       if (itemsError) throw itemsError;
 
-      // Then delete the order
+      // Finally delete the order
       const { error } = await supabase
         .from("orders")
         .delete()
@@ -380,7 +400,7 @@ const PaymentOrdersTab = () => {
 
       toast({
         title: "Order Deleted",
-        description: "Order has been permanently deleted.",
+        description: "Order and all related transactions have been permanently deleted.",
       });
 
       fetchOrders();
