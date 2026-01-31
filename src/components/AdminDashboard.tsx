@@ -687,37 +687,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Monthly Summary Card - Financial data only for full admins */}
-      {isFullAdmin && (
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <PieChart className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">Monthly Summary</p>
-              <p className="text-xs text-muted-foreground">Current month performance</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 rounded-xl bg-muted/30">
-              <p className="text-xs text-muted-foreground mb-1">Income</p>
-              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatMVR(stats.monthlyRevenue)}</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-muted/30">
-              <p className="text-xs text-muted-foreground mb-1">Expenses</p>
-              <p className="text-sm font-bold text-rose-500 dark:text-rose-400">{formatMVR(stats.monthlyExpenses)}</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-primary/5">
-              <p className="text-xs text-muted-foreground mb-1">Net</p>
-              <p className={`text-sm font-bold ${monthlyNetProfit >= 0 ? "text-primary" : "text-rose-500 dark:text-rose-400"}`}>
-                {monthlyNetProfit >= 0 ? "+" : ""}{formatMVR(monthlyNetProfit)}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Staff notice */}
       {!isFullAdmin && (
