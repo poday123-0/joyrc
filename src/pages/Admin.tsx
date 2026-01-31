@@ -574,7 +574,7 @@ const Admin = () => {
             </div>
 
             {/* Content */}
-            {activeTab === "dashboard" && <AdminDashboard />}
+            {activeTab === "dashboard" && <AdminDashboard onTabChange={(tab) => setActiveTab(tab as Tab)} />}
             {activeTab === "products" && (
               <ProductsTab 
                 products={products} 
