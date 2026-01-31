@@ -700,42 +700,6 @@ const QuickPOSTab = () => {
               </div>
             </div>
 
-            {/* Selected Items Summary - Inline below customer */}
-            {cart.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-medium text-foreground">Items ({cart.reduce((acc, item) => acc + item.quantity, 0)})</span>
-                  </div>
-                  <span className="text-xs font-semibold text-primary">{formatMVR(cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0))}</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-                  {cart.map(item => (
-                    <div 
-                      key={`${item.product.id}-${item.selectedColor?.id || 'default'}`}
-                      className="flex items-center gap-1.5 bg-muted/70 rounded-lg px-2 py-1 text-xs"
-                    >
-                      {item.selectedColor && (
-                        <div 
-                          className="w-3 h-3 rounded-full border border-border flex-shrink-0"
-                          style={{ backgroundColor: item.selectedColor.color_hex }}
-                        />
-                      )}
-                      <span className="font-medium truncate max-w-[80px]">{item.product.name}</span>
-                      <span className="text-muted-foreground">×{item.quantity}</span>
-                      <button
-                        onClick={() => removeFromCart(item.product.id, item.selectedColor?.id)}
-                        className="p-0.5 hover:bg-destructive/20 rounded text-destructive"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Product Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -822,70 +786,59 @@ const QuickPOSTab = () => {
             )}
           </div>
 
+          {/* Selected Items Summary - At top of cart */}
+          {cart.length > 0 && (
+            <div className="px-3 py-2 border-b border-border bg-primary/5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-foreground">Items ({cart.reduce((acc, item) => acc + item.quantity, 0)})</span>
+                <span className="text-xs font-semibold text-primary">{formatMVR(cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0))}</span>
+              </div>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                {cart.map(item => (
+                  <div 
+                    key={`summary-${item.product.id}-${item.selectedColor?.id || 'default'}`}
+                    className="flex items-center gap-2 bg-card rounded-lg px-2 py-1.5"
+                  >
+                    {item.selectedColor && (
+                      <div 
+                        className="w-3 h-3 rounded-full border border-border flex-shrink-0"
+                        style={{ backgroundColor: item.selectedColor.color_hex }}
+                      />
+                    )}
+                    <span className="text-xs font-medium text-foreground flex-1">{item.product.name}</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
+                        className="w-5 h-5 rounded bg-muted flex items-center justify-center hover:bg-muted/80"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-5 text-center text-xs font-medium">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
+                        className="w-5 h-5 rounded bg-muted flex items-center justify-center hover:bg-muted/80"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => removeFromCart(item.product.id, item.selectedColor?.id)}
+                      className="p-1 hover:bg-destructive/20 rounded text-destructive"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
-            {cart.length === 0 ? (
+            {cart.length === 0 && (
               <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
                 <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
                 <p className="text-xs">Cart is empty</p>
               </div>
-            ) : (
-              cart.map(item => (
-                <div
-                  key={`${item.product.id}-${item.selectedColor?.id || 'default'}`}
-                  className="flex gap-2 p-2 bg-muted/50 rounded-lg"
-                >
-                  {/* Product Image */}
-                  <div className="w-14 h-14 rounded-md bg-background overflow-hidden flex-shrink-0">
-                    {item.selectedColor?.image_url || item.product.image_url ? (
-                      <img src={item.selectedColor?.image_url || item.product.image_url || ''} alt={item.product.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Product Details */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground leading-tight">{item.product.name}</p>
-                    {item.selectedColor && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <div className="w-2.5 h-2.5 rounded-full border border-border" style={{ backgroundColor: item.selectedColor.color_hex }} />
-                        <span className="text-[10px] text-muted-foreground">{item.selectedColor.color_name}</span>
-                      </div>
-                    )}
-                    
-                    {/* Price and Controls Row */}
-                    <div className="flex items-center justify-between mt-1.5">
-                      <div className="flex items-center gap-0.5">
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
-                          className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
-                          className="w-6 h-6 rounded bg-background flex items-center justify-center hover:bg-muted"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                      
-                      <p className="text-xs font-semibold text-foreground">{formatMVR(item.product.price * item.quantity)}</p>
-                    </div>
-                  </div>
-
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => removeFromCart(item.product.id, item.selectedColor?.id || null)}
-                    className="w-6 h-6 rounded bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 flex-shrink-0 self-start"
-                  >
-                    <Trash2 className="w-3 h-3 text-destructive" />
-                  </button>
-                </div>
-              ))
             )}
 
             {/* Delivery Details */}
