@@ -29,6 +29,10 @@ interface StockHistoryItem {
   shipping_cost: number | null;
   other_expenses: number | null;
   total_expense: number | null;
+  order_id: string | null;
+  created_by: string | null;
+  order?: { id: string } | null;
+  profile?: { full_name: string | null } | null;
 }
 
 interface StockCosts {
@@ -117,7 +121,8 @@ const StockManagementTab = () => {
   const fetchStockHistory = async (productId: string) => {
     setHistoryLoading(true);
     try {
-      const { data, error } = await supabase
+      // First get the history records
+      const { data: historyData, error } = await supabase
         .from("stock_history")
         .select("*")
         .eq("product_id", productId)
@@ -125,7 +130,24 @@ const StockManagementTab = () => {
         .limit(20);
 
       if (error) throw error;
-      setStockHistory(data || []);
+
+      // Fetch profile names for created_by users
+      const historyWithProfiles = await Promise.all(
+        (historyData || []).map(async (item) => {
+          let profile = null;
+          if (item.created_by) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("user_id", item.created_by)
+              .single();
+            profile = profileData;
+          }
+          return { ...item, profile };
+        })
+      );
+
+      setStockHistory(historyWithProfiles);
     } catch (error) {
       console.error("Error fetching stock history:", error);
     }
@@ -781,7 +803,7 @@ const StockManagementTab = () => {
                     ) : stockHistory.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-2">No history recorded yet</p>
                     ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
                         {stockHistory.map((item) => (
                           <div key={item.id} className="p-3 bg-muted/50 rounded-lg text-sm">
                             <div className="flex items-start justify-between gap-2">
@@ -809,6 +831,18 @@ const StockManagementTab = () => {
                                 <p className="text-xs text-muted-foreground">
                                   Stock: <span className="font-medium text-foreground">{item.previous_quantity}</span> → <span className="font-medium text-foreground">{item.new_quantity}</span>
                                 </p>
+                                {/* Order reference for sales */}
+                                {item.order_id && item.change_type === "sale" && (
+                                  <p className="text-xs text-blue-600">
+                                    📦 Order #{item.order_id.slice(0, 8).toUpperCase()}
+                                  </p>
+                                )}
+                                {/* Who made the change */}
+                                {item.profile?.full_name && (
+                                  <p className="text-xs text-muted-foreground">
+                                    👤 {item.change_type === "sale" ? "Sold by" : "By"}: <span className="font-medium text-foreground">{item.profile.full_name}</span>
+                                  </p>
+                                )}
                                 {/* Notes if available */}
                                 {item.notes && (
                                   <p className="text-xs text-muted-foreground italic">"{item.notes}"</p>

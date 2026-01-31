@@ -692,6 +692,7 @@ export type Database = {
           id: string
           new_quantity: number
           notes: string | null
+          order_id: string | null
           other_expenses: number | null
           previous_quantity: number
           product_id: string
@@ -708,6 +709,7 @@ export type Database = {
           id?: string
           new_quantity: number
           notes?: string | null
+          order_id?: string | null
           other_expenses?: number | null
           previous_quantity: number
           product_id: string
@@ -724,6 +726,7 @@ export type Database = {
           id?: string
           new_quantity?: number
           notes?: string | null
+          order_id?: string | null
           other_expenses?: number | null
           previous_quantity?: number
           product_id?: string
@@ -732,6 +735,13 @@ export type Database = {
           unit_purchase_price?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_history_product_id_fkey"
             columns: ["product_id"]

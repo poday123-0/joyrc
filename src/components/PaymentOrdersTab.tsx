@@ -99,6 +99,68 @@ const PaymentOrdersTab = () => {
     if (!order) return;
 
     try {
+      // Get current user for tracking who confirmed
+      const { data: { user } } = await supabase.auth.getUser();
+      const confirmedBy = user?.id || null;
+
+      // Get order items to deduct stock
+      const { data: items, error: itemsError } = await supabase
+        .from("order_items")
+        .select("product_id, product_name, quantity")
+        .eq("order_id", selectedOrderId);
+
+      if (itemsError) throw itemsError;
+
+      // Deduct stock for each item and record history
+      for (const item of items || []) {
+        // Get current stock
+        const { data: product, error: productError } = await supabase
+          .from("products")
+          .select("stock_quantity")
+          .eq("id", item.product_id)
+          .single();
+
+        if (productError) {
+          console.error(`Failed to get product ${item.product_id}:`, productError);
+          continue;
+        }
+
+        const currentQty = product.stock_quantity || 0;
+        const newQty = Math.max(0, currentQty - item.quantity);
+
+        // Update product stock
+        const { error: updateError } = await supabase
+          .from("products")
+          .update({ 
+            stock_quantity: newQty,
+            in_stock: newQty > 0
+          })
+          .eq("id", item.product_id);
+
+        if (updateError) {
+          console.error(`Failed to update stock for ${item.product_id}:`, updateError);
+          continue;
+        }
+
+        // Record stock history with order reference
+        const { error: historyError } = await supabase
+          .from("stock_history")
+          .insert({
+            product_id: item.product_id,
+            previous_quantity: currentQty,
+            new_quantity: newQty,
+            change_amount: -item.quantity,
+            change_type: "sale",
+            notes: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
+            order_id: selectedOrderId,
+            created_by: confirmedBy,
+          });
+
+        if (historyError) {
+          console.error(`Failed to record stock history:`, historyError);
+        }
+      }
+
       // Update order status
       const { error: orderError } = await supabase
         .from("orders")
@@ -138,7 +200,7 @@ const PaymentOrdersTab = () => {
 
       toast({
         title: "Payment Confirmed",
-        description: "Order has been confirmed and customer has been notified.",
+        description: "Order confirmed, stock deducted, and customer notified.",
       });
 
       fetchOrders();
