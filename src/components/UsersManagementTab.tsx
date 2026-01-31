@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Trash2, Search, RefreshCw, UserPlus, X, KeyRound } from "lucide-react";
+import { User, Trash2, Search, RefreshCw, UserPlus, X, KeyRound, Phone, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "./ConfirmDialog";
@@ -8,6 +8,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string | null;
+  mobile_number: string | null;
   created_at: string;
   email?: string;
   is_admin?: boolean;
@@ -22,6 +23,7 @@ const UsersManagementTab = () => {
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
+  const [newUserMobile, setNewUserMobile] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("123456");
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -33,31 +35,22 @@ const UsersManagementTab = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles with user roles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Use the edge function to get customer users with emails
+      const response = await supabase.functions.invoke("get-customer-users");
 
-      if (profilesError) throw profilesError;
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
-      // Fetch all admin and super_admin roles to exclude them
-      const { data: adminRoles } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .or("role.eq.admin,role.eq.super_admin");
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
-      const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
-
-      // Filter to only show customers (users without admin/super_admin roles)
-      const customerProfiles = (profiles || [])
-        .filter(profile => !adminUserIds.has(profile.user_id))
-        .map(profile => ({
-          ...profile,
-          is_admin: false,
-        }));
-
-      setUsers(customerProfiles);
+      const customers = response.data?.customers || [];
+      setUsers(customers.map((customer: UserProfile) => ({
+        ...customer,
+        is_admin: false,
+      })));
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
@@ -140,7 +133,9 @@ const UsersManagementTab = () => {
 
   const filteredUsers = users.filter(user =>
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.user_id.toLowerCase().includes(searchQuery.toLowerCase())
+    user.user_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.mobile_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const formatDate = (dateString: string) => {
@@ -163,6 +158,7 @@ const UsersManagementTab = () => {
         body: {
           email: newUserEmail.trim(),
           full_name: newUserName.trim() || null,
+          mobile_number: newUserMobile.trim() || null,
           password: newUserPassword || "123456",
           make_admin: false,
         },
@@ -180,6 +176,7 @@ const UsersManagementTab = () => {
       setShowAddUser(false);
       setNewUserEmail("");
       setNewUserName("");
+      setNewUserMobile("");
       setNewUserPassword("123456");
       fetchUsers();
     } catch (error: any) {
@@ -236,6 +233,30 @@ const UsersManagementTab = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Mobile Number *
+              </label>
+              <input
+                type="tel"
+                value={newUserMobile}
+                onChange={(e) => setNewUserMobile(e.target.value)}
+                placeholder="+1234567890"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Email *
               </label>
               <input
@@ -243,18 +264,6 @@ const UsersManagementTab = () => {
                 value={newUserEmail}
                 onChange={(e) => setNewUserEmail(e.target.value)}
                 placeholder="customer@example.com"
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={newUserName}
-                onChange={(e) => setNewUserName(e.target.value)}
-                placeholder="John Doe"
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
@@ -326,15 +335,29 @@ const UsersManagementTab = () => {
               key={user.id}
               className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50 gap-3"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-primary" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground truncate">
                     {user.full_name || "No name"}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {user.mobile_number && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        {user.mobile_number}
+                      </span>
+                    )}
+                    {user.email && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Joined {formatDate(user.created_at)}
                   </p>
                 </div>
