@@ -13,7 +13,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, subDays } from "date-fns";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 type PeriodFilter = "today" | "week" | "month" | "year" | "custom";
 interface Transaction {
   id: string;
@@ -89,6 +91,18 @@ const AdminDashboard = () => {
   const [customEndDate, setCustomEndDate] = useState("");
   const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0 });
   const [periodFilterOpen, setPeriodFilterOpen] = useState(false);
+  
+  // Stock value details dialog state
+  const [showStockDetails, setShowStockDetails] = useState(false);
+  const [stockDetails, setStockDetails] = useState<Array<{
+    id: string;
+    name: string;
+    stock_quantity: number;
+    cost_price: number;
+    selling_price: number;
+    total_cost: number;
+    total_selling: number;
+  }>>([]);
 
   // Check if user is a full admin (admin role) vs staff with permissions
   useEffect(() => {
@@ -346,6 +360,46 @@ const AdminDashboard = () => {
     setLoading(false);
   };
 
+  // Fetch stock details for dialog
+  const fetchStockDetails = async () => {
+    const [productsRes, stockHistoryRes] = await Promise.all([
+      supabase.from("products").select("id, name, stock_quantity, price"),
+      supabase.from("stock_history").select("product_id, unit_purchase_price").eq("change_type", "restock")
+    ]);
+
+    const products = productsRes.data || [];
+    const stockHistory = stockHistoryRes.data || [];
+
+    // Build cost price map (latest cost per product)
+    const productCostMap = new Map<string, number>();
+    stockHistory.forEach(sh => {
+      if (sh.unit_purchase_price && !productCostMap.has(sh.product_id)) {
+        productCostMap.set(sh.product_id, Number(sh.unit_purchase_price));
+      }
+    });
+
+    const details = products
+      .filter(p => p.stock_quantity > 0)
+      .map(p => {
+        const costPrice = productCostMap.get(p.id) || 0;
+        const sellingPrice = Number(p.price) || 0;
+        const stockQty = p.stock_quantity || 0;
+        return {
+          id: p.id,
+          name: p.name,
+          stock_quantity: stockQty,
+          cost_price: costPrice,
+          selling_price: sellingPrice,
+          total_cost: stockQty * costPrice,
+          total_selling: stockQty * sellingPrice,
+        };
+      })
+      .sort((a, b) => b.total_selling - a.total_selling);
+
+    setStockDetails(details);
+    setShowStockDetails(true);
+  };
+
   const resetForm = () => {
     setFormData({ type: "expense", category: "", amount: "", description: "" });
     setEditingTransaction(null);
@@ -537,15 +591,18 @@ const AdminDashboard = () => {
       {/* Stock Value & Weekly Summary - Financial data only for full admins */}
       {isFullAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Stock Values Card */}
-          <div className="bg-card border border-border rounded-2xl p-4">
+          {/* Stock Values Card - Clickable */}
+          <div 
+            className="bg-card border border-border rounded-2xl p-4 cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={fetchStockDetails}
+          >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Package className="w-4 h-4 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">Stock Value</p>
-                <p className="text-xs text-muted-foreground">{stats.totalStockItems} items in stock</p>
+                <p className="text-xs text-muted-foreground">{stats.totalStockItems} items in stock · <span className="text-primary">Click for details</span></p>
               </div>
             </div>
             
@@ -848,6 +905,90 @@ const AdminDashboard = () => {
         </div>
       </div>
       )}
+
+      {/* Stock Value Details Dialog */}
+      <Dialog open={showStockDetails} onOpenChange={setShowStockDetails}>
+        <DialogContent className="max-w-4xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-primary" />
+              Stock Value Breakdown
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="p-3 rounded-xl bg-muted/30 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Total Cost Value</p>
+              <p className="text-lg font-bold text-foreground">
+                {formatMVR(stockDetails.reduce((sum, p) => sum + p.total_cost, 0))}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-primary/10 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Total Selling Value</p>
+              <p className="text-lg font-bold text-primary">
+                {formatMVR(stockDetails.reduce((sum, p) => sum + p.total_selling, 0))}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-emerald-500/10 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Potential Profit</p>
+              <p className="text-lg font-bold text-emerald-600">
+                {formatMVR(stockDetails.reduce((sum, p) => sum + (p.total_selling - p.total_cost), 0))}
+              </p>
+            </div>
+          </div>
+
+          <ScrollArea className="h-[400px] rounded-lg border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead className="font-semibold">Product</TableHead>
+                  <TableHead className="text-center font-semibold">Stock</TableHead>
+                  <TableHead className="text-right font-semibold">Unit Cost</TableHead>
+                  <TableHead className="text-right font-semibold">Unit Price</TableHead>
+                  <TableHead className="text-right font-semibold">Total Cost</TableHead>
+                  <TableHead className="text-right font-semibold">Total Value</TableHead>
+                  <TableHead className="text-right font-semibold">Profit</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stockDetails.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No products in stock
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  stockDetails.map((product) => (
+                    <TableRow key={product.id} className="hover:bg-muted/20">
+                      <TableCell className="font-medium max-w-[200px] truncate" title={product.name}>
+                        {product.name}
+                      </TableCell>
+                      <TableCell className="text-center">{product.stock_quantity}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {product.cost_price > 0 ? formatMVR(product.cost_price) : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">{formatMVR(product.selling_price)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {product.total_cost > 0 ? formatMVR(product.total_cost) : "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-primary">
+                        {formatMVR(product.total_selling)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-emerald-600">
+                        {product.total_cost > 0 ? formatMVR(product.total_selling - product.total_cost) : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+          
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Showing {stockDetails.length} products with stock
+          </p>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialogOpen}
