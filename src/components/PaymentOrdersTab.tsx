@@ -326,11 +326,71 @@ const PaymentOrdersTab = () => {
     if (!order) return;
 
     try {
+      // Check if the order was previously confirmed (has stock deductions and transactions)
+      const wasConfirmed = order.payment_status === "confirmed";
+
+      if (wasConfirmed) {
+        // 1. Get stock history records for this order to reverse stock deductions
+        const { data: stockRecords, error: stockFetchError } = await supabase
+          .from("stock_history")
+          .select("id, product_id, change_amount")
+          .eq("order_id", selectedOrderId);
+
+        if (stockFetchError) {
+          console.error("Failed to fetch stock history:", stockFetchError);
+        }
+
+        // 2. Restore stock for each product
+        for (const record of stockRecords || []) {
+          // change_amount is negative for sales, so we add the absolute value back
+          const restoreAmount = Math.abs(record.change_amount);
+          
+          const { data: product, error: productError } = await supabase
+            .from("products")
+            .select("stock_quantity")
+            .eq("id", record.product_id)
+            .single();
+
+          if (!productError && product) {
+            const newQty = (product.stock_quantity || 0) + restoreAmount;
+            await supabase
+              .from("products")
+              .update({ 
+                stock_quantity: newQty,
+                in_stock: newQty > 0 
+              })
+              .eq("id", record.product_id);
+          }
+        }
+
+        // 3. Delete stock history records for this order
+        const { error: stockDeleteError } = await supabase
+          .from("stock_history")
+          .delete()
+          .eq("order_id", selectedOrderId);
+
+        if (stockDeleteError) {
+          console.error("Failed to delete stock history:", stockDeleteError);
+        }
+
+        // 4. Delete income transaction for this order
+        const { error: txDeleteError } = await supabase
+          .from("transactions")
+          .delete()
+          .eq("order_id", selectedOrderId);
+
+        if (txDeleteError) {
+          console.error("Failed to delete transaction:", txDeleteError);
+        }
+      }
+
+      // Update order status
       const { error } = await supabase
         .from("orders")
         .update({
           payment_status: "rejected",
           status: "cancelled",
+          payment_confirmed_at: null,
         })
         .eq("id", selectedOrderId);
 
@@ -339,14 +399,18 @@ const PaymentOrdersTab = () => {
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Payment Issue",
-        message: "There was an issue with your payment. Please contact support or try again.",
+        message: wasConfirmed 
+          ? "Your order has been cancelled. Any stock reservations have been released."
+          : "There was an issue with your payment. Please contact support or try again.",
         type: "error",
         link: "/support",
       });
 
       toast({
         title: "Payment Rejected",
-        description: "Order has been cancelled and customer has been notified.",
+        description: wasConfirmed 
+          ? "Order cancelled, stock restored, and transaction reversed."
+          : "Order has been cancelled and customer has been notified.",
       });
 
       fetchOrders();
