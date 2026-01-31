@@ -132,13 +132,13 @@ const Checkout = () => {
         console.error("Failed to send order confirmation email:", emailError);
       }
 
-      // Send new order notification to admin
+      // Send new order notification to admin via send-order-notification (uses system settings)
       try {
-        await supabase.functions.invoke("send-email", {
+        await supabase.functions.invoke("send-order-notification", {
           body: {
-            type: "order_notification",
-            template_key: "new_order_admin",
-            order_id: order.id,
+            orderId: order.id,
+            type: "new_order_admin",
+            customerUserId: user.id,
           },
         });
       } catch (emailError) {
