@@ -1,12 +1,14 @@
-import { User, Mail, Save, Phone } from "lucide-react";
+import { User, Mail, Save, Phone, MapPin } from "lucide-react";
 
 interface EditProfileFormProps {
   fullName: string;
   mobileNumber: string;
   email: string;
+  address: string;
   saving: boolean;
   onFullNameChange: (value: string) => void;
   onMobileNumberChange: (value: string) => void;
+  onAddressChange: (value: string) => void;
   onSave: () => void;
 }
 
@@ -14,9 +16,11 @@ const EditProfileForm = ({
   fullName,
   mobileNumber,
   email,
+  address,
   saving,
   onFullNameChange,
   onMobileNumberChange,
+  onAddressChange,
   onSave,
 }: EditProfileFormProps) => {
   return (
@@ -64,6 +68,23 @@ const EditProfileForm = ({
             <span className="text-foreground text-sm truncate">{email}</span>
           </div>
           <p className="text-xs text-muted-foreground mt-1.5 ml-1">Email cannot be changed</p>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block flex items-center gap-2">
+            <span>Address</span>
+            <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+          </label>
+          <div className="relative">
+            <MapPin className="absolute left-4 top-4 w-4 h-4 text-muted-foreground/60" />
+            <textarea
+              value={address}
+              onChange={(e) => onAddressChange(e.target.value)}
+              placeholder="Enter your delivery/shipping address"
+              rows={3}
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-border/60 bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-300 text-sm placeholder:text-muted-foreground/60 resize-none"
+            />
+          </div>
         </div>
         
         <button

@@ -18,6 +18,7 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   mobile_number: string | null;
+  address: string | null;
 }
 
 const Profile = () => {
@@ -26,6 +27,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages">("profile");
@@ -70,6 +72,7 @@ const Profile = () => {
         setProfile(data);
         setFullName(data.full_name || user.user_metadata?.name || "");
         setMobileNumber(data.mobile_number || "");
+        setAddress(data.address || "");
       }
       setLoading(false);
     };
@@ -88,7 +91,8 @@ const Profile = () => {
         .from("profiles")
         .update({ 
           full_name: fullName.trim(),
-          mobile_number: mobileNumber.trim() || null
+          mobile_number: mobileNumber.trim() || null,
+          address: address.trim() || null
         })
         .eq("user_id", user.id);
 
@@ -169,9 +173,11 @@ const Profile = () => {
                   fullName={fullName}
                   mobileNumber={mobileNumber}
                   email={user.email || ""}
+                  address={address}
                   saving={saving}
                   onFullNameChange={setFullName}
                   onMobileNumberChange={setMobileNumber}
+                  onAddressChange={setAddress}
                   onSave={handleSaveProfile}
                 />
 

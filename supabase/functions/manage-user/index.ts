@@ -60,7 +60,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { action, user_id, new_password } = await req.json();
+    const { action, user_id, new_password, new_email, full_name, mobile_number, address } = await req.json();
 
     if (!action || !user_id) {
       return new Response(
@@ -68,6 +68,15 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Check if caller has staff permission for customer management
+    const { data: staffPermissions } = await supabaseAdmin
+      .from("staff_permissions")
+      .select("permission_key")
+      .eq("user_id", callerUser.id);
+
+    const hasStaffPermission = staffPermissions?.some(p => p.permission_key === "tab_customers" || p.permission_key === "tab_users");
+    const canManageCustomers = callerIsAdmin || hasStaffPermission;
 
     // Check target user's role
     const { data: targetRoles } = await supabaseAdmin
@@ -260,8 +269,51 @@ serve(async (req) => {
       );
     }
 
+    // Update user email (admins and staff with permission can do this)
+    if (action === "update_email") {
+      if (!canManageCustomers) {
+        return new Response(
+          JSON.stringify({ error: "You don't have permission to update customer information" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!new_email) {
+        return new Response(
+          JSON.stringify({ error: "New email is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Only allow editing non-admin customers
+      if (targetIsAdmin || targetIsSuperAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Cannot modify admin email through this action" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
+        email: new_email,
+        email_confirm: true,
+      });
+
+      if (updateError) {
+        console.error("Error updating email:", updateError);
+        return new Response(
+          JSON.stringify({ error: updateError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Email updated successfully" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use 'delete', 'reset_password', 'promote_to_super_admin', 'demote_self', or 'remove_admin'" }),
+      JSON.stringify({ error: "Invalid action. Use 'delete', 'reset_password', 'update_email', 'promote_to_super_admin', 'demote_self', or 'remove_admin'" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
