@@ -172,31 +172,38 @@ const Profile = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-8 xl:col-span-9">
-            {/* Tabs */}
-            <div className="flex gap-2 mb-6 p-1 bg-muted/50 rounded-xl backdrop-blur-sm">
-              <button
-                onClick={() => setActiveTab("profile")}
-                className={`flex-1 md:flex-none md:px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                  activeTab === "profile"
-                    ? "bg-card text-foreground shadow-sm border border-border/50"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <User className="w-4 h-4" />
-                Profile
-              </button>
-              <button
-                onClick={() => setActiveTab("orders")}
-                className={`flex-1 md:flex-none md:px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                  activeTab === "orders"
-                    ? "bg-card text-foreground shadow-sm border border-border/50"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Package className="w-4 h-4" />
-                My Orders
-              </button>
-            </div>
+            {/* Tabs - Only show Orders tab for regular customers */}
+            {!isAdmin ? (
+              <div className="flex gap-2 mb-6 p-1 bg-muted/50 rounded-xl backdrop-blur-sm">
+                <button
+                  onClick={() => setActiveTab("profile")}
+                  className={`flex-1 md:flex-none md:px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    activeTab === "profile"
+                      ? "bg-card text-foreground shadow-sm border border-border/50"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  Profile
+                </button>
+                <button
+                  onClick={() => setActiveTab("orders")}
+                  className={`flex-1 md:flex-none md:px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    activeTab === "orders"
+                      ? "bg-card text-foreground shadow-sm border border-border/50"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Package className="w-4 h-4" />
+                  My Orders
+                </button>
+              </div>
+            ) : (
+              <div className="mb-6">
+                <h3 className="font-semibold text-foreground text-lg">Account Settings</h3>
+                <p className="text-sm text-muted-foreground">Manage orders from the Admin Panel</p>
+              </div>
+            )}
 
             {activeTab === "profile" ? (
               <div className="md:grid md:grid-cols-2 md:gap-6 space-y-4 md:space-y-0">
@@ -285,11 +292,11 @@ const Profile = () => {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : !isAdmin ? (
               <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-4 md:p-6 shadow-sm">
                 <OrdersTab />
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
