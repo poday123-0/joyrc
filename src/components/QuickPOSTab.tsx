@@ -774,20 +774,20 @@ const QuickPOSTab = () => {
             </div>
 
             {/* Product Search */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="space-y-2">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name..."
+                  placeholder="Search by product name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 text-sm"
                 />
               </div>
-              <div className="relative w-28 sm:w-32">
+              <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">#</span>
                 <Input
-                  placeholder="Item code"
+                  placeholder="Search by item code..."
                   value={itemCodeSearch}
                   onChange={(e) => setItemCodeSearch(e.target.value)}
                   className="pl-7 h-9 text-sm font-mono"
