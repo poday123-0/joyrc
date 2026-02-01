@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
 import { 
-  X, ArrowUpRight, ArrowDownRight, Calendar, TrendingUp, TrendingDown,
-  Package, Truck, User, Filter, ChevronDown
+  ArrowUpRight, ArrowDownRight, Calendar, TrendingUp, TrendingDown,
+  Package, Truck, User, Filter, ChevronDown, ShoppingCart, Wallet, 
+  CreditCard, Gift, Briefcase, Home, Zap, DollarSign, Receipt, 
+  ShoppingBag, Banknote, PiggyBank, TrendingDown as ExpenseIcon,
+  icons
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { formatMVR } from "@/lib/currency";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Transaction {
   id: string;
@@ -37,6 +40,29 @@ interface TransactionDetailSheetProps {
 
 type DateFilter = "this_month" | "last_month" | "this_year" | "all" | "custom";
 
+// Icon mapping for categories
+const getCategoryIcon = (category: string, isIncome: boolean) => {
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    "Product Sales": ShoppingCart,
+    "Order Payment": CreditCard,
+    "Service": Briefcase,
+    "Gift": Gift,
+    "Refund": Wallet,
+    "Other Income": DollarSign,
+    "Product Purchase": ShoppingBag,
+    "Shipping": Truck,
+    "Packaging": Package,
+    "Marketing": Zap,
+    "Utilities": Home,
+    "Rent": Home,
+    "Salary": Banknote,
+    "Other Expense": Receipt,
+    "Stock Purchase": Package,
+  };
+  
+  return iconMap[category] || (isIncome ? PiggyBank : ExpenseIcon);
+};
+
 const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: TransactionDetailSheetProps) => {
   const [dateFilter, setDateFilter] = useState<DateFilter>("this_month");
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -51,10 +77,15 @@ const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: Tran
   // Filter transactions by type
   const typeFilteredTransactions = transactions.filter(tx => tx.type === type);
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    const cats = [...new Set(typeFilteredTransactions.map(tx => tx.category))];
-    return ["all", ...cats];
+  // Get unique categories with counts
+  const categoriesWithCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    typeFilteredTransactions.forEach(tx => {
+      counts[tx.category] = (counts[tx.category] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   }, [typeFilteredTransactions]);
 
   // Apply date and category filters
@@ -175,15 +206,110 @@ const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: Tran
             </div>
           </SheetHeader>
 
-          {/* Filters */}
+          {/* Category Cards */}
+          <div className="p-4 border-b border-border bg-muted/20">
+            <p className="text-xs font-medium text-muted-foreground mb-3">Filter by Category</p>
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="flex gap-2 pb-2">
+                {/* All Categories Card */}
+                <button
+                  onClick={() => setSelectedCategory("all")}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all min-w-[80px]",
+                    selectedCategory === "all"
+                      ? isIncome 
+                        ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/25" 
+                        : "bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/25"
+                      : "bg-background border-border hover:bg-muted/50"
+                  )}
+                >
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                    selectedCategory === "all" 
+                      ? "bg-white/20" 
+                      : isIncome ? "bg-emerald-500/10" : "bg-rose-500/10"
+                  )}>
+                    <Filter className={cn(
+                      "w-4 h-4",
+                      selectedCategory === "all" 
+                        ? "text-white" 
+                        : isIncome ? "text-emerald-600" : "text-rose-500"
+                    )} />
+                  </div>
+                  <span className={cn(
+                    "text-xs font-medium",
+                    selectedCategory === "all" ? "text-white" : "text-foreground"
+                  )}>
+                    All
+                  </span>
+                  <span className={cn(
+                    "text-[10px]",
+                    selectedCategory === "all" ? "text-white/80" : "text-muted-foreground"
+                  )}>
+                    {typeFilteredTransactions.length}
+                  </span>
+                </button>
+
+                {/* Category Cards */}
+                {categoriesWithCounts.map(({ name, count }) => {
+                  const IconComponent = getCategoryIcon(name, isIncome);
+                  const isSelected = selectedCategory === name;
+                  
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => setSelectedCategory(name)}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all min-w-[80px]",
+                        isSelected
+                          ? isIncome 
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/25" 
+                            : "bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-500/25"
+                          : "bg-background border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center",
+                        isSelected 
+                          ? "bg-white/20" 
+                          : isIncome ? "bg-emerald-500/10" : "bg-rose-500/10"
+                      )}>
+                        <IconComponent className={cn(
+                          "w-4 h-4",
+                          isSelected 
+                            ? "text-white" 
+                            : isIncome ? "text-emerald-600" : "text-rose-500"
+                        )} />
+                      </div>
+                      <span className={cn(
+                        "text-xs font-medium text-center line-clamp-1 max-w-[70px]",
+                        isSelected ? "text-white" : "text-foreground"
+                      )}>
+                        {name.replace("Product ", "").replace("Other ", "")}
+                      </span>
+                      <span className={cn(
+                        "text-[10px]",
+                        isSelected ? "text-white/80" : "text-muted-foreground"
+                      )}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+
+          {/* Date Filters */}
           <div className="p-4 border-b border-border bg-muted/30">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center justify-between w-full text-sm font-medium text-foreground"
             >
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                Filters
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                Date Range: {dateFilterLabels[dateFilter]}
               </div>
               <ChevronDown className={cn(
                 "w-4 h-4 text-muted-foreground transition-transform",
@@ -192,72 +318,52 @@ const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: Tran
             </button>
             
             {showFilters && (
-              <div className="mt-4 space-y-4">
-                {/* Date Filter */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-2 block">Date Range</label>
-                  <div className="flex flex-wrap gap-2">
-                    {(["this_month", "last_month", "this_year", "all"] as DateFilter[]).map((filter) => (
+              <div className="mt-4">
+                <div className="flex flex-wrap gap-2">
+                  {(["this_month", "last_month", "this_year", "all"] as DateFilter[]).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setDateFilter(filter)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                        dateFilter === filter
+                          ? isIncome ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {dateFilterLabels[filter]}
+                    </button>
+                  ))}
+                  <Popover>
+                    <PopoverTrigger asChild>
                       <button
-                        key={filter}
-                        onClick={() => setDateFilter(filter)}
                         className={cn(
-                          "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                          dateFilter === filter
+                          "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1",
+                          dateFilter === "custom"
                             ? isIncome ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         )}
                       >
-                        {dateFilterLabels[filter]}
+                        <Calendar className="w-3 h-3" />
+                        Custom
                       </button>
-                    ))}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1",
-                            dateFilter === "custom"
-                              ? isIncome ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
-                              : "bg-muted text-muted-foreground hover:bg-muted/80"
-                          )}
-                        >
-                          <Calendar className="w-3 h-3" />
-                          Custom
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          initialFocus
-                          mode="range"
-                          selected={{ from: customDateRange.from, to: customDateRange.to }}
-                          onSelect={(range) => {
-                            setCustomDateRange({ from: range?.from, to: range?.to });
-                            if (range?.from && range?.to) {
-                              setDateFilter("custom");
-                            }
-                          }}
-                          numberOfMonths={1}
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-
-                {/* Category Filter */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-2 block">Category</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>
-                        {cat === "all" ? "All Categories" : cat}
-                      </option>
-                    ))}
-                  </select>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        initialFocus
+                        mode="range"
+                        selected={{ from: customDateRange.from, to: customDateRange.to }}
+                        onSelect={(range) => {
+                          setCustomDateRange({ from: range?.from, to: range?.to });
+                          if (range?.from && range?.to) {
+                            setDateFilter("custom");
+                          }
+                        }}
+                        numberOfMonths={1}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             )}
