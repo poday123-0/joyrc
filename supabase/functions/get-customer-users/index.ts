@@ -37,20 +37,29 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: callerUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
-    if (authError || !callerUser) {
+    // Create a client with the user's token for auth validation
+    const supabaseWithAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    const { data: claimsData, error: claimsError } = await supabaseWithAuth.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.error("Auth validation failed:", claimsError?.message || "No claims found");
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    const callerUserId = claimsData.claims.sub as string;
 
     // Check if caller is admin, super_admin, or staff with relevant permission
     const { data: callerRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
-      .eq("user_id", callerUser.id);
+      .eq("user_id", callerUserId);
 
     const isAdminOrSuperAdmin = callerRoles?.some(r => r.role === "admin" || r.role === "super_admin");
     
@@ -60,13 +69,13 @@ serve(async (req) => {
       const { data: staffPerms } = await supabaseAdmin
         .from("staff_permissions")
         .select("permission_key")
-        .eq("user_id", callerUser.id)
+        .eq("user_id", callerUserId)
         .or("permission_key.eq.tab_pos,permission_key.eq.tab_users");
       
       hasStaffPermission = !!(staffPerms && staffPerms.length > 0);
     }
 
-    console.log(`Auth check - User: ${callerUser.id}, isAdmin: ${isAdminOrSuperAdmin}, hasStaffPermission: ${hasStaffPermission}, roles: ${JSON.stringify(callerRoles)}`);
+    console.log(`Auth check - User: ${callerUserId}, isAdmin: ${isAdminOrSuperAdmin}, hasStaffPermission: ${hasStaffPermission}, roles: ${JSON.stringify(callerRoles)}`);
 
     if (!isAdminOrSuperAdmin && !hasStaffPermission) {
       return new Response(
