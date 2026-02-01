@@ -431,26 +431,32 @@ const TransactionsTab = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div 
-          className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/15 transition-colors"
+          className={`p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/15 transition-colors ${filterType === "income" && !showInventoryOnly ? "ring-2 ring-emerald-500" : ""}`}
           onClick={() => {
-            setDetailSheetType("income");
-            setDetailSheetOpen(true);
+            setShowInventoryOnly(false);
+            setFilterType(filterType === "income" ? "all" : "income");
           }}
         >
           <p className="text-xs text-muted-foreground mb-1">Total Income</p>
           <p className="text-lg font-bold text-emerald-600">{formatMVR(totalIncome)}</p>
+          {filterType === "income" && !showInventoryOnly && (
+            <p className="text-[10px] text-emerald-600 mt-0.5">Click to show all</p>
+          )}
         </div>
         <div 
-          className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/20 cursor-pointer hover:bg-rose-500/15 transition-colors"
+          className={`p-4 bg-rose-500/10 rounded-xl border border-rose-500/20 cursor-pointer hover:bg-rose-500/15 transition-colors ${filterType === "expense" && !showInventoryOnly ? "ring-2 ring-rose-500" : ""}`}
           onClick={() => {
-            setDetailSheetType("expense");
-            setDetailSheetOpen(true);
+            setShowInventoryOnly(false);
+            setFilterType(filterType === "expense" ? "all" : "expense");
           }}
         >
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs text-muted-foreground">Other Expenses</p>
           </div>
           <p className="text-lg font-bold text-rose-500">{formatMVR(otherExpenses)}</p>
+          {filterType === "expense" && !showInventoryOnly && (
+            <p className="text-[10px] text-rose-500 mt-0.5">Click to show all</p>
+          )}
         </div>
         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
           <p className="text-xs text-muted-foreground mb-1">Net Balance</p>
@@ -460,7 +466,10 @@ const TransactionsTab = () => {
         </div>
         <div 
           className={`p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 cursor-pointer hover:bg-amber-500/15 transition-colors ${showInventoryOnly ? "ring-2 ring-amber-500" : ""}`}
-          onClick={() => setShowInventoryOnly(!showInventoryOnly)}
+          onClick={() => {
+            setShowInventoryOnly(!showInventoryOnly);
+            setFilterType("all");
+          }}
         >
           <div className="flex items-center gap-1.5 mb-1">
             <Boxes className="w-3 h-3 text-amber-600" />
