@@ -321,7 +321,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
               {settings?.logo_url && (
                 <img src={settings.logo_url} alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 object-contain mx-auto mb-2 logo" />
               )}
-              <h2 className="text-base sm:text-lg font-bold text-foreground company-name">{companyName}</h2>
+              
               <div className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5 company-info">
                 {settings?.footer_address && <p>{settings.footer_address}</p>}
                 {settings?.footer_phone && <p>Tel: {settings.footer_phone}</p>}
