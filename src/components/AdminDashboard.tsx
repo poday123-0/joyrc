@@ -820,14 +820,6 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
       )}
 
 
-      {/* Staff notice */}
-      {!isFullAdmin && (
-        <div className="bg-muted/30 border border-border rounded-2xl p-4">
-          <p className="text-sm text-muted-foreground text-center">
-            Financial details are only visible to administrators
-          </p>
-        </div>
-      )}
 
       {/* Transactions Section - Only for full admins */}
       {isFullAdmin && (
