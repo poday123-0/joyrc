@@ -74,7 +74,7 @@ const QuickPOSTab = () => {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
-  const [newCustomerData, setNewCustomerData] = useState({ name: "", phone: "", email: "" });
+  const [newCustomerData, setNewCustomerData] = useState({ name: "", phone: "", email: "", address: "" });
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
@@ -300,6 +300,7 @@ const QuickPOSTab = () => {
             name: newCustomerData.name.trim(),
             phone: newCustomerData.phone.trim(),
             email: newCustomerData.email.trim(),
+            address: newCustomerData.address.trim(),
           });
           setCustomerSearch(newCustomerData.name.trim());
           toast({ title: "Customer Created", description: `${newCustomerData.name} added successfully` });
@@ -311,12 +312,13 @@ const QuickPOSTab = () => {
           name: newCustomerData.name.trim(),
           phone: newCustomerData.phone.trim(),
           email: "",
+          address: newCustomerData.address.trim(),
         });
         setCustomerSearch(newCustomerData.name.trim());
         toast({ title: "Customer Added", description: `${newCustomerData.name} details saved` });
       }
 
-      setNewCustomerData({ name: "", phone: "", email: "" });
+      setNewCustomerData({ name: "", phone: "", email: "", address: "" });
       setShowNewCustomerModal(false);
     } catch (error: any) {
       console.error("Error creating customer:", error);
@@ -576,7 +578,7 @@ const QuickPOSTab = () => {
               <button 
                 onClick={() => {
                   setShowNewCustomerModal(false);
-                  setNewCustomerData({ name: "", phone: "", email: "" });
+                  setNewCustomerData({ name: "", phone: "", email: "", address: "" });
                 }} 
                 className="p-1.5 hover:bg-muted rounded-lg"
               >
@@ -625,6 +627,20 @@ const QuickPOSTab = () => {
                   />
                 </div>
               </div>
+
+              <div>
+                <Label className="text-xs mb-1.5 block">Address (optional)</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Textarea
+                    placeholder="Delivery address"
+                    value={newCustomerData.address}
+                    onChange={(e) => setNewCustomerData({ ...newCustomerData, address: e.target.value })}
+                    className="pl-9 min-h-[60px] text-sm resize-none"
+                    rows={2}
+                  />
+                </div>
+              </div>
             </div>
             
             <div className="flex gap-2 mt-4">
@@ -634,7 +650,7 @@ const QuickPOSTab = () => {
                 className="flex-1"
                 onClick={() => {
                   setShowNewCustomerModal(false);
-                  setNewCustomerData({ name: "", phone: "", email: "" });
+                  setNewCustomerData({ name: "", phone: "", email: "", address: "" });
                 }}
               >
                 Cancel
