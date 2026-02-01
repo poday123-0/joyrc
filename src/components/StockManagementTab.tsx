@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt, Trash2, ShieldAlert, X, Eye, EyeOff, Hash } from "lucide-react";
+import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt, Trash2, ShieldAlert, X, Eye, EyeOff, Hash, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -36,6 +36,12 @@ interface StockHistoryItem {
   profile?: { full_name: string | null } | null;
 }
 
+interface ProductColor {
+  id: string;
+  color_name: string;
+  color_hex: string;
+}
+
 interface StockCosts {
   unitPurchasePrice: number;
   shippingCost: number;
@@ -63,6 +69,8 @@ const StockManagementTab = () => {
   const [stockCosts, setStockCosts] = useState<Record<string, StockCosts>>({});
   const [showCostFields, setShowCostFields] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [productColors, setProductColors] = useState<Record<string, ProductColor[]>>({});
+  const [selectedColorId, setSelectedColorId] = useState<Record<string, string>>({});
   
   // Clear history state
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -156,6 +164,20 @@ const StockManagementTab = () => {
     setHistoryLoading(false);
   };
 
+  const fetchProductColors = async (productId: string) => {
+    if (productColors[productId]) return; // Already fetched
+    
+    const { data } = await supabase
+      .from("product_colors")
+      .select("id, color_name, color_hex")
+      .eq("product_id", productId)
+      .order("sort_order");
+    
+    if (data) {
+      setProductColors(prev => ({ ...prev, [productId]: data }));
+    }
+  };
+
   const handleExpandProduct = (productId: string) => {
     if (expandedProductId === productId) {
       setExpandedProductId(null);
@@ -163,12 +185,18 @@ const StockManagementTab = () => {
     } else {
       setExpandedProductId(productId);
       fetchStockHistory(productId);
+      fetchProductColors(productId);
     }
   };
 
 
   const handleSetStock = async (productId: string, currentQty: number, newQty: number, productName: string) => {
-    const notes = adjustmentNotes[productId] || null;
+    const selectedColor = selectedColorId[productId] 
+      ? productColors[productId]?.find(c => c.id === selectedColorId[productId])
+      : null;
+    const colorNote = selectedColor ? `[Color: ${selectedColor.color_name}] ` : "";
+    const userNote = adjustmentNotes[productId] || "";
+    const notes = colorNote + userNote || null;
     const costs = stockCosts[productId];
     const isRestock = newQty > currentQty;
     const changeAmount = newQty - currentQty;
@@ -252,6 +280,7 @@ const StockManagementTab = () => {
       // Reset all inputs
       setAdjustmentAmount(prev => ({ ...prev, [productId]: 0 }));
       setAdjustmentNotes(prev => ({ ...prev, [productId]: "" }));
+      setSelectedColorId(prev => ({ ...prev, [productId]: "" }));
       setStockCosts(prev => ({ ...prev, [productId]: { unitPurchasePrice: 0, shippingCost: 0, otherExpenses: 0, expenseNotes: "" } }));
       setShowCostFields(prev => ({ ...prev, [productId]: false }));
       
@@ -673,6 +702,40 @@ const StockManagementTab = () => {
                           </button>
                         </div>
                       </div>
+                      
+                      {/* Color Selection */}
+                      {productColors[product.id] && productColors[product.id].length > 0 && (
+                        <div className="min-w-[140px]">
+                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <Palette className="w-3 h-3" />
+                            Color (optional)
+                          </label>
+                          <select
+                            value={selectedColorId[product.id] || ""}
+                            onChange={(e) => setSelectedColorId(prev => ({ ...prev, [product.id]: e.target.value }))}
+                            className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="">No color</option>
+                            {productColors[product.id].map(color => (
+                              <option key={color.id} value={color.id}>
+                                {color.color_name}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedColorId[product.id] && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <div 
+                                className="w-3 h-3 rounded-full border border-border"
+                                style={{ backgroundColor: productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_hex }}
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                {productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_name}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="flex-1 min-w-[150px]">
                         <label className="block text-xs text-muted-foreground mb-1">Notes (optional)</label>
                         <input
