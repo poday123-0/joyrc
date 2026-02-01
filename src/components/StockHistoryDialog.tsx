@@ -1,9 +1,14 @@
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { History, Trash2, Package, TrendingUp, TrendingDown } from "lucide-react";
+import { History, Trash2, Package, TrendingUp, TrendingDown, Calendar as CalendarIcon, Filter, X } from "lucide-react";
 import { formatMVR } from "@/lib/currency";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface StockHistoryItem {
   id: string;
@@ -30,6 +35,9 @@ interface StockHistoryDialogProps {
   isSuperAdmin: boolean;
   onDeleteHistory: (historyId: string) => void;
 }
+
+type PeriodFilter = "all" | "today" | "week" | "month" | "year" | "custom";
+type TypeFilter = "all" | "sale" | "restock" | "adjustment" | "return";
 
 const getChangeTypeLabel = (type: string) => {
   switch (type) {
@@ -60,29 +68,240 @@ export const StockHistoryDialog = ({
   onDeleteHistory,
 }: StockHistoryDialogProps) => {
   const isMobile = useIsMobile();
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Filter history based on selected filters
+  const filteredHistory = useMemo(() => {
+    let filtered = [...stockHistory];
+
+    // Filter by type
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(item => item.change_type === typeFilter);
+    }
+
+    // Filter by period
+    if (periodFilter !== "all") {
+      const now = new Date();
+      let start: Date;
+      let end: Date;
+
+      switch (periodFilter) {
+        case "today":
+          start = startOfDay(now);
+          end = endOfDay(now);
+          break;
+        case "week":
+          start = startOfWeek(now, { weekStartsOn: 1 });
+          end = endOfWeek(now, { weekStartsOn: 1 });
+          break;
+        case "month":
+          start = startOfMonth(now);
+          end = endOfMonth(now);
+          break;
+        case "year":
+          start = startOfYear(now);
+          end = endOfYear(now);
+          break;
+        case "custom":
+          if (customDateRange.from && customDateRange.to) {
+            start = startOfDay(customDateRange.from);
+            end = endOfDay(customDateRange.to);
+          } else {
+            return filtered;
+          }
+          break;
+        default:
+          return filtered;
+      }
+
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.created_at);
+        return isWithinInterval(itemDate, { start, end });
+      });
+    }
+
+    return filtered;
+  }, [stockHistory, periodFilter, typeFilter, customDateRange]);
+
+  // Calculate stats based on filtered history
+  const stats = useMemo(() => ({
+    added: filteredHistory.filter(h => h.change_amount > 0).reduce((acc, h) => acc + h.change_amount, 0),
+    removed: Math.abs(filteredHistory.filter(h => h.change_amount < 0).reduce((acc, h) => acc + h.change_amount, 0)),
+    entries: filteredHistory.length,
+  }), [filteredHistory]);
+
+  const hasActiveFilters = periodFilter !== "all" || typeFilter !== "all";
+
+  const clearFilters = () => {
+    setPeriodFilter("all");
+    setTypeFilter("all");
+    setCustomDateRange({ from: undefined, to: undefined });
+  };
+
+  const periodOptions: { value: PeriodFilter; label: string }[] = [
+    { value: "all", label: "All Time" },
+    { value: "today", label: "Today" },
+    { value: "week", label: "This Week" },
+    { value: "month", label: "This Month" },
+    { value: "year", label: "This Year" },
+    { value: "custom", label: "Custom" },
+  ];
+
+  const typeOptions: { value: TypeFilter; label: string; color: string }[] = [
+    { value: "all", label: "All Types", color: "bg-muted text-foreground" },
+    { value: "sale", label: "Sales", color: "bg-blue-500/20 text-blue-600" },
+    { value: "restock", label: "Restocks", color: "bg-emerald-500/20 text-emerald-600" },
+    { value: "adjustment", label: "Adjustments", color: "bg-amber-500/20 text-amber-600" },
+    { value: "return", label: "Returns", color: "bg-purple-500/20 text-purple-600" },
+  ];
 
   const content = (
     <div className="flex flex-col h-full">
+      {/* Filter Toggle Button */}
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        className={cn(
+          "flex items-center justify-center gap-2 px-3 py-2 mb-3 rounded-lg text-sm font-medium transition-colors",
+          showFilters || hasActiveFilters
+            ? "bg-primary/10 text-primary"
+            : "bg-muted/50 text-muted-foreground hover:bg-muted"
+        )}
+      >
+        <Filter className="w-4 h-4" />
+        Filters
+        {hasActiveFilters && (
+          <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">
+            {(periodFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0)}
+          </span>
+        )}
+      </button>
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="mb-4 p-3 bg-muted/30 rounded-xl border border-border/50 space-y-3">
+          {/* Period Filter */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Time Period</p>
+            <div className="flex flex-wrap gap-1.5">
+              {periodOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setPeriodFilter(option.value);
+                    if (option.value !== "custom") {
+                      setCustomDateRange({ from: undefined, to: undefined });
+                    }
+                  }}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    periodFilter === option.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Date Range Picker */}
+            {periodFilter === "custom" && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      {customDateRange.from ? format(customDateRange.from, "MMM d, yyyy") : "Start date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customDateRange.from}
+                      onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground">to</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      {customDateRange.to ? format(customDateRange.to, "MMM d, yyyy") : "End date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customDateRange.to}
+                      onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+          </div>
+
+          {/* Type Filter */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Change Type</p>
+            <div className="flex flex-wrap gap-1.5">
+              {typeOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => setTypeFilter(option.value)}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    typeFilter === option.value
+                      ? option.color
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors"
+            >
+              <X className="w-3 h-3" />
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Stats Summary */}
-      {stockHistory.length > 0 && (
+      {filteredHistory.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="p-3 bg-emerald-500/10 rounded-lg text-center">
             <TrendingUp className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-            <p className="text-lg font-bold text-emerald-600">
-              {stockHistory.filter(h => h.change_amount > 0).reduce((acc, h) => acc + h.change_amount, 0)}
-            </p>
+            <p className="text-lg font-bold text-emerald-600">{stats.added}</p>
             <p className="text-[10px] text-muted-foreground">Added</p>
           </div>
           <div className="p-3 bg-rose-500/10 rounded-lg text-center">
             <TrendingDown className="w-4 h-4 text-rose-500 mx-auto mb-1" />
-            <p className="text-lg font-bold text-rose-500">
-              {Math.abs(stockHistory.filter(h => h.change_amount < 0).reduce((acc, h) => acc + h.change_amount, 0))}
-            </p>
+            <p className="text-lg font-bold text-rose-500">{stats.removed}</p>
             <p className="text-[10px] text-muted-foreground">Sold/Removed</p>
           </div>
           <div className="p-3 bg-primary/10 rounded-lg text-center">
             <Package className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-lg font-bold text-primary">{stockHistory.length}</p>
+            <p className="text-lg font-bold text-primary">{stats.entries}</p>
             <p className="text-[10px] text-muted-foreground">Entries</p>
           </div>
         </div>
@@ -93,16 +312,24 @@ export const StockHistoryDialog = ({
         <div className="flex items-center justify-center py-12">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : stockHistory.length === 0 ? (
+      ) : filteredHistory.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
           <History className="w-10 h-10 mb-3 opacity-50" />
-          <p className="text-sm">No stock history yet</p>
-          <p className="text-xs">Changes will appear here</p>
+          <p className="text-sm">{hasActiveFilters ? "No matching history" : "No stock history yet"}</p>
+          <p className="text-xs">{hasActiveFilters ? "Try adjusting your filters" : "Changes will appear here"}</p>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="mt-3 px-3 py-1.5 bg-primary/10 text-primary text-xs rounded-lg hover:bg-primary/20 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       ) : (
-        <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "60vh" : "400px" }}>
+        <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "50vh" : "350px" }}>
           <div className="space-y-2 pb-4">
-            {stockHistory.map((item) => (
+            {filteredHistory.map((item) => (
               <div
                 key={item.id}
                 className="p-3 bg-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors"
@@ -208,8 +435,8 @@ export const StockHistoryDialog = ({
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
-          <SheetHeader className="pb-4">
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl">
+          <SheetHeader className="pb-3">
             <SheetTitle className="flex items-center gap-2 text-left">
               <History className="w-5 h-5 text-primary" />
               <span className="truncate">{productName}</span>
@@ -223,7 +450,7 @@ export const StockHistoryDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="w-5 h-5 text-primary" />
