@@ -67,6 +67,7 @@ const TransactionsTab = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [detailSheetType, setDetailSheetType] = useState<"income" | "expense">("income");
+  const [showInventoryOnly, setShowInventoryOnly] = useState(false);
 
   useEffect(() => {
     fetchTransactions();
@@ -292,13 +293,30 @@ const TransactionsTab = () => {
   const expenseCategories = categories.filter(c => c.type === "expense").map(c => c.name);
   const incomeCategories = categories.filter(c => c.type === "income").map(c => c.name);
 
+  // Helper to check if a transaction is inventory-related
+  const isInventoryTransaction = (tx: Transaction) => {
+    return tx.type === "expense" && (
+      tx.category.toLowerCase().includes("inventory") || 
+      tx.category.toLowerCase().includes("stock") ||
+      tx.category.toLowerCase().includes("product") ||
+      tx.product_name // Has product_name = stock purchase
+    );
+  };
+
   // Filter and search transactions
   const filteredTransactions = transactions.filter(tx => {
     const matchesSearch = 
       tx.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesType = filterType === "all" || tx.type === filterType;
-    return matchesSearch && matchesType;
+    
+    // If showing inventory only, filter to inventory transactions
+    if (showInventoryOnly) {
+      return matchesSearch && isInventoryTransaction(tx);
+    }
+    
+    // Otherwise exclude inventory transactions from the main list
+    return matchesSearch && matchesType && !isInventoryTransaction(tx);
   });
 
   // Calculate totals
@@ -360,12 +378,18 @@ const TransactionsTab = () => {
             {formatMVR(totalIncome - otherExpenses)}
           </p>
         </div>
-        <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+        <div 
+          className={`p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 cursor-pointer hover:bg-amber-500/15 transition-colors ${showInventoryOnly ? "ring-2 ring-amber-500" : ""}`}
+          onClick={() => setShowInventoryOnly(!showInventoryOnly)}
+        >
           <div className="flex items-center gap-1.5 mb-1">
             <Boxes className="w-3 h-3 text-amber-600" />
             <p className="text-xs text-muted-foreground">Inventory Purchases</p>
           </div>
           <p className="text-lg font-bold text-amber-600">{formatMVR(inventoryExpenses)}</p>
+          {showInventoryOnly && (
+            <p className="text-[10px] text-amber-600 mt-1">Click to show all</p>
+          )}
         </div>
       </div>
 
@@ -502,10 +526,18 @@ const TransactionsTab = () => {
 
       {/* Transactions List */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-border bg-muted/30">
+        <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
           <p className="text-sm font-medium text-foreground">
-            {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""}
+            {showInventoryOnly ? "Inventory Purchases" : "Transactions"} • {filteredTransactions.length} item{filteredTransactions.length !== 1 ? "s" : ""}
           </p>
+          {showInventoryOnly && (
+            <button
+              onClick={() => setShowInventoryOnly(false)}
+              className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+            >
+              Show All Transactions
+            </button>
+          )}
         </div>
         
         <div className="divide-y divide-border max-h-[60vh] overflow-y-auto">
