@@ -812,8 +812,8 @@ const QuickPOSTab = () => {
           </div>
         </div>
 
-        {/* Cart Section - Mobile-optimized with scrollable items */}
-        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden max-h-[50vh] lg:max-h-none">
+        {/* Cart Section - Mobile-optimized without scroll constraint */}
+        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden lg:max-h-none">
           {/* Cart Header with Delivery Toggle */}
           <div className="p-3 border-b border-border bg-muted/30">
             <div className="flex items-center justify-between mb-2">
@@ -907,25 +907,27 @@ const QuickPOSTab = () => {
                   </div>
                 ))}
 
-                {/* Delivery Fields - Inline */}
+                {/* Delivery Fields - Compact Inline for Mobile */}
                 {isDelivery && (
-                  <div className="space-y-2 pt-2 border-t border-border">
-                    <div className="relative">
-                      <MapPin className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
-                      <Textarea
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-border">
+                    <div className="relative flex-1">
+                      <MapPin className="absolute left-2 top-2 w-3.5 h-3.5 text-muted-foreground" />
+                      <input
+                        type="text"
                         placeholder="Delivery address"
                         value={customerDetails.address}
                         onChange={(e) => setCustomerDetails({ ...customerDetails, address: e.target.value })}
-                        className="pl-8 text-xs min-h-[50px] resize-none"
+                        className="w-full pl-8 pr-2 py-2 text-xs bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
-                    <div className="relative">
-                      <FileText className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
-                      <Textarea
-                        placeholder="Notes (optional)"
+                    <div className="relative flex-1 sm:max-w-[120px]">
+                      <FileText className="absolute left-2 top-2 w-3.5 h-3.5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Notes"
                         value={customerDetails.notes}
                         onChange={(e) => setCustomerDetails({ ...customerDetails, notes: e.target.value })}
-                        className="pl-8 text-xs min-h-[40px] resize-none"
+                        className="w-full pl-8 pr-2 py-2 text-xs bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                   </div>
