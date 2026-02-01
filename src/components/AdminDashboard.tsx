@@ -242,8 +242,8 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
     
     const txns = periodTxns || [];
     const income = txns.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
-    // Exclude "Inventory Purchase" from other expenses (tracked separately)
-    const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory Purchase").reduce((sum, t) => sum + Number(t.amount), 0);
+    // Exclude "Inventory" category from expenses (tracked separately in stock management)
+    const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory").reduce((sum, t) => sum + Number(t.amount), 0);
     
     setPeriodStats({ income, expenses });
   };
