@@ -29,6 +29,10 @@ interface Transaction {
   quantity: number | null;
   added_by: string | null;
   profile?: { full_name: string | null } | null;
+  // Customer info from orders
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_address?: string | null;
 }
 
 interface TransactionDetailSheetProps {
@@ -416,73 +420,134 @@ const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: Tran
             <div className="p-4">
               <h4 className="text-xs font-medium text-muted-foreground mb-3">All Transactions</h4>
               <div className="space-y-3">
-                {filteredTransactions.map((tx) => (
-                  <div 
-                    key={tx.id} 
-                    className="p-3 bg-muted/30 rounded-xl border border-border/50 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                          isIncome ? "bg-emerald-500/10" : "bg-rose-500/10"
-                        )}>
-                          {isIncome ? (
-                            <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-                          ) : (
-                            <ArrowDownRight className="w-4 h-4 text-rose-500" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <p className="font-medium text-sm text-foreground">{tx.category}</p>
-                            {tx.product_name && (
-                              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                                {tx.product_name}
-                              </span>
-                            )}
+                {filteredTransactions.map((tx) => {
+                  const IconComponent = getCategoryIcon(tx.category, isIncome);
+                  const hasOrderDetails = tx.order_id && (tx.customer_name || tx.customer_phone);
+                  const hasProductDetails = tx.product_name || (tx.quantity && tx.unit_purchase_price);
+                  const hasCostDetails = tx.shipping_cost || tx.other_costs;
+                  const hasExtraDetails = hasOrderDetails || hasProductDetails || hasCostDetails || tx.profile?.full_name;
+                  
+                  return (
+                    <div 
+                      key={tx.id} 
+                      className="p-4 bg-muted/30 rounded-xl border border-border/50 hover:bg-muted/50 transition-colors"
+                    >
+                      {/* Header Row */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                            isIncome ? "bg-emerald-500/10" : "bg-rose-500/10"
+                          )}>
+                            <IconComponent className={cn(
+                              "w-5 h-5",
+                              isIncome ? "text-emerald-600" : "text-rose-500"
+                            )} />
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                            {tx.description || "No description"}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {format(new Date(tx.created_at), "MMM d, yyyy 'at' h:mm a")}
-                          </p>
-                          
-                          {/* Additional Details */}
-                          {(tx.unit_purchase_price || tx.shipping_cost || tx.other_costs || tx.profile?.full_name) && (
-                            <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
-                              {tx.quantity && tx.unit_purchase_price && (
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <Package className="w-3 h-3" />
-                                  <span>{tx.quantity} × {formatMVR(tx.unit_purchase_price)}</span>
-                                </div>
-                              )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-foreground">{tx.category}</p>
+                            {tx.order_id && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Order #{tx.order_id.slice(0, 8).toUpperCase()}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {format(new Date(tx.created_at), "MMM d, yyyy 'at' h:mm a")}
+                            </p>
+                          </div>
+                        </div>
+                        <p className={cn(
+                          "font-bold text-base flex-shrink-0",
+                          isIncome ? "text-emerald-600" : "text-rose-500"
+                        )}>
+                          {isIncome ? "+" : "-"}{formatMVR(tx.amount)}
+                        </p>
+                      </div>
+
+                      {/* Details Section */}
+                      {hasExtraDetails && (
+                        <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                          {/* Product Info */}
+                          {tx.product_name && (
+                            <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg">
+                              <Package className={cn("w-4 h-4", isIncome ? "text-emerald-600" : "text-rose-500")} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{tx.product_name}</p>
+                                {tx.quantity && tx.unit_purchase_price && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {tx.quantity} × {formatMVR(tx.unit_purchase_price)} = {formatMVR(tx.quantity * tx.unit_purchase_price)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Customer Info (for income/sales) */}
+                          {isIncome && (tx.customer_name || tx.customer_phone) && (
+                            <div className="flex items-start gap-2 p-2 bg-emerald-500/5 rounded-lg">
+                              <User className="w-4 h-4 text-emerald-600 mt-0.5" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground">
+                                  {tx.customer_name || "Unknown Customer"}
+                                </p>
+                                {tx.customer_phone && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    📞 {tx.customer_phone}
+                                  </p>
+                                )}
+                                {tx.customer_address && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1 flex items-center gap-1">
+                                    📍 {tx.customer_address}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Cost Breakdown */}
+                          {hasCostDetails && (
+                            <div className="grid grid-cols-2 gap-2">
                               {tx.shipping_cost !== null && tx.shipping_cost > 0 && (
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <Truck className="w-3 h-3" />
-                                  <span>Shipping: {formatMVR(tx.shipping_cost)}</span>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 bg-muted/50 rounded-lg">
+                                  <Truck className="w-3.5 h-3.5" />
+                                  <span>Shipping: <span className="font-medium text-foreground">{formatMVR(tx.shipping_cost)}</span></span>
                                 </div>
                               )}
-                              {tx.profile?.full_name && (
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <User className="w-3 h-3" />
-                                  <span>By: {tx.profile.full_name}</span>
+                              {tx.other_costs !== null && tx.other_costs > 0 && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 bg-muted/50 rounded-lg">
+                                  <Receipt className="w-3.5 h-3.5" />
+                                  <span>Other: <span className="font-medium text-foreground">{formatMVR(tx.other_costs)}</span></span>
                                 </div>
                               )}
                             </div>
                           )}
+
+                          {/* Description */}
+                          {tx.description && (
+                            <p className="text-xs text-muted-foreground italic px-1">
+                              "{tx.description}"
+                            </p>
+                          )}
+
+                          {/* Added By */}
+                          {tx.profile?.full_name && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                              <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[10px]">👤</span>
+                              <span>Recorded by <span className="font-medium text-foreground">{tx.profile.full_name}</span></span>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <p className={cn(
-                        "font-semibold text-sm flex-shrink-0",
-                        isIncome ? "text-emerald-600" : "text-rose-500"
-                      )}>
-                        {isIncome ? "+" : "-"}{formatMVR(tx.amount)}
-                      </p>
+                      )}
+
+                      {/* Simple description if no extra details */}
+                      {!hasExtraDetails && tx.description && (
+                        <p className="text-xs text-muted-foreground mt-2 italic">
+                          "{tx.description}"
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {filteredTransactions.length === 0 && (
                   <div className="text-center py-8">
