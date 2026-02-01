@@ -1,8 +1,16 @@
 import { useEffect, useState, useRef } from "react";
-import { X, Printer, Download, Building2, Phone, Mail, MapPin } from "lucide-react";
+import { X, Printer, Download, Share2, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMVR } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
+import { toPng } from "html-to-image";
+import { toast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface InvoiceItem {
   name: string;
@@ -52,6 +60,85 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     fetchSettings();
   }, []);
 
+  const handleDownloadPng = async () => {
+    if (!invoiceRef.current) return;
+    
+    try {
+      const dataUrl = await toPng(invoiceRef.current, { 
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        style: {
+          padding: '16px'
+        }
+      });
+      
+      const link = document.createElement('a');
+      link.download = `invoice-${invoice.orderId.slice(0, 8).toUpperCase()}.png`;
+      link.href = dataUrl;
+      link.click();
+      
+      toast({
+        title: "Downloaded",
+        description: "Invoice saved as PNG",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateShareText = () => {
+    const lines = [
+      `🧾 Invoice #${invoice.orderId.slice(0, 8).toUpperCase()}`,
+      `📅 ${new Date(invoice.orderDate).toLocaleDateString()}`,
+      ``,
+    ];
+    
+    if (invoice.customerName) {
+      lines.push(`👤 ${invoice.customerName}`);
+      if (invoice.customerPhone) lines.push(`📱 ${invoice.customerPhone}`);
+      if (invoice.isDelivery && invoice.customerAddress) lines.push(`📍 ${invoice.customerAddress}`);
+      lines.push(``);
+    }
+    
+    lines.push(`📦 Items:`);
+    invoice.items.forEach(item => {
+      lines.push(`• ${item.name}${item.color ? ` (${item.color})` : ''} x${item.quantity} - ${formatMVR(item.price * item.quantity)}`);
+    });
+    
+    lines.push(``);
+    lines.push(`💰 Total: ${formatMVR(invoice.total)}`);
+    
+    if (invoice.notes) {
+      lines.push(``);
+      lines.push(`📝 Notes: ${invoice.notes}`);
+    }
+    
+    lines.push(``);
+    lines.push(`Thank you for your purchase!`);
+    lines.push(companyName);
+    
+    return lines.join('\n');
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(generateShareText());
+    const phone = invoice.customerPhone?.replace(/\D/g, '') || '';
+    const url = phone 
+      ? `https://wa.me/${phone}?text=${text}`
+      : `https://wa.me/?text=${text}`;
+    window.open(url, '_blank');
+  };
+
+  const handleShareViber = () => {
+    const text = encodeURIComponent(generateShareText());
+    const url = `viber://forward?text=${text}`;
+    window.open(url, '_blank');
+  };
+
   const handlePrint = () => {
     const printContent = invoiceRef.current;
     if (!printContent) return;
@@ -84,6 +171,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
             .customer-title { font-size: 11px; color: #666; margin-bottom: 6px; text-transform: uppercase; }
             .customer-name { font-weight: 600; font-size: 13px; }
             .customer-detail { font-size: 11px; color: #666; margin-top: 2px; }
+            .delivery-badge { display: inline-block; background: #22c55e; color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
             .items-section { margin-bottom: 15px; }
             .item-header { display: flex; font-size: 10px; color: #666; text-transform: uppercase; padding: 8px 0; border-bottom: 1px solid #eee; }
             .item-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
@@ -123,6 +211,28 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
         <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
           <h3 className="font-semibold text-foreground">Invoice</h3>
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Share2 className="w-4 h-4 mr-1" />
+                  Share
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleShareWhatsApp} className="cursor-pointer">
+                  <MessageCircle className="w-4 h-4 mr-2 text-green-500" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleShareViber} className="cursor-pointer">
+                  <MessageCircle className="w-4 h-4 mr-2 text-purple-500" />
+                  Viber
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="outline" size="sm" onClick={handleDownloadPng}>
+              <Download className="w-4 h-4 mr-1" />
+              PNG
+            </Button>
             <Button variant="outline" size="sm" onClick={handlePrint}>
               <Printer className="w-4 h-4 mr-1" />
               Print
@@ -169,16 +279,27 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
               </div>
             </div>
 
-            {/* Customer Info */}
-            {invoice.customerName && (
+            {/* Customer Info - Always show if available */}
+            {(invoice.customerName || invoice.customerPhone || invoice.customerAddress) && (
               <div className="mb-4 p-3 border border-border rounded-lg customer-section">
-                <p className="text-[10px] text-muted-foreground uppercase mb-1 customer-title">Bill To</p>
-                <p className="font-semibold text-sm customer-name">{invoice.customerName}</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-[10px] text-muted-foreground uppercase customer-title">
+                    {invoice.isDelivery ? "Delivery To" : "Customer"}
+                  </p>
+                  {invoice.isDelivery && (
+                    <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded delivery-badge">
+                      Delivery
+                    </span>
+                  )}
+                </div>
+                {invoice.customerName && (
+                  <p className="font-semibold text-sm customer-name">{invoice.customerName}</p>
+                )}
                 {invoice.customerPhone && (
-                  <p className="text-xs text-muted-foreground customer-detail">{invoice.customerPhone}</p>
+                  <p className="text-xs text-muted-foreground customer-detail">📱 {invoice.customerPhone}</p>
                 )}
                 {invoice.customerAddress && (
-                  <p className="text-xs text-muted-foreground customer-detail">{invoice.customerAddress}</p>
+                  <p className="text-xs text-muted-foreground customer-detail">📍 {invoice.customerAddress}</p>
                 )}
               </div>
             )}
