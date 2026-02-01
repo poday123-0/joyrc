@@ -78,6 +78,11 @@ const StockManagementTab = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  
+  // Delete individual history item state
+  const [deleteHistoryId, setDeleteHistoryId] = useState<string | null>(null);
+  const [deleteHistoryProductId, setDeleteHistoryProductId] = useState<string | null>(null);
+  const [deletingHistory, setDeletingHistory] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -393,6 +398,36 @@ const StockManagementTab = () => {
       case "initial": return "Initial";
       default: return type;
     }
+  };
+
+  const handleDeleteHistoryItem = async () => {
+    if (!deleteHistoryId) return;
+    
+    setDeletingHistory(true);
+    try {
+      const { error } = await supabase
+        .from("stock_history")
+        .delete()
+        .eq("id", deleteHistoryId);
+      
+      if (error) throw error;
+      
+      toast({ title: "History entry deleted" });
+      setDeleteHistoryId(null);
+      
+      // Refresh history for the current product
+      if (deleteHistoryProductId) {
+        fetchStockHistory(deleteHistoryProductId);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete history entry",
+        variant: "destructive",
+      });
+    }
+    setDeletingHistory(false);
+    setDeleteHistoryProductId(null);
   };
 
   return (
@@ -968,8 +1003,20 @@ const StockManagementTab = () => {
                                   <p className="text-xs text-muted-foreground italic">"{item.notes}"</p>
                                 )}
                               </div>
-                              <div className="text-right flex-shrink-0">
+                              <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
                                 <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
+                                {isSuperAdmin && (
+                                  <button
+                                    onClick={() => {
+                                      setDeleteHistoryId(item.id);
+                                      setDeleteHistoryProductId(product.id);
+                                    }}
+                                    className="p-1 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+                                    title="Delete this entry"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
                             </div>
                             {/* Show cost details if available */}
@@ -1007,6 +1054,21 @@ const StockManagementTab = () => {
           ))}
         </div>
       )}
+      {/* Delete Individual History Confirm Dialog */}
+      <ConfirmDialog
+        open={!!deleteHistoryId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteHistoryId(null);
+            setDeleteHistoryProductId(null);
+          }
+        }}
+        onConfirm={handleDeleteHistoryItem}
+        title="Delete History Entry"
+        description="This will permanently delete this stock history entry. This action cannot be undone."
+        variant="destructive"
+        confirmText={deletingHistory ? "Deleting..." : "Delete"}
+      />
     </div>
   );
 };
