@@ -40,6 +40,13 @@ interface SystemSettings {
   logo_url: string | null;
 }
 
+interface BankAccount {
+  id: string;
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+}
+
 interface POSInvoiceProps {
   invoice: InvoiceData;
   onClose: () => void;
@@ -47,6 +54,7 @@ interface POSInvoiceProps {
 
 const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,7 +65,18 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
         .single();
       if (data) setSettings(data);
     };
+    
+    const fetchBankAccounts = async () => {
+      const { data } = await supabase
+        .from("bank_settings")
+        .select("id, bank_name, account_name, account_number")
+        .eq("is_active", true)
+        .order("bank_name");
+      if (data) setBankAccounts(data);
+    };
+    
     fetchSettings();
+    fetchBankAccounts();
   }, []);
 
   const handleDownloadPng = async () => {
@@ -182,6 +201,8 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
             .totals-section { border-top: 2px dashed #ddd; padding-top: 15px; margin-top: 10px; }
             .total-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
             .total-row.grand { font-size: 16px; font-weight: bold; padding-top: 8px; border-top: 1px solid #eee; }
+            .bank-accounts { margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
+            .bank-accounts p:first-child { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
             .footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px dashed #ddd; }
             .footer-text { font-size: 12px; color: #666; margin-bottom: 4px; }
             .footer-thanks { font-size: 14px; font-weight: 600; }
@@ -347,6 +368,22 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
                 <span className="text-primary">{formatMVR(invoice.total)}</span>
               </div>
             </div>
+
+            {/* Bank Accounts */}
+            {bankAccounts.length > 0 && (
+              <div className="mt-3 sm:mt-4 p-2.5 sm:p-3 bg-muted/30 rounded-lg bank-accounts">
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase mb-2 font-medium">Bank Accounts</p>
+                <div className="space-y-2">
+                  {bankAccounts.map((bank) => (
+                    <div key={bank.id} className="text-[11px] sm:text-xs">
+                      <p className="font-semibold text-foreground">{bank.bank_name}</p>
+                      <p className="text-muted-foreground">{bank.account_name}</p>
+                      <p className="font-mono text-foreground">{bank.account_number}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Notes */}
             {invoice.notes && (
