@@ -379,18 +379,18 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
             {/* Items */}
             <div className="mb-3 sm:mb-4 items-section">
               <div className="flex text-[9px] sm:text-[10px] text-muted-foreground uppercase pb-2 border-b border-border item-header">
-                <span className="flex-[2.5] sm:flex-[2] item-name">Item</span>
-                <span className="flex-[0.5] text-center item-qty">Qty</span>
-                <span className="flex-1 text-right item-price">Amount</span>
+                <span className="flex-1 item-name">Item</span>
+                <span className="w-10 text-center item-qty">Qty</span>
+                <span className="w-24 text-right item-price">Amount</span>
               </div>
               {invoice.items.map((item, idx) => (
                 <div key={idx} className="flex py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm item-row">
-                  <div className="flex-[2.5] sm:flex-[2] item-name pr-2">
+                  <div className="flex-1 item-name pr-2">
                     <span className="font-medium text-[11px] sm:text-sm leading-tight line-clamp-2">{item.name}</span>
                     {item.color && <p className="text-[9px] sm:text-[10px] text-muted-foreground item-color">{item.color}</p>}
                   </div>
-                  <span className="flex-[0.5] text-center text-muted-foreground item-qty text-[11px] sm:text-sm">{item.quantity}</span>
-                  <span className="flex-1 text-right font-medium item-price text-[11px] sm:text-sm">{formatMVR(item.price * item.quantity)}</span>
+                  <span className="w-10 text-center text-muted-foreground item-qty text-[11px] sm:text-sm">{item.quantity}</span>
+                  <span className="w-24 text-right font-medium item-price text-[11px] sm:text-sm whitespace-nowrap">{formatMVR(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
