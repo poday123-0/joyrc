@@ -88,6 +88,7 @@ const StockManagementTab = () => {
   // Stock history dialog state
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [historyDialogProductName, setHistoryDialogProductName] = useState("");
+  const [isGlobalHistoryView, setIsGlobalHistoryView] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -138,7 +139,7 @@ const StockManagementTab = () => {
     setLoading(false);
   };
 
-  const fetchStockHistory = async (productId: string) => {
+  const fetchStockHistory = async (productId: string, productInfo?: { name: string; item_code: string | null }) => {
     setHistoryLoading(true);
     try {
       // First get the history records
@@ -147,7 +148,7 @@ const StockManagementTab = () => {
         .select("*")
         .eq("product_id", productId)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (error) throw error;
 
@@ -163,13 +164,58 @@ const StockManagementTab = () => {
               .single();
             profile = profileData;
           }
-          return { ...item, profile };
+          return { 
+            ...item, 
+            profile,
+            product_name: productInfo?.name,
+            product_item_code: productInfo?.item_code
+          };
         })
       );
 
       setStockHistory(historyWithProfiles);
     } catch (error) {
       console.error("Error fetching stock history:", error);
+    }
+    setHistoryLoading(false);
+  };
+
+  const fetchAllStockHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      // Fetch all history records with product info
+      const { data: historyData, error } = await supabase
+        .from("stock_history")
+        .select("*, products:product_id(name, item_code)")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      // Fetch profile names for created_by users
+      const historyWithProfiles = await Promise.all(
+        (historyData || []).map(async (item) => {
+          let profile = null;
+          if (item.created_by) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("user_id", item.created_by)
+              .single();
+            profile = profileData;
+          }
+          return { 
+            ...item, 
+            profile,
+            product_name: (item.products as any)?.name,
+            product_item_code: (item.products as any)?.item_code
+          };
+        })
+      );
+
+      setStockHistory(historyWithProfiles);
+    } catch (error) {
+      console.error("Error fetching all stock history:", error);
     }
     setHistoryLoading(false);
   };
@@ -194,7 +240,8 @@ const StockManagementTab = () => {
       setStockHistory([]);
     } else {
       setExpandedProductId(productId);
-      fetchStockHistory(productId);
+      const product = products.find(p => p.id === productId);
+      fetchStockHistory(productId, product ? { name: product.name, item_code: product.item_code || null } : undefined);
       fetchProductColors(productId);
       
       // Load last used costs for this product if not already set
@@ -332,7 +379,8 @@ const StockManagementTab = () => {
       
       fetchProducts();
       if (expandedProductId === productId) {
-        fetchStockHistory(productId);
+        const product = products.find(p => p.id === productId);
+        fetchStockHistory(productId, product ? { name: product.name, item_code: product.item_code || null } : undefined);
       }
     } catch (error: any) {
       toast({
@@ -458,7 +506,8 @@ const StockManagementTab = () => {
       
       // Refresh history for the current product
       if (deleteHistoryProductId) {
-        fetchStockHistory(deleteHistoryProductId);
+        const product = products.find(p => p.id === deleteHistoryProductId);
+        fetchStockHistory(deleteHistoryProductId, product ? { name: product.name, item_code: product.item_code || null } : undefined);
       }
     } catch (error: any) {
       toast({
@@ -498,6 +547,18 @@ const StockManagementTab = () => {
           >
             <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Refresh</span>
+          </button>
+          <button
+            onClick={() => {
+              setIsGlobalHistoryView(true);
+              setHistoryDialogProductName("All Products");
+              fetchAllStockHistory();
+              setHistoryDialogOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+          >
+            <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">All History</span>
           </button>
         </div>
       </div>
@@ -936,6 +997,7 @@ const StockManagementTab = () => {
                   {/* View History Button */}
                   <button
                     onClick={() => {
+                      setIsGlobalHistoryView(false);
                       setHistoryDialogProductName(product.name);
                       setHistoryDialogOpen(true);
                     }}
@@ -974,11 +1036,17 @@ const StockManagementTab = () => {
       {/* Stock History Dialog */}
       <StockHistoryDialog
         open={historyDialogOpen}
-        onOpenChange={setHistoryDialogOpen}
+        onOpenChange={(open) => {
+          setHistoryDialogOpen(open);
+          if (!open) {
+            setIsGlobalHistoryView(false);
+          }
+        }}
         productName={historyDialogProductName}
         stockHistory={stockHistory}
         loading={historyLoading}
         isSuperAdmin={isSuperAdmin}
+        showProductFilter={isGlobalHistoryView}
         onDeleteHistory={(historyId) => {
           setDeleteHistoryId(historyId);
           setDeleteHistoryProductId(expandedProductId);
