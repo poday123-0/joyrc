@@ -3,13 +3,14 @@ import {
   Clock, CheckCircle, XCircle, Receipt, Eye, 
   ChevronDown, ChevronUp, CreditCard, AlertCircle,
   Trash2, Edit, Download, Upload, FileSpreadsheet,
-  Truck, UserPlus, Plus
+  Truck, UserPlus, Plus, FileText
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import POSInvoice from "@/components/POSInvoice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +51,7 @@ interface OrderItem {
   product_name: string;
   product_price: number;
   quantity: number;
+  color_name?: string | null;
 }
 
 interface ImportOrder {
@@ -95,6 +97,20 @@ const PaymentOrdersTab = () => {
   
   // Add order dialog state
   const [showAddOrderDialog, setShowAddOrderDialog] = useState(false);
+  
+  // Invoice state
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<{
+    orderId: string;
+    orderDate: string;
+    items: { name: string; quantity: number; price: number; color?: string | null }[];
+    total: number;
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    isDelivery: boolean;
+    notes?: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -1018,6 +1034,26 @@ const PaymentOrdersTab = () => {
                   onEditNotesChange={setEditNotes}
                   onEditCommentChange={setEditComment}
                   onViewReceipt={(url) => setViewingReceipt(url)}
+                  onViewInvoice={() => {
+                    const items = (orderItems[order.id] || []).map(item => ({
+                      name: item.product_name,
+                      quantity: item.quantity,
+                      price: item.product_price,
+                      color: item.color_name
+                    }));
+                    setInvoiceData({
+                      orderId: order.id,
+                      orderDate: order.created_at,
+                      items,
+                      total: order.total_amount,
+                      customerName: customerProfiles[order.user_id]?.full_name || undefined,
+                      customerPhone: order.phone || undefined,
+                      customerAddress: order.shipping_address || undefined,
+                      isDelivery: !!order.shipping_address,
+                      notes: order.notes || undefined
+                    });
+                    setShowInvoice(true);
+                  }}
                   onAssignDelivery={() => {
                     setSelectedOrderId(order.id);
                     setAssignDialogOpen(true);
@@ -1026,6 +1062,7 @@ const PaymentOrdersTab = () => {
                   deliveryStaff={deliveryStaff}
                   assignedStaffName={assignedStaff?.full_name || undefined}
                   confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
+                  customerName={customerProfiles[order.user_id]?.full_name || undefined}
                   getPaymentStatusConfig={getPaymentStatusConfig}
                 />
               );
@@ -1065,6 +1102,26 @@ const PaymentOrdersTab = () => {
                 }}
                 onEditNotesChange={setEditNotes}
                 onEditCommentChange={setEditComment}
+                onViewInvoice={() => {
+                  const items = (orderItems[order.id] || []).map(item => ({
+                    name: item.product_name,
+                    quantity: item.quantity,
+                    price: item.product_price,
+                    color: item.color_name
+                  }));
+                  setInvoiceData({
+                    orderId: order.id,
+                    orderDate: order.created_at,
+                    items,
+                    total: order.total_amount,
+                    customerName: customerProfiles[order.user_id]?.full_name || undefined,
+                    customerPhone: order.phone || undefined,
+                    customerAddress: order.shipping_address || undefined,
+                    isDelivery: !!order.shipping_address,
+                    notes: order.notes || undefined
+                  });
+                  setShowInvoice(true);
+                }}
                 onAssignDelivery={() => {
                   setSelectedOrderId(order.id);
                   setAssignDialogOpen(true);
@@ -1073,6 +1130,7 @@ const PaymentOrdersTab = () => {
                 deliveryStaff={deliveryStaff}
                 assignedStaffName={assignedStaff?.full_name || undefined}
                 confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
+                customerName={customerProfiles[order.user_id]?.full_name || undefined}
                 getPaymentStatusConfig={getPaymentStatusConfig}
               />
             );
@@ -1197,6 +1255,17 @@ const PaymentOrdersTab = () => {
           </div>
         </div>
       )}
+
+      {/* Invoice Modal */}
+      {showInvoice && invoiceData && (
+        <POSInvoice
+          invoice={invoiceData}
+          onClose={() => {
+            setShowInvoice(false);
+            setInvoiceData(null);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -1220,11 +1289,13 @@ const OrderCard = ({
   onEditNotesChange,
   onEditCommentChange,
   onViewReceipt,
+  onViewInvoice,
   onAssignDelivery,
   onUpdateStatus,
   deliveryStaff,
   assignedStaffName,
   confirmedByName,
+  customerName,
   getPaymentStatusConfig,
 }: {
   order: Order;
@@ -1245,11 +1316,13 @@ const OrderCard = ({
   onEditNotesChange?: (value: string) => void;
   onEditCommentChange?: (value: string) => void;
   onViewReceipt?: (url: string) => void;
+  onViewInvoice?: () => void;
   onAssignDelivery?: () => void;
   onUpdateStatus?: (status: string) => void;
   deliveryStaff?: DeliveryStaff[];
   assignedStaffName?: string;
   confirmedByName?: string;
+  customerName?: string;
   getPaymentStatusConfig: (status: string) => any;
 }) => {
   const statusConfig = getPaymentStatusConfig(order.payment_status || "pending");
@@ -1379,16 +1452,27 @@ const OrderCard = ({
               </div>
             )}
 
-            {/* Receipt */}
-            {order.receipt_url && onViewReceipt && (
-              <button
-                onClick={() => onViewReceipt(order.receipt_url!)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
-              >
-                <Eye className="w-4 h-4" />
-                <span className="text-sm">View Receipt</span>
-              </button>
-            )}
+            {/* Invoice & Receipt buttons */}
+            <div className="flex flex-wrap gap-2">
+              {onViewInvoice && (
+                <button
+                  onClick={onViewInvoice}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span className="text-sm font-medium">View Invoice</span>
+                </button>
+              )}
+              {order.receipt_url && onViewReceipt && (
+                <button
+                  onClick={() => onViewReceipt(order.receipt_url!)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="text-sm">View Receipt</span>
+                </button>
+              )}
+            </div>
 
             {/* Action buttons for pending payments */}
             {(order.payment_status === "uploaded" || order.payment_status === "pending") && onConfirm && onReject && (
