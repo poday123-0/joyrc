@@ -83,15 +83,31 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     if (!invoiceRef.current) return;
     
     try {
-      const dataUrl = await toPng(invoiceRef.current, { 
+      // Clone the node to apply fixed styles for capture
+      const element = invoiceRef.current;
+      const originalWidth = element.style.width;
+      const originalOverflow = element.style.overflow;
+      
+      // Temporarily set fixed width to ensure full capture
+      element.style.width = '380px';
+      element.style.overflow = 'visible';
+      
+      const dataUrl = await toPng(element, { 
         backgroundColor: '#ffffff',
-        pixelRatio: 3,
-        quality: 1,
+        pixelRatio: 2,
+        cacheBust: true,
+        width: 380,
         style: {
-          padding: '24px',
+          padding: '20px',
           background: '#ffffff',
+          width: '380px',
+          overflow: 'visible',
         }
       });
+      
+      // Restore original styles
+      element.style.width = originalWidth;
+      element.style.overflow = originalOverflow;
       
       const link = document.createElement('a');
       link.download = `invoice-${invoice.orderId.slice(0, 8).toUpperCase()}.png`;
