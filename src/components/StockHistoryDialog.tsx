@@ -5,10 +5,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { History, Trash2, Package, TrendingUp, TrendingDown, Calendar as CalendarIcon, Filter, X } from "lucide-react";
+import { History, Trash2, Package, TrendingUp, TrendingDown, Calendar as CalendarIcon, Filter, X, Search, Hash } from "lucide-react";
 import { formatMVR } from "@/lib/currency";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 interface StockHistoryItem {
   id: string;
@@ -24,6 +25,8 @@ interface StockHistoryItem {
   total_expense?: number | null;
   order_id?: string | null;
   profile?: { full_name: string | null } | null;
+  product_name?: string;
+  product_item_code?: string | null;
 }
 
 interface StockHistoryDialogProps {
@@ -34,6 +37,7 @@ interface StockHistoryDialogProps {
   loading: boolean;
   isSuperAdmin: boolean;
   onDeleteHistory: (historyId: string) => void;
+  showProductFilter?: boolean;
 }
 
 type PeriodFilter = "all" | "today" | "week" | "month" | "year" | "custom";
@@ -66,10 +70,12 @@ export const StockHistoryDialog = ({
   loading,
   isSuperAdmin,
   onDeleteHistory,
+  showProductFilter = false,
 }: StockHistoryDialogProps) => {
   const isMobile = useIsMobile();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [productSearch, setProductSearch] = useState("");
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
@@ -79,6 +85,16 @@ export const StockHistoryDialog = ({
   // Filter history based on selected filters
   const filteredHistory = useMemo(() => {
     let filtered = [...stockHistory];
+
+    // Filter by product search (name or item code)
+    if (showProductFilter && productSearch.trim()) {
+      const search = productSearch.toLowerCase().trim();
+      filtered = filtered.filter(item => 
+        (item.product_name?.toLowerCase().includes(search)) ||
+        (item.product_item_code?.toLowerCase().includes(search)) ||
+        (item.notes?.toLowerCase().includes(search))
+      );
+    }
 
     // Filter by type
     if (typeFilter !== "all") {
@@ -127,7 +143,7 @@ export const StockHistoryDialog = ({
     }
 
     return filtered;
-  }, [stockHistory, periodFilter, typeFilter, customDateRange]);
+  }, [stockHistory, periodFilter, typeFilter, customDateRange, productSearch, showProductFilter]);
 
   // Calculate stats based on filtered history
   const stats = useMemo(() => ({
@@ -136,11 +152,12 @@ export const StockHistoryDialog = ({
     entries: filteredHistory.length,
   }), [filteredHistory]);
 
-  const hasActiveFilters = periodFilter !== "all" || typeFilter !== "all";
+  const hasActiveFilters = periodFilter !== "all" || typeFilter !== "all" || (showProductFilter && productSearch.trim() !== "");
 
   const clearFilters = () => {
     setPeriodFilter("all");
     setTypeFilter("all");
+    setProductSearch("");
     setCustomDateRange({ from: undefined, to: undefined });
   };
 
@@ -177,7 +194,7 @@ export const StockHistoryDialog = ({
         Filters
         {hasActiveFilters && (
           <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">
-            {(periodFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0)}
+            {(periodFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0) + (showProductFilter && productSearch.trim() ? 1 : 0)}
           </span>
         )}
       </button>
@@ -185,6 +202,30 @@ export const StockHistoryDialog = ({
       {/* Filters Panel */}
       {showFilters && (
         <div className="mb-4 p-3 bg-muted/30 rounded-xl border border-border/50 space-y-3">
+          {/* Product Search - only when showProductFilter is true */}
+          {showProductFilter && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">Search Product</p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Search by name, item code, or notes..."
+                  className="pl-9 h-9 text-sm"
+                />
+                {productSearch && (
+                  <button
+                    onClick={() => setProductSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Period Filter */}
           <div>
             <p className="text-xs font-medium text-muted-foreground mb-2">Time Period</p>
@@ -336,6 +377,19 @@ export const StockHistoryDialog = ({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
+                    {/* Product name (only in global view) */}
+                    {showProductFilter && item.product_name && (
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Package className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-sm font-medium text-foreground truncate">{item.product_name}</span>
+                        {item.product_item_code && (
+                          <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                            {item.product_item_code}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
                     {/* Change badge and type */}
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                       <span
