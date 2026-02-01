@@ -383,6 +383,22 @@ const Admin = () => {
   // Define tabs that are always accessible vs permission-gated
   const adminOnlyTabs = ["admins", "staff", "settings"]; // Only for full admins
   
+  // Check if user has permission for a specific tab
+  const hasTabPermission = (tabId: string): boolean => {
+    // Full admins and super admins have access to everything
+    if (isFullAdmin || isSuperAdmin) return true;
+    
+    // Dashboard is always accessible
+    if (tabId === "dashboard") return true;
+    
+    // Admin-only tabs are blocked for staff
+    if (adminOnlyTabs.includes(tabId)) return false;
+    
+    // Check granular permission
+    const permissionKey = `tab_${tabId}`;
+    return userPermissions.includes(permissionKey);
+  };
+  
   // Filter tabs based on user permissions
   const filteredTabs = useMemo(() => {
     // Full admins and super admins see all tabs
@@ -403,6 +419,21 @@ const Admin = () => {
       return userPermissions.includes(permissionKey);
     });
   }, [tabs, isFullAdmin, isSuperAdmin, userPermissions]);
+
+  // Ensure activeTab is valid for current user permissions
+  useEffect(() => {
+    if (!authLoading && !loading && user) {
+      // If current tab is not permitted, redirect to dashboard
+      if (!hasTabPermission(activeTab)) {
+        setActiveTab("dashboard");
+        toast({
+          title: "Access Restricted",
+          description: "You don't have permission to access that section.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [activeTab, isFullAdmin, isSuperAdmin, userPermissions, authLoading, loading, user]);
 
   if (authLoading || loading) {
     return (
@@ -553,42 +584,52 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground mt-1">Manage your {activeTab} settings</p>
             </div>
 
-            {/* Content */}
-            {activeTab === "dashboard" && <AdminDashboard onTabChange={(tab) => setActiveTab(tab as Tab)} />}
-            {activeTab === "pos" && <QuickPOSTab />}
-            {activeTab === "products" && (
+            {/* Content - with permission checks */}
+            {activeTab === "dashboard" && <AdminDashboard onTabChange={(tab) => {
+              if (hasTabPermission(tab)) {
+                setActiveTab(tab as Tab);
+              } else {
+                toast({
+                  title: "Access Restricted",
+                  description: "You don't have permission to access that section.",
+                  variant: "destructive",
+                });
+              }
+            }} />}
+            {activeTab === "pos" && hasTabPermission("pos") && <QuickPOSTab />}
+            {activeTab === "products" && hasTabPermission("products") && (
               <ProductsTab 
                 products={products} 
                 categories={categories}
                 onRefresh={fetchData} 
               />
             )}
-            {activeTab === "stock" && <StockManagementTab />}
-            {activeTab === "transactions" && <TransactionsTab />}
-            {activeTab === "featured" && <FeaturedProductsTab />}
-            {activeTab === "videos" && <VideoShowcasesTab />}
-            {activeTab === "categories" && (
+            {activeTab === "stock" && hasTabPermission("stock") && <StockManagementTab />}
+            {activeTab === "transactions" && hasTabPermission("transactions") && <TransactionsTab />}
+            {activeTab === "featured" && hasTabPermission("featured") && <FeaturedProductsTab />}
+            {activeTab === "videos" && hasTabPermission("videos") && <VideoShowcasesTab />}
+            {activeTab === "categories" && hasTabPermission("categories") && (
               <CategoriesTab 
                 categories={categories} 
                 onRefresh={fetchData} 
               />
             )}
-            {activeTab === "orders" && <PaymentOrdersTab />}
-            {activeTab === "preorders" && <PreordersTab />}
-            {activeTab === "deliveries" && <DeliveryTab />}
-            {activeTab === "reports" && <SalesReportsTab />}
-            {activeTab === "messages" && <ContactMessagesTab />}
-            {activeTab === "bank" && <BankSettingsTab />}
-            {activeTab === "support" && <SupportContentTab />}
-            {activeTab === "admins" && <SystemUsersTab />}
-            {activeTab === "users" && <UsersManagementTab />}
-            {activeTab === "hero" && <HeroBackgroundsTab />}
-            {activeTab === "home-content" && <HomeContentTab />}
-            {activeTab === "storage" && <StorageManagementTab />}
-            {activeTab === "email-templates" && <EmailTemplatesTab />}
-            {activeTab === "marketing" && <MarketingEmailsTab />}
-            {activeTab === "footer" && <FooterSettingsTab />}
-            {activeTab === "settings" && settings && (
+            {activeTab === "orders" && hasTabPermission("orders") && <PaymentOrdersTab />}
+            {activeTab === "preorders" && hasTabPermission("preorders") && <PreordersTab />}
+            {activeTab === "deliveries" && hasTabPermission("deliveries") && <DeliveryTab />}
+            {activeTab === "reports" && hasTabPermission("reports") && <SalesReportsTab />}
+            {activeTab === "messages" && hasTabPermission("messages") && <ContactMessagesTab />}
+            {activeTab === "bank" && hasTabPermission("bank") && <BankSettingsTab />}
+            {activeTab === "support" && hasTabPermission("support") && <SupportContentTab />}
+            {activeTab === "admins" && hasTabPermission("admins") && <SystemUsersTab />}
+            {activeTab === "users" && hasTabPermission("users") && <UsersManagementTab />}
+            {activeTab === "hero" && hasTabPermission("hero") && <HeroBackgroundsTab />}
+            {activeTab === "home-content" && hasTabPermission("home-content") && <HomeContentTab />}
+            {activeTab === "storage" && hasTabPermission("storage") && <StorageManagementTab />}
+            {activeTab === "email-templates" && hasTabPermission("email-templates") && <EmailTemplatesTab />}
+            {activeTab === "marketing" && hasTabPermission("marketing") && <MarketingEmailsTab />}
+            {activeTab === "footer" && hasTabPermission("footer") && <FooterSettingsTab />}
+            {activeTab === "settings" && hasTabPermission("settings") && settings && (
               <SettingsTab 
                 settings={settings} 
                 onRefresh={() => fetchData(false)}
@@ -604,6 +645,23 @@ const Admin = () => {
                   setIsReordering(!isReordering);
                 }}
               />
+            )}
+            
+            {/* Access Denied Message for unpermitted tabs */}
+            {!hasTabPermission(activeTab) && activeTab !== "dashboard" && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Settings className="w-8 h-8 text-destructive" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h3>
+                <p className="text-muted-foreground mb-4">You don't have permission to access this section.</p>
+                <button
+                  onClick={() => setActiveTab("dashboard")}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
             )}
           </div>
         </main>
