@@ -354,18 +354,18 @@ const TransactionsTab = () => {
           </div>
           <p className="text-lg font-bold text-rose-500">{formatMVR(otherExpenses)}</p>
         </div>
+        <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
+          <p className="text-xs text-muted-foreground mb-1">Net Balance</p>
+          <p className={`text-lg font-bold ${totalIncome - otherExpenses >= 0 ? "text-primary" : "text-rose-500"}`}>
+            {formatMVR(totalIncome - otherExpenses)}
+          </p>
+        </div>
         <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
           <div className="flex items-center gap-1.5 mb-1">
             <Boxes className="w-3 h-3 text-amber-600" />
             <p className="text-xs text-muted-foreground">Inventory Purchases</p>
           </div>
           <p className="text-lg font-bold text-amber-600">{formatMVR(inventoryExpenses)}</p>
-        </div>
-        <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
-          <p className="text-xs text-muted-foreground mb-1">Net Balance</p>
-          <p className={`text-lg font-bold ${totalIncome - otherExpenses >= 0 ? "text-primary" : "text-rose-500"}`}>
-            {formatMVR(totalIncome - otherExpenses)}
-          </p>
         </div>
       </div>
 
