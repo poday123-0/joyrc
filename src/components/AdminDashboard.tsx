@@ -99,7 +99,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("week");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
-  const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0 });
+  const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0, cashOut: 0 });
   const [periodFilterOpen, setPeriodFilterOpen] = useState(false);
   
   // Stock value details dialog state
@@ -234,18 +234,31 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
   const fetchPeriodData = async () => {
     const { start, end } = getPeriodDateRange(periodFilter);
     
-    const { data: periodTxns } = await supabase
-      .from("transactions")
-      .select("type, amount, category")
-      .gte("created_at", start.toISOString())
-      .lte("created_at", end.toISOString());
+    // Fetch transactions and stock history for the period in parallel
+    const [txnsRes, stockRes] = await Promise.all([
+      supabase
+        .from("transactions")
+        .select("type, amount, category")
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString()),
+      supabase
+        .from("stock_history")
+        .select("total_expense")
+        .eq("change_type", "restock")
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString())
+    ]);
     
-    const txns = periodTxns || [];
+    const txns = txnsRes.data || [];
+    const stockHistory = stockRes.data || [];
+    
     const income = txns.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
     // Exclude "Inventory" category from expenses (tracked separately in stock management)
     const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory").reduce((sum, t) => sum + Number(t.amount), 0);
+    // Calculate cash out from inventory purchases
+    const cashOut = stockHistory.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
     
-    setPeriodStats({ income, expenses });
+    setPeriodStats({ income, expenses, cashOut });
   };
 
   // Fetch period data when filter changes
@@ -782,7 +795,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
               </Popover>
             </div>
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="text-center p-3 rounded-xl bg-muted/30">
                 <p className="text-xs text-muted-foreground mb-1">Income</p>
                 <p className="text-sm font-bold text-[hsl(var(--chart-2))]">{formatMVR(periodStats.income)}</p>
@@ -796,6 +809,10 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
                 <p className={`text-sm font-bold ${periodStats.income - periodStats.expenses >= 0 ? "text-primary" : "text-destructive"}`}>
                   {periodStats.income - periodStats.expenses >= 0 ? "+" : ""}{formatMVR(periodStats.income - periodStats.expenses)}
                 </p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
+                <p className="text-xs text-muted-foreground mb-1">Cash Out</p>
+                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
               </div>
             </div>
           </div>
