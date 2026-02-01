@@ -350,14 +350,9 @@ const TransactionsTab = () => {
           }}
         >
           <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-muted-foreground">Total Expenses</p>
+            <p className="text-xs text-muted-foreground">Other Expenses</p>
           </div>
-          <p className="text-lg font-bold text-rose-500">{formatMVR(totalExpenses)}</p>
-          {inventoryExpenses > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Other: {formatMVR(otherExpenses)}
-            </p>
-          )}
+          <p className="text-lg font-bold text-rose-500">{formatMVR(otherExpenses)}</p>
         </div>
         <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
           <div className="flex items-center gap-1.5 mb-1">
@@ -365,16 +360,11 @@ const TransactionsTab = () => {
             <p className="text-xs text-muted-foreground">Inventory Purchases</p>
           </div>
           <p className="text-lg font-bold text-amber-600">{formatMVR(inventoryExpenses)}</p>
-          {inventoryExpenses > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {((inventoryExpenses / totalExpenses) * 100).toFixed(0)}% of expenses
-            </p>
-          )}
         </div>
         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
           <p className="text-xs text-muted-foreground mb-1">Net Balance</p>
-          <p className={`text-lg font-bold ${totalIncome - totalExpenses >= 0 ? "text-primary" : "text-rose-500"}`}>
-            {formatMVR(totalIncome - totalExpenses)}
+          <p className={`text-lg font-bold ${totalIncome - otherExpenses >= 0 ? "text-primary" : "text-rose-500"}`}>
+            {formatMVR(totalIncome - otherExpenses)}
           </p>
         </div>
       </div>
