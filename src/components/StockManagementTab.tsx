@@ -710,28 +710,40 @@ const StockManagementTab = () => {
                             <Palette className="w-3 h-3" />
                             Color (optional)
                           </label>
-                          <select
-                            value={selectedColorId[product.id] || ""}
-                            onChange={(e) => setSelectedColorId(prev => ({ ...prev, [product.id]: e.target.value }))}
-                            className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            <option value="">No color</option>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* No color option */}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedColorId(prev => ({ ...prev, [product.id]: "" }))}
+                              className={`w-7 h-7 rounded-full border-2 transition-all flex items-center justify-center ${
+                                !selectedColorId[product.id] 
+                                  ? "border-primary ring-2 ring-primary/30" 
+                                  : "border-border hover:border-muted-foreground"
+                              }`}
+                              title="No color"
+                            >
+                              <X className="w-3 h-3 text-muted-foreground" />
+                            </button>
+                            {/* Color swatches */}
                             {productColors[product.id].map(color => (
-                              <option key={color.id} value={color.id}>
-                                {color.color_name}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedColorId[product.id] && (
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <div 
-                                className="w-3 h-3 rounded-full border border-border"
-                                style={{ backgroundColor: productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_hex }}
+                              <button
+                                key={color.id}
+                                type="button"
+                                onClick={() => setSelectedColorId(prev => ({ ...prev, [product.id]: color.id }))}
+                                className={`w-7 h-7 rounded-full border-2 transition-all ${
+                                  selectedColorId[product.id] === color.id 
+                                    ? "border-primary ring-2 ring-primary/30 scale-110" 
+                                    : "border-border hover:scale-105"
+                                }`}
+                                style={{ backgroundColor: color.color_hex }}
+                                title={color.color_name}
                               />
-                              <span className="text-xs text-muted-foreground">
-                                {productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_name}
-                              </span>
-                            </div>
+                            ))}
+                          </div>
+                          {selectedColorId[product.id] && (
+                            <p className="text-xs text-muted-foreground mt-1.5">
+                              {productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_name}
+                            </p>
                           )}
                         </div>
                       )}
