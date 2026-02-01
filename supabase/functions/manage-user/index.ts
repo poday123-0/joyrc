@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,8 +151,53 @@ serve(async (req) => {
         );
       }
 
+      // Get user email to send notification
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(user_id);
+      const userEmail = userData?.user?.email;
+
+      // Get system settings for sender info
+      const { data: settings } = await supabaseAdmin
+        .from("system_settings")
+        .select("site_name, notification_sender_name, notification_email")
+        .single();
+
+      const senderName = settings?.notification_sender_name || settings?.site_name || "RC Joy";
+      const senderEmail = settings?.notification_email || "noreply@rcjoy.store";
+
+      // Send email with new password
+      if (userEmail) {
+        try {
+          await resend.emails.send({
+            from: `${senderName} <${senderEmail}>`,
+            to: [userEmail],
+            subject: "Your Password Has Been Reset",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #333;">Password Reset Notification</h2>
+                <p>Hello,</p>
+                <p>Your password has been reset by an administrator.</p>
+                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0;"><strong>Your new password:</strong></p>
+                  <p style="font-size: 24px; font-weight: bold; color: #10B981; margin: 10px 0;">${password}</p>
+                </div>
+                <p>Please log in with this password and change it immediately for security.</p>
+                <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                  If you did not request this password reset, please contact support immediately.
+                </p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="color: #999; font-size: 12px;">This email was sent by ${senderName}</p>
+              </div>
+            `,
+          });
+          console.log("Password reset email sent to:", userEmail);
+        } catch (emailError) {
+          console.error("Failed to send password reset email:", emailError);
+          // Continue even if email fails - password was still reset
+        }
+      }
+
       return new Response(
-        JSON.stringify({ success: true, message: `Password reset to: ${password}` }),
+        JSON.stringify({ success: true, message: `Password reset to: ${password}`, emailSent: !!userEmail }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
