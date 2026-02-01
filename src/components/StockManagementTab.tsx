@@ -183,7 +183,7 @@ const StockManagementTab = () => {
     }
   };
 
-  const handleExpandProduct = (productId: string) => {
+  const handleExpandProduct = async (productId: string) => {
     if (expandedProductId === productId) {
       setExpandedProductId(null);
       setStockHistory([]);
@@ -191,19 +191,55 @@ const StockManagementTab = () => {
       setExpandedProductId(productId);
       fetchStockHistory(productId);
       fetchProductColors(productId);
+      
+      // Load last used costs for this product if not already set
+      if (!stockCosts[productId]) {
+        const { data: lastRestock } = await supabase
+          .from("stock_history")
+          .select("unit_purchase_price, shipping_cost, other_expenses, expense_notes")
+          .eq("product_id", productId)
+          .eq("change_type", "restock")
+          .not("unit_purchase_price", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (lastRestock) {
+          setStockCosts(prev => ({
+            ...prev,
+            [productId]: {
+              unitPurchasePrice: lastRestock.unit_purchase_price || 0,
+              shippingCost: lastRestock.shipping_cost || 0,
+              otherExpenses: lastRestock.other_expenses || 0,
+              expenseNotes: lastRestock.expense_notes || ""
+            }
+          }));
+        }
+      }
     }
   };
 
 
   const handleSetStock = async (productId: string, currentQty: number, newQty: number, productName: string) => {
+    const isRestock = newQty > currentQty;
+    const costs = stockCosts[productId];
+    
+    // Validate: Unit price is required when restocking
+    if (isRestock && (!costs || !costs.unitPurchasePrice || costs.unitPurchasePrice <= 0)) {
+      toast({
+        title: "Unit Purchase Price Required",
+        description: "Please enter the unit purchase price before adding stock.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const selectedColor = selectedColorId[productId] 
       ? productColors[productId]?.find(c => c.id === selectedColorId[productId])
       : null;
     const colorNote = selectedColor ? `[Color: ${selectedColor.color_name}] ` : "";
     const userNote = adjustmentNotes[productId] || "";
     const notes = colorNote + userNote || null;
-    const costs = stockCosts[productId];
-    const isRestock = newQty > currentQty;
     const changeAmount = newQty - currentQty;
     
     // Calculate total expense
@@ -798,138 +834,133 @@ const StockManagementTab = () => {
                       </div>
                     </div>
 
-                    {/* Cost Fields - Always visible when expanded */}
+                    {/* Cost Fields - Always visible */}
                     <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowCostFields(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
-                        className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 transition-colors"
-                      >
+                      <div className="flex items-center gap-2 text-xs font-medium text-accent">
                         <Receipt className="w-3.5 h-3.5" />
-                        {showCostFields[product.id] ? "Hide Costs" : "Add Costs & Expenses"}
-                      </button>
-
-                        {showCostFields[product.id] && (
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-                            <div>
-                              <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                                <DollarSign className="w-3 h-3" />
-                                Unit Purchase Price
-                              </label>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={stockCosts[product.id]?.unitPurchasePrice || ""}
-                                onChange={(e) => setStockCosts(prev => ({ 
-                                  ...prev, 
-                                  [product.id]: {
-                                    ...prev[product.id],
-                                    unitPurchasePrice: parseFloat(e.target.value) || 0,
-                                    shippingCost: prev[product.id]?.shippingCost || 0,
-                                    otherExpenses: prev[product.id]?.otherExpenses || 0,
-                                    expenseNotes: prev[product.id]?.expenseNotes || ""
-                                  }
-                                }))}
-                                placeholder="0.00"
-                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                                <Truck className="w-3 h-3" />
-                                Shipping Cost
-                              </label>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={stockCosts[product.id]?.shippingCost || ""}
-                                onChange={(e) => setStockCosts(prev => ({ 
-                                  ...prev, 
-                                  [product.id]: {
-                                    ...prev[product.id],
-                                    unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
-                                    shippingCost: parseFloat(e.target.value) || 0,
-                                    otherExpenses: prev[product.id]?.otherExpenses || 0,
-                                    expenseNotes: prev[product.id]?.expenseNotes || ""
-                                  }
-                                }))}
-                                placeholder="0.00"
-                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                                <Receipt className="w-3 h-3" />
-                                Other Expenses
-                              </label>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={stockCosts[product.id]?.otherExpenses || ""}
-                                onChange={(e) => setStockCosts(prev => ({ 
-                                  ...prev, 
-                                  [product.id]: {
-                                    ...prev[product.id],
-                                    unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
-                                    shippingCost: prev[product.id]?.shippingCost || 0,
-                                    otherExpenses: parseFloat(e.target.value) || 0,
-                                    expenseNotes: prev[product.id]?.expenseNotes || ""
-                                  }
-                                }))}
-                                placeholder="0.00"
-                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                            </div>
-                            <div className="sm:col-span-3">
-                              <label className="block text-xs text-muted-foreground mb-1">
-                                Expense Description (optional)
-                              </label>
-                              <input
-                                type="text"
-                                value={stockCosts[product.id]?.expenseNotes || ""}
-                                onChange={(e) => setStockCosts(prev => ({ 
-                                  ...prev, 
-                                  [product.id]: {
-                                    ...prev[product.id],
-                                    unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
-                                    shippingCost: prev[product.id]?.shippingCost || 0,
-                                    otherExpenses: prev[product.id]?.otherExpenses || 0,
-                                    expenseNotes: e.target.value
-                                  }
-                                }))}
-                                placeholder="e.g., Supplier invoice #123, customs fees, etc."
-                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                            </div>
-                            
-                            {/* Total Expense Preview */}
-                            {(() => {
-                              const costs = stockCosts[product.id];
-                              const changeAmount = (adjustmentAmount[product.id] || 0) - product.stock_quantity;
-                              if (!costs || changeAmount <= 0) return null;
-                              const purchaseTotal = (costs.unitPurchasePrice || 0) * changeAmount;
-                              const totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
-                              if (totalExpense <= 0) return null;
-                              return (
-                                <div className="sm:col-span-3 p-2 bg-primary/10 rounded-lg">
-                                  <p className="text-sm text-foreground">
-                                    <span className="font-medium">Total Expense:</span> {formatMVR(totalExpense)}
-                                    <span className="text-xs text-muted-foreground ml-2">
-                                      ({changeAmount} units × {formatMVR(costs.unitPurchasePrice || 0)} + shipping + other)
-                                    </span>
-                                  </p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    This will be automatically added to Transactions as an expense.
-                                  </p>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        )}
+                        Purchase Costs & Expenses
+                        <span className="text-muted-foreground font-normal">(Last values auto-loaded)</span>
                       </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />
+                            Unit Purchase Price <span className="text-destructive">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={stockCosts[product.id]?.unitPurchasePrice || ""}
+                            onChange={(e) => setStockCosts(prev => ({ 
+                              ...prev, 
+                              [product.id]: {
+                                ...prev[product.id],
+                                unitPurchasePrice: parseFloat(e.target.value) || 0,
+                                shippingCost: prev[product.id]?.shippingCost || 0,
+                                otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                expenseNotes: prev[product.id]?.expenseNotes || ""
+                              }
+                            }))}
+                            placeholder="0.00"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <Truck className="w-3 h-3" />
+                            Shipping Cost
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={stockCosts[product.id]?.shippingCost || ""}
+                            onChange={(e) => setStockCosts(prev => ({ 
+                              ...prev, 
+                              [product.id]: {
+                                ...prev[product.id],
+                                unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                shippingCost: parseFloat(e.target.value) || 0,
+                                otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                expenseNotes: prev[product.id]?.expenseNotes || ""
+                              }
+                            }))}
+                            placeholder="0.00"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                            <Receipt className="w-3 h-3" />
+                            Other Expenses
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={stockCosts[product.id]?.otherExpenses || ""}
+                            onChange={(e) => setStockCosts(prev => ({ 
+                              ...prev, 
+                              [product.id]: {
+                                ...prev[product.id],
+                                unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                shippingCost: prev[product.id]?.shippingCost || 0,
+                                otherExpenses: parseFloat(e.target.value) || 0,
+                                expenseNotes: prev[product.id]?.expenseNotes || ""
+                              }
+                            }))}
+                            placeholder="0.00"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label className="block text-xs text-muted-foreground mb-1">
+                            Expense Description (optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={stockCosts[product.id]?.expenseNotes || ""}
+                            onChange={(e) => setStockCosts(prev => ({ 
+                              ...prev, 
+                              [product.id]: {
+                                ...prev[product.id],
+                                unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                shippingCost: prev[product.id]?.shippingCost || 0,
+                                otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                expenseNotes: e.target.value
+                              }
+                            }))}
+                            placeholder="e.g., Supplier invoice #123, customs fees, etc."
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        
+                        {/* Total Expense Preview */}
+                        {(() => {
+                          const costs = stockCosts[product.id];
+                          const changeAmount = (adjustmentAmount[product.id] || 0) - product.stock_quantity;
+                          if (!costs || changeAmount <= 0) return null;
+                          const purchaseTotal = (costs.unitPurchasePrice || 0) * changeAmount;
+                          const totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+                          if (totalExpense <= 0) return null;
+                          return (
+                            <div className="sm:col-span-3 p-2 bg-primary/10 rounded-lg">
+                              <p className="text-sm text-foreground">
+                                <span className="font-medium">Total Expense:</span> {formatMVR(totalExpense)}
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  ({changeAmount} units × {formatMVR(costs.unitPurchasePrice || 0)} + shipping + other)
+                                </span>
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                This will be automatically added to Transactions as an expense.
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
 
                     <button
                       onClick={() => handleSetStock(
