@@ -712,7 +712,7 @@ const TransactionsTab = () => {
         <div className="px-4 py-3 border-b border-border bg-muted/30">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-foreground">
-              {showInventoryOnly ? "Inventory Purchases" : "Transactions"} • {filteredTransactions.length} item{filteredTransactions.length !== 1 ? "s" : ""}
+              {showInventoryOnly ? "Product Purchase" : "Transactions"} • {filteredTransactions.length} item{filteredTransactions.length !== 1 ? "s" : ""}
               {showInventoryOnly && inventoryDatePeriod !== "all" && (
                 <span className="ml-2 text-xs text-amber-600">
                   ({inventoryDatePeriod === "custom" && inventoryCustomDateRange.from 
