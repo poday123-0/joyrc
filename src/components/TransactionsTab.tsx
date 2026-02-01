@@ -445,8 +445,13 @@ const TransactionsTab = () => {
             <p className="text-xs text-muted-foreground">Inventory Purchases</p>
           </div>
           <p className="text-lg font-bold text-amber-600">{formatMVR(inventoryExpenses)}</p>
+          {showInventoryOnly && (inventoryDatePeriod !== "all" || inventoryProductFilter !== "all") && (
+            <p className="text-[10px] text-amber-600/70 mt-1">
+              Filtered: {formatMVR(filteredInventoryExpenses)}
+            </p>
+          )}
           {showInventoryOnly && (
-            <p className="text-[10px] text-amber-600 mt-1">Click to show all</p>
+            <p className="text-[10px] text-amber-600 mt-0.5">Click to show all</p>
           )}
         </div>
       </div>
