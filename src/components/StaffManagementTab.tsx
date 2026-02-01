@@ -61,7 +61,6 @@ const StaffManagementTab = () => {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("123456");
-  const [makeAdmin, setMakeAdmin] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -211,14 +210,21 @@ const StaffManagementTab = () => {
       return;
     }
 
+    // Staff must have at least one permission
+    if (selectedPermissions.length === 0) {
+      toast({ title: "Please select at least one permission", variant: "destructive" });
+      return;
+    }
+
     setCreating(true);
     try {
+      // Create user WITHOUT admin role - staff only get permissions
       const response = await supabase.functions.invoke("create-user", {
         body: {
           email: newUserEmail.trim(),
           full_name: newUserName.trim() || null,
           password: newUserPassword || "123456",
-          make_admin: makeAdmin,
+          make_admin: false, // Never make staff as admin - they only get permissions
         },
       });
 
@@ -227,8 +233,8 @@ const StaffManagementTab = () => {
 
       const userId = response.data?.user?.id;
 
-      // Add permissions if admin and permissions selected
-      if (makeAdmin && userId && selectedPermissions.length > 0) {
+      // Add permissions for staff member
+      if (userId && selectedPermissions.length > 0) {
         const permissionInserts = selectedPermissions.map(p => ({
           user_id: userId,
           permission_key: p,
@@ -236,12 +242,11 @@ const StaffManagementTab = () => {
         await supabase.from("staff_permissions").insert(permissionInserts);
       }
 
-      toast({ title: "User created successfully!", description: `Password: ${newUserPassword || "123456"}` });
+      toast({ title: "Staff member created!", description: `Password: ${newUserPassword || "123456"}` });
       setShowAddUser(false);
       setNewUserEmail("");
       setNewUserName("");
       setNewUserPassword("123456");
-      setMakeAdmin(false);
       setSelectedPermissions([]);
       fetchUsers();
     } catch (error: any) {
@@ -298,9 +303,14 @@ const StaffManagementTab = () => {
     user.user_id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Separate staff (admins) from regular users
-  const staffUsers = filteredUsers.filter(u => u.is_admin || u.is_super_admin);
-  const regularUsers = filteredUsers.filter(u => !u.is_admin && !u.is_super_admin);
+  // Staff = users who have permissions (not admins)
+  // Admins/SuperAdmins are shown in AdminManagementTab
+  const staffUsers = filteredUsers.filter(u => 
+    !u.is_admin && !u.is_super_admin && u.permissions && u.permissions.length > 0
+  );
+  const regularUsers = filteredUsers.filter(u => 
+    !u.is_admin && !u.is_super_admin && (!u.permissions || u.permissions.length === 0)
+  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -358,7 +368,6 @@ const StaffManagementTab = () => {
               onClick={() => {
                 setShowAddUser(false);
                 setSelectedPermissions([]);
-                setMakeAdmin(false);
               }}
               className="p-1 hover:bg-muted rounded-lg transition-colors"
             >
@@ -398,53 +407,41 @@ const StaffManagementTab = () => {
               />
               <p className="text-xs text-muted-foreground mt-1">Default: 123456</p>
             </div>
-            <div className="flex items-center gap-2 pt-6">
-              <Checkbox
-                id="makeAdmin"
-                checked={makeAdmin}
-                onCheckedChange={(checked) => setMakeAdmin(checked === true)}
-              />
-              <label htmlFor="makeAdmin" className="text-sm text-foreground cursor-pointer">
-                Make this user a staff admin
-              </label>
-            </div>
           </div>
 
-          {/* Permission Selection */}
-          {makeAdmin && (
-            <div className="space-y-3 pt-2">
-              <h4 className="text-sm font-medium text-foreground">Access Permissions</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {PERMISSION_AREAS.map((perm) => (
-                  <div
-                    key={perm.key}
-                    onClick={() => togglePermission(perm.key, false)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                      selectedPermissions.includes(perm.key)
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={selectedPermissions.includes(perm.key)}
-                        onCheckedChange={() => togglePermission(perm.key, false)}
-                      />
-                      <span className="font-medium text-sm text-foreground">{perm.label}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1 ml-6">{perm.description}</p>
+          {/* Permission Selection - Always visible for staff */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-sm font-medium text-foreground">Access Permissions <span className="text-destructive">*</span></h4>
+            <p className="text-xs text-muted-foreground">Select at least one tab the staff member can access</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {PERMISSION_AREAS.map((perm) => (
+                <div
+                  key={perm.key}
+                  onClick={() => togglePermission(perm.key, false)}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    selectedPermissions.includes(perm.key)
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={selectedPermissions.includes(perm.key)}
+                      onCheckedChange={() => togglePermission(perm.key, false)}
+                    />
+                    <span className="font-medium text-sm text-foreground">{perm.label}</span>
                   </div>
-                ))}
-              </div>
+                  <p className="text-xs text-muted-foreground mt-1 ml-6">{perm.description}</p>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
           
           <div className="flex justify-end gap-2 pt-2">
             <button
               onClick={() => {
                 setShowAddUser(false);
                 setSelectedPermissions([]);
-                setMakeAdmin(false);
               }}
               className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
             >
@@ -452,7 +449,7 @@ const StaffManagementTab = () => {
             </button>
             <button
               onClick={handleCreateUser}
-              disabled={creating || !newUserEmail.trim()}
+              disabled={creating || !newUserEmail.trim() || selectedPermissions.length === 0}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {creating ? "Creating..." : "Create Staff"}
