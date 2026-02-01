@@ -83,31 +83,44 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     if (!invoiceRef.current) return;
     
     try {
-      // Clone the node to apply fixed styles for capture
       const element = invoiceRef.current;
-      const originalWidth = element.style.width;
-      const originalOverflow = element.style.overflow;
       
-      // Temporarily set fixed width to ensure full capture
-      element.style.width = '380px';
+      // Store original styles
+      const originalStyles = {
+        width: element.style.width,
+        minWidth: element.style.minWidth,
+        maxWidth: element.style.maxWidth,
+        overflow: element.style.overflow,
+      };
+      
+      // Apply fixed width to ensure full capture - increased to 440px
+      element.style.width = '440px';
+      element.style.minWidth = '440px';
+      element.style.maxWidth = '440px';
       element.style.overflow = 'visible';
+      
+      // Wait for styles to apply
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       const dataUrl = await toPng(element, { 
         backgroundColor: '#ffffff',
         pixelRatio: 2,
         cacheBust: true,
-        width: 380,
+        width: 440,
         style: {
-          padding: '20px',
+          padding: '24px',
           background: '#ffffff',
-          width: '380px',
+          width: '440px',
+          minWidth: '440px',
           overflow: 'visible',
         }
       });
       
       // Restore original styles
-      element.style.width = originalWidth;
-      element.style.overflow = originalOverflow;
+      element.style.width = originalStyles.width;
+      element.style.minWidth = originalStyles.minWidth;
+      element.style.maxWidth = originalStyles.maxWidth;
+      element.style.overflow = originalStyles.overflow;
       
       const link = document.createElement('a');
       link.download = `invoice-${invoice.orderId.slice(0, 8).toUpperCase()}.png`;
