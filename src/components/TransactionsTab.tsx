@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Plus, X, Trash2, Edit2, ArrowUpRight, ArrowDownRight, 
   Search, Filter, Calendar, Download, Package, Truck, User, ChevronDown, ChevronUp, Settings2,
-  Hash, CreditCard, Phone, MapPin, UserCheck, ShoppingBag, Boxes
+  Hash, CreditCard, Phone, MapPin, UserCheck, ShoppingBag, Boxes, CalendarDays
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -12,6 +12,13 @@ import { useAuth } from "@/hooks/useAuth";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import TransactionCategoriesTab from "@/components/TransactionCategoriesTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, endOfDay, isWithinInterval } from "date-fns";
+import { cn } from "@/lib/utils";
+
+type DatePeriod = "all" | "today" | "week" | "month" | "year" | "custom";
+
 interface Transaction {
   id: string;
   type: "income" | "expense";
@@ -68,6 +75,14 @@ const TransactionsTab = () => {
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [detailSheetType, setDetailSheetType] = useState<"income" | "expense">("income");
   const [showInventoryOnly, setShowInventoryOnly] = useState(false);
+  
+  // Inventory filters
+  const [inventoryDatePeriod, setInventoryDatePeriod] = useState<DatePeriod>("all");
+  const [inventoryCustomDateRange, setInventoryCustomDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({ from: undefined, to: undefined });
+  const [inventoryProductFilter, setInventoryProductFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchTransactions();
@@ -303,16 +318,59 @@ const TransactionsTab = () => {
     );
   };
 
+  // Get unique product names for inventory filter
+  const inventoryProductNames = useMemo(() => {
+    const products = transactions
+      .filter(tx => isInventoryTransaction(tx) && tx.product_name)
+      .map(tx => tx.product_name!)
+      .filter((name, index, self) => self.indexOf(name) === index)
+      .sort();
+    return products;
+  }, [transactions]);
+
+  // Helper to check if date is within the selected period
+  const isWithinDatePeriod = (dateStr: string, period: DatePeriod, customRange?: { from: Date | undefined; to: Date | undefined }) => {
+    if (period === "all") return true;
+    
+    const date = new Date(dateStr);
+    const now = new Date();
+    
+    switch (period) {
+      case "today":
+        return startOfDay(date).getTime() === startOfDay(now).getTime();
+      case "week":
+        return date >= startOfWeek(now, { weekStartsOn: 1 }) && date <= endOfDay(now);
+      case "month":
+        return date >= startOfMonth(now) && date <= endOfDay(now);
+      case "year":
+        return date >= startOfYear(now) && date <= endOfDay(now);
+      case "custom":
+        if (customRange?.from && customRange?.to) {
+          return isWithinInterval(date, { start: startOfDay(customRange.from), end: endOfDay(customRange.to) });
+        }
+        if (customRange?.from) {
+          return date >= startOfDay(customRange.from);
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
   // Filter and search transactions
   const filteredTransactions = transactions.filter(tx => {
     const matchesSearch = 
       tx.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+      (tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (tx.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesType = filterType === "all" || tx.type === filterType;
     
-    // If showing inventory only, filter to inventory transactions
+    // If showing inventory only, filter to inventory transactions with additional filters
     if (showInventoryOnly) {
-      return matchesSearch && isInventoryTransaction(tx);
+      const isInventory = isInventoryTransaction(tx);
+      const matchesDatePeriod = isWithinDatePeriod(tx.created_at, inventoryDatePeriod, inventoryCustomDateRange);
+      const matchesProduct = inventoryProductFilter === "all" || tx.product_name === inventoryProductFilter;
+      return matchesSearch && isInventory && matchesDatePeriod && matchesProduct;
     }
     
     // Otherwise exclude inventory transactions from the main list
@@ -327,16 +385,16 @@ const TransactionsTab = () => {
     .filter(tx => tx.type === "expense")
     .reduce((sum, tx) => sum + tx.amount, 0);
   
-  // Separate inventory/stock purchases from other expenses
-  const inventoryExpenses = filteredTransactions
-    .filter(tx => tx.type === "expense" && 
-      (tx.category.toLowerCase().includes("inventory") || 
-       tx.category.toLowerCase().includes("stock") ||
-       tx.category.toLowerCase().includes("product") ||
-       tx.product_name)) // Has product_name = stock purchase
-    .reduce((sum, tx) => sum + tx.amount, 0);
+  // Separate inventory/stock purchases from other expenses (always use full data for summary card)
+  const allInventoryTransactions = transactions.filter(tx => isInventoryTransaction(tx));
+  const inventoryExpenses = allInventoryTransactions.reduce((sum, tx) => sum + tx.amount, 0);
   
-  const otherExpenses = totalExpenses - inventoryExpenses;
+  // Calculate filtered inventory total when filters are active
+  const filteredInventoryExpenses = showInventoryOnly ? filteredTransactions.reduce((sum, tx) => sum + tx.amount, 0) : inventoryExpenses;
+  
+  const otherExpenses = transactions
+    .filter(tx => tx.type === "expense" && !isInventoryTransaction(tx))
+    .reduce((sum, tx) => sum + tx.amount, 0);
 
   if (loading) {
     return (
@@ -526,17 +584,112 @@ const TransactionsTab = () => {
 
       {/* Transactions List */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
-          <p className="text-sm font-medium text-foreground">
-            {showInventoryOnly ? "Inventory Purchases" : "Transactions"} • {filteredTransactions.length} item{filteredTransactions.length !== 1 ? "s" : ""}
-          </p>
+        <div className="px-4 py-3 border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-foreground">
+              {showInventoryOnly ? "Inventory Purchases" : "Transactions"} • {filteredTransactions.length} item{filteredTransactions.length !== 1 ? "s" : ""}
+              {showInventoryOnly && inventoryDatePeriod !== "all" && (
+                <span className="ml-2 text-xs text-amber-600">
+                  ({inventoryDatePeriod === "custom" && inventoryCustomDateRange.from 
+                    ? `${format(inventoryCustomDateRange.from, "MMM d")}${inventoryCustomDateRange.to ? ` - ${format(inventoryCustomDateRange.to, "MMM d")}` : ""}`
+                    : inventoryDatePeriod})
+                </span>
+              )}
+            </p>
+            {showInventoryOnly && (
+              <button
+                onClick={() => {
+                  setShowInventoryOnly(false);
+                  setInventoryDatePeriod("all");
+                  setInventoryProductFilter("all");
+                  setInventoryCustomDateRange({ from: undefined, to: undefined });
+                }}
+                className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+              >
+                Show All Transactions
+              </button>
+            )}
+          </div>
+          
+          {/* Inventory Filters */}
           {showInventoryOnly && (
-            <button
-              onClick={() => setShowInventoryOnly(false)}
-              className="text-xs text-amber-600 hover:text-amber-700 font-medium"
-            >
-              Show All Transactions
-            </button>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {/* Date Period Pills */}
+              <div className="flex flex-wrap gap-1">
+                {(["all", "today", "week", "month", "year"] as DatePeriod[]).map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => {
+                      setInventoryDatePeriod(period);
+                      if (period !== "custom") {
+                        setInventoryCustomDateRange({ from: undefined, to: undefined });
+                      }
+                    }}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize",
+                      inventoryDatePeriod === period
+                        ? "bg-amber-500 text-white"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {period === "all" ? "All Time" : period}
+                  </button>
+                ))}
+                
+                {/* Custom Date Range */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1",
+                        inventoryDatePeriod === "custom"
+                          ? "bg-amber-500 text-white"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      <CalendarDays className="w-3 h-3" />
+                      Custom
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="range"
+                      selected={{ from: inventoryCustomDateRange.from, to: inventoryCustomDateRange.to }}
+                      onSelect={(range) => {
+                        setInventoryCustomDateRange({ from: range?.from, to: range?.to });
+                        if (range?.from) {
+                          setInventoryDatePeriod("custom");
+                        }
+                      }}
+                      numberOfMonths={2}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              {/* Product Filter */}
+              {inventoryProductNames.length > 0 && (
+                <select
+                  value={inventoryProductFilter}
+                  onChange={(e) => setInventoryProductFilter(e.target.value)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground border-0 focus:ring-2 focus:ring-amber-500/20"
+                >
+                  <option value="all">All Products</option>
+                  {inventoryProductNames.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              )}
+              
+              {/* Filtered Total */}
+              {(inventoryDatePeriod !== "all" || inventoryProductFilter !== "all") && (
+                <div className="ml-auto flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Filtered Total:</span>
+                  <span className="text-sm font-semibold text-amber-600">{formatMVR(filteredInventoryExpenses)}</span>
+                </div>
+              )}
+            </div>
           )}
         </div>
         
