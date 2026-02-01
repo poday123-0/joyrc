@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { 
   Plus, X, Trash2, Edit2, ArrowUpRight, ArrowDownRight, 
   Search, Filter, Calendar, Download, Package, Truck, User, ChevronDown, ChevronUp, Settings2,
-  Hash, CreditCard, Phone, MapPin, UserCheck, ShoppingBag
+  Hash, CreditCard, Phone, MapPin, UserCheck, ShoppingBag, Boxes
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -308,6 +308,17 @@ const TransactionsTab = () => {
   const totalExpenses = filteredTransactions
     .filter(tx => tx.type === "expense")
     .reduce((sum, tx) => sum + tx.amount, 0);
+  
+  // Separate inventory/stock purchases from other expenses
+  const inventoryExpenses = filteredTransactions
+    .filter(tx => tx.type === "expense" && 
+      (tx.category.toLowerCase().includes("inventory") || 
+       tx.category.toLowerCase().includes("stock") ||
+       tx.category.toLowerCase().includes("product") ||
+       tx.product_name)) // Has product_name = stock purchase
+    .reduce((sum, tx) => sum + tx.amount, 0);
+  
+  const otherExpenses = totalExpenses - inventoryExpenses;
 
   if (loading) {
     return (
@@ -320,7 +331,7 @@ const TransactionsTab = () => {
   return (
     <div className="space-y-5">
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div 
           className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/15 transition-colors"
           onClick={() => {
@@ -338,8 +349,27 @@ const TransactionsTab = () => {
             setDetailSheetOpen(true);
           }}
         >
-          <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs text-muted-foreground">Total Expenses</p>
+          </div>
           <p className="text-lg font-bold text-rose-500">{formatMVR(totalExpenses)}</p>
+          {inventoryExpenses > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Other: {formatMVR(otherExpenses)}
+            </p>
+          )}
+        </div>
+        <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Boxes className="w-3 h-3 text-amber-600" />
+            <p className="text-xs text-muted-foreground">Inventory Purchases</p>
+          </div>
+          <p className="text-lg font-bold text-amber-600">{formatMVR(inventoryExpenses)}</p>
+          {inventoryExpenses > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {((inventoryExpenses / totalExpenses) * 100).toFixed(0)}% of expenses
+            </p>
+          )}
         </div>
         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
           <p className="text-xs text-muted-foreground mb-1">Net Balance</p>
