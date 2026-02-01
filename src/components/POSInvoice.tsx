@@ -314,113 +314,123 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
         </div>
 
         {/* Invoice Content */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4">
-          <div ref={invoiceRef}>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+          <div ref={invoiceRef} className="max-w-sm mx-auto">
             {/* Invoice Header */}
-            <div className="text-center mb-3 sm:mb-4 pb-3 sm:pb-4 border-b-2 border-dashed border-border">
+            <div className="text-center mb-5 pb-4 border-b-2 border-dashed border-border/60">
               {settings?.logo_url && (
-                <img src={settings.logo_url} alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 object-contain mx-auto mb-2 logo" />
+                <img src={settings.logo_url} alt="Logo" className="w-14 h-14 sm:w-16 sm:h-16 object-contain mx-auto mb-3 logo" />
               )}
               
-              <div className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5 company-info">
-                {settings?.footer_address && <p>{settings.footer_address}</p>}
+              <div className="text-[11px] sm:text-xs text-muted-foreground space-y-0.5 company-info">
+                {settings?.footer_address && <p className="font-medium">{settings.footer_address}</p>}
                 {settings?.footer_phone && <p>Tel: {settings.footer_phone}</p>}
                 {settings?.footer_email && <p>{settings.footer_email}</p>}
               </div>
             </div>
 
-            {/* Invoice Meta */}
-            <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-muted/30 rounded-lg invoice-meta">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:text-xs">
-                <div className="flex justify-between invoice-meta-row">
-                  <span className="text-muted-foreground invoice-meta-label">Invoice #</span>
-                  <span className="font-semibold invoice-meta-value">{invoice.orderId.slice(0, 8).toUpperCase()}</span>
+            {/* Invoice Meta - Clean Grid */}
+            <div className="mb-4 p-3 sm:p-4 bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl border border-border/30 invoice-meta">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="space-y-0.5 invoice-meta-row">
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Invoice #</p>
+                  <p className="font-bold text-foreground invoice-meta-value">{invoice.orderId.slice(0, 8).toUpperCase()}</p>
                 </div>
-                <div className="flex justify-between invoice-meta-row">
-                  <span className="text-muted-foreground invoice-meta-label">Type</span>
-                  <span className="font-semibold invoice-meta-value">{invoice.isDelivery ? "Delivery" : "Walk-in"}</span>
+                <div className="space-y-0.5 text-right invoice-meta-row">
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Type</p>
+                  <p className="font-bold text-foreground invoice-meta-value">{invoice.isDelivery ? "Delivery" : "Walk-in"}</p>
                 </div>
-                <div className="flex justify-between invoice-meta-row">
-                  <span className="text-muted-foreground invoice-meta-label">Date</span>
-                  <span className="font-semibold invoice-meta-value">{new Date(invoice.orderDate).toLocaleDateString()}</span>
+                <div className="space-y-0.5 invoice-meta-row">
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Date</p>
+                  <p className="font-semibold text-foreground invoice-meta-value">{new Date(invoice.orderDate).toLocaleDateString()}</p>
                 </div>
-                <div className="flex justify-between invoice-meta-row">
-                  <span className="text-muted-foreground invoice-meta-label">Time</span>
-                  <span className="font-semibold invoice-meta-value">{new Date(invoice.orderDate).toLocaleTimeString()}</span>
+                <div className="space-y-0.5 text-right invoice-meta-row">
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Time</p>
+                  <p className="font-semibold text-foreground invoice-meta-value">{new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>
             </div>
 
-            {/* Customer Info - Always show if available */}
+            {/* Customer Info */}
             {(invoice.customerName || invoice.customerPhone || invoice.customerAddress) && (
-              <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 border border-border rounded-lg customer-section">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase customer-title">
+              <div className="mb-4 p-3 sm:p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20 customer-section">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold customer-title">
                     {invoice.isDelivery ? "Delivery To" : "Customer"}
                   </p>
                   {invoice.isDelivery && (
-                    <span className="text-[8px] sm:text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded delivery-badge">
+                    <span className="text-[9px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-medium delivery-badge">
                       Delivery
                     </span>
                   )}
                 </div>
                 {invoice.customerName && (
-                  <p className="font-semibold text-xs sm:text-sm customer-name">{invoice.customerName}</p>
+                  <p className="font-bold text-sm text-foreground mb-1 customer-name">{invoice.customerName}</p>
                 )}
-                {invoice.customerPhone && (
-                  <p className="text-[11px] sm:text-xs text-muted-foreground customer-detail">📱 {invoice.customerPhone}</p>
-                )}
-                {invoice.customerAddress && (
-                  <p className="text-[11px] sm:text-xs text-muted-foreground customer-detail">📍 {invoice.customerAddress}</p>
-                )}
+                <div className="space-y-0.5">
+                  {invoice.customerPhone && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 customer-detail">
+                      <span>📱</span> {invoice.customerPhone}
+                    </p>
+                  )}
+                  {invoice.customerAddress && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 customer-detail">
+                      <span>📍</span> {invoice.customerAddress}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Items */}
-            <div className="mb-3 sm:mb-4 items-section">
-              <div className="flex text-[9px] sm:text-[10px] text-muted-foreground uppercase pb-2 border-b border-border item-header">
+            {/* Items Table */}
+            <div className="mb-4 items-section">
+              <div className="flex text-[10px] text-muted-foreground uppercase tracking-wider pb-2 mb-1 border-b-2 border-border/60 font-semibold item-header">
                 <span className="w-[55%] item-name">Item</span>
                 <span className="w-[15%] text-center item-qty">Qty</span>
                 <span className="w-[30%] text-right item-price">Amount</span>
               </div>
               {invoice.items.map((item, idx) => (
-                <div key={idx} className="flex py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm item-row">
-                  <div className="w-[55%] item-name pr-2">
-                    <span className="font-medium text-[11px] sm:text-sm leading-tight line-clamp-2">{item.name}</span>
-                    {item.color && <p className="text-[9px] sm:text-[10px] text-muted-foreground item-color">{item.color}</p>}
+                <div key={idx} className="flex py-2.5 border-b border-border/30 item-row">
+                  <div className="w-[55%] pr-2 item-name">
+                    <p className="font-semibold text-xs text-foreground leading-snug">{item.name}</p>
+                    {item.color && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 item-color">{item.color}</p>
+                    )}
                   </div>
-                  <span className="w-[15%] text-center text-muted-foreground item-qty text-[11px] sm:text-sm">{item.quantity}</span>
-                  <span className="w-[30%] text-right font-medium item-price text-[11px] sm:text-sm whitespace-nowrap">{formatMVR(item.price * item.quantity)}</span>
+                  <span className="w-[15%] text-center text-xs text-muted-foreground self-center item-qty">{item.quantity}</span>
+                  <span className="w-[30%] text-right text-xs font-semibold text-foreground self-center item-price">{formatMVR(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
 
-            {/* Totals */}
-            <div className="border-t-2 border-dashed border-border pt-3 sm:pt-4 totals-section">
-              <div className="flex justify-between text-xs sm:text-sm mb-1 total-row">
+            {/* Totals Section */}
+            <div className="border-t-2 border-dashed border-border/60 pt-4 mb-4 totals-section">
+              <div className="flex justify-between text-xs mb-2 total-row">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatMVR(subtotal)}</span>
+                <span className="font-medium text-foreground">{formatMVR(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-xs sm:text-sm mb-1 total-row">
+              <div className="flex justify-between text-xs mb-3 total-row">
                 <span className="text-muted-foreground">Items</span>
-                <span>{invoice.items.reduce((sum, i) => sum + i.quantity, 0)}</span>
+                <span className="font-medium text-foreground">{invoice.items.reduce((sum, i) => sum + i.quantity, 0)}</span>
               </div>
-              <div className="flex justify-between text-base sm:text-lg font-bold pt-2 border-t border-border total-row grand">
-                <span>Total</span>
-                <span className="text-primary">{formatMVR(invoice.total)}</span>
+              <div className="flex justify-between items-center pt-3 border-t-2 border-border total-row grand">
+                <span className="text-base font-bold text-foreground">Total</span>
+                <span className="text-lg font-bold text-primary">{formatMVR(invoice.total)}</span>
               </div>
             </div>
 
             {/* Bank Accounts */}
             {bankAccounts.length > 0 && (
-              <div className="mt-3 sm:mt-4 p-2.5 sm:p-3 bg-muted/30 rounded-lg bank-accounts">
-                <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase mb-2 font-medium">Bank Accounts</p>
-                <div className="space-y-2">
+              <div className="mb-4 p-3 sm:p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl border border-border/30 bank-accounts">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3 font-semibold flex items-center gap-1.5">
+                  🏦 Bank Accounts
+                </p>
+                <div className="space-y-3">
                   {bankAccounts.map((bank) => (
-                    <div key={bank.id} className="text-[11px] sm:text-xs">
-                      <p className="font-semibold text-foreground">{bank.bank_name}</p>
+                    <div key={bank.id} className="text-xs border-l-2 border-primary/40 pl-3">
+                      <p className="font-bold text-foreground">{bank.bank_name}</p>
                       <p className="text-muted-foreground">{bank.account_name}</p>
-                      <p className="font-mono text-foreground">{bank.account_number}</p>
+                      <p className="font-mono text-foreground tracking-wide">{bank.account_number}</p>
                     </div>
                   ))}
                 </div>
@@ -429,15 +439,16 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
 
             {/* Notes */}
             {invoice.notes && (
-              <div className="mt-3 sm:mt-4 p-2 bg-muted/30 rounded text-[11px] sm:text-xs text-muted-foreground">
-                <span className="font-medium">Notes:</span> {invoice.notes}
+              <div className="mb-4 p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-xs">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-semibold">📝 Notes</p>
+                <p className="text-foreground">{invoice.notes}</p>
               </div>
             )}
 
             {/* Footer */}
-            <div className="text-center mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-dashed border-border footer">
-              <p className="text-xs sm:text-sm font-semibold text-foreground footer-thanks">Thank you for your purchase!</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 footer-text">{companyName}</p>
+            <div className="text-center pt-4 border-t-2 border-dashed border-border/60 footer">
+              <p className="text-sm font-bold text-foreground mb-1 footer-thanks">Thank you for your purchase!</p>
+              <p className="text-xs text-muted-foreground footer-text">{companyName}</p>
             </div>
           </div>
         </div>
