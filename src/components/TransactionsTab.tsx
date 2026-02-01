@@ -31,9 +31,18 @@ interface Transaction {
   customer_address?: string | null;
 }
 
+interface TransactionCategory {
+  id: string;
+  name: string;
+  type: "income" | "expense";
+  icon: string | null;
+  is_active: boolean;
+}
+
 const TransactionsTab = () => {
   const { isSuperAdmin } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<TransactionCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -54,7 +63,20 @@ const TransactionsTab = () => {
 
   useEffect(() => {
     fetchTransactions();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from("transaction_categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (!error && data) {
+      setCategories(data as TransactionCategory[]);
+    }
+  };
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -219,8 +241,9 @@ const TransactionsTab = () => {
     setTransactionToDelete(null);
   };
 
-  const expenseCategories = ["Inventory", "Shipping", "Marketing", "Utilities", "Rent", "Salaries", "Equipment", "Other"];
-  const incomeCategories = ["Product Sales", "Services", "Refund Reversed", "Other"];
+  // Get categories for the selected type
+  const expenseCategories = categories.filter(c => c.type === "expense").map(c => c.name);
+  const incomeCategories = categories.filter(c => c.type === "income").map(c => c.name);
 
   // Filter and search transactions
   const filteredTransactions = transactions.filter(tx => {
