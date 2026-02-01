@@ -236,13 +236,14 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
     
     const { data: periodTxns } = await supabase
       .from("transactions")
-      .select("type, amount")
+      .select("type, amount, category")
       .gte("created_at", start.toISOString())
       .lte("created_at", end.toISOString());
     
     const txns = periodTxns || [];
     const income = txns.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
-    const expenses = txns.filter(t => t.type === "expense").reduce((sum, t) => sum + Number(t.amount), 0);
+    // Exclude "Inventory Purchase" from other expenses (tracked separately)
+    const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory Purchase").reduce((sum, t) => sum + Number(t.amount), 0);
     
     setPeriodStats({ income, expenses });
   };
