@@ -1219,7 +1219,7 @@ const StatCard = ({
           </div>
         )}
       </div>
-      <p className="text-xl font-bold text-foreground">{value}</p>
+      <p className="text-lg font-bold text-foreground">{value}</p>
       <p className="text-xs text-muted-foreground mt-0.5">{title}</p>
       <p className="text-[10px] text-muted-foreground mt-1">{trend}</p>
     </div>
