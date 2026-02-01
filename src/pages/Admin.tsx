@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash
 } from "lucide-react";
 import {
   DndContext,
@@ -700,14 +700,16 @@ const ProductsTab = ({
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
+  const [itemCodeSearch, setItemCodeSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   
   // Filtered products
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.item_code && product.item_code.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesItemCode = !itemCodeSearch.trim() || 
+      (product.item_code && product.item_code.toLowerCase().includes(itemCodeSearch.toLowerCase()));
     const matchesCategory = categoryFilter === "all" || product.category_id === categoryFilter;
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesItemCode && matchesCategory;
   });
   
   // Specifications state
@@ -1306,10 +1308,20 @@ const ProductsTab = ({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+          />
+        </div>
+        <div className="relative w-full sm:w-36">
+          <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Item code"
+            value={itemCodeSearch}
+            onChange={(e) => setItemCodeSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-mono"
           />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
