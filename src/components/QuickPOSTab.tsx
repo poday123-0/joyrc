@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import POSInvoice from "./POSInvoice";
 
 interface ProductColor {
   id: string;
@@ -73,6 +74,18 @@ const QuickPOSTab = () => {
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
   const [newCustomerData, setNewCustomerData] = useState({ name: "", phone: "", email: "" });
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [lastOrderData, setLastOrderData] = useState<{
+    orderId: string;
+    orderDate: string;
+    items: Array<{ name: string; quantity: number; price: number; color?: string | null }>;
+    total: number;
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    isDelivery: boolean;
+    notes?: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -461,6 +474,24 @@ const QuickPOSTab = () => {
         }
       }
 
+      // Store order data for invoice
+      setLastOrderData({
+        orderId: order.id,
+        orderDate: new Date().toISOString(),
+        items: cart.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          color: item.selectedColor?.color_name || null,
+        })),
+        total: totalAmount,
+        customerName: customerDetails.name || undefined,
+        customerPhone: customerDetails.phone || undefined,
+        customerAddress: customerDetails.address || undefined,
+        isDelivery,
+        notes: customerDetails.notes || undefined,
+      });
+
       toast({
         title: isDelivery ? "Order Created! 📦" : "Sale Complete! 🎉",
         description: `${formatMVR(totalAmount)} - ${totalItems} item(s)${customerDetails.name ? ` for ${customerDetails.name}` : ''}${customerDetails.email ? ' (Account created)' : ''}`,
@@ -468,6 +499,7 @@ const QuickPOSTab = () => {
 
       clearCart();
       setShowCart(false);
+      setShowInvoice(true);
       fetchProducts();
     } catch (error: any) {
       toast({
@@ -780,106 +812,111 @@ const QuickPOSTab = () => {
           </div>
         </div>
 
-        {/* Cart Section - Inline on mobile, sidebar on desktop */}
-        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden">
-          <div className="p-3 border-b border-border bg-muted/30 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-primary" />
-              <span className="font-semibold text-foreground text-sm">Cart</span>
-              {totalItems > 0 && (
-                <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">{totalItems}</span>
+        {/* Cart Section - Mobile-optimized with scrollable items */}
+        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden max-h-[50vh] lg:max-h-none">
+          {/* Cart Header with Delivery Toggle */}
+          <div className="p-3 border-b border-border bg-muted/30">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-foreground text-sm">Cart</span>
+                {totalItems > 0 && (
+                  <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">{totalItems}</span>
+                )}
+              </div>
+              {cart.length > 0 && (
+                <button onClick={clearCart} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>
               )}
             </div>
+            
+            {/* Customer & Delivery Toggle Row */}
             {cart.length > 0 && (
-              <button onClick={clearCart} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                {/* Customer Info */}
+                <div className="flex-1 min-w-0">
+                  {(selectedCustomerId || customerDetails.name) ? (
+                    <div className="flex items-center gap-1.5 text-xs text-foreground truncate">
+                      <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate">{customerDetails.name || "Customer"}</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No customer</span>
+                  )}
+                </div>
+                
+                {/* Delivery Toggle */}
+                <div className="flex items-center gap-2">
+                  <Truck className={`w-3.5 h-3.5 ${isDelivery ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className="text-xs font-medium text-foreground hidden sm:inline">Delivery</span>
+                  <Switch checked={isDelivery} onCheckedChange={setIsDelivery} />
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Selected Items Summary */}
-          {cart.length > 0 && (
-            <div className="px-3 py-2 border-b border-border bg-primary/5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-foreground">Items ({cart.reduce((acc, item) => acc + item.quantity, 0)})</span>
-                <span className="text-xs font-semibold text-primary">{formatMVR(cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0))}</span>
-              </div>
-              <div className="space-y-1.5 max-h-32 lg:max-h-40 overflow-y-auto">
-                {cart.map(item => (
-                  <div 
-                    key={`summary-${item.product.id}-${item.selectedColor?.id || 'default'}`}
-                    className="flex items-center gap-2 bg-card rounded-lg px-2 py-1.5"
-                  >
-                    {item.selectedColor && (
-                      <div 
-                        className="w-3 h-3 rounded-full border border-border flex-shrink-0"
-                        style={{ backgroundColor: item.selectedColor.color_hex }}
-                      />
-                    )}
-                    <span className="text-xs font-medium text-foreground flex-1">{item.product.name}</span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
-                        className="w-5 h-5 rounded bg-muted flex items-center justify-center hover:bg-muted/80"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-5 text-center text-xs font-medium">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
-                        className="w-5 h-5 rounded bg-muted flex items-center justify-center hover:bg-muted/80"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => removeFromCart(item.product.id, item.selectedColor?.id)}
-                      className="p-1 hover:bg-destructive/20 rounded text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Delivery Details & Complete Section */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0">
             {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-24 text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-24 text-muted-foreground p-3">
                 <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
                 <p className="text-xs">Cart is empty</p>
               </div>
             ) : (
-              <>
-                {/* Customer Summary */}
-                {(selectedCustomerId || customerDetails.name) && (
-                  <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/50 rounded-lg">
-                    <User className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-xs text-foreground truncate">
-                      {customerDetails.name || "Customer"} {customerDetails.phone && `• ${customerDetails.phone}`}
+              <div className="p-3 space-y-2">
+                {/* Cart Items */}
+                {cart.map(item => (
+                  <div 
+                    key={`cart-${item.product.id}-${item.selectedColor?.id || 'default'}`}
+                    className="flex items-center gap-2 bg-muted/30 rounded-lg p-2"
+                  >
+                    {item.selectedColor && (
+                      <div 
+                        className="w-4 h-4 rounded-full border border-border flex-shrink-0"
+                        style={{ backgroundColor: item.selectedColor.color_hex }}
+                        title={item.selectedColor.color_name}
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{item.product.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatMVR(item.product.price)}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, -1)}
+                        className="w-6 h-6 rounded bg-muted flex items-center justify-center hover:bg-muted/80 active:scale-95"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.selectedColor?.id || null, 1)}
+                        className="w-6 h-6 rounded bg-muted flex items-center justify-center hover:bg-muted/80 active:scale-95"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <span className="text-xs font-semibold text-primary w-16 text-right">
+                      {formatMVR(item.product.price * item.quantity)}
                     </span>
+                    <button
+                      onClick={() => removeFromCart(item.product.id, item.selectedColor?.id)}
+                      className="p-1.5 hover:bg-destructive/20 rounded text-destructive/70 hover:text-destructive"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
+                ))}
 
-                {/* Delivery Toggle */}
-                <div className="flex items-center justify-between py-2 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-foreground">Delivery Order</span>
-                  </div>
-                  <Switch checked={isDelivery} onCheckedChange={setIsDelivery} />
-                </div>
-
-                {/* Delivery Fields */}
+                {/* Delivery Fields - Inline */}
                 {isDelivery && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 pt-2 border-t border-border">
                     <div className="relative">
                       <MapPin className="absolute left-2 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
                       <Textarea
                         placeholder="Delivery address"
                         value={customerDetails.address}
                         onChange={(e) => setCustomerDetails({ ...customerDetails, address: e.target.value })}
-                        className="pl-8 text-xs min-h-[60px] resize-none"
+                        className="pl-8 text-xs min-h-[50px] resize-none"
                       />
                     </div>
                     <div className="relative">
@@ -888,42 +925,55 @@ const QuickPOSTab = () => {
                         placeholder="Notes (optional)"
                         value={customerDetails.notes}
                         onChange={(e) => setCustomerDetails({ ...customerDetails, notes: e.target.value })}
-                        className="pl-8 text-xs min-h-[50px] resize-none"
+                        className="pl-8 text-xs min-h-[40px] resize-none"
                       />
                     </div>
                   </div>
                 )}
-
-                {/* Total & Complete Button */}
-                <div className="pt-3 border-t border-border space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Total</span>
-                    <span className="text-xl font-bold text-foreground">{formatMVR(totalAmount)}</span>
-                  </div>
-
-                  <button
-                    onClick={completeSale}
-                    disabled={cart.length === 0 || processing}
-                    className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
-                  >
-                    {processing ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-4 h-4" />
-                        {isDelivery ? "Create Order" : "Complete Sale"}
-                      </>
-                    )}
-                  </button>
-                </div>
-              </>
+              </div>
             )}
           </div>
+
+          {/* Fixed Footer - Total & Action */}
+          {cart.length > 0 && (
+            <div className="p-3 border-t border-border bg-card/80 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
+              </div>
+
+              <button
+                onClick={completeSale}
+                disabled={cart.length === 0 || processing}
+                className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-[0.98] transition-all"
+              >
+                {processing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    {isDelivery ? "Create Order" : "Complete Sale"}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Invoice Modal */}
+      {showInvoice && lastOrderData && (
+        <POSInvoice 
+          invoice={lastOrderData} 
+          onClose={() => {
+            setShowInvoice(false);
+            setLastOrderData(null);
+          }} 
+        />
+      )}
     </div>
   );
 };
