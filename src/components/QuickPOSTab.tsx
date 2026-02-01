@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt, Calendar, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -58,6 +58,8 @@ const QuickPOSTab = () => {
   const [processing, setProcessing] = useState(false);
   const [colorPickerProduct, setColorPickerProduct] = useState<Product | null>(null);
   const [isDelivery, setIsDelivery] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryTime, setDeliveryTime] = useState("");
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     name: "",
     email: "",
@@ -378,6 +380,10 @@ const QuickPOSTab = () => {
 
       // Build order notes
       let orderNotes = isDelivery ? "POS Delivery Order" : "Walk-in POS Sale";
+      if (deliveryDate || deliveryTime) {
+        const dateTimeStr = [deliveryDate, deliveryTime].filter(Boolean).join(" ");
+        orderNotes += ` | Delivery: ${dateTimeStr}`;
+      }
       if (customerDetails.notes.trim()) {
         orderNotes += ` | Notes: ${customerDetails.notes.trim()}`;
       }
@@ -812,8 +818,8 @@ const QuickPOSTab = () => {
           </div>
         </div>
 
-        {/* Cart Section - Mobile-optimized without scroll constraint */}
-        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden lg:max-h-none">
+        {/* Cart Section - Mobile-optimized without scroll */}
+        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl lg:overflow-hidden">
           {/* Cart Header with Delivery Toggle */}
           <div className="p-3 border-b border-border bg-muted/30">
             <div className="flex items-center justify-between mb-2">
@@ -854,8 +860,8 @@ const QuickPOSTab = () => {
             )}
           </div>
 
-          {/* Scrollable Content Area */}
-          <div className="flex-1 overflow-y-auto min-h-0">
+          {/* Content Area - No scroll on mobile */}
+          <div className="flex-1 lg:overflow-y-auto lg:min-h-0">
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-24 text-muted-foreground p-3">
                 <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
@@ -907,10 +913,10 @@ const QuickPOSTab = () => {
                   </div>
                 ))}
 
-                {/* Delivery Fields - Compact Inline for Mobile */}
+                {/* Delivery Fields - Compact Grid for Mobile */}
                 {isDelivery && (
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-border">
-                    <div className="relative flex-1">
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                    <div className="relative col-span-2">
                       <MapPin className="absolute left-2 top-2 w-3.5 h-3.5 text-muted-foreground" />
                       <input
                         type="text"
@@ -920,11 +926,29 @@ const QuickPOSTab = () => {
                         className="w-full pl-8 pr-2 py-2 text-xs bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
-                    <div className="relative flex-1 sm:max-w-[120px]">
+                    <div className="relative">
+                      <Calendar className="absolute left-2 top-2 w-3.5 h-3.5 text-muted-foreground" />
+                      <input
+                        type="date"
+                        value={deliveryDate}
+                        onChange={(e) => setDeliveryDate(e.target.value)}
+                        className="w-full pl-8 pr-2 py-2 text-xs bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Clock className="absolute left-2 top-2 w-3.5 h-3.5 text-muted-foreground" />
+                      <input
+                        type="time"
+                        value={deliveryTime}
+                        onChange={(e) => setDeliveryTime(e.target.value)}
+                        className="w-full pl-8 pr-2 py-2 text-xs bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div className="relative col-span-2">
                       <FileText className="absolute left-2 top-2 w-3.5 h-3.5 text-muted-foreground" />
                       <input
                         type="text"
-                        placeholder="Notes"
+                        placeholder="Delivery notes"
                         value={customerDetails.notes}
                         onChange={(e) => setCustomerDetails({ ...customerDetails, notes: e.target.value })}
                         className="w-full pl-8 pr-2 py-2 text-xs bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
