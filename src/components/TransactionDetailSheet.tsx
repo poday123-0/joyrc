@@ -247,17 +247,29 @@ const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: Tran
                 {/* Category Filter */}
                 <div>
                   <label className="text-xs text-muted-foreground mb-2 block">Category</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
+                  <div className="flex flex-wrap gap-2">
                     {categories.map(cat => (
-                      <option key={cat} value={cat}>
-                        {cat === "all" ? "All Categories" : cat}
-                      </option>
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5",
+                          selectedCategory === cat
+                            ? isIncome ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                      >
+                        {cat === "all" ? (
+                          <>
+                            <Filter className="w-3 h-3" />
+                            All
+                          </>
+                        ) : (
+                          cat
+                        )}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               </div>
             )}
