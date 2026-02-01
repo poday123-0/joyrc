@@ -37,6 +37,7 @@ interface Order {
   created_at: string;
   assigned_to: string | null;
   assigned_at: string | null;
+  confirmed_by: string | null;
 }
 
 interface DeliveryStaff {
@@ -90,6 +91,7 @@ const PaymentOrdersTab = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [customerProfiles, setCustomerProfiles] = useState<Record<string, { full_name: string | null }>>({});
+  const [confirmerProfiles, setConfirmerProfiles] = useState<Record<string, { full_name: string | null }>>({});
   
   // Add order dialog state
   const [showAddOrderDialog, setShowAddOrderDialog] = useState(false);
@@ -123,6 +125,23 @@ const PaymentOrdersTab = () => {
             profileMap[p.user_id] = { full_name: p.full_name };
           });
           setCustomerProfiles(profileMap);
+        }
+      }
+      
+      // Fetch confirmer profiles (admins who approved orders)
+      const confirmerIds = [...new Set(data.filter(o => o.confirmed_by).map(o => o.confirmed_by!))];
+      if (confirmerIds.length > 0) {
+        const { data: confirmerProfilesData } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", confirmerIds);
+        
+        if (confirmerProfilesData) {
+          const confirmerMap: Record<string, { full_name: string | null }> = {};
+          confirmerProfilesData.forEach(p => {
+            confirmerMap[p.user_id] = { full_name: p.full_name };
+          });
+          setConfirmerProfiles(confirmerMap);
         }
       }
     }
@@ -274,6 +293,7 @@ const PaymentOrdersTab = () => {
           payment_status: "confirmed",
           status: "confirmed",
           payment_confirmed_at: new Date().toISOString(),
+          confirmed_by: confirmedBy,
         })
         .eq("id", selectedOrderId);
 
@@ -1005,6 +1025,7 @@ const PaymentOrdersTab = () => {
                   onUpdateStatus={(status) => handleUpdateOrderStatus(order.id, status)}
                   deliveryStaff={deliveryStaff}
                   assignedStaffName={assignedStaff?.full_name || undefined}
+                  confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
                   getPaymentStatusConfig={getPaymentStatusConfig}
                 />
               );
@@ -1051,6 +1072,7 @@ const PaymentOrdersTab = () => {
                 onUpdateStatus={(status) => handleUpdateOrderStatus(order.id, status)}
                 deliveryStaff={deliveryStaff}
                 assignedStaffName={assignedStaff?.full_name || undefined}
+                confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
                 getPaymentStatusConfig={getPaymentStatusConfig}
               />
             );
@@ -1202,6 +1224,7 @@ const OrderCard = ({
   onUpdateStatus,
   deliveryStaff,
   assignedStaffName,
+  confirmedByName,
   getPaymentStatusConfig,
 }: {
   order: Order;
@@ -1226,6 +1249,7 @@ const OrderCard = ({
   onUpdateStatus?: (status: string) => void;
   deliveryStaff?: DeliveryStaff[];
   assignedStaffName?: string;
+  confirmedByName?: string;
   getPaymentStatusConfig: (status: string) => any;
 }) => {
   const statusConfig = getPaymentStatusConfig(order.payment_status || "pending");
@@ -1300,6 +1324,24 @@ const OrderCard = ({
               <div>
                 <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Notes</h5>
                 <p className="text-sm whitespace-pre-wrap">{order.notes}</p>
+              </div>
+            )}
+
+            {/* Order Source / Approved By Info */}
+            {(confirmedByName || order.payment_method === "pos") && (
+              <div className="p-2 bg-muted/30 rounded-lg">
+                {order.payment_method === "pos" ? (
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">POS Order</span>
+                    {confirmedByName && (
+                      <> • Added by <span className="font-medium text-foreground">{confirmedByName}</span></>
+                    )}
+                  </p>
+                ) : confirmedByName && (
+                  <p className="text-xs text-muted-foreground">
+                    Approved by <span className="font-medium text-foreground">{confirmedByName}</span>
+                  </p>
+                )}
               </div>
             )}
 

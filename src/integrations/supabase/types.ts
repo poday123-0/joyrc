@@ -494,6 +494,7 @@ export type Database = {
         Row: {
           assigned_at: string | null
           assigned_to: string | null
+          confirmed_by: string | null
           created_at: string
           id: string
           notes: string | null
@@ -511,6 +512,7 @@ export type Database = {
         Insert: {
           assigned_at?: string | null
           assigned_to?: string | null
+          confirmed_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -528,6 +530,7 @@ export type Database = {
         Update: {
           assigned_at?: string | null
           assigned_to?: string | null
+          confirmed_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
