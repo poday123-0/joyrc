@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { 
   Plus, X, Trash2, Edit2, ArrowUpRight, ArrowDownRight, 
-  Search, Filter, Calendar, Download, Package, Truck, User, ChevronDown, ChevronUp, Settings2
+  Search, Filter, Calendar, Download, Package, Truck, User, ChevronDown, ChevronUp, Settings2,
+  Hash, CreditCard, Phone, MapPin, UserCheck, ShoppingBag
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -30,6 +31,11 @@ interface Transaction {
   customer_name?: string | null;
   customer_phone?: string | null;
   customer_address?: string | null;
+  // Product info for sales
+  item_code?: string | null;
+  sold_by_name?: string | null;
+  payment_method?: string | null;
+  order_status?: string | null;
 }
 
 interface TransactionCategory {
@@ -112,16 +118,23 @@ const TransactionsTab = () => {
           }
 
           // Get customer info from order if this is linked to an order
+          let item_code = null;
+          let sold_by_name = null;
+          let payment_method = null;
+          let order_status = null;
+
           if (tx.order_id) {
             const { data: orderData } = await supabase
               .from("orders")
-              .select("user_id, phone, shipping_address")
+              .select("user_id, phone, shipping_address, payment_method, status, assigned_to")
               .eq("id", tx.order_id)
               .single();
             
             if (orderData) {
               customer_phone = orderData.phone;
               customer_address = orderData.shipping_address;
+              payment_method = orderData.payment_method;
+              order_status = orderData.status;
               
               // Get customer name from profile
               if (orderData.user_id) {
@@ -132,6 +145,35 @@ const TransactionsTab = () => {
                   .single();
                 customer_name = customerProfile?.full_name || null;
               }
+
+              // Get sold by name (assigned_to or added_by)
+              const soldById = orderData.assigned_to || tx.added_by;
+              if (soldById) {
+                const { data: soldByProfile } = await supabase
+                  .from("profiles")
+                  .select("full_name")
+                  .eq("user_id", soldById)
+                  .single();
+                sold_by_name = soldByProfile?.full_name || null;
+              }
+            }
+
+            // Get item code from order_items -> products
+            if (tx.product_name) {
+              const { data: orderItems } = await supabase
+                .from("order_items")
+                .select("product_id")
+                .eq("order_id", tx.order_id)
+                .limit(1);
+              
+              if (orderItems && orderItems.length > 0) {
+                const { data: productData } = await supabase
+                  .from("products")
+                  .select("item_code")
+                  .eq("id", orderItems[0].product_id)
+                  .single();
+                item_code = productData?.item_code || null;
+              }
             }
           }
 
@@ -140,7 +182,11 @@ const TransactionsTab = () => {
             profile,
             customer_name,
             customer_phone,
-            customer_address
+            customer_address,
+            item_code,
+            sold_by_name,
+            payment_method,
+            order_status
           };
         })
       );
@@ -444,7 +490,7 @@ const TransactionsTab = () => {
         
         <div className="divide-y divide-border max-h-[60vh] overflow-y-auto">
           {filteredTransactions.map((tx) => {
-            const hasStockDetails = tx.product_name || tx.unit_purchase_price || tx.shipping_cost || tx.other_costs;
+            const hasStockDetails = tx.product_name || tx.unit_purchase_price || tx.shipping_cost || tx.other_costs || (tx.type === "income" && tx.order_id);
             const isExpanded = expandedId === tx.id;
             
             return (
@@ -525,6 +571,13 @@ const TransactionsTab = () => {
                           )}
                         </div>
                       )}
+                      {tx.item_code && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Hash className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Item Code:</span>
+                          <span className="font-medium text-foreground font-mono">{tx.item_code}</span>
+                        </div>
+                      )}
                       {tx.unit_purchase_price !== null && tx.unit_purchase_price > 0 && (
                         <div className="flex items-center gap-2 text-sm">
                           <span className="w-4 h-4 text-center text-muted-foreground">💰</span>
@@ -546,7 +599,61 @@ const TransactionsTab = () => {
                           <span className="font-medium text-foreground">{formatMVR(tx.other_costs)}</span>
                         </div>
                       )}
-                      {tx.profile?.full_name && (
+                      
+                      {/* Income-specific details (sales) */}
+                      {tx.type === "income" && (
+                        <>
+                          {tx.sold_by_name && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <UserCheck className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Sold by:</span>
+                              <span className="font-medium text-foreground">{tx.sold_by_name}</span>
+                            </div>
+                          )}
+                          {tx.customer_name && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <ShoppingBag className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Customer:</span>
+                              <span className="font-medium text-foreground">{tx.customer_name}</span>
+                            </div>
+                          )}
+                          {tx.customer_phone && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Phone className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Phone:</span>
+                              <span className="font-medium text-foreground">{tx.customer_phone}</span>
+                            </div>
+                          )}
+                          {tx.customer_address && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <MapPin className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Address:</span>
+                              <span className="font-medium text-foreground truncate max-w-[200px]">{tx.customer_address}</span>
+                            </div>
+                          )}
+                          {tx.payment_method && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <CreditCard className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Payment:</span>
+                              <span className="font-medium text-foreground capitalize">{tx.payment_method.replace(/_/g, ' ')}</span>
+                            </div>
+                          )}
+                          {tx.order_status && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="w-4 h-4 text-center text-muted-foreground">📋</span>
+                              <span className="text-muted-foreground">Status:</span>
+                              <span className={`font-medium capitalize ${
+                                tx.order_status === 'delivered' ? 'text-emerald-600' :
+                                tx.order_status === 'cancelled' ? 'text-rose-500' :
+                                'text-foreground'
+                              }`}>{tx.order_status}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Expense-specific: Added by */}
+                      {tx.type === "expense" && tx.profile?.full_name && (
                         <div className="flex items-center gap-2 text-sm">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <span className="text-muted-foreground">Added by:</span>
