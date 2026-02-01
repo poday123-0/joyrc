@@ -205,16 +205,26 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
   const subtotal = invoice.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
-          <h3 className="font-semibold text-foreground">Invoice</h3>
-          <div className="flex items-center gap-2">
+        <div className="p-3 sm:p-4 border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between mb-3 sm:mb-0">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">Invoice</h3>
+            <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg sm:hidden">
+              <X className="w-4 h-4" />
+            </button>
+            <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg hidden sm:block">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Action buttons - stacked on mobile, inline on desktop */}
+          <div className="flex items-center gap-1.5 sm:gap-2 sm:absolute sm:right-4 sm:top-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Share2 className="w-4 h-4 mr-1" />
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-8 text-xs sm:text-sm">
+                  <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                   Share
                 </Button>
               </DropdownMenuTrigger>
@@ -229,30 +239,27 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" onClick={handleDownloadPng}>
-              <Download className="w-4 h-4 mr-1" />
+            <Button variant="outline" size="sm" onClick={handleDownloadPng} className="flex-1 sm:flex-none h-8 text-xs sm:text-sm">
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
               PNG
             </Button>
-            <Button variant="outline" size="sm" onClick={handlePrint}>
-              <Printer className="w-4 h-4 mr-1" />
+            <Button variant="outline" size="sm" onClick={handlePrint} className="flex-1 sm:flex-none h-8 text-xs sm:text-sm">
+              <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
               Print
             </Button>
-            <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg">
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
         {/* Invoice Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4">
           <div ref={invoiceRef}>
             {/* Invoice Header */}
-            <div className="text-center mb-4 pb-4 border-b-2 border-dashed border-border">
+            <div className="text-center mb-3 sm:mb-4 pb-3 sm:pb-4 border-b-2 border-dashed border-border">
               {settings?.logo_url && (
-                <img src={settings.logo_url} alt="Logo" className="w-16 h-16 object-contain mx-auto mb-2 logo" />
+                <img src={settings.logo_url} alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 object-contain mx-auto mb-2 logo" />
               )}
-              <h2 className="text-lg font-bold text-foreground company-name">{companyName}</h2>
-              <div className="text-xs text-muted-foreground space-y-0.5 company-info">
+              <h2 className="text-base sm:text-lg font-bold text-foreground company-name">{companyName}</h2>
+              <div className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5 company-info">
                 {settings?.footer_address && <p>{settings.footer_address}</p>}
                 {settings?.footer_phone && <p>Tel: {settings.footer_phone}</p>}
                 {settings?.footer_email && <p>{settings.footer_email}</p>}
@@ -260,80 +267,82 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
             </div>
 
             {/* Invoice Meta */}
-            <div className="mb-4 p-3 bg-muted/30 rounded-lg invoice-meta">
-              <div className="flex justify-between text-xs mb-1 invoice-meta-row">
-                <span className="text-muted-foreground invoice-meta-label">Invoice #</span>
-                <span className="font-semibold invoice-meta-value">{invoice.orderId.slice(0, 8).toUpperCase()}</span>
-              </div>
-              <div className="flex justify-between text-xs mb-1 invoice-meta-row">
-                <span className="text-muted-foreground invoice-meta-label">Date</span>
-                <span className="font-semibold invoice-meta-value">{new Date(invoice.orderDate).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between text-xs invoice-meta-row">
-                <span className="text-muted-foreground invoice-meta-label">Time</span>
-                <span className="font-semibold invoice-meta-value">{new Date(invoice.orderDate).toLocaleTimeString()}</span>
-              </div>
-              <div className="flex justify-between text-xs invoice-meta-row">
-                <span className="text-muted-foreground invoice-meta-label">Type</span>
-                <span className="font-semibold invoice-meta-value">{invoice.isDelivery ? "Delivery" : "Walk-in"}</span>
+            <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-muted/30 rounded-lg invoice-meta">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:text-xs">
+                <div className="flex justify-between invoice-meta-row">
+                  <span className="text-muted-foreground invoice-meta-label">Invoice #</span>
+                  <span className="font-semibold invoice-meta-value">{invoice.orderId.slice(0, 8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between invoice-meta-row">
+                  <span className="text-muted-foreground invoice-meta-label">Type</span>
+                  <span className="font-semibold invoice-meta-value">{invoice.isDelivery ? "Delivery" : "Walk-in"}</span>
+                </div>
+                <div className="flex justify-between invoice-meta-row">
+                  <span className="text-muted-foreground invoice-meta-label">Date</span>
+                  <span className="font-semibold invoice-meta-value">{new Date(invoice.orderDate).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between invoice-meta-row">
+                  <span className="text-muted-foreground invoice-meta-label">Time</span>
+                  <span className="font-semibold invoice-meta-value">{new Date(invoice.orderDate).toLocaleTimeString()}</span>
+                </div>
               </div>
             </div>
 
             {/* Customer Info - Always show if available */}
             {(invoice.customerName || invoice.customerPhone || invoice.customerAddress) && (
-              <div className="mb-4 p-3 border border-border rounded-lg customer-section">
+              <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 border border-border rounded-lg customer-section">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[10px] text-muted-foreground uppercase customer-title">
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase customer-title">
                     {invoice.isDelivery ? "Delivery To" : "Customer"}
                   </p>
                   {invoice.isDelivery && (
-                    <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded delivery-badge">
+                    <span className="text-[8px] sm:text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded delivery-badge">
                       Delivery
                     </span>
                   )}
                 </div>
                 {invoice.customerName && (
-                  <p className="font-semibold text-sm customer-name">{invoice.customerName}</p>
+                  <p className="font-semibold text-xs sm:text-sm customer-name">{invoice.customerName}</p>
                 )}
                 {invoice.customerPhone && (
-                  <p className="text-xs text-muted-foreground customer-detail">📱 {invoice.customerPhone}</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground customer-detail">📱 {invoice.customerPhone}</p>
                 )}
                 {invoice.customerAddress && (
-                  <p className="text-xs text-muted-foreground customer-detail">📍 {invoice.customerAddress}</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground customer-detail">📍 {invoice.customerAddress}</p>
                 )}
               </div>
             )}
 
             {/* Items */}
-            <div className="mb-4 items-section">
-              <div className="flex text-[10px] text-muted-foreground uppercase pb-2 border-b border-border item-header">
-                <span className="flex-[2] item-name">Item</span>
+            <div className="mb-3 sm:mb-4 items-section">
+              <div className="flex text-[9px] sm:text-[10px] text-muted-foreground uppercase pb-2 border-b border-border item-header">
+                <span className="flex-[2.5] sm:flex-[2] item-name">Item</span>
                 <span className="flex-[0.5] text-center item-qty">Qty</span>
                 <span className="flex-1 text-right item-price">Amount</span>
               </div>
               {invoice.items.map((item, idx) => (
-                <div key={idx} className="flex py-2 border-b border-border/50 text-sm item-row">
-                  <div className="flex-[2] item-name">
-                    <span className="font-medium">{item.name}</span>
-                    {item.color && <p className="text-[10px] text-muted-foreground item-color">{item.color}</p>}
+                <div key={idx} className="flex py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm item-row">
+                  <div className="flex-[2.5] sm:flex-[2] item-name pr-2">
+                    <span className="font-medium text-[11px] sm:text-sm leading-tight line-clamp-2">{item.name}</span>
+                    {item.color && <p className="text-[9px] sm:text-[10px] text-muted-foreground item-color">{item.color}</p>}
                   </div>
-                  <span className="flex-[0.5] text-center text-muted-foreground item-qty">{item.quantity}</span>
-                  <span className="flex-1 text-right font-medium item-price">{formatMVR(item.price * item.quantity)}</span>
+                  <span className="flex-[0.5] text-center text-muted-foreground item-qty text-[11px] sm:text-sm">{item.quantity}</span>
+                  <span className="flex-1 text-right font-medium item-price text-[11px] sm:text-sm">{formatMVR(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
 
             {/* Totals */}
-            <div className="border-t-2 border-dashed border-border pt-4 totals-section">
-              <div className="flex justify-between text-sm mb-1 total-row">
+            <div className="border-t-2 border-dashed border-border pt-3 sm:pt-4 totals-section">
+              <div className="flex justify-between text-xs sm:text-sm mb-1 total-row">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatMVR(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-sm mb-1 total-row">
+              <div className="flex justify-between text-xs sm:text-sm mb-1 total-row">
                 <span className="text-muted-foreground">Items</span>
                 <span>{invoice.items.reduce((sum, i) => sum + i.quantity, 0)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold pt-2 border-t border-border total-row grand">
+              <div className="flex justify-between text-base sm:text-lg font-bold pt-2 border-t border-border total-row grand">
                 <span>Total</span>
                 <span className="text-primary">{formatMVR(invoice.total)}</span>
               </div>
@@ -341,15 +350,15 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
 
             {/* Notes */}
             {invoice.notes && (
-              <div className="mt-4 p-2 bg-muted/30 rounded text-xs text-muted-foreground">
+              <div className="mt-3 sm:mt-4 p-2 bg-muted/30 rounded text-[11px] sm:text-xs text-muted-foreground">
                 <span className="font-medium">Notes:</span> {invoice.notes}
               </div>
             )}
 
             {/* Footer */}
-            <div className="text-center mt-6 pt-4 border-t border-dashed border-border footer">
-              <p className="text-sm font-semibold text-foreground footer-thanks">Thank you for your purchase!</p>
-              <p className="text-xs text-muted-foreground mt-1 footer-text">{companyName}</p>
+            <div className="text-center mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-dashed border-border footer">
+              <p className="text-xs sm:text-sm font-semibold text-foreground footer-thanks">Thank you for your purchase!</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 footer-text">{companyName}</p>
             </div>
           </div>
         </div>
