@@ -46,15 +46,29 @@ serve(async (req) => {
       );
     }
 
-    // Check if caller is admin or super_admin
+    // Check if caller is admin, super_admin, or staff with relevant permission
     const { data: callerRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", callerUser.id);
 
-    const isAdmin = callerRoles?.some(r => r.role === "admin" || r.role === "super_admin");
+    const isAdminOrSuperAdmin = callerRoles?.some(r => r.role === "admin" || r.role === "super_admin");
+    
+    // Also check for staff with tab_pos or tab_users permission
+    let hasStaffPermission = false;
+    if (!isAdminOrSuperAdmin) {
+      const { data: staffPerms } = await supabaseAdmin
+        .from("staff_permissions")
+        .select("permission_key")
+        .eq("user_id", callerUser.id)
+        .or("permission_key.eq.tab_pos,permission_key.eq.tab_users");
+      
+      hasStaffPermission = !!(staffPerms && staffPerms.length > 0);
+    }
 
-    if (!isAdmin) {
+    console.log(`Auth check - User: ${callerUser.id}, isAdmin: ${isAdminOrSuperAdmin}, hasStaffPermission: ${hasStaffPermission}, roles: ${JSON.stringify(callerRoles)}`);
+
+    if (!isAdminOrSuperAdmin && !hasStaffPermission) {
       return new Response(
         JSON.stringify({ error: "Only admins can view customer users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
