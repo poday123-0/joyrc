@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt, Trash2, ShieldAlert, X, Eye, EyeOff } from "lucide-react";
+import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt, Trash2, ShieldAlert, X, Eye, EyeOff, Hash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -53,6 +53,7 @@ const StockManagementTab = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [itemCodeSearch, setItemCodeSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([]);
@@ -271,8 +272,10 @@ const StockManagementTab = () => {
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.item_code && p.item_code.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesItemCode = !itemCodeSearch.trim() || 
+      (p.item_code && p.item_code.toLowerCase().includes(itemCodeSearch.toLowerCase()));
     const matchesCategory = selectedCategory === "all" || p.category_id === selectedCategory;
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesItemCode && matchesCategory;
   });
 
   const lowStockProducts = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5);
@@ -523,10 +526,20 @@ const StockManagementTab = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div className="relative w-full sm:w-36">
+          <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Item code"
+            value={itemCodeSearch}
+            onChange={(e) => setItemCodeSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
           />
         </div>
         <select
