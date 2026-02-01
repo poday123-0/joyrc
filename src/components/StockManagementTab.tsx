@@ -62,6 +62,7 @@ const StockManagementTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [itemCodeSearch, setItemCodeSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [stockFilter, setStockFilter] = useState<"all" | "low" | "out">("all");
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -398,7 +399,10 @@ const StockManagementTab = () => {
     const matchesItemCode = !itemCodeSearch.trim() || 
       (p.item_code && p.item_code.toLowerCase().includes(itemCodeSearch.toLowerCase()));
     const matchesCategory = selectedCategory === "all" || p.category_id === selectedCategory;
-    return matchesSearch && matchesItemCode && matchesCategory;
+    const matchesStockFilter = stockFilter === "all" || 
+      (stockFilter === "low" && p.stock_quantity > 0 && p.stock_quantity <= 5) ||
+      (stockFilter === "out" && p.stock_quantity === 0);
+    return matchesSearch && matchesItemCode && matchesCategory && matchesStockFilter;
   });
 
   const lowStockProducts = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5);
@@ -635,14 +639,28 @@ const StockManagementTab = () => {
           </p>
           <p className="text-[10px] sm:text-sm text-muted-foreground">Stock</p>
         </div>
-        <div className="p-2 sm:p-4 bg-amber-500/10 rounded-lg sm:rounded-xl text-center sm:text-left">
+        <button
+          onClick={() => setStockFilter(stockFilter === "low" ? "all" : "low")}
+          className={`p-2 sm:p-4 rounded-lg sm:rounded-xl text-center sm:text-left transition-all ${
+            stockFilter === "low" 
+              ? "bg-amber-500/20 ring-2 ring-amber-500" 
+              : "bg-amber-500/10 hover:bg-amber-500/15"
+          }`}
+        >
           <p className="text-lg sm:text-2xl font-bold text-amber-500">{lowStockProducts.length}</p>
           <p className="text-[10px] sm:text-sm text-muted-foreground">Low</p>
-        </div>
-        <div className="p-2 sm:p-4 bg-destructive/10 rounded-lg sm:rounded-xl text-center sm:text-left">
+        </button>
+        <button
+          onClick={() => setStockFilter(stockFilter === "out" ? "all" : "out")}
+          className={`p-2 sm:p-4 rounded-lg sm:rounded-xl text-center sm:text-left transition-all ${
+            stockFilter === "out" 
+              ? "bg-destructive/20 ring-2 ring-destructive" 
+              : "bg-destructive/10 hover:bg-destructive/15"
+          }`}
+        >
           <p className="text-lg sm:text-2xl font-bold text-destructive">{outOfStockProducts.length}</p>
           <p className="text-[10px] sm:text-sm text-muted-foreground">Out</p>
-        </div>
+        </button>
       </div>
 
       {/* Stock Alerts - Compact on mobile */}
