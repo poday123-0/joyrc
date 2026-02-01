@@ -21,136 +21,61 @@ interface NotificationRequest {
   staffName?: string;
 }
 
-const getEmailContent = (type: string, orderId: string, recipientName: string, senderName: string, staffName?: string) => {
+// Map notification types to template keys
+const typeToTemplateKey: Record<string, string> = {
+  new_order_admin: "new_order_admin",
+  payment_confirmed: "payment_confirmed",
+  payment_rejected: "payment_rejected",
+  order_shipped: "order_shipped",
+  order_delivered: "order_delivered",
+  delivery_assigned_staff: "delivery_assigned_staff",
+  delivery_assigned_customer: "delivery_assigned_customer",
+};
+
+// Fallback templates in case database template is not found
+const getFallbackTemplate = (type: string, orderId: string, recipientName: string, senderName: string, staffName?: string) => {
   const templates: Record<string, { subject: string; html: string }> = {
     new_order_admin: {
-      subject: `New Order Received - #${orderId.slice(0, 8).toUpperCase()}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #f59e0b, #f97316); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">New Order Received! 🛒</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">A new order has been placed and requires your attention.</p>
-            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #6b7280;">Order ID</p>
-              <p style="font-size: 18px; font-weight: bold; margin: 5px 0;">#${orderId.slice(0, 8).toUpperCase()}</p>
-              <p style="margin: 10px 0 0 0; color: #6b7280;">Customer</p>
-              <p style="font-size: 16px; font-weight: 500; margin: 5px 0;">${recipientName}</p>
-            </div>
-            <p style="font-size: 16px;">Please review the order in your admin dashboard.</p>
-            <p style="font-size: 14px; color: #6b7280;">${senderName} Admin Team</p>
-          </div>
-        </div>
-      `,
+      subject: `New Order Received - #${orderId}`,
+      html: `<div style="font-family: Arial, sans-serif;"><h1>New Order Received! 🛒</h1><p>A new order has been placed.</p><p>Order ID: #${orderId}</p><p>Customer: ${recipientName}</p><p>${senderName} Admin Team</p></div>`,
     },
     payment_confirmed: {
-      subject: "Payment Confirmed - Order #" + orderId.slice(0, 8),
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #10B981, #06B6D4); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">Payment Confirmed! ✓</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${recipientName},</p>
-            <p style="font-size: 16px;">Great news! Your payment has been confirmed and your order is now being processed.</p>
-            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #6b7280;">Order ID</p>
-              <p style="font-size: 18px; font-weight: bold; margin: 5px 0;">#${orderId.slice(0, 8).toUpperCase()}</p>
-            </div>
-            <p style="font-size: 16px;">We'll notify you once your order has been shipped.</p>
-            <p style="font-size: 14px; color: #6b7280;">Thank you for shopping with ${senderName}!</p>
-          </div>
-        </div>
-      `,
+      subject: `Payment Confirmed - Order #${orderId}`,
+      html: `<div style="font-family: Arial, sans-serif;"><h1>Payment Confirmed! ✓</h1><p>Dear ${recipientName},</p><p>Your payment has been confirmed and your order is being processed.</p><p>Order ID: #${orderId}</p><p>Thank you for shopping with ${senderName}!</p></div>`,
     },
     payment_rejected: {
-      subject: "Payment Issue - Order #" + orderId.slice(0, 8),
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #ef4444; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">Payment Issue</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${recipientName},</p>
-            <p style="font-size: 16px;">Unfortunately, we couldn't verify your payment for order #${orderId.slice(0, 8).toUpperCase()}.</p>
-            <p style="font-size: 16px;">Please contact our support team or try uploading a clearer receipt image.</p>
-            <p style="font-size: 14px; color: #6b7280;">${senderName} Support Team</p>
-          </div>
-        </div>
-      `,
+      subject: `Payment Issue - Order #${orderId}`,
+      html: `<div style="font-family: Arial, sans-serif;"><h1>Payment Issue</h1><p>Dear ${recipientName},</p><p>We couldn't verify your payment for order #${orderId}.</p><p>Please contact our support team.</p><p>${senderName} Support Team</p></div>`,
     },
     order_shipped: {
-      subject: "Order Shipped - Order #" + orderId.slice(0, 8),
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">Your Order is On Its Way! 🚚</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${recipientName},</p>
-            <p style="font-size: 16px;">Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way to you!</p>
-            <p style="font-size: 14px; color: #6b7280;">Thank you for shopping with ${senderName}!</p>
-          </div>
-        </div>
-      `,
+      subject: `Order Shipped - Order #${orderId}`,
+      html: `<div style="font-family: Arial, sans-serif;"><h1>Your Order is On Its Way! 🚚</h1><p>Dear ${recipientName},</p><p>Your order #${orderId} has been shipped!</p><p>Thank you for shopping with ${senderName}!</p></div>`,
     },
     order_delivered: {
-      subject: "Order Delivered - Order #" + orderId.slice(0, 8),
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #10B981, #06B6D4); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">Order Delivered! 📦</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${recipientName},</p>
-            <p style="font-size: 16px;">Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered!</p>
-            <p style="font-size: 16px;">We hope you enjoy your purchase. If you have any questions, please don't hesitate to contact us.</p>
-            <p style="font-size: 14px; color: #6b7280;">Thank you for shopping with ${senderName}!</p>
-          </div>
-        </div>
-      `,
+      subject: `Order Delivered - Order #${orderId}`,
+      html: `<div style="font-family: Arial, sans-serif;"><h1>Order Delivered! 📦</h1><p>Dear ${recipientName},</p><p>Your order #${orderId} has been delivered!</p><p>Thank you for shopping with ${senderName}!</p></div>`,
     },
     delivery_assigned_staff: {
-      subject: "New Delivery Assignment - Order #" + orderId.slice(0, 8),
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #f59e0b, #f97316); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">New Delivery Assigned! 🚚</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Hi ${recipientName},</p>
-            <p style="font-size: 16px;">A new delivery has been assigned to you.</p>
-            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #6b7280;">Order ID</p>
-              <p style="font-size: 18px; font-weight: bold; margin: 5px 0;">#${orderId.slice(0, 8).toUpperCase()}</p>
-            </div>
-            <p style="font-size: 16px;">Please check your dashboard for delivery details and customer information.</p>
-            <p style="font-size: 14px; color: #6b7280;">${senderName} Admin Team</p>
-          </div>
-        </div>
-      `,
+      subject: `New Delivery Assignment - Order #${orderId}`,
+      html: `<div style="font-family: Arial, sans-serif;"><h1>New Delivery Assigned! 🚚</h1><p>Hi ${recipientName},</p><p>A new delivery has been assigned to you.</p><p>Order ID: #${orderId}</p><p>${senderName} Admin Team</p></div>`,
     },
     delivery_assigned_customer: {
-      subject: "Order Out for Delivery - Order #" + orderId.slice(0, 8),
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #10B981, #06B6D4); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">Your Order is Out for Delivery! 🚚</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px;">Dear ${recipientName},</p>
-            <p style="font-size: 16px;">Great news! Your order #${orderId.slice(0, 8).toUpperCase()} is now out for delivery.</p>
-            ${staffName ? `<p style="font-size: 16px;">Our delivery partner <strong>${staffName}</strong> will be bringing your order to you soon.</p>` : ''}
-            <p style="font-size: 16px;">Please ensure someone is available to receive the package.</p>
-            <p style="font-size: 14px; color: #6b7280;">Thank you for shopping with ${senderName}!</p>
-          </div>
-        </div>
-      `,
+      subject: `Order Out for Delivery - Order #${orderId}`,
+      html: `<div style="font-family: Arial, sans-serif;"><h1>Your Order is Out for Delivery! 🚚</h1><p>Dear ${recipientName},</p><p>Your order #${orderId} is now out for delivery.</p>${staffName ? `<p>Delivery partner: ${staffName}</p>` : ''}<p>Thank you for shopping with ${senderName}!</p></div>`,
     },
   };
 
   return templates[type] || templates.payment_confirmed;
+};
+
+// Replace template variables with actual values
+const replaceVariables = (template: string, variables: Record<string, string>): string => {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    result = result.replace(regex, value || '');
+  }
+  return result;
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -175,7 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Processing ${type} notification for order ${orderId}`);
 
-    // Create Supabase client to fetch user emails and system settings
+    // Create Supabase client
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Get system settings for sender info
@@ -185,16 +110,47 @@ const handler = async (req: Request): Promise<Response> => {
       .limit(1)
       .maybeSingle();
 
-    // Use notification_sender_name, fallback to site_name
     const senderName = settings?.notification_sender_name || settings?.site_name || "RC Joy";
     const adminEmail = settings?.notification_email;
-    
-    // Use system notification email or fallback to resend.dev
     const fromEmail = adminEmail ? `${senderName} <${adminEmail}>` : `${senderName} <onboarding@resend.dev>`;
 
     console.log(`Using sender: ${fromEmail}`);
 
+    // Helper function to get email content from database template
+    const getEmailContent = async (
+      templateKey: string, 
+      variables: Record<string, string>,
+      fallbackRecipientName: string,
+      fallbackStaffName?: string
+    ): Promise<{ subject: string; html: string }> => {
+      // Fetch template from database
+      const { data: template, error } = await supabase
+        .from("email_templates")
+        .select("subject, html_content")
+        .eq("template_key", templateKey)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error || !template) {
+        console.log(`Template '${templateKey}' not found in database, using fallback`);
+        return getFallbackTemplate(
+          templateKey, 
+          variables.order_id || orderId.slice(0, 8).toUpperCase(), 
+          fallbackRecipientName, 
+          senderName,
+          fallbackStaffName
+        );
+      }
+
+      // Replace variables in template
+      const subject = replaceVariables(template.subject, variables);
+      const html = replaceVariables(template.html_content, variables);
+
+      return { subject, html };
+    };
+
     const emailsToSend: Array<{ to: string; content: { subject: string; html: string } }> = [];
+    const shortOrderId = orderId.slice(0, 8).toUpperCase();
 
     // Handle new order admin notification
     if (type === "new_order_admin") {
@@ -216,14 +172,19 @@ const handler = async (req: Request): Promise<Response> => {
         custName = profile?.full_name || "Customer";
       }
 
-      emailsToSend.push({
-        to: adminEmail,
-        content: getEmailContent("new_order_admin", orderId, custName, senderName),
-      });
+      const variables = {
+        order_id: shortOrderId,
+        customer_name: custName,
+        customer_email: customerEmail || "",
+        sender_name: senderName,
+      };
+
+      const content = await getEmailContent("new_order_admin", variables, custName);
+      emailsToSend.push({ to: adminEmail, content });
     }
     // Handle delivery_assigned type - send to both staff and customer
     else if (type === "delivery_assigned") {
-      // Get staff email
+      // Get staff email and send notification
       if (staffUserId) {
         const { data: staffUser } = await supabase.auth.admin.getUserById(staffUserId);
         if (staffUser?.user?.email) {
@@ -233,14 +194,19 @@ const handler = async (req: Request): Promise<Response> => {
             .eq("user_id", staffUserId)
             .single();
           
-          emailsToSend.push({
-            to: staffUser.user.email,
-            content: getEmailContent("delivery_assigned_staff", orderId, staffProfile?.full_name || staffName || "Staff", senderName),
-          });
+          const staffFullName = staffProfile?.full_name || staffName || "Staff";
+          const variables = {
+            order_id: shortOrderId,
+            staff_name: staffFullName,
+            sender_name: senderName,
+          };
+
+          const content = await getEmailContent("delivery_assigned_staff", variables, staffFullName);
+          emailsToSend.push({ to: staffUser.user.email, content });
         }
       }
 
-      // Get customer email
+      // Get customer email and send notification
       if (customerUserId) {
         const { data: customerUser } = await supabase.auth.admin.getUserById(customerUserId);
         if (customerUser?.user?.email) {
@@ -250,14 +216,20 @@ const handler = async (req: Request): Promise<Response> => {
             .eq("user_id", customerUserId)
             .single();
           
-          emailsToSend.push({
-            to: customerUser.user.email,
-            content: getEmailContent("delivery_assigned_customer", orderId, customerProfile?.full_name || customerName || "Customer", senderName, staffName),
-          });
+          const custName = customerProfile?.full_name || customerName || "Customer";
+          const variables = {
+            order_id: shortOrderId,
+            customer_name: custName,
+            staff_name: staffName || "our delivery partner",
+            sender_name: senderName,
+          };
+
+          const content = await getEmailContent("delivery_assigned_customer", variables, custName, staffName);
+          emailsToSend.push({ to: customerUser.user.email, content });
         }
       }
     } else {
-      // For other notification types, send to customer
+      // For other notification types (payment_confirmed, payment_rejected, order_shipped, order_delivered)
       let recipientEmail = customerEmail;
       let recipientName = customerName || "Customer";
 
@@ -276,16 +248,31 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       if (recipientEmail) {
-        emailsToSend.push({
-          to: recipientEmail,
-          content: getEmailContent(type, orderId, recipientName, senderName),
-        });
+        const templateKey = typeToTemplateKey[type] || type;
+        const variables = {
+          order_id: shortOrderId,
+          customer_name: recipientName,
+          sender_name: senderName,
+        };
+
+        const content = await getEmailContent(templateKey, variables, recipientName);
+        emailsToSend.push({ to: recipientEmail, content });
       }
+    }
+
+    if (emailsToSend.length === 0) {
+      console.log("No emails to send - no valid recipients found");
+      return new Response(
+        JSON.stringify({ success: false, message: "No valid recipients found" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     // Send all emails
     const results = [];
     for (const email of emailsToSend) {
+      console.log(`Sending email to ${email.to}: ${email.content.subject}`);
+      
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -301,7 +288,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       const emailResponse = await res.json();
-      console.log(`Email sent to ${email.to}:`, emailResponse);
+      console.log(`Email result for ${email.to}:`, emailResponse);
       results.push({ to: email.to, response: emailResponse, success: res.ok });
     }
 
