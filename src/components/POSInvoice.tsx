@@ -85,9 +85,11 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     try {
       const dataUrl = await toPng(invoiceRef.current, { 
         backgroundColor: '#ffffff',
-        pixelRatio: 2,
+        pixelRatio: 3,
+        quality: 1,
         style: {
-          padding: '16px'
+          padding: '24px',
+          background: '#ffffff',
         }
       });
       
@@ -110,35 +112,64 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
   };
 
   const generateShareText = () => {
-    const lines = [
-      `🧾 Invoice #${invoice.orderId.slice(0, 8).toUpperCase()}`,
-      `📅 ${new Date(invoice.orderDate).toLocaleDateString()}`,
-      ``,
-    ];
+    const divider = "━━━━━━━━━━━━━━━━━━━━";
+    const lines: string[] = [];
     
-    if (invoice.customerName) {
-      lines.push(`👤 ${invoice.customerName}`);
-      if (invoice.customerPhone) lines.push(`📱 ${invoice.customerPhone}`);
-      if (invoice.isDelivery && invoice.customerAddress) lines.push(`📍 ${invoice.customerAddress}`);
+    // Header
+    lines.push(`*${companyName}*`);
+    lines.push(divider);
+    lines.push(``);
+    lines.push(`📄 *INVOICE*`);
+    lines.push(`#${invoice.orderId.slice(0, 8).toUpperCase()}`);
+    lines.push(`📅 ${new Date(invoice.orderDate).toLocaleDateString()} at ${new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+    lines.push(``);
+    
+    // Customer info
+    if (invoice.customerName || invoice.customerPhone) {
+      lines.push(`👤 *Customer*`);
+      if (invoice.customerName) lines.push(`   ${invoice.customerName}`);
+      if (invoice.customerPhone) lines.push(`   📱 ${invoice.customerPhone}`);
+      if (invoice.isDelivery && invoice.customerAddress) {
+        lines.push(`   📍 ${invoice.customerAddress}`);
+      }
       lines.push(``);
     }
     
-    lines.push(`📦 Items:`);
-    invoice.items.forEach(item => {
-      lines.push(`• ${item.name}${item.color ? ` (${item.color})` : ''} x${item.quantity} - ${formatMVR(item.price * item.quantity)}`);
+    // Items
+    lines.push(`🛒 *Items*`);
+    lines.push(``);
+    invoice.items.forEach((item, idx) => {
+      const itemTotal = formatMVR(item.price * item.quantity);
+      lines.push(`${idx + 1}. ${item.name}`);
+      if (item.color) lines.push(`   Color: ${item.color}`);
+      lines.push(`   ${item.quantity} x ${formatMVR(item.price)} = *${itemTotal}*`);
+      lines.push(``);
     });
     
-    lines.push(``);
-    lines.push(`💰 Total: ${formatMVR(invoice.total)}`);
+    lines.push(divider);
+    lines.push(`💰 *TOTAL: ${formatMVR(invoice.total)}*`);
+    lines.push(divider);
     
-    if (invoice.notes) {
+    // Bank accounts
+    if (bankAccounts.length > 0) {
       lines.push(``);
-      lines.push(`📝 Notes: ${invoice.notes}`);
+      lines.push(`🏦 *Bank Transfer*`);
+      bankAccounts.forEach(bank => {
+        lines.push(`   ${bank.bank_name}`);
+        lines.push(`   ${bank.account_name}`);
+        lines.push(`   Acc: ${bank.account_number}`);
+        lines.push(``);
+      });
     }
     
-    lines.push(``);
-    lines.push(`Thank you for your purchase!`);
-    lines.push(companyName);
+    // Notes
+    if (invoice.notes) {
+      lines.push(`📝 *Notes:* ${invoice.notes}`);
+      lines.push(``);
+    }
+    
+    // Footer
+    lines.push(`✨ Thank you for your purchase!`);
     
     return lines.join('\n');
   };
