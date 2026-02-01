@@ -83,70 +83,25 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     if (!invoiceRef.current) return;
     
     try {
-      // Create a clone of the invoice for export
-      const clone = invoiceRef.current.cloneNode(true) as HTMLElement;
+      const element = invoiceRef.current;
       
-      // Create a container with fixed styles
-      const container = document.createElement('div');
-      container.style.cssText = `
-        position: fixed;
-        left: -9999px;
-        top: 0;
-        width: 400px;
-        padding: 24px;
-        background: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      `;
+      // Get computed width and add extra padding
+      const rect = element.getBoundingClientRect();
+      const captureWidth = Math.max(rect.width + 60, 500);
       
-      // Apply fixed styles to clone to override responsive classes
-      clone.style.cssText = `
-        width: 100%;
-        background: #ffffff;
-        color: #1a1a1a;
-      `;
-      
-      // Fix all text sizes and remove responsive breakpoint styles
-      const allElements = clone.querySelectorAll('*');
-      allElements.forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        const computedStyle = window.getComputedStyle(invoiceRef.current!.querySelector(
-          `[class="${htmlEl.className}"]`
-        ) || htmlEl);
-        
-        // Force text color to be visible
-        if (htmlEl.classList.contains('text-muted-foreground')) {
-          htmlEl.style.color = '#666666';
-        } else if (htmlEl.classList.contains('text-foreground')) {
-          htmlEl.style.color = '#1a1a1a';
-        } else if (htmlEl.classList.contains('text-primary')) {
-          htmlEl.style.color = '#10B981';
-        }
-        
-        // Ensure borders are visible
-        if (htmlEl.classList.contains('border-border') || htmlEl.classList.contains('border-dashed')) {
-          htmlEl.style.borderColor = '#e5e5e5';
-        }
-        
-        // Fix background colors
-        if (htmlEl.classList.contains('bg-muted/30')) {
-          htmlEl.style.backgroundColor = '#f5f5f5';
-        }
-      });
-      
-      container.appendChild(clone);
-      document.body.appendChild(container);
-      
-      // Wait for rendering
-      await new Promise(resolve => setTimeout(resolve, 150));
-      
-      const dataUrl = await toPng(container, { 
+      const dataUrl = await toPng(element, { 
         backgroundColor: '#ffffff',
         pixelRatio: 2,
         cacheBust: true,
+        width: captureWidth,
+        height: rect.height + 48,
+        style: {
+          padding: '24px',
+          paddingRight: '40px',
+          background: '#ffffff',
+          width: `${captureWidth}px`,
+        }
       });
-      
-      // Clean up
-      document.body.removeChild(container);
       
       const link = document.createElement('a');
       link.download = `invoice-${invoice.orderId.slice(0, 8).toUpperCase()}.png`;
