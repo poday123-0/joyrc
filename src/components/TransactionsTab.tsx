@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
+import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 
 interface Transaction {
   id: string;
@@ -44,6 +45,8 @@ const TransactionsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+  const [detailSheetType, setDetailSheetType] = useState<"income" | "expense">("income");
 
   useEffect(() => {
     fetchTransactions();
@@ -208,11 +211,23 @@ const TransactionsTab = () => {
     <div className="space-y-5">
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+        <div 
+          className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/15 transition-colors"
+          onClick={() => {
+            setDetailSheetType("income");
+            setDetailSheetOpen(true);
+          }}
+        >
           <p className="text-xs text-muted-foreground mb-1">Total Income</p>
           <p className="text-lg font-bold text-emerald-600">{formatMVR(totalIncome)}</p>
         </div>
-        <div className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
+        <div 
+          className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/20 cursor-pointer hover:bg-rose-500/15 transition-colors"
+          onClick={() => {
+            setDetailSheetType("expense");
+            setDetailSheetOpen(true);
+          }}
+        >
           <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
           <p className="text-lg font-bold text-rose-500">{formatMVR(totalExpenses)}</p>
         </div>
@@ -485,6 +500,14 @@ const TransactionsTab = () => {
         onConfirm={handleConfirmDelete}
         title="Delete Transaction"
         description="Are you sure you want to delete this transaction? This action cannot be undone."
+      />
+
+      {/* Transaction Detail Sheet */}
+      <TransactionDetailSheet
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        type={detailSheetType}
+        transactions={transactions}
       />
     </div>
   );
