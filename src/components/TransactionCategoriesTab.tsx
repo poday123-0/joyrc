@@ -42,7 +42,11 @@ const getIconComponent = (iconName: string | null) => {
   return found?.component || MoreHorizontal;
 };
 
-const TransactionCategoriesTab = () => {
+interface TransactionCategoriesTabProps {
+  onCategoryChange?: () => void;
+}
+
+const TransactionCategoriesTab = ({ onCategoryChange }: TransactionCategoriesTabProps) => {
   const [categories, setCategories] = useState<TransactionCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
@@ -118,6 +122,7 @@ const TransactionCategoriesTab = () => {
           title: "Category Updated",
           description: `"${formData.name}" has been updated.`,
         });
+        onCategoryChange?.();
       } else {
         // Get max sort_order for the type
         const maxSort = categories
@@ -132,6 +137,7 @@ const TransactionCategoriesTab = () => {
           title: "Category Added",
           description: `"${formData.name}" has been added.`,
         });
+        onCategoryChange?.();
       }
 
       resetForm();
@@ -171,6 +177,7 @@ const TransactionCategoriesTab = () => {
         title: "Category Deleted",
         description: "The category has been removed.",
       });
+      onCategoryChange?.();
       fetchCategories();
     }
     setDeleteDialogOpen(false);

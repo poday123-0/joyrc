@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Plus, X, Trash2, Edit2, ArrowUpRight, ArrowDownRight, 
-  Search, Filter, Calendar, Download, Package, Truck, User, ChevronDown, ChevronUp
+  Search, Filter, Calendar, Download, Package, Truck, User, ChevronDown, ChevronUp, Settings2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -9,7 +9,8 @@ import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
-
+import TransactionCategoriesTab from "@/components/TransactionCategoriesTab";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 interface Transaction {
   id: string;
   type: "income" | "expense";
@@ -329,6 +330,24 @@ const TransactionsTab = () => {
         >
           <Plus className="w-4 h-4" /> Add Transaction
         </button>
+        
+        <Sheet>
+          <SheetTrigger asChild>
+            <button
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors"
+            >
+              <Settings2 className="w-4 h-4" /> Categories
+            </button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Manage Categories</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4">
+              <TransactionCategoriesTab onCategoryChange={fetchCategories} />
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Add/Edit Form */}
