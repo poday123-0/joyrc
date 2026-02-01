@@ -25,6 +25,10 @@ interface Transaction {
   quantity: number | null;
   added_by: string | null;
   profile?: { full_name: string | null } | null;
+  // Customer info from orders
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_address?: string | null;
 }
 
 const TransactionsTab = () => {
@@ -66,10 +70,15 @@ const TransactionsTab = () => {
         variant: "destructive",
       });
     } else {
-      // Fetch profile names for added_by users
-      const transactionsWithProfiles = await Promise.all(
+      // Fetch profile names for added_by users and customer info for orders
+      const transactionsWithDetails = await Promise.all(
         (data || []).map(async (tx) => {
           let profile = null;
+          let customer_name = null;
+          let customer_phone = null;
+          let customer_address = null;
+
+          // Get profile of who added this transaction
           if (tx.added_by) {
             const { data: profileData } = await supabase
               .from("profiles")
@@ -78,10 +87,41 @@ const TransactionsTab = () => {
               .single();
             profile = profileData;
           }
-          return { ...tx, profile };
+
+          // Get customer info from order if this is linked to an order
+          if (tx.order_id) {
+            const { data: orderData } = await supabase
+              .from("orders")
+              .select("user_id, phone, shipping_address")
+              .eq("id", tx.order_id)
+              .single();
+            
+            if (orderData) {
+              customer_phone = orderData.phone;
+              customer_address = orderData.shipping_address;
+              
+              // Get customer name from profile
+              if (orderData.user_id) {
+                const { data: customerProfile } = await supabase
+                  .from("profiles")
+                  .select("full_name")
+                  .eq("user_id", orderData.user_id)
+                  .single();
+                customer_name = customerProfile?.full_name || null;
+              }
+            }
+          }
+
+          return { 
+            ...tx, 
+            profile,
+            customer_name,
+            customer_phone,
+            customer_address
+          };
         })
       );
-      setTransactions(transactionsWithProfiles as Transaction[]);
+      setTransactions(transactionsWithDetails as Transaction[]);
     }
     setLoading(false);
   };
