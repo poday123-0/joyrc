@@ -22,6 +22,11 @@ serve(async (req) => {
       },
     });
 
+    // Get search query from URL params
+    const url = new URL(req.url);
+    const searchQuery = url.searchParams.get("q")?.toLowerCase() || "";
+    const limit = parseInt(url.searchParams.get("limit") || "20");
+
     // Verify the caller is an admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -64,11 +69,18 @@ serve(async (req) => {
 
     const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
 
-    // Get all profiles
-    const { data: profiles, error: profilesError } = await supabaseAdmin
+    // Build the profile query with optional search
+    let profilesQuery = supabaseAdmin
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
+
+    // Apply server-side filtering if search query provided
+    if (searchQuery) {
+      profilesQuery = profilesQuery.or(`full_name.ilike.%${searchQuery}%,mobile_number.ilike.%${searchQuery}%`);
+    }
+
+    const { data: profiles, error: profilesError } = await profilesQuery.limit(limit * 2); // Get extra to account for admin filtering
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);
@@ -78,27 +90,33 @@ serve(async (req) => {
       );
     }
 
-    // Filter to only customers (non-admin users)
-    const customerProfiles = (profiles || []).filter(p => !adminUserIds.has(p.user_id));
+    // Filter to only customers (non-admin users) and limit
+    const customerProfiles = (profiles || [])
+      .filter(p => !adminUserIds.has(p.user_id))
+      .slice(0, limit);
 
-    // Get emails from auth.users using admin API
-    const { data: { users: authUsers }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+    // Only fetch auth users if we have profiles to match
+    let customersWithEmail = customerProfiles.map(profile => ({
+      ...profile,
+      email: null as string | null,
+    }));
 
-    if (usersError) {
-      console.error("Error fetching auth users:", usersError);
+    if (customerProfiles.length > 0) {
+      // Get emails from auth.users using admin API
+      const { data: { users: authUsers }, error: usersError } = await supabaseAdmin.auth.admin.listUsers({
+        perPage: 1000,
+      });
+
+      if (!usersError && authUsers) {
+        const userEmailMap = new Map(authUsers.map(u => [u.id, u.email]));
+        customersWithEmail = customerProfiles.map(profile => ({
+          ...profile,
+          email: userEmailMap.get(profile.user_id) || null,
+        }));
+      }
     }
 
-    // Combine data with emails
-    const customersWithEmail = customerProfiles.map(profile => {
-      const authUser = authUsers?.find(u => u.id === profile.user_id);
-      
-      return {
-        ...profile,
-        email: authUser?.email || null,
-      };
-    });
-
-    console.log(`Fetched ${customersWithEmail.length} customer users`);
+    console.log(`Fetched ${customersWithEmail.length} customer users (query: "${searchQuery}")`);
 
     return new Response(
       JSON.stringify({ customers: customersWithEmail }),
