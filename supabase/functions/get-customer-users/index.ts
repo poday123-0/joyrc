@@ -69,6 +69,16 @@ serve(async (req) => {
 
     const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
 
+    // Get all staff user IDs to exclude them (users with any staff permissions)
+    const { data: staffPermissions } = await supabaseAdmin
+      .from("staff_permissions")
+      .select("user_id");
+
+    const staffUserIds = new Set(staffPermissions?.map(p => p.user_id) || []);
+
+    // Combine admin and staff IDs to exclude
+    const excludedUserIds = new Set([...adminUserIds, ...staffUserIds]);
+
     // Build the profile query with optional search
     let profilesQuery = supabaseAdmin
       .from("profiles")
@@ -90,9 +100,9 @@ serve(async (req) => {
       );
     }
 
-    // Filter to only customers (non-admin users) and limit
+    // Filter to only customers (non-admin, non-staff users) and limit
     const customerProfiles = (profiles || [])
-      .filter(p => !adminUserIds.has(p.user_id))
+      .filter(p => !excludedUserIds.has(p.user_id))
       .slice(0, limit);
 
     // Only fetch auth users if we have profiles to match
