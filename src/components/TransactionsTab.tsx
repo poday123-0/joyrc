@@ -83,6 +83,14 @@ const TransactionsTab = () => {
     to: Date | undefined;
   }>({ from: undefined, to: undefined });
   const [inventoryProductFilter, setInventoryProductFilter] = useState<string>("all");
+  
+  // Main transactions filters
+  const [txDatePeriod, setTxDatePeriod] = useState<DatePeriod>("all");
+  const [txCustomDateRange, setTxCustomDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({ from: undefined, to: undefined });
+  const [txCategoryFilter, setTxCategoryFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchTransactions();
@@ -357,6 +365,16 @@ const TransactionsTab = () => {
     }
   };
 
+  // Get unique categories for filter dropdown
+  const uniqueCategories = useMemo(() => {
+    const cats = transactions
+      .filter(tx => !isInventoryTransaction(tx))
+      .map(tx => tx.category)
+      .filter((cat, index, self) => self.indexOf(cat) === index)
+      .sort();
+    return cats;
+  }, [transactions]);
+
   // Filter and search transactions
   const filteredTransactions = transactions.filter(tx => {
     const matchesSearch = 
@@ -373,8 +391,12 @@ const TransactionsTab = () => {
       return matchesSearch && isInventory && matchesDatePeriod && matchesProduct;
     }
     
+    // Apply date period filter for main transactions
+    const matchesDatePeriod = isWithinDatePeriod(tx.created_at, txDatePeriod, txCustomDateRange);
+    const matchesCategory = txCategoryFilter === "all" || tx.category === txCategoryFilter;
+    
     // Otherwise exclude inventory transactions from the main list
-    return matchesSearch && matchesType && !isInventoryTransaction(tx);
+    return matchesSearch && matchesType && matchesDatePeriod && matchesCategory && !isInventoryTransaction(tx);
   });
 
   // Calculate totals
@@ -457,50 +479,139 @@ const TransactionsTab = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search transactions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search transactions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as "all" | "income" | "expense")}
+            className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="all">All Types</option>
+            <option value="income">Income Only</option>
+            <option value="expense">Expenses Only</option>
+          </select>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Transaction
+          </button>
+          
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors"
+              >
+                <Settings2 className="w-4 h-4" /> Categories
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Manage Categories</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <TransactionCategoriesTab onCategoryChange={fetchCategories} />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value as "all" | "income" | "expense")}
-          className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          <option value="all">All Types</option>
-          <option value="income">Income Only</option>
-          <option value="expense">Expenses Only</option>
-        </select>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Add Transaction
-        </button>
         
-        <Sheet>
-          <SheetTrigger asChild>
-            <button
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors"
-            >
-              <Settings2 className="w-4 h-4" /> Categories
-            </button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Manage Categories</SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">
-              <TransactionCategoriesTab onCategoryChange={fetchCategories} />
-            </div>
-          </SheetContent>
-        </Sheet>
+        {/* Date Period and Category Filters */}
+        {!showInventoryOnly && (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Date Period Pills */}
+            {(["all", "today", "week", "month", "year"] as DatePeriod[]).map((period) => (
+              <button
+                key={period}
+                onClick={() => {
+                  setTxDatePeriod(period);
+                  if (period !== "custom") {
+                    setTxCustomDateRange({ from: undefined, to: undefined });
+                  }
+                }}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize",
+                  txDatePeriod === period
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+              >
+                {period === "all" ? "All Time" : period}
+              </button>
+            ))}
+            
+            {/* Custom Date Range */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1",
+                    txDatePeriod === "custom"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  <CalendarDays className="w-3 h-3" />
+                  {txDatePeriod === "custom" && txCustomDateRange.from
+                    ? `${format(txCustomDateRange.from, "MMM d")}${txCustomDateRange.to ? ` - ${format(txCustomDateRange.to, "MMM d")}` : ""}`
+                    : "Custom"}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="range"
+                  selected={{ from: txCustomDateRange.from, to: txCustomDateRange.to }}
+                  onSelect={(range) => {
+                    setTxCustomDateRange({ from: range?.from, to: range?.to });
+                    if (range?.from) {
+                      setTxDatePeriod("custom");
+                    }
+                  }}
+                  numberOfMonths={2}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            
+            {/* Category Filter */}
+            {uniqueCategories.length > 0 && (
+              <select
+                value={txCategoryFilter}
+                onChange={(e) => setTxCategoryFilter(e.target.value)}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground border-0 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="all">All Categories</option>
+                {uniqueCategories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            )}
+            
+            {/* Clear Filters */}
+            {(txDatePeriod !== "all" || txCategoryFilter !== "all") && (
+              <button
+                onClick={() => {
+                  setTxDatePeriod("all");
+                  setTxCategoryFilter("all");
+                  setTxCustomDateRange({ from: undefined, to: undefined });
+                }}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Form */}
