@@ -83,44 +83,70 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     if (!invoiceRef.current) return;
     
     try {
-      const element = invoiceRef.current;
+      // Create a clone of the invoice for export
+      const clone = invoiceRef.current.cloneNode(true) as HTMLElement;
       
-      // Store original styles
-      const originalStyles = {
-        width: element.style.width,
-        minWidth: element.style.minWidth,
-        maxWidth: element.style.maxWidth,
-        overflow: element.style.overflow,
-      };
+      // Create a container with fixed styles
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: 400px;
+        padding: 24px;
+        background: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      `;
       
-      // Apply fixed width to ensure full capture - increased to 440px
-      element.style.width = '440px';
-      element.style.minWidth = '440px';
-      element.style.maxWidth = '440px';
-      element.style.overflow = 'visible';
+      // Apply fixed styles to clone to override responsive classes
+      clone.style.cssText = `
+        width: 100%;
+        background: #ffffff;
+        color: #1a1a1a;
+      `;
       
-      // Wait for styles to apply
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const dataUrl = await toPng(element, { 
-        backgroundColor: '#ffffff',
-        pixelRatio: 2,
-        cacheBust: true,
-        width: 440,
-        style: {
-          padding: '24px',
-          background: '#ffffff',
-          width: '440px',
-          minWidth: '440px',
-          overflow: 'visible',
+      // Fix all text sizes and remove responsive breakpoint styles
+      const allElements = clone.querySelectorAll('*');
+      allElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        const computedStyle = window.getComputedStyle(invoiceRef.current!.querySelector(
+          `[class="${htmlEl.className}"]`
+        ) || htmlEl);
+        
+        // Force text color to be visible
+        if (htmlEl.classList.contains('text-muted-foreground')) {
+          htmlEl.style.color = '#666666';
+        } else if (htmlEl.classList.contains('text-foreground')) {
+          htmlEl.style.color = '#1a1a1a';
+        } else if (htmlEl.classList.contains('text-primary')) {
+          htmlEl.style.color = '#10B981';
+        }
+        
+        // Ensure borders are visible
+        if (htmlEl.classList.contains('border-border') || htmlEl.classList.contains('border-dashed')) {
+          htmlEl.style.borderColor = '#e5e5e5';
+        }
+        
+        // Fix background colors
+        if (htmlEl.classList.contains('bg-muted/30')) {
+          htmlEl.style.backgroundColor = '#f5f5f5';
         }
       });
       
-      // Restore original styles
-      element.style.width = originalStyles.width;
-      element.style.minWidth = originalStyles.minWidth;
-      element.style.maxWidth = originalStyles.maxWidth;
-      element.style.overflow = originalStyles.overflow;
+      container.appendChild(clone);
+      document.body.appendChild(container);
+      
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      const dataUrl = await toPng(container, { 
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        cacheBust: true,
+      });
+      
+      // Clean up
+      document.body.removeChild(container);
       
       const link = document.createElement('a');
       link.download = `invoice-${invoice.orderId.slice(0, 8).toUpperCase()}.png`;
@@ -132,6 +158,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
         description: "Invoice saved as PNG",
       });
     } catch (error) {
+      console.error('PNG generation error:', error);
       toast({
         title: "Error",
         description: "Failed to download invoice",
