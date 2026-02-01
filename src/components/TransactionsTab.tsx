@@ -473,7 +473,7 @@ const TransactionsTab = () => {
         >
           <div className="flex items-center gap-1.5 mb-1">
             <Boxes className="w-3 h-3 text-amber-600" />
-            <p className="text-xs text-muted-foreground">Inventory Purchases</p>
+            <p className="text-xs text-muted-foreground">Product Purchase</p>
           </div>
           <p className="text-lg font-bold text-amber-600">{formatMVR(inventoryExpenses)}</p>
           {showInventoryOnly && (inventoryDatePeriod !== "all" || inventoryProductFilter !== "all") && (
