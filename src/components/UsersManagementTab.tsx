@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { User, Trash2, Search, RefreshCw, UserPlus, X, KeyRound, Phone, Mail, Edit2, MapPin } from "lucide-react";
+import { User, Trash2, Search, RefreshCw, UserPlus, X, KeyRound, Phone, Mail, Edit2, MapPin, ShoppingBag, Package, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "./ConfirmDialog";
 import EditCustomerDialog from "./EditCustomerDialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface UserProfile {
   id: string;
@@ -14,6 +16,24 @@ interface UserProfile {
   email?: string;
   is_admin?: boolean;
   address?: string | null;
+}
+
+interface OrderItem {
+  id: string;
+  product_name: string;
+  product_price: number;
+  quantity: number;
+  color_name: string | null;
+}
+
+interface CustomerOrder {
+  id: string;
+  total_amount: number;
+  status: string;
+  payment_status: string | null;
+  payment_method: string | null;
+  created_at: string;
+  order_items: OrderItem[];
 }
 
 const UsersManagementTab = () => {
@@ -31,6 +51,11 @@ const UsersManagementTab = () => {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<UserProfile | null>(null);
+  
+  // Order history state
+  const [selectedCustomerForOrders, setSelectedCustomerForOrders] = useState<UserProfile | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -64,6 +89,56 @@ const UsersManagementTab = () => {
       });
     }
     setLoading(false);
+  };
+
+  const fetchCustomerOrders = async (userId: string) => {
+    setLoadingOrders(true);
+    try {
+      const { data: orders, error } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          total_amount,
+          status,
+          payment_status,
+          payment_method,
+          created_at,
+          order_items (
+            id,
+            product_name,
+            product_price,
+            quantity,
+            color_name
+          )
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setCustomerOrders(orders || []);
+    } catch (error) {
+      console.error("Error fetching customer orders:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load order history",
+        variant: "destructive",
+      });
+    }
+    setLoadingOrders(false);
+  };
+
+  const handleViewOrders = (user: UserProfile) => {
+    setSelectedCustomerForOrders(user);
+    fetchCustomerOrders(user.user_id);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "delivered": return "text-emerald-600 bg-emerald-500/10";
+      case "cancelled": return "text-rose-500 bg-rose-500/10";
+      case "processing": case "shipped": return "text-blue-600 bg-blue-500/10";
+      default: return "text-amber-600 bg-amber-500/10";
+    }
   };
 
   const handleDeleteUser = async () => {
@@ -388,6 +463,13 @@ const UsersManagementTab = () => {
               
               <div className="flex items-center gap-2 ml-auto sm:ml-0">
                 <button
+                  onClick={() => handleViewOrders(user)}
+                  className="p-2 bg-accent/50 text-accent-foreground rounded-lg hover:bg-accent/70 transition-colors"
+                  title="View order history"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => setEditingCustomer(user)}
                   className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
                   title="Edit customer"
@@ -439,6 +521,87 @@ const UsersManagementTab = () => {
         customer={editingCustomer}
         onSuccess={fetchUsers}
       />
+
+      {/* Order History Sheet */}
+      <Sheet open={!!selectedCustomerForOrders} onOpenChange={(open) => !open && setSelectedCustomerForOrders(null)}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" />
+              Order History - {selectedCustomerForOrders?.full_name || "Customer"}
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-4">
+            {loadingOrders ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : customerOrders.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No orders found for this customer</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {customerOrders.map((order) => (
+                  <div key={order.id} className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </p>
+                        <p className="font-semibold text-foreground">{formatMVR(order.total_amount)}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                        {order.payment_status && (
+                          <p className="text-xs text-muted-foreground mt-1 capitalize">
+                            {order.payment_status.replace(/_/g, " ")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Order Items */}
+                    <div className="space-y-2 pt-2 border-t border-border/50">
+                      {order.order_items.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <Package className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="truncate text-foreground">{item.product_name}</span>
+                            {item.color_name && (
+                              <span className="text-xs text-muted-foreground">({item.color_name})</span>
+                            )}
+                          </div>
+                          <div className="text-right text-muted-foreground flex-shrink-0 ml-2">
+                            <span>×{item.quantity}</span>
+                            <span className="ml-2">{formatMVR(item.product_price)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {order.payment_method && (
+                      <p className="text-xs text-muted-foreground">
+                        Payment: <span className="capitalize">{order.payment_method.replace(/_/g, " ")}</span>
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
