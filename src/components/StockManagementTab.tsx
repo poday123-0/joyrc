@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { StockHistoryDialog } from "@/components/StockHistoryDialog";
 
 interface Product {
   id: string;
@@ -83,6 +84,10 @@ const StockManagementTab = () => {
   const [deleteHistoryId, setDeleteHistoryId] = useState<string | null>(null);
   const [deleteHistoryProductId, setDeleteHistoryProductId] = useState<string | null>(null);
   const [deletingHistory, setDeletingHistory] = useState(false);
+  
+  // Stock history dialog state
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [historyDialogProductName, setHistoryDialogProductName] = useState("");
 
   useEffect(() => {
     fetchProducts();
@@ -928,95 +933,22 @@ const StockManagementTab = () => {
                     </button>
                   </div>
 
-                  {/* Stock History - Mobile optimized */}
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-medium text-foreground flex items-center gap-2 mb-2">
-                      <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      History
-                    </h4>
-                    {historyLoading ? (
-                      <div className="flex items-center justify-center py-4">
-                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    ) : stockHistory.length === 0 ? (
-                      <p className="text-xs sm:text-sm text-muted-foreground py-2">No history yet</p>
-                    ) : (
-                      <div className="space-y-1.5 sm:space-y-2 max-h-48 sm:max-h-60 overflow-y-auto">
-                        {stockHistory.map((item) => (
-                          <div key={item.id} className="p-2 sm:p-3 bg-muted/50 rounded-lg text-xs sm:text-sm">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex flex-col gap-1">
-                                {/* Change badge and type */}
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-medium ${
-                                    item.change_amount > 0 
-                                      ? "bg-emerald-500/10 text-emerald-600" 
-                                      : "bg-rose-500/10 text-rose-500"
-                                  }`}>
-                                    {item.change_amount > 0 ? "+" : ""}{item.change_amount}
-                                  </span>
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-medium ${
-                                    item.change_type === "sale" 
-                                      ? "bg-blue-500/10 text-blue-600"
-                                      : item.change_type === "restock"
-                                      ? "bg-emerald-500/10 text-emerald-600"
-                                      : "bg-muted text-muted-foreground"
-                                  }`}>
-                                    {getChangeTypeLabel(item.change_type)}
-                                  </span>
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {item.previous_quantity}→{item.new_quantity}
-                                  </span>
-                                </div>
-                                {/* Compact info row */}
-                                {(item.order_id || item.profile?.full_name) && (
-                                  <p className="text-[10px] text-muted-foreground truncate">
-                                    {item.order_id && item.change_type === "sale" && (
-                                      <span className="text-blue-600">#{item.order_id.slice(0, 6).toUpperCase()} </span>
-                                    )}
-                                    {item.profile?.full_name && (
-                                      <span>• {item.profile.full_name}</span>
-                                    )}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="text-right flex-shrink-0 flex items-center gap-1">
-                                <p className="text-[10px] text-muted-foreground">{formatDate(item.created_at)}</p>
-                                {isSuperAdmin && (
-                                  <button
-                                    onClick={() => {
-                                      setDeleteHistoryId(item.id);
-                                      setDeleteHistoryProductId(product.id);
-                                    }}
-                                    className="p-1 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
-                                    title="Delete"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                            {/* Show cost details if available - Compact on mobile */}
-                            {item.total_expense && item.total_expense > 0 && (
-                              <div className="mt-1.5 pt-1.5 border-t border-border/50 flex items-center gap-2 text-[10px] sm:text-xs flex-wrap">
-                                <span className="text-muted-foreground">
-                                  {formatMVR(item.unit_purchase_price || 0)}/u
-                                </span>
-                                {item.shipping_cost && item.shipping_cost > 0 && (
-                                  <span className="text-muted-foreground">
-                                    +{formatMVR(item.shipping_cost)} ship
-                                  </span>
-                                )}
-                                <span className="font-medium text-primary ml-auto">
-                                  {formatMVR(item.total_expense)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                  {/* View History Button */}
+                  <button
+                    onClick={() => {
+                      setHistoryDialogProductName(product.name);
+                      setHistoryDialogOpen(true);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted text-foreground rounded-lg text-sm font-medium transition-colors border border-border/50"
+                  >
+                    <History className="w-4 h-4" />
+                    View Stock History
+                    {stockHistory.length > 0 && (
+                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                        {stockHistory.length}
+                      </span>
                     )}
-                  </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -1037,6 +969,20 @@ const StockManagementTab = () => {
         description="This will permanently delete this stock history entry. This action cannot be undone."
         variant="destructive"
         confirmText={deletingHistory ? "Deleting..." : "Delete"}
+      />
+
+      {/* Stock History Dialog */}
+      <StockHistoryDialog
+        open={historyDialogOpen}
+        onOpenChange={setHistoryDialogOpen}
+        productName={historyDialogProductName}
+        stockHistory={stockHistory}
+        loading={historyLoading}
+        isSuperAdmin={isSuperAdmin}
+        onDeleteHistory={(historyId) => {
+          setDeleteHistoryId(historyId);
+          setDeleteHistoryProductId(expandedProductId);
+        }}
       />
     </div>
   );
