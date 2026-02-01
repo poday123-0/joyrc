@@ -1242,8 +1242,8 @@ const ProductsTab = ({
         });
       }
 
+      await onRefresh();
       resetForm();
-      onRefresh();
     } catch (error: any) {
       toast({ 
         title: "Error", 
