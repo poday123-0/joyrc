@@ -601,7 +601,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
             onClick={() => onTabChange?.("reports")}
           />
           <StatCard
-            title="Cash Out"
+            title="Product Purchase"
             value={formatMVR(stats.totalInventoryCashOut)}
             icon={Package}
             trend={`${formatMVR(stats.monthlyInventoryCashOut)} this month`}
@@ -811,7 +811,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
                 </p>
               </div>
               <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
-                <p className="text-xs text-muted-foreground mb-1">Cash Out</p>
+                <p className="text-xs text-muted-foreground mb-1">Product Purchase</p>
                 <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
               </div>
             </div>
