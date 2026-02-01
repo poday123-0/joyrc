@@ -46,6 +46,9 @@ interface DashboardStats {
   stockValueCost: number;
   stockValueSelling: number;
   totalStockItems: number;
+  // Inventory cash out stats
+  totalInventoryCashOut: number;
+  monthlyInventoryCashOut: number;
 }
 
 interface AdminDashboardProps {
@@ -74,6 +77,9 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
     stockValueCost: 0,
     stockValueSelling: 0,
     totalStockItems: 0,
+    // Inventory cash out stats
+    totalInventoryCashOut: 0,
+    monthlyInventoryCashOut: 0,
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -271,6 +277,8 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
       monthlyTransactionsRes,
       weeklyTransactionsRes,
       stockHistoryRes,
+      stockHistoryAllRes,
+      monthlyStockHistoryRes,
       profilesRes
     ] = await Promise.all([
       supabase.from("orders").select("*"),
@@ -279,6 +287,8 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
       supabase.from("transactions").select("*").gte("created_at", startOfMonth),
       supabase.from("transactions").select("*").gte("created_at", startOfWeek),
       supabase.from("stock_history").select("product_id, unit_purchase_price, change_amount, change_type").eq("change_type", "restock"),
+      supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock"),
+      supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock").gte("created_at", startOfMonth),
       supabase.from("profiles").select("id")
     ]);
 
@@ -288,22 +298,30 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
     const monthlyTxns = monthlyTransactionsRes.data || [];
     const weeklyTxns = weeklyTransactionsRes.data || [];
     const stockHistory = stockHistoryRes.data || [];
+    const stockHistoryAll = stockHistoryAllRes.data || [];
+    const monthlyStockHistory = monthlyStockHistoryRes.data || [];
     const profiles = profilesRes.data || [];
+
+    // Calculate inventory cash out (total_expense from stock_history restocks)
+    const totalInventoryCashOut = stockHistoryAll.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
+    const monthlyInventoryCashOut = monthlyStockHistory.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
 
     const totalRevenue = allTransactions
       .filter(t => t.type === "income")
       .reduce((sum, t) => sum + Number(t.amount), 0);
     
+    // Exclude inventory-related expenses from regular expenses
     const totalExpenses = allTransactions
-      .filter(t => t.type === "expense")
+      .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping")
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const monthlyRevenue = monthlyTxns
       .filter(t => t.type === "income")
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
+    // Exclude inventory-related expenses from monthly expenses
     const monthlyExpenses = monthlyTxns
-      .filter(t => t.type === "expense")
+      .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping")
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const weeklyRevenue = weeklyTxns
@@ -311,7 +329,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const weeklyExpenses = weeklyTxns
-      .filter(t => t.type === "expense")
+      .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping")
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     // Count orders by status
@@ -363,6 +381,8 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
       stockValueCost,
       stockValueSelling,
       totalStockItems,
+      totalInventoryCashOut,
+      monthlyInventoryCashOut,
     });
 
     setTransactions(allTransactions as Transaction[]);
@@ -538,7 +558,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
 
       {/* Primary Stats Row - Financial data only for full admins */}
       {isFullAdmin && (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
             title="Total Revenue"
             value={formatMVR(stats.totalRevenue)}
@@ -564,8 +584,16 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
             trend={`${formatMVR(monthlyNetProfit)} this month`}
             trendUp={monthlyNetProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
-            className="col-span-2 lg:col-span-1"
             onClick={() => onTabChange?.("reports")}
+          />
+          <StatCard
+            title="Cash Out"
+            value={formatMVR(stats.totalInventoryCashOut)}
+            icon={Package}
+            trend={`${formatMVR(stats.monthlyInventoryCashOut)} this month`}
+            trendUp={false}
+            variant="warning"
+            onClick={() => onTabChange?.("stock")}
           />
         </div>
       )}
@@ -1147,7 +1175,7 @@ const StatCard = ({
   icon: any;
   trend: string;
   trendUp?: boolean;
-  variant: "success" | "danger" | "primary";
+  variant: "success" | "danger" | "primary" | "warning";
   className?: string;
   onClick?: () => void;
 }) => {
@@ -1155,6 +1183,7 @@ const StatCard = ({
     success: "bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))]",
     danger: "bg-destructive/10 text-destructive",
     primary: "bg-primary/10 text-primary",
+    warning: "bg-amber-500/10 text-amber-600 dark:text-amber-500",
   };
 
   return (
