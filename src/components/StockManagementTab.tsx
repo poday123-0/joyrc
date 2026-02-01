@@ -467,11 +467,12 @@ const StockManagementTab = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="flex flex-col gap-3">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Stock Management</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h2 className="text-lg sm:text-xl font-bold text-foreground">Stock Management</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Track and manage product inventory
           </p>
         </div>
@@ -479,18 +480,19 @@ const StockManagementTab = () => {
           {isSuperAdmin && (
             <button
               onClick={() => setShowClearDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
             >
-              <Trash2 className="w-4 h-4" />
-              Clear History
+              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Clear History</span>
+              <span className="sm:hidden">Clear</span>
             </button>
           )}
           <button
             onClick={fetchProducts}
-            className="flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
           >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
+            <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>
@@ -555,103 +557,86 @@ const StockManagementTab = () => {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-muted/30 rounded-xl">
-          <p className="text-2xl font-bold text-foreground">{products.length}</p>
-          <p className="text-sm text-muted-foreground">Total Products</p>
+      {/* Stats - Compact on mobile */}
+      <div className="grid grid-cols-4 gap-2 sm:gap-4">
+        <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
+          <p className="text-lg sm:text-2xl font-bold text-foreground">{products.length}</p>
+          <p className="text-[10px] sm:text-sm text-muted-foreground">Products</p>
         </div>
-        <div className="p-4 bg-muted/30 rounded-xl">
-          <p className="text-2xl font-bold text-primary">
+        <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
+          <p className="text-lg sm:text-2xl font-bold text-primary">
             {products.reduce((sum, p) => sum + p.stock_quantity, 0)}
           </p>
-          <p className="text-sm text-muted-foreground">Total Stock</p>
+          <p className="text-[10px] sm:text-sm text-muted-foreground">Stock</p>
         </div>
-        <div className="p-4 bg-amber-500/10 rounded-xl">
-          <p className="text-2xl font-bold text-amber-500">{lowStockProducts.length}</p>
-          <p className="text-sm text-muted-foreground">Low Stock</p>
+        <div className="p-2 sm:p-4 bg-amber-500/10 rounded-lg sm:rounded-xl text-center sm:text-left">
+          <p className="text-lg sm:text-2xl font-bold text-amber-500">{lowStockProducts.length}</p>
+          <p className="text-[10px] sm:text-sm text-muted-foreground">Low</p>
         </div>
-        <div className="p-4 bg-destructive/10 rounded-xl">
-          <p className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</p>
-          <p className="text-sm text-muted-foreground">Out of Stock</p>
+        <div className="p-2 sm:p-4 bg-destructive/10 rounded-lg sm:rounded-xl text-center sm:text-left">
+          <p className="text-lg sm:text-2xl font-bold text-destructive">{outOfStockProducts.length}</p>
+          <p className="text-[10px] sm:text-sm text-muted-foreground">Out</p>
         </div>
       </div>
 
-      {/* Stock Alerts */}
+      {/* Stock Alerts - Compact on mobile */}
       {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="flex flex-wrap gap-2">
           {outOfStockProducts.length > 0 && (
-            <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg font-bold text-destructive">{outOfStockProducts.length}</span>
-                    <span className="text-sm font-medium text-foreground">Out of Stock</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {outOfStockProducts.slice(0, 2).map(p => p.name).join(", ")}
-                    {outOfStockProducts.length > 2 && ` +${outOfStockProducts.length - 2} more`}
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-destructive/5 border border-destructive/20 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />
+              <span className="text-xs sm:text-sm">
+                <span className="font-bold text-destructive">{outOfStockProducts.length}</span>
+                <span className="text-foreground ml-1">Out of Stock</span>
+              </span>
             </div>
           )}
           {lowStockProducts.length > 0 && (
-            <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg font-bold text-amber-600">{lowStockProducts.length}</span>
-                    <span className="text-sm font-medium text-foreground">Low Stock</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Products with ≤5 items remaining
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <span className="text-xs sm:text-sm">
+                <span className="font-bold text-amber-600">{lowStockProducts.length}</span>
+                <span className="text-foreground ml-1">Low Stock</span>
+              </span>
             </div>
           )}
         </div>
       )}
 
-      {/* Search and Category Filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Search and Category Filter - Stacked on mobile */}
+      <div className="space-y-2 sm:space-y-0 sm:flex sm:flex-row sm:gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by name..."
+            placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full pl-10 pr-4 py-2 sm:py-2.5 text-sm bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
-        <div className="relative w-full sm:w-36">
-          <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Item code"
-            value={itemCodeSearch}
-            onChange={(e) => setItemCodeSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1 sm:w-32 sm:flex-none">
+            <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Code"
+              value={itemCodeSearch}
+              onChange={(e) => setItemCodeSearch(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 sm:py-2.5 text-sm bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
+            />
+          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="flex-1 sm:flex-none px-3 py-2 sm:py-2.5 text-sm bg-muted/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 sm:min-w-[150px]"
+          >
+            <option value="all">All</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
         </div>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[150px]"
-        >
-          <option value="all">All Categories</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
       </div>
 
       {/* Products List */}
@@ -665,16 +650,16 @@ const StockManagementTab = () => {
           <p>No products found</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-muted/30 rounded-xl border border-border/50 overflow-hidden">
-              {/* Clickable Product Card */}
+            <div key={product.id} className="bg-muted/30 rounded-lg sm:rounded-xl border border-border/50 overflow-hidden">
+              {/* Clickable Product Card - Optimized for mobile */}
               <button
                 onClick={() => handleExpandProduct(product.id)}
-                className="w-full flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 hover:bg-muted/50 transition-colors text-left"
+                className="w-full flex items-center justify-between p-3 sm:p-4 gap-3 hover:bg-muted/50 transition-colors text-left"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
@@ -683,36 +668,33 @@ const StockManagementTab = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-6 h-6 text-muted-foreground" />
+                        <Package className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
                       </div>
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-foreground truncate">{product.name}</p>
-                    {product.item_code && (
-                      <p className="text-xs text-primary font-mono">{product.item_code}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm sm:text-base text-foreground truncate">{product.name}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {product.category?.name || "Uncategorized"} • {formatMVR(product.price)}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  {/* Stock Display */}
-                  <div className={`px-3 py-1.5 rounded-lg text-center min-w-[80px] ${
+                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                  {/* Stock Display - Compact on mobile */}
+                  <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-center min-w-[50px] sm:min-w-[80px] ${
                     product.stock_quantity === 0
                       ? "bg-destructive/10 text-destructive"
                       : product.stock_quantity <= 5
                       ? "bg-amber-500/10 text-amber-600"
                       : "bg-primary/10 text-primary"
                   }`}>
-                    <p className="text-lg font-bold">{product.stock_quantity}</p>
-                    <p className="text-xs">in stock</p>
+                    <p className="text-base sm:text-lg font-bold">{product.stock_quantity}</p>
+                    <p className="text-[9px] sm:text-xs hidden sm:block">in stock</p>
                   </div>
 
                   {/* Expand Indicator */}
-                  <div className="p-2 bg-muted rounded-lg">
+                  <div className="p-1.5 sm:p-2 bg-muted rounded-lg">
                     {expandedProductId === product.id ? (
                       <ChevronUp className="w-4 h-4" />
                     ) : (
@@ -722,105 +704,101 @@ const StockManagementTab = () => {
                 </div>
               </button>
 
-              {/* Expanded Section */}
+              {/* Expanded Section - Mobile optimized */}
               {expandedProductId === product.id && (
-                <div className="p-4 bg-background border-t border-border space-y-4">
+                <div className="p-3 sm:p-4 bg-background border-t border-border space-y-3 sm:space-y-4">
                   {/* Stock Adjustment */}
-                  <div className="space-y-4">
-                    {/* Quantity with +/- buttons */}
-                    <div className="flex flex-wrap items-end gap-4">
-                      <div>
-                        <label className="block text-xs text-muted-foreground mb-1">Set Stock To</label>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const current = adjustmentAmount[product.id] ?? product.stock_quantity;
-                              setAdjustmentAmount(prev => ({ 
-                                ...prev, 
-                                [product.id]: Math.max(0, current - 1)
-                              }));
-                            }}
-                            disabled={saving === product.id || (adjustmentAmount[product.id] ?? product.stock_quantity) === 0}
-                            className="p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
-                          <input
-                            type="number"
-                            min="0"
-                            value={adjustmentAmount[product.id] ?? product.stock_quantity}
-                            onChange={(e) => setAdjustmentAmount(prev => ({ 
-                              ...prev, 
-                              [product.id]: parseInt(e.target.value) || 0 
-                            }))}
-                            placeholder="Qty"
-                            className="w-20 px-3 py-2 bg-muted border border-border rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          />
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const current = adjustmentAmount[product.id] ?? product.stock_quantity;
-                              setAdjustmentAmount(prev => ({ 
-                                ...prev, 
-                                [product.id]: current + 1
-                              }));
-                            }}
-                            disabled={saving === product.id}
-                            className="p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Color Selection */}
-                      {productColors[product.id] && productColors[product.id].length > 0 && (
-                        <div className="min-w-[140px]">
-                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                            <Palette className="w-3 h-3" />
-                            Color (optional)
-                          </label>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {/* No color option */}
+                  <div className="space-y-3 sm:space-y-4">
+                    {/* Quantity with +/- buttons - Mobile optimized */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">Set Stock To</label>
+                          <div className="flex items-center gap-1.5 sm:gap-2">
                             <button
-                              type="button"
-                              onClick={() => setSelectedColorId(prev => ({ ...prev, [product.id]: "" }))}
-                              className={`w-7 h-7 rounded-full border-2 transition-all flex items-center justify-center ${
-                                !selectedColorId[product.id] 
-                                  ? "border-primary ring-2 ring-primary/30" 
-                                  : "border-border hover:border-muted-foreground"
-                              }`}
-                              title="No color"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const current = adjustmentAmount[product.id] ?? product.stock_quantity;
+                                setAdjustmentAmount(prev => ({ 
+                                  ...prev, 
+                                  [product.id]: Math.max(0, current - 1)
+                                }));
+                              }}
+                              disabled={saving === product.id || (adjustmentAmount[product.id] ?? product.stock_quantity) === 0}
+                              className="p-2 sm:p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
                             >
-                              <X className="w-3 h-3 text-muted-foreground" />
+                              <Minus className="w-4 h-4" />
                             </button>
-                            {/* Color swatches */}
-                            {productColors[product.id].map(color => (
-                              <button
-                                key={color.id}
-                                type="button"
-                                onClick={() => setSelectedColorId(prev => ({ ...prev, [product.id]: color.id }))}
-                                className={`w-7 h-7 rounded-full border-2 transition-all ${
-                                  selectedColorId[product.id] === color.id 
-                                    ? "border-primary ring-2 ring-primary/30 scale-110" 
-                                    : "border-border hover:scale-105"
-                                }`}
-                                style={{ backgroundColor: color.color_hex }}
-                                title={color.color_name}
-                              />
-                            ))}
+                            <input
+                              type="number"
+                              min="0"
+                              value={adjustmentAmount[product.id] ?? product.stock_quantity}
+                              onChange={(e) => setAdjustmentAmount(prev => ({ 
+                                ...prev, 
+                                [product.id]: parseInt(e.target.value) || 0 
+                              }))}
+                              placeholder="Qty"
+                              className="w-16 sm:w-20 px-2 sm:px-3 py-2 bg-muted border border-border rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const current = adjustmentAmount[product.id] ?? product.stock_quantity;
+                                setAdjustmentAmount(prev => ({ 
+                                  ...prev, 
+                                  [product.id]: current + 1
+                                }));
+                              }}
+                              disabled={saving === product.id}
+                              className="p-2 sm:p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
                           </div>
-                          {selectedColorId[product.id] && (
-                            <p className="text-xs text-muted-foreground mt-1.5">
-                              {productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_name}
-                            </p>
-                          )}
                         </div>
-                      )}
+                        
+                        {/* Color Selection - Inline on mobile */}
+                        {productColors[product.id] && productColors[product.id].length > 0 && (
+                          <div>
+                            <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                              <Palette className="w-3 h-3" />
+                              <span className="hidden sm:inline">Color</span>
+                            </label>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedColorId(prev => ({ ...prev, [product.id]: "" }))}
+                                className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 transition-all flex items-center justify-center ${
+                                  !selectedColorId[product.id] 
+                                    ? "border-primary ring-2 ring-primary/30" 
+                                    : "border-border hover:border-muted-foreground"
+                                }`}
+                                title="No color"
+                              >
+                                <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground" />
+                              </button>
+                              {productColors[product.id].map(color => (
+                                <button
+                                  key={color.id}
+                                  type="button"
+                                  onClick={() => setSelectedColorId(prev => ({ ...prev, [product.id]: color.id }))}
+                                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
+                                    selectedColorId[product.id] === color.id 
+                                      ? "border-primary ring-2 ring-primary/30 scale-110" 
+                                      : "border-border hover:scale-105"
+                                  }`}
+                                  style={{ backgroundColor: color.color_hex }}
+                                  title={color.color_name}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                      <div className="flex-1 min-w-[150px]">
-                        <label className="block text-xs text-muted-foreground mb-1">Notes (optional)</label>
+                      {/* Notes - Full width on mobile */}
+                      <div>
+                        <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">Notes (optional)</label>
                         <input
                           type="text"
                           value={adjustmentNotes[product.id] || ""}
@@ -834,19 +812,18 @@ const StockManagementTab = () => {
                       </div>
                     </div>
 
-                    {/* Cost Fields - Always visible */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-medium text-accent">
-                        <Receipt className="w-3.5 h-3.5" />
-                        Purchase Costs & Expenses
-                        <span className="text-muted-foreground font-normal">(Last values auto-loaded)</span>
+                    {/* Cost Fields - Mobile optimized */}
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-accent">
+                        <Receipt className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        <span>Purchase Costs</span>
+                        <span className="text-muted-foreground font-normal hidden sm:inline">(Auto-loaded)</span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                      <div className="grid grid-cols-3 gap-2 p-2 sm:p-3 bg-muted/30 rounded-lg border border-border">
                         <div>
-                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                            <DollarSign className="w-3 h-3" />
-                            Unit Purchase Price <span className="text-destructive">*</span>
+                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
+                            Unit Price <span className="text-destructive">*</span>
                           </label>
                           <input
                             type="number"
@@ -863,14 +840,13 @@ const StockManagementTab = () => {
                                 expenseNotes: prev[product.id]?.expenseNotes || ""
                               }
                             }))}
-                            placeholder="0.00"
-                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="0"
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                            <Truck className="w-3 h-3" />
-                            Shipping Cost
+                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
+                            Shipping
                           </label>
                           <input
                             type="number"
@@ -887,14 +863,13 @@ const StockManagementTab = () => {
                                 expenseNotes: prev[product.id]?.expenseNotes || ""
                               }
                             }))}
-                            placeholder="0.00"
-                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="0"
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                            <Receipt className="w-3 h-3" />
-                            Other Expenses
+                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
+                            Other
                           </label>
                           <input
                             type="number"
@@ -911,33 +886,12 @@ const StockManagementTab = () => {
                                 expenseNotes: prev[product.id]?.expenseNotes || ""
                               }
                             }))}
-                            placeholder="0.00"
-                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                        <div className="sm:col-span-3">
-                          <label className="block text-xs text-muted-foreground mb-1">
-                            Expense Description (optional)
-                          </label>
-                          <input
-                            type="text"
-                            value={stockCosts[product.id]?.expenseNotes || ""}
-                            onChange={(e) => setStockCosts(prev => ({ 
-                              ...prev, 
-                              [product.id]: {
-                                ...prev[product.id],
-                                unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
-                                shippingCost: prev[product.id]?.shippingCost || 0,
-                                otherExpenses: prev[product.id]?.otherExpenses || 0,
-                                expenseNotes: e.target.value
-                              }
-                            }))}
-                            placeholder="e.g., Supplier invoice #123, customs fees, etc."
-                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="0"
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                           />
                         </div>
                         
-                        {/* Total Expense Preview */}
+                        {/* Total Expense Preview - Compact on mobile */}
                         {(() => {
                           const costs = stockCosts[product.id];
                           const changeAmount = (adjustmentAmount[product.id] || 0) - product.stock_quantity;
@@ -946,15 +900,12 @@ const StockManagementTab = () => {
                           const totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
                           if (totalExpense <= 0) return null;
                           return (
-                            <div className="sm:col-span-3 p-2 bg-primary/10 rounded-lg">
-                              <p className="text-sm text-foreground">
-                                <span className="font-medium">Total Expense:</span> {formatMVR(totalExpense)}
-                                <span className="text-xs text-muted-foreground ml-2">
-                                  ({changeAmount} units × {formatMVR(costs.unitPurchasePrice || 0)} + shipping + other)
+                            <div className="col-span-3 p-2 bg-primary/10 rounded-lg">
+                              <p className="text-xs sm:text-sm text-foreground">
+                                <span className="font-medium">Total:</span> {formatMVR(totalExpense)}
+                                <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 sm:ml-2">
+                                  ({changeAmount} × {formatMVR(costs.unitPurchasePrice || 0)})
                                 </span>
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                This will be automatically added to Transactions as an expense.
                               </p>
                             </div>
                           );
@@ -962,6 +913,7 @@ const StockManagementTab = () => {
                       </div>
                     </div>
 
+                    {/* Update Button - Full width on mobile */}
                     <button
                       onClick={() => handleSetStock(
                         product.id, 
@@ -970,40 +922,40 @@ const StockManagementTab = () => {
                         product.name
                       )}
                       disabled={saving === product.id || (adjustmentAmount[product.id] ?? product.stock_quantity) === product.stock_quantity}
-                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50"
+                      className="w-full sm:w-auto px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
                     >
                       {saving === product.id ? "Saving..." : "Update Stock"}
                     </button>
                   </div>
 
-                  {/* Stock History */}
+                  {/* Stock History - Mobile optimized */}
                   <div>
-                    <h4 className="text-sm font-medium text-foreground flex items-center gap-2 mb-2">
-                      <History className="w-4 h-4" />
-                      Stock History
+                    <h4 className="text-xs sm:text-sm font-medium text-foreground flex items-center gap-2 mb-2">
+                      <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      History
                     </h4>
                     {historyLoading ? (
                       <div className="flex items-center justify-center py-4">
                         <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       </div>
                     ) : stockHistory.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-2">No history recorded yet</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground py-2">No history yet</p>
                     ) : (
-                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                      <div className="space-y-1.5 sm:space-y-2 max-h-48 sm:max-h-60 overflow-y-auto">
                         {stockHistory.map((item) => (
-                          <div key={item.id} className="p-3 bg-muted/50 rounded-lg text-sm">
+                          <div key={item.id} className="p-2 sm:p-3 bg-muted/50 rounded-lg text-xs sm:text-sm">
                             <div className="flex items-start justify-between gap-2">
-                              <div className="flex flex-col gap-1.5">
+                              <div className="flex flex-col gap-1">
                                 {/* Change badge and type */}
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-medium ${
                                     item.change_amount > 0 
                                       ? "bg-emerald-500/10 text-emerald-600" 
                                       : "bg-rose-500/10 text-rose-500"
                                   }`}>
                                     {item.change_amount > 0 ? "+" : ""}{item.change_amount}
                                   </span>
-                                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-medium ${
                                     item.change_type === "sale" 
                                       ? "bg-blue-500/10 text-blue-600"
                                       : item.change_type === "restock"
@@ -1012,30 +964,24 @@ const StockManagementTab = () => {
                                   }`}>
                                     {getChangeTypeLabel(item.change_type)}
                                   </span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {item.previous_quantity}→{item.new_quantity}
+                                  </span>
                                 </div>
-                                {/* Quantity change */}
-                                <p className="text-xs text-muted-foreground">
-                                  Stock: <span className="font-medium text-foreground">{item.previous_quantity}</span> → <span className="font-medium text-foreground">{item.new_quantity}</span>
-                                </p>
-                                {/* Order reference for sales */}
-                                {item.order_id && item.change_type === "sale" && (
-                                  <p className="text-xs text-blue-600">
-                                    📦 Order #{item.order_id.slice(0, 8).toUpperCase()}
+                                {/* Compact info row */}
+                                {(item.order_id || item.profile?.full_name) && (
+                                  <p className="text-[10px] text-muted-foreground truncate">
+                                    {item.order_id && item.change_type === "sale" && (
+                                      <span className="text-blue-600">#{item.order_id.slice(0, 6).toUpperCase()} </span>
+                                    )}
+                                    {item.profile?.full_name && (
+                                      <span>• {item.profile.full_name}</span>
+                                    )}
                                   </p>
-                                )}
-                                {/* Who made the change */}
-                                {item.profile?.full_name && (
-                                  <p className="text-xs text-muted-foreground">
-                                    👤 {item.change_type === "sale" ? "Sold by" : "By"}: <span className="font-medium text-foreground">{item.profile.full_name}</span>
-                                  </p>
-                                )}
-                                {/* Notes if available */}
-                                {item.notes && (
-                                  <p className="text-xs text-muted-foreground italic">"{item.notes}"</p>
                                 )}
                               </div>
-                              <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
-                                <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
+                              <div className="text-right flex-shrink-0 flex items-center gap-1">
+                                <p className="text-[10px] text-muted-foreground">{formatDate(item.created_at)}</p>
                                 {isSuperAdmin && (
                                   <button
                                     onClick={() => {
@@ -1043,34 +989,26 @@ const StockManagementTab = () => {
                                       setDeleteHistoryProductId(product.id);
                                     }}
                                     className="p-1 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
-                                    title="Delete this entry"
+                                    title="Delete"
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </button>
                                 )}
                               </div>
                             </div>
-                            {/* Show cost details if available */}
+                            {/* Show cost details if available - Compact on mobile */}
                             {item.total_expense && item.total_expense > 0 && (
-                              <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-4 text-xs flex-wrap">
-                                <span className="text-muted-foreground flex items-center gap-1">
-                                  <DollarSign className="w-3 h-3" />
-                                  {formatMVR(item.unit_purchase_price || 0)}/unit
+                              <div className="mt-1.5 pt-1.5 border-t border-border/50 flex items-center gap-2 text-[10px] sm:text-xs flex-wrap">
+                                <span className="text-muted-foreground">
+                                  {formatMVR(item.unit_purchase_price || 0)}/u
                                 </span>
                                 {item.shipping_cost && item.shipping_cost > 0 && (
-                                  <span className="text-muted-foreground flex items-center gap-1">
-                                    <Truck className="w-3 h-3" />
-                                    {formatMVR(item.shipping_cost)}
-                                  </span>
-                                )}
-                                {item.other_expenses && item.other_expenses > 0 && (
-                                  <span className="text-muted-foreground flex items-center gap-1">
-                                    <Receipt className="w-3 h-3" />
-                                    {formatMVR(item.other_expenses)}
+                                  <span className="text-muted-foreground">
+                                    +{formatMVR(item.shipping_cost)} ship
                                   </span>
                                 )}
                                 <span className="font-medium text-primary ml-auto">
-                                  Total: {formatMVR(item.total_expense)}
+                                  {formatMVR(item.total_expense)}
                                 </span>
                               </div>
                             )}
