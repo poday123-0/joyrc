@@ -24,7 +24,8 @@ const PERMISSION_AREAS = [
   { key: "tab_stock", label: "Stock Management", description: "View and update inventory levels" },
   { key: "tab_featured", label: "Featured Products", description: "Manage featured product highlights" },
   
-  // Orders & Delivery
+  // Orders & Sales
+  { key: "tab_pos", label: "Quick POS", description: "Create walk-in and delivery sales" },
   { key: "tab_orders", label: "Orders", description: "View and manage customer orders" },
   { key: "tab_preorders", label: "Pre-orders", description: "Manage pre-order requests" },
   { key: "tab_deliveries", label: "Deliveries", description: "Manage delivery assignments" },
