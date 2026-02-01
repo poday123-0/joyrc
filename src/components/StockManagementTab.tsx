@@ -803,10 +803,10 @@ const StockManagementTab = () => {
                       <button
                         type="button"
                         onClick={() => setShowCostFields(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
-                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80"
+                        className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 transition-colors"
                       >
-                        <Receipt className="w-4 h-4" />
-                        {showCostFields[product.id] ? "Hide" : "Add"} Purchase Costs & Expenses
+                        <Receipt className="w-3.5 h-3.5" />
+                        {showCostFields[product.id] ? "Hide Costs" : "Add Costs & Expenses"}
                       </button>
 
                         {showCostFields[product.id] && (
