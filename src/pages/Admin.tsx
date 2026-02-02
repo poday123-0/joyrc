@@ -588,6 +588,7 @@ const Admin = () => {
             {/* Content - with permission checks */}
             {activeTab === "dashboard" && <AdminDashboard 
               userPermissions={userPermissions}
+              isFullAdmin={isFullAdmin}
               onTabChange={(tab) => {
               if (hasTabPermission(tab)) {
                 setActiveTab(tab as Tab);

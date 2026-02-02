@@ -54,11 +54,11 @@ interface DashboardStats {
 interface AdminDashboardProps {
   onTabChange?: (tab: string) => void;
   userPermissions?: string[];
+  isFullAdmin?: boolean;
 }
 
-const AdminDashboard = ({ onTabChange, userPermissions = [] }: AdminDashboardProps) => {
+const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false }: AdminDashboardProps) => {
   const { isSuperAdmin, isAdmin, user } = useAuth();
-  const [isFullAdmin, setIsFullAdmin] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     totalExpenses: 0,
@@ -119,24 +119,6 @@ const AdminDashboard = ({ onTabChange, userPermissions = [] }: AdminDashboardPro
   const [stockSearchQuery, setStockSearchQuery] = useState("");
   const [stockCategoryFilter, setStockCategoryFilter] = useState("all");
   const [stockCategories, setStockCategories] = useState<Array<{ id: string; name: string }>>([]);
-
-  // Check if user is a full admin (admin role) vs staff with permissions
-  useEffect(() => {
-    const checkFullAdmin = async () => {
-      if (!user) return;
-      
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-      
-      // User is a full admin if they have admin or super_admin role
-      const hasAdminRole = roles?.some(r => r.role === "admin" || r.role === "super_admin");
-      setIsFullAdmin(hasAdminRole || false);
-    };
-    
-    checkFullAdmin();
-  }, [user]);
 
   useEffect(() => {
     fetchDashboardData();
