@@ -53,9 +53,10 @@ interface DashboardStats {
 
 interface AdminDashboardProps {
   onTabChange?: (tab: string) => void;
+  userPermissions?: string[];
 }
 
-const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
+const AdminDashboard = ({ onTabChange, userPermissions = [] }: AdminDashboardProps) => {
   const { isSuperAdmin, isAdmin, user } = useAuth();
   const [isFullAdmin, setIsFullAdmin] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
@@ -562,13 +563,54 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
   const monthlyNetProfit = stats.monthlyRevenue - stats.monthlyExpenses;
   const weeklyNetProfit = stats.weeklyRevenue - stats.weeklyExpenses;
 
+  // Tab permission definitions for staff quick access cards
+  const availableTabs = [
+    { id: "pos", label: "Quick POS", icon: DollarSign, description: "Process sales quickly" },
+    { id: "orders", label: "Orders", icon: ShoppingCart, description: "Manage customer orders" },
+    { id: "products", label: "Products", icon: Package, description: "Manage inventory" },
+    { id: "stock", label: "Stock", icon: Package, description: "Stock management" },
+    { id: "transactions", label: "Transactions", icon: Wallet, description: "View transactions" },
+    { id: "deliveries", label: "Deliveries", icon: Package, description: "Manage deliveries" },
+    { id: "messages", label: "Messages", icon: Users, description: "Customer messages" },
+    { id: "preorders", label: "Pre-orders", icon: ShoppingCart, description: "Manage pre-orders" },
+  ];
+
+  // Get tabs that staff has permission for
+  const staffPermittedTabs = availableTabs.filter(tab => 
+    userPermissions.includes(`tab_${tab.id}`)
+  );
+
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="mb-2">
         <h2 className="text-lg font-semibold text-foreground">Dashboard Overview</h2>
-        <p className="text-xs text-muted-foreground">Monitor your business performance</p>
+        <p className="text-xs text-muted-foreground">
+          {isFullAdmin ? "Monitor your business performance" : "Quick access to your permitted areas"}
+        </p>
       </div>
+
+      {/* Staff Quick Access Cards - shown instead of stats for non-full admins */}
+      {!isFullAdmin && staffPermittedTabs.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {staffPermittedTabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange?.(tab.id)}
+                className="bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/50 hover:shadow-md transition-all group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                  <Icon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground text-sm">{tab.label}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{tab.description}</p>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Primary Stats Row - Financial data only for full admins */}
       {isFullAdmin && (
@@ -612,7 +654,8 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
         </div>
       )}
 
-      {/* Business Stats Row */}
+      {/* Business Stats Row - only for full admins */}
+      {isFullAdmin && (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <MiniStatCard
           title="Customers"
@@ -658,6 +701,7 @@ const AdminDashboard = ({ onTabChange }: AdminDashboardProps) => {
           onClick={() => onTabChange?.("stock")}
         />
       </div>
+      )}
 
       {/* Stock Value & Weekly Summary - Financial data only for full admins */}
       {isFullAdmin && (

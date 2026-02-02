@@ -106,6 +106,7 @@ interface ProductImage {
   image_url: string;
   sort_order: number | null;
   is_360: boolean;
+  color_id: string | null;
 }
 
 interface ProductColor {
@@ -585,7 +586,9 @@ const Admin = () => {
             </div>
 
             {/* Content - with permission checks */}
-            {activeTab === "dashboard" && <AdminDashboard onTabChange={(tab) => {
+            {activeTab === "dashboard" && <AdminDashboard 
+              userPermissions={userPermissions}
+              onTabChange={(tab) => {
               if (hasTabPermission(tab)) {
                 setActiveTab(tab as Tab);
               } else {
@@ -727,8 +730,10 @@ const ProductsTab = ({
   const [productColors, setProductColors] = useState<ProductColor[]>([]);
   const [loadingColors, setLoadingColors] = useState(false);
   const [newColor, setNewColor] = useState({ name: "", hex: "#000000" });
-  const [colorImageFile, setColorImageFile] = useState<File | null>(null);
+  const [colorImageFiles, setColorImageFiles] = useState<File[]>([]);
   const [uploadingColor, setUploadingColor] = useState(false);
+  const [expandedColorId, setExpandedColorId] = useState<string | null>(null);
+  const [colorImageFile, setColorImageFile] = useState<File | null>(null); // Keep for backwards compatibility
 
   // Existing images dialog state
   const [showExistingImagesDialog, setShowExistingImagesDialog] = useState(false);
@@ -1115,7 +1120,7 @@ const ProductsTab = ({
     setUploadingColor(true);
     let finalColorImageUrl: string | null = colorImageUrl; // Use existing selected URL
 
-    // Upload color image if file provided (takes priority)
+    // Upload first color image if file provided (takes priority) - this becomes the main color image
     if (colorImageFile) {
       const compressedFile = await compressImage(colorImageFile, 1200, 0.8);
       const fileName = `color-${Date.now()}-${compressedFile.name}`;
@@ -1151,16 +1156,110 @@ const ProductsTab = ({
         variant: "destructive" 
       });
     } else if (data) {
+      // Upload additional images (up to 3 total) as color-linked product_images
+      if (colorImageFiles.length > 0) {
+        for (let i = 0; i < Math.min(colorImageFiles.length, 3); i++) {
+          const file = colorImageFiles[i];
+          const compressedFile = await compressImage(file, 1200, 0.8);
+          const fileName = `color-img-${Date.now()}-${i}-${compressedFile.name}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from("product-images")
+            .upload(fileName, compressedFile);
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from("product-images")
+              .getPublicUrl(fileName);
+            
+            // Add to product_images with color_id link
+            await supabase.from("product_images").insert({
+              product_id: editingProduct.id,
+              image_url: urlData.publicUrl,
+              color_id: data.id,
+              sort_order: galleryImages.length + i,
+              is_360: false,
+            });
+          }
+        }
+        // Refresh gallery images
+        await fetchGalleryImages(editingProduct.id);
+      }
+      
       setProductColors([...productColors, data as ProductColor]);
       setNewColor({ name: "", hex: "#000000" });
       setColorImageFile(null);
+      setColorImageFiles([]);
       setColorImageUrl(null);
       toast({ 
         title: "Color Added",
-        description: `${data.color_name} has been added.`,
+        description: `${data.color_name} has been added${colorImageFiles.length > 0 ? ` with ${Math.min(colorImageFiles.length, 3)} images` : ''}.`,
       });
     }
     setUploadingColor(false);
+  };
+
+  // Add images to existing color
+  const handleAddColorImages = async (colorId: string, files: FileList) => {
+    if (!editingProduct) return;
+    
+    const existingColorImages = galleryImages.filter(img => img.color_id === colorId);
+    const remainingSlots = 3 - existingColorImages.length;
+    
+    if (remainingSlots <= 0) {
+      toast({
+        title: "Maximum Images Reached",
+        description: "Each color can have up to 3 images.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadingColor(true);
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
+      const compressedFile = await compressImage(file, 1200, 0.8);
+      const fileName = `color-img-${Date.now()}-${i}-${compressedFile.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, compressedFile);
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(fileName);
+        
+        await supabase.from("product_images").insert({
+          product_id: editingProduct.id,
+          image_url: urlData.publicUrl,
+          color_id: colorId,
+          sort_order: galleryImages.length + i,
+          is_360: false,
+        });
+      }
+    }
+    
+    await fetchGalleryImages(editingProduct.id);
+    setUploadingColor(false);
+    toast({
+      title: "Images Added",
+      description: `${filesToUpload.length} image(s) added to color.`,
+    });
+  };
+
+  // Delete color-specific image
+  const handleDeleteColorImage = async (imageId: string) => {
+    const { error } = await supabase.from("product_images").delete().eq("id", imageId);
+    if (!error) {
+      setGalleryImages(galleryImages.filter(img => img.id !== imageId));
+      toast({
+        title: "Image Removed",
+        description: "Color image has been removed.",
+      });
+    }
   };
 
   const handleDeleteColor = async (colorId: string, colorName: string) => {
@@ -1700,94 +1799,165 @@ const ProductsTab = ({
             {editingProduct && (
               <div className="border-t border-border pt-4 mt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-green-500 to-blue-500" />
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary via-accent to-destructive" />
                   <h4 className="font-medium text-sm">Product Colors</h4>
+                  <span className="text-xs text-muted-foreground">(up to 3 images per color)</span>
                 </div>
                 
                 {loadingColors ? (
                   <p className="text-sm text-muted-foreground">Loading colors...</p>
                 ) : (
                   <>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {productColors.map((color) => (
-                        <div 
-                          key={color.id} 
-                          className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 group"
-                        >
-                          <div 
-                            className="w-5 h-5 rounded-full border border-border flex-shrink-0"
-                            style={{ backgroundColor: color.color_hex }}
-                          />
-                          <span className="text-sm font-medium">{color.color_name}</span>
-                          {color.image_url && (
-                            <img 
-                              src={color.image_url} 
-                              alt={color.color_name}
-                              className="w-6 h-6 rounded object-cover"
-                            />
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteColor(color.id, color.color_name)}
-                            className="w-5 h-5 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
-                          >
-                            <X className="w-3 h-3 text-destructive" />
-                          </button>
-                        </div>
-                      ))}
+                    {/* Existing colors with expandable image management */}
+                    <div className="space-y-2 mb-3">
+                      {productColors.map((color) => {
+                        const colorImages = galleryImages.filter(img => img.color_id === color.id);
+                        const isExpanded = expandedColorId === color.id;
+                        const imageCount = colorImages.length + (color.image_url ? 1 : 0);
+                        
+                        return (
+                          <div key={color.id} className="bg-muted/30 rounded-xl p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="w-6 h-6 rounded-full border-2 border-border flex-shrink-0 shadow-sm"
+                                  style={{ backgroundColor: color.color_hex }}
+                                />
+                                <span className="text-sm font-medium">{color.color_name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {imageCount}/3 images
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedColorId(isExpanded ? null : color.id)}
+                                  className="text-xs text-primary hover:underline"
+                                >
+                                  {isExpanded ? 'Hide' : 'Manage Images'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteColor(color.id, color.color_name)}
+                                  className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20"
+                                >
+                                  <X className="w-3 h-3 text-destructive" />
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Expandable image section */}
+                            {isExpanded && (
+                              <div className="mt-3 pt-3 border-t border-border">
+                                <div className="grid grid-cols-4 gap-2 mb-2">
+                                  {/* Main color image */}
+                                  {color.image_url && (
+                                    <div className="relative group">
+                                      <img 
+                                        src={color.image_url} 
+                                        alt={color.color_name}
+                                        className="w-full aspect-square rounded-lg object-cover"
+                                      />
+                                      <span className="absolute bottom-1 left-1 text-[10px] bg-background/80 px-1 rounded">Main</span>
+                                    </div>
+                                  )}
+                                  {/* Additional color images */}
+                                  {colorImages.map((img) => (
+                                    <div key={img.id} className="relative group">
+                                      <img 
+                                        src={img.image_url} 
+                                        alt={`${color.color_name} variant`}
+                                        className="w-full aspect-square rounded-lg object-cover"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteColorImage(img.id)}
+                                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {/* Add more images slot */}
+                                  {imageCount < 3 && (
+                                    <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                                      <Upload className="w-4 h-4 text-muted-foreground mb-1" />
+                                      <span className="text-[10px] text-muted-foreground">Add</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) => e.target.files && handleAddColorImages(color.id, e.target.files)}
+                                        className="hidden"
+                                      />
+                                    </label>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                       {productColors.length === 0 && (
                         <p className="text-sm text-muted-foreground">No colors yet.</p>
                       )}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="text"
-                        placeholder="Color name (e.g., Red, Black)"
-                        value={newColor.name}
-                        onChange={(e) => handleColorNameChange(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
-                      />
-                      <div className="flex gap-2">
+                    {/* Add new color form */}
+                    <div className="bg-muted/20 rounded-xl p-3">
+                      <p className="text-xs text-muted-foreground mb-2">Add new color:</p>
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <input
-                          type="color"
-                          value={newColor.hex}
-                          onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
-                          className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                          type="text"
+                          placeholder="Color name (e.g., Red, Black)"
+                          value={newColor.name}
+                          onChange={(e) => handleColorNameChange(e.target.value)}
+                          className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                         />
-                        <label className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 text-xs text-muted-foreground">
-                          <Upload className="w-3 h-3" />
-                          {colorImageFile ? colorImageFile.name.slice(0, 8) + '...' : 'Upload'}
+                        <div className="flex gap-2">
                           <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              setColorImageFile(e.target.files?.[0] || null);
-                              setColorImageUrl(null);
-                            }}
-                            className="hidden"
+                            type="color"
+                            value={newColor.hex}
+                            onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                            className="w-10 h-10 rounded-lg border border-border cursor-pointer"
                           />
-                        </label>
+                          <label className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 text-xs text-muted-foreground">
+                            <Upload className="w-3 h-3" />
+                            {colorImageFile ? '1 file' : 'Main'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                setColorImageFile(e.target.files?.[0] || null);
+                                setColorImageUrl(null);
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          <label className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-primary/50 bg-primary/5 cursor-pointer hover:bg-primary/10 text-xs text-primary">
+                            <Image className="w-3 h-3" />
+                            {colorImageFiles.length > 0 ? `+${colorImageFiles.length}` : '+Extra'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => {
+                                const files = e.target.files ? Array.from(e.target.files).slice(0, 3) : [];
+                                setColorImageFiles(files);
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setExistingImagesMode("color");
-                            setShowExistingImagesDialog(true);
-                          }}
-                          className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-accent/50 bg-accent/5 hover:bg-accent/10 text-xs text-accent-foreground"
+                          onClick={handleAddColor}
+                          disabled={uploadingColor || !newColor.name.trim()}
+                          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap disabled:opacity-50"
                         >
-                          <FolderOpen className="w-3 h-3" />
-                          {colorImageUrl ? '✓' : 'Gallery'}
+                          {uploadingColor ? "Adding..." : "Add Color"}
                         </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleAddColor}
-                        disabled={uploadingColor || !newColor.name.trim()}
-                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap disabled:opacity-50"
-                      >
-                        {uploadingColor ? "Adding..." : "Add"}
-                      </button>
                     </div>
                   </>
                 )}

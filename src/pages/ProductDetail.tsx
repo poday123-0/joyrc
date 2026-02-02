@@ -127,37 +127,7 @@ const ProductDetail = () => {
     return images;
   }, [colorImages, productColors]);
 
-  // Auto-slide logic
-  useEffect(() => {
-    if (autoSlideRef.current) {
-      clearInterval(autoSlideRef.current);
-      autoSlideRef.current = null;
-    }
-    if (productColors.length === 0) return;
-    if (userSelectedColor && selectedColorId) {
-      // User selected a color - auto-swipe through that color's images
-      const colorImgs = getImagesForColor(selectedColorId);
-      if (colorImgs.length > 1) {
-        autoSlideRef.current = setInterval(() => {
-          setSelectedColorImageIndex(prev => (prev + 1) % colorImgs.length);
-        }, 3000);
-      }
-    } else {
-      // No color selected - auto-swipe through different colors
-      autoSlideRef.current = setInterval(() => {
-        setColorImageIndex(prev => {
-          const nextIndex = (prev + 1) % productColors.length;
-          setSelectedColorId(productColors[nextIndex].id);
-          return nextIndex;
-        });
-      }, 3000);
-    }
-    return () => {
-      if (autoSlideRef.current) {
-        clearInterval(autoSlideRef.current);
-      }
-    };
-  }, [productColors, userSelectedColor, selectedColorId, getImagesForColor]);
+  // Auto-slide logic removed - users can now swipe manually
   const handleColorSelect = (colorId: string) => {
     setUserSelectedColor(true);
     setSelectedColorId(colorId);
