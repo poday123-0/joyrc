@@ -626,63 +626,119 @@ const StaffManagementTab = () => {
             )}
           </div>
 
-          {/* Regular Users Section */}
+          {/* Regular Users Section - Can be promoted to staff */}
           <div>
             <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <User className="w-4 h-4 text-muted-foreground" />
               Regular Users ({regularUsers.length})
+              <span className="text-xs text-muted-foreground font-normal ml-2">Click settings to add as staff</span>
             </h3>
             {regularUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground">No regular users found</p>
             ) : (
               <div className="space-y-3">
-                {regularUsers.slice(0, 10).map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50 gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                        <User className="w-5 h-5 text-muted-foreground" />
+                {regularUsers.slice(0, 20).map((user) => (
+                  <div key={user.id} className="bg-muted/30 rounded-xl border border-border/50 overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <User className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">
+                            {user.full_name || "No name"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Joined {formatDate(user.created_at)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-foreground truncate">
-                          {user.full_name || "No name"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Joined {formatDate(user.created_at)}
-                        </p>
+                      
+                      <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                        <button
+                          onClick={() => handleExpandUser(user.user_id, [])}
+                          className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                          title="Add as staff"
+                        >
+                          {expandedUserId === user.user_id ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <Settings className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setResetPasswordUserId(user.user_id)}
+                          className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
+                          title="Reset password"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleToggleAdmin(user.user_id, false)}
+                          className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
+                          title="Make admin"
+                        >
+                          <ShieldOff className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteUserId(user.user_id)}
+                          className="p-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
+                          title="Delete user"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2 ml-auto sm:ml-0">
-                      <button
-                        onClick={() => setResetPasswordUserId(user.user_id)}
-                        className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
-                        title="Reset password"
-                      >
-                        <KeyRound className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleToggleAdmin(user.user_id, false)}
-                        className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
-                        title="Make admin"
-                      >
-                        <ShieldOff className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteUserId(user.user_id)}
-                        className="p-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors"
-                        title="Delete user"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+
+                    {/* Expanded Permissions Editor - Add staff permissions to regular user */}
+                    {expandedUserId === user.user_id && (
+                      <div className="p-4 bg-background border-t border-border space-y-3">
+                        <h4 className="text-sm font-medium text-foreground">Add as Staff - Select Permissions</h4>
+                        <p className="text-xs text-muted-foreground">Select permissions to convert this user to a staff member</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {PERMISSION_AREAS.map((perm) => (
+                            <div
+                              key={perm.key}
+                              onClick={() => togglePermission(perm.key, true)}
+                              className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                                editingPermissions.includes(perm.key)
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border hover:border-primary/50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={editingPermissions.includes(perm.key)}
+                                  onCheckedChange={() => togglePermission(perm.key, true)}
+                                />
+                                <span className="font-medium text-sm text-foreground">{perm.label}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1 ml-6">{perm.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <button
+                            onClick={() => setExpandedUserId(null)}
+                            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleSavePermissions(user.user_id)}
+                            disabled={savingPermissions || editingPermissions.length === 0}
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm disabled:opacity-50"
+                          >
+                            {savingPermissions ? "Saving..." : "Make Staff"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
-                {regularUsers.length > 10 && (
+                {regularUsers.length > 20 && (
                   <p className="text-sm text-muted-foreground text-center py-2">
-                    Showing 10 of {regularUsers.length} users
+                    Showing 20 of {regularUsers.length} users
                   </p>
                 )}
               </div>
