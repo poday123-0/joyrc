@@ -545,16 +545,40 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const monthlyNetProfit = stats.monthlyRevenue - stats.monthlyExpenses;
   const weeklyNetProfit = stats.weeklyRevenue - stats.weeklyExpenses;
 
-  // Tab permission definitions for staff quick access cards
+  // Tab permission definitions for staff quick access cards - matches PERMISSION_AREAS in StaffManagementTab
   const availableTabs = [
-    { id: "pos", label: "Quick POS", icon: DollarSign, description: "Process sales quickly" },
+    // Products & Inventory
+    { id: "products", label: "Products", icon: Package, description: "Add, edit and manage products" },
+    { id: "categories", label: "Categories", icon: Package, description: "Manage product categories" },
+    { id: "stock", label: "Stock Management", icon: Package, description: "View and update inventory" },
+    { id: "featured", label: "Featured Products", icon: Package, description: "Manage featured highlights" },
+    
+    // Orders & Sales
+    { id: "pos", label: "Quick POS", icon: DollarSign, description: "Process walk-in sales" },
     { id: "orders", label: "Orders", icon: ShoppingCart, description: "Manage customer orders" },
-    { id: "products", label: "Products", icon: Package, description: "Manage inventory" },
-    { id: "stock", label: "Stock", icon: Package, description: "Stock management" },
-    { id: "transactions", label: "Transactions", icon: Wallet, description: "View transactions" },
-    { id: "deliveries", label: "Deliveries", icon: Package, description: "Manage deliveries" },
-    { id: "messages", label: "Messages", icon: Users, description: "Customer messages" },
-    { id: "preorders", label: "Pre-orders", icon: ShoppingCart, description: "Manage pre-orders" },
+    { id: "preorders", label: "Pre-orders", icon: ShoppingCart, description: "Manage pre-order requests" },
+    { id: "deliveries", label: "Deliveries", icon: Package, description: "Manage delivery assignments" },
+    
+    // Content & Media
+    { id: "hero", label: "Hero Banners", icon: Package, description: "Manage hero backgrounds" },
+    { id: "videos", label: "Videos", icon: Package, description: "Manage video showcases" },
+    { id: "home-content", label: "Home Content", icon: Package, description: "Edit homepage features" },
+    { id: "support", label: "Support Content", icon: Package, description: "Manage FAQ and articles" },
+    { id: "footer", label: "Footer Settings", icon: Package, description: "Configure footer info" },
+    { id: "storage", label: "Storage", icon: Package, description: "Manage uploaded files" },
+    
+    // Communication
+    { id: "messages", label: "Messages", icon: Users, description: "View contact messages" },
+    { id: "email-templates", label: "Email Templates", icon: Users, description: "Manage templates" },
+    { id: "marketing", label: "Marketing Emails", icon: Users, description: "Send campaigns" },
+    
+    // Financial
+    { id: "transactions", label: "Transactions", icon: Wallet, description: "View financial records" },
+    { id: "reports", label: "Reports", icon: Wallet, description: "View sales analytics" },
+    { id: "bank", label: "Bank Settings", icon: Wallet, description: "Manage bank details" },
+    
+    // User Management
+    { id: "users", label: "Users", icon: Users, description: "View customer accounts" },
   ];
 
   // Get tabs that staff has permission for
