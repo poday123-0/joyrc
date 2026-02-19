@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt, Trash2, ShieldAlert, X, Eye, EyeOff, Hash, Palette } from "lucide-react";
+import { Package, Search, RefreshCw, Plus, Minus, History, AlertTriangle, ChevronDown, ChevronUp, DollarSign, Truck, Receipt, Trash2, ShieldAlert, X, Eye, EyeOff, Hash, Palette, BarChart3, Boxes } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { StockHistoryDialog } from "@/components/StockHistoryDialog";
+import StockAnalytics from "@/components/stock/StockAnalytics";
+import BulkRestockDialog from "@/components/stock/BulkRestockDialog";
 
 interface Product {
   id: string;
@@ -89,6 +91,11 @@ const StockManagementTab = () => {
   // Stock history dialog state
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [historyDialogProductName, setHistoryDialogProductName] = useState("");
+  
+  // New feature states
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [bulkRestockOpen, setBulkRestockOpen] = useState(false);
+  const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [isGlobalHistoryView, setIsGlobalHistoryView] = useState(false);
 
   useEffect(() => {
@@ -400,12 +407,12 @@ const StockManagementTab = () => {
       (p.item_code && p.item_code.toLowerCase().includes(itemCodeSearch.toLowerCase()));
     const matchesCategory = selectedCategory === "all" || p.category_id === selectedCategory;
     const matchesStockFilter = stockFilter === "all" || 
-      (stockFilter === "low" && p.stock_quantity > 0 && p.stock_quantity <= 5) ||
+      (stockFilter === "low" && p.stock_quantity > 0 && p.stock_quantity <= lowStockThreshold) ||
       (stockFilter === "out" && p.stock_quantity === 0);
     return matchesSearch && matchesItemCode && matchesCategory && matchesStockFilter;
   });
 
-  const lowStockProducts = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5);
+  const lowStockProducts = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= lowStockThreshold);
   const outOfStockProducts = products.filter(p => p.stock_quantity === 0);
 
   const formatDate = (dateString: string) => {
@@ -534,7 +541,7 @@ const StockManagementTab = () => {
             Track and manage product inventory
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isSuperAdmin && (
             <button
               onClick={() => setShowClearDialog(true)}
@@ -564,8 +571,38 @@ const StockManagementTab = () => {
             <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">All History</span>
           </button>
+          <button
+            onClick={() => setBulkRestockOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-emerald-500/10 text-emerald-600 rounded-lg hover:bg-emerald-500/20 transition-colors"
+          >
+            <Boxes className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Bulk Restock</span>
+            <span className="sm:hidden">Bulk</span>
+          </button>
+          <button
+            onClick={() => setShowAnalytics(!showAnalytics)}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
+              showAnalytics ? "bg-accent text-accent-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Analytics</span>
+          </button>
         </div>
       </div>
+
+      {/* Analytics Section */}
+      {showAnalytics && (
+        <StockAnalytics products={products} />
+      )}
+
+      {/* Bulk Restock Dialog */}
+      <BulkRestockDialog
+        open={bulkRestockOpen}
+        onOpenChange={setBulkRestockOpen}
+        products={products}
+        onComplete={fetchProducts}
+      />
 
       {/* Clear History Dialog */}
       {showClearDialog && (
@@ -628,7 +665,7 @@ const StockManagementTab = () => {
       )}
 
       {/* Stats - Compact on mobile */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
         <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
           <p className="text-lg sm:text-2xl font-bold text-foreground">{products.length}</p>
           <p className="text-[10px] sm:text-sm text-muted-foreground">Products</p>
@@ -637,7 +674,7 @@ const StockManagementTab = () => {
           <p className="text-lg sm:text-2xl font-bold text-primary">
             {products.reduce((sum, p) => sum + p.stock_quantity, 0)}
           </p>
-          <p className="text-[10px] sm:text-sm text-muted-foreground">Stock</p>
+          <p className="text-[10px] sm:text-sm text-muted-foreground">Total Stock</p>
         </div>
         <button
           onClick={() => setStockFilter(stockFilter === "low" ? "all" : "low")}
@@ -648,7 +685,7 @@ const StockManagementTab = () => {
           }`}
         >
           <p className="text-lg sm:text-2xl font-bold text-amber-500">{lowStockProducts.length}</p>
-          <p className="text-[10px] sm:text-sm text-muted-foreground">Low</p>
+          <p className="text-[10px] sm:text-sm text-muted-foreground">Low (≤{lowStockThreshold})</p>
         </button>
         <button
           onClick={() => setStockFilter(stockFilter === "out" ? "all" : "out")}
@@ -661,6 +698,19 @@ const StockManagementTab = () => {
           <p className="text-lg sm:text-2xl font-bold text-destructive">{outOfStockProducts.length}</p>
           <p className="text-[10px] sm:text-sm text-muted-foreground">Out</p>
         </button>
+        {/* Threshold Setting */}
+        <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
+          <label className="text-[10px] sm:text-xs text-muted-foreground block mb-1">Low Threshold</label>
+          <select
+            value={lowStockThreshold}
+            onChange={(e) => setLowStockThreshold(parseInt(e.target.value))}
+            className="w-full px-2 py-1 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/30"
+          >
+            {[3, 5, 10, 15, 20, 25, 50].map(v => (
+              <option key={v} value={v}>≤ {v} units</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Stock Alerts - Compact on mobile */}
