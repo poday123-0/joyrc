@@ -13,6 +13,7 @@ interface Product {
   name: string;
   image_url: string | null;
   price: number;
+  cost_price: number | null;
   stock_quantity: number;
   in_stock: boolean;
   category_id: string | null;
@@ -43,6 +44,7 @@ interface ProductColor {
   id: string;
   color_name: string;
   color_hex: string;
+  stock_quantity: number;
 }
 
 interface StockCosts {
@@ -131,7 +133,7 @@ const StockManagementTab = () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, image_url, price, stock_quantity, in_stock, category_id, item_code, category:categories(name)")
+        .select("id, name, image_url, price, cost_price, stock_quantity, in_stock, category_id, item_code, category:categories(name)")
         .order("name");
 
       if (error) throw error;
@@ -233,7 +235,7 @@ const StockManagementTab = () => {
     
     const { data } = await supabase
       .from("product_colors")
-      .select("id, color_name, color_hex")
+      .select("id, color_name, color_hex, stock_quantity")
       .eq("product_id", productId)
       .order("sort_order");
     
@@ -321,6 +323,35 @@ const StockManagementTab = () => {
 
       if (updateError) throw updateError;
 
+      // Update color-specific stock if a color is selected
+      if (selectedColor) {
+        const colorNewQty = selectedColor.stock_quantity + changeAmount;
+        const { error: colorError } = await supabase
+          .from("product_colors")
+          .update({ stock_quantity: Math.max(0, colorNewQty) })
+          .eq("id", selectedColor.id);
+        
+        if (colorError) throw colorError;
+        
+        // Update local state
+        setProductColors(prev => ({
+          ...prev,
+          [productId]: prev[productId]?.map(c => 
+            c.id === selectedColor.id 
+              ? { ...c, stock_quantity: Math.max(0, colorNewQty) }
+              : c
+          ) || []
+        }));
+      }
+
+      // Update cost_price on the product if this is a restock
+      if (isRestock && costs?.unitPurchasePrice) {
+        await supabase
+          .from("products")
+          .update({ cost_price: costs.unitPurchasePrice })
+          .eq("id", productId);
+      }
+
       // Record stock history with costs
       const historyData: any = {
         product_id: productId,
@@ -374,7 +405,7 @@ const StockManagementTab = () => {
       toast({ 
         title: "Stock Updated",
         description: totalExpense > 0 
-          ? `Added ${changeAmount} units. Expense of ${formatMVR(totalExpense)} recorded.`
+          ? `Added ${changeAmount} units${selectedColor ? ` (${selectedColor.color_name})` : ''}. Expense of ${formatMVR(totalExpense)} recorded.`
           : undefined
       });
       
@@ -389,6 +420,13 @@ const StockManagementTab = () => {
       if (expandedProductId === productId) {
         const product = products.find(p => p.id === productId);
         fetchStockHistory(productId, product ? { name: product.name, item_code: product.item_code || null } : undefined);
+        // Refresh colors to get updated stock
+        setProductColors(prev => {
+          const copy = { ...prev };
+          delete copy[productId];
+          return copy;
+        });
+        fetchProductColors(productId);
       }
     } catch (error: any) {
       toast({
@@ -808,9 +846,10 @@ const StockManagementTab = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-sm sm:text-base text-foreground truncate">{product.name}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                      {product.category?.name || "Uncategorized"} • {formatMVR(product.price)}
-                    </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                        {product.category?.name || "Uncategorized"} • Sale: {formatMVR(product.price)}
+                        {product.cost_price ? ` • Cost: ${formatMVR(product.cost_price)}` : ""}
+                      </p>
                   </div>
                 </div>
 
@@ -896,7 +935,7 @@ const StockManagementTab = () => {
                           <div>
                             <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1 flex items-center gap-1">
                               <Palette className="w-3 h-3" />
-                              <span className="hidden sm:inline">Color</span>
+                              <span className="hidden sm:inline">Color (stock)</span>
                             </label>
                             <div className="flex flex-wrap items-center gap-1.5">
                               <button
@@ -916,14 +955,23 @@ const StockManagementTab = () => {
                                   key={color.id}
                                   type="button"
                                   onClick={() => setSelectedColorId(prev => ({ ...prev, [product.id]: color.id }))}
-                                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
+                                  className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
                                     selectedColorId[product.id] === color.id 
                                       ? "border-primary ring-2 ring-primary/30 scale-110" 
                                       : "border-border hover:scale-105"
                                   }`}
                                   style={{ backgroundColor: color.color_hex }}
-                                  title={color.color_name}
+                                  title={`${color.color_name} (${color.stock_quantity})`}
                                 />
+                              ))}
+                            </div>
+                            {/* Per-color stock display */}
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {productColors[product.id].map(color => (
+                                <span key={color.id} className="text-[9px] px-1.5 py-0.5 bg-muted rounded-full flex items-center gap-1">
+                                  <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: color.color_hex }} />
+                                  {color.stock_quantity}
+                                </span>
                               ))}
                             </div>
                           </div>

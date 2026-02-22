@@ -79,8 +79,8 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete }: BulkRes
         const newQty = product.stock_quantity + item.addQty;
         const itemTotal = item.addQty * unitPrice + (shippingCost / selectedItems.length) + (otherExpenses / selectedItems.length);
 
-        // Update product stock
-        await supabase.from("products").update({ stock_quantity: newQty, in_stock: true }).eq("id", item.productId);
+        // Update product stock and cost_price
+        await supabase.from("products").update({ stock_quantity: newQty, in_stock: true, cost_price: unitPrice }).eq("id", item.productId);
 
         // Record stock history
         await supabase.from("stock_history").insert({

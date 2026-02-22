@@ -15,6 +15,7 @@ interface ProductColor {
   color_name: string;
   color_hex: string;
   image_url: string | null;
+  stock_quantity: number;
 }
 
 interface Product {
@@ -109,7 +110,7 @@ const QuickPOSTab = () => {
     const productIds = productsData?.map(p => p.id) || [];
     const { data: colorsData } = await supabase
       .from("product_colors")
-      .select("*")
+      .select("*, stock_quantity")
       .in("product_id", productIds)
       .order("sort_order");
 
@@ -150,17 +151,24 @@ const QuickPOSTab = () => {
       (item.selectedColor?.id || null) === (color?.id || null)
     );
     
+    // Determine available stock: use color stock if color selected, else product stock
+    const availableStock = color ? color.stock_quantity : product.stock_quantity;
+    
     if (existing) {
-      if (existing.quantity < product.stock_quantity) {
+      if (existing.quantity < availableStock) {
         setCart(cart.map(item =>
           item.product.id === product.id && (item.selectedColor?.id || null) === (color?.id || null)
             ? { ...item, quantity: item.quantity + 1 }
             : item
         ));
       } else {
-        toast({ title: "Stock limit", description: `Only ${product.stock_quantity} available`, variant: "destructive" });
+        toast({ title: "Stock limit", description: `Only ${availableStock} available${color ? ` in ${color.color_name}` : ''}`, variant: "destructive" });
       }
     } else {
+      if (availableStock <= 0) {
+        toast({ title: "Out of stock", description: `${color?.color_name || product.name} is out of stock`, variant: "destructive" });
+        return;
+      }
       setCart([...cart, { product, quantity: 1, selectedColor: color }]);
     }
     setColorPickerProduct(null);
@@ -171,8 +179,9 @@ const QuickPOSTab = () => {
       if (item.product.id === productId && (item.selectedColor?.id || null) === colorId) {
         const newQty = item.quantity + delta;
         if (newQty <= 0) return item;
-        if (newQty > item.product.stock_quantity) {
-          toast({ title: "Stock limit", description: `Only ${item.product.stock_quantity} available`, variant: "destructive" });
+        const availableStock = item.selectedColor ? item.selectedColor.stock_quantity : item.product.stock_quantity;
+        if (newQty > availableStock) {
+          toast({ title: "Stock limit", description: `Only ${availableStock} available${item.selectedColor ? ` in ${item.selectedColor.color_name}` : ''}`, variant: "destructive" });
           return item;
         }
         return { ...item, quantity: newQty };
@@ -437,6 +446,15 @@ const QuickPOSTab = () => {
 
         if (stockError) throw stockError;
 
+        // Also deduct from color-specific stock if color was selected
+        if (item.selectedColor) {
+          const colorNewQty = Math.max(0, item.selectedColor.stock_quantity - item.quantity);
+          await supabase
+            .from("product_colors")
+            .update({ stock_quantity: colorNewQty })
+            .eq("id", item.selectedColor.id);
+        }
+
         await supabase.from("stock_history").insert({
           product_id: item.product.id,
           previous_quantity: item.product.stock_quantity,
@@ -541,10 +559,16 @@ const QuickPOSTab = () => {
                 <button
                   key={color.id}
                   onClick={() => addToCart(colorPickerProduct, color)}
-                  className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-muted transition-colors"
+                  disabled={color.stock_quantity <= 0}
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border border-border transition-colors ${
+                    color.stock_quantity <= 0 ? "opacity-40 cursor-not-allowed" : "hover:bg-muted"
+                  }`}
                 >
                   <div className="w-5 h-5 rounded-full border border-border shadow-sm flex-shrink-0" style={{ backgroundColor: color.color_hex }} />
-                  <span className="text-xs font-medium truncate">{color.color_name}</span>
+                  <div className="flex flex-col items-start min-w-0">
+                    <span className="text-xs font-medium truncate">{color.color_name}</span>
+                    <span className="text-[10px] text-muted-foreground">{color.stock_quantity} in stock</span>
+                  </div>
                 </button>
               ))}
             </div>
