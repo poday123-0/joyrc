@@ -606,6 +606,7 @@ export type Database = {
           image_url: string | null
           product_id: string
           sort_order: number | null
+          stock_quantity: number
         }
         Insert: {
           color_hex: string
@@ -615,6 +616,7 @@ export type Database = {
           image_url?: string | null
           product_id: string
           sort_order?: number | null
+          stock_quantity?: number
         }
         Update: {
           color_hex?: string
@@ -624,6 +626,7 @@ export type Database = {
           image_url?: string | null
           product_id?: string
           sort_order?: number | null
+          stock_quantity?: number
         }
         Relationships: [
           {
@@ -718,6 +721,7 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          cost_price: number | null
           created_at: string
           description: string | null
           id: string
@@ -733,6 +737,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
@@ -748,6 +753,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
