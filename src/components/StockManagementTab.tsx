@@ -45,6 +45,7 @@ interface ProductColor {
   color_name: string;
   color_hex: string;
   stock_quantity: number;
+  cost_price: number | null;
 }
 
 interface StockCosts {
@@ -235,7 +236,7 @@ const StockManagementTab = () => {
     
     const { data } = await supabase
       .from("product_colors")
-      .select("id, color_name, color_hex, stock_quantity")
+      .select("id, color_name, color_hex, stock_quantity, cost_price")
       .eq("product_id", productId)
       .order("sort_order");
     
@@ -326,9 +327,14 @@ const StockManagementTab = () => {
       // Update color-specific stock if a color is selected
       if (selectedColor) {
         const colorNewQty = selectedColor.stock_quantity + changeAmount;
+        const colorUpdate: any = { stock_quantity: Math.max(0, colorNewQty) };
+        // Also update color cost_price when restocking
+        if (isRestock && costs?.unitPurchasePrice) {
+          colorUpdate.cost_price = costs.unitPurchasePrice;
+        }
         const { error: colorError } = await supabase
           .from("product_colors")
-          .update({ stock_quantity: Math.max(0, colorNewQty) })
+          .update(colorUpdate)
           .eq("id", selectedColor.id);
         
         if (colorError) throw colorError;
@@ -338,7 +344,7 @@ const StockManagementTab = () => {
           ...prev,
           [productId]: prev[productId]?.map(c => 
             c.id === selectedColor.id 
-              ? { ...c, stock_quantity: Math.max(0, colorNewQty) }
+              ? { ...c, stock_quantity: Math.max(0, colorNewQty), cost_price: colorUpdate.cost_price ?? c.cost_price }
               : c
           ) || []
         }));
@@ -965,15 +971,63 @@ const StockManagementTab = () => {
                                 />
                               ))}
                             </div>
-                            {/* Per-color stock display */}
+                            {/* Per-color stock & cost display */}
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {productColors[product.id].map(color => (
                                 <span key={color.id} className="text-[9px] px-1.5 py-0.5 bg-muted rounded-full flex items-center gap-1">
                                   <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: color.color_hex }} />
-                                  {color.stock_quantity}
+                                  {color.stock_quantity} • {formatMVR(color.cost_price || 0)}
                                 </span>
                               ))}
                             </div>
+                            {/* Per-color cost price editing */}
+                            {selectedColorId[product.id] && (() => {
+                              const selColor = productColors[product.id]?.find(c => c.id === selectedColorId[product.id]);
+                              if (!selColor) return null;
+                              return (
+                                <div className="mt-2 p-2 bg-muted/40 rounded-lg border border-border/50">
+                                  <label className="block text-[10px] text-muted-foreground mb-1">
+                                    Cost Price — {selColor.color_name}
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={selColor.cost_price || ""}
+                                      onChange={(e) => {
+                                        const val = parseFloat(e.target.value) || 0;
+                                        setProductColors(prev => ({
+                                          ...prev,
+                                          [product.id]: prev[product.id]?.map(c =>
+                                            c.id === selColor.id ? { ...c, cost_price: val } : c
+                                          ) || []
+                                        }));
+                                      }}
+                                      placeholder="0.00"
+                                      className="w-24 px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    />
+                                    <button
+                                      onClick={async () => {
+                                        const val = selColor.cost_price || 0;
+                                        const { error } = await supabase
+                                          .from("product_colors")
+                                          .update({ cost_price: val })
+                                          .eq("id", selColor.id);
+                                        if (error) {
+                                          toast({ title: "Error", description: error.message, variant: "destructive" });
+                                        } else {
+                                          toast({ title: "Saved", description: `${selColor.color_name} cost price set to ${formatMVR(val)}` });
+                                        }
+                                      }}
+                                      className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
