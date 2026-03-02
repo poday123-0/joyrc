@@ -980,54 +980,6 @@ const StockManagementTab = () => {
                                 </span>
                               ))}
                             </div>
-                            {/* Per-color cost price editing */}
-                            {selectedColorId[product.id] && (() => {
-                              const selColor = productColors[product.id]?.find(c => c.id === selectedColorId[product.id]);
-                              if (!selColor) return null;
-                              return (
-                                <div className="mt-2 p-2 bg-muted/40 rounded-lg border border-border/50">
-                                  <label className="block text-[10px] text-muted-foreground mb-1">
-                                    Cost Price — {selColor.color_name}
-                                  </label>
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      value={selColor.cost_price || ""}
-                                      onChange={(e) => {
-                                        const val = parseFloat(e.target.value) || 0;
-                                        setProductColors(prev => ({
-                                          ...prev,
-                                          [product.id]: prev[product.id]?.map(c =>
-                                            c.id === selColor.id ? { ...c, cost_price: val } : c
-                                          ) || []
-                                        }));
-                                      }}
-                                      placeholder="0.00"
-                                      className="w-24 px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    />
-                                    <button
-                                      onClick={async () => {
-                                        const val = selColor.cost_price || 0;
-                                        const { error } = await supabase
-                                          .from("product_colors")
-                                          .update({ cost_price: val })
-                                          .eq("id", selColor.id);
-                                        if (error) {
-                                          toast({ title: "Error", description: error.message, variant: "destructive" });
-                                        } else {
-                                          toast({ title: "Saved", description: `${selColor.color_name} cost price set to ${formatMVR(val)}` });
-                                        }
-                                      }}
-                                      className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })()}
                           </div>
                         )}
                       </div>
@@ -1053,6 +1005,12 @@ const StockManagementTab = () => {
                       <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-accent">
                         <Receipt className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         <span>Purchase Costs</span>
+                        {selectedColorId[product.id] && productColors[product.id]?.find(c => c.id === selectedColorId[product.id]) && (
+                          <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-[9px] flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_hex }} />
+                            {productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_name}
+                          </span>
+                        )}
                         <span className="text-muted-foreground font-normal hidden sm:inline">(Auto-loaded)</span>
                       </div>
 
