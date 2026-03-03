@@ -261,8 +261,28 @@ const ProductDetail = () => {
         setShowPreorderDialog(true);
         return;
       }
-      // Get image for selected color or default
+      
+      // Check stock availability before adding
       const selectedColor = productColors.find(c => c.id === selectedColorId);
+      const currentCartQty = (() => {
+        const stored = localStorage.getItem("rcjoy_cart");
+        if (!stored) return 0;
+        const cartItems = JSON.parse(stored);
+        return cartItems.filter((i: any) => 
+          i.id === product.id && (i.colorId || null) === (selectedColorId || null)
+        ).reduce((sum: number, i: any) => sum + i.quantity, 0);
+      })();
+      
+      if (currentCartQty >= product.stock_quantity) {
+        toast({
+          title: "Stock Limit Reached",
+          description: `Only ${product.stock_quantity} available in stock.`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Get image for selected color or default
       const imageSrc = selectedColor?.image_url || galleryImages[0] || product.image_url || "";
       
       addToCart({
