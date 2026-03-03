@@ -727,6 +727,7 @@ export type Database = {
           cost_price: number | null
           created_at: string
           description: string | null
+          hidden_from_shop: boolean
           id: string
           image_url: string | null
           in_stock: boolean | null
@@ -743,6 +744,7 @@ export type Database = {
           cost_price?: number | null
           created_at?: string
           description?: string | null
+          hidden_from_shop?: boolean
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
@@ -759,6 +761,7 @@ export type Database = {
           cost_price?: number | null
           created_at?: string
           description?: string | null
+          hidden_from_shop?: boolean
           id?: string
           image_url?: string | null
           in_stock?: boolean | null

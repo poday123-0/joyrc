@@ -252,7 +252,7 @@ const PaymentOrdersTab = () => {
 
       const { data: items, error: itemsError } = await supabase
         .from("order_items")
-        .select("product_id, product_name, quantity")
+        .select("product_id, product_name, quantity, color_id")
         .eq("order_id", selectedOrderId);
 
       if (itemsError) throw itemsError;
@@ -283,6 +283,23 @@ const PaymentOrdersTab = () => {
         if (updateError) {
           console.error(`Failed to update stock for ${item.product_id}:`, updateError);
           continue;
+        }
+
+        // Also deduct from color-specific stock if color was selected
+        if (item.color_id) {
+          const { data: colorData } = await supabase
+            .from("product_colors")
+            .select("stock_quantity")
+            .eq("id", item.color_id)
+            .single();
+          
+          if (colorData) {
+            const colorNewQty = Math.max(0, (colorData.stock_quantity || 0) - item.quantity);
+            await supabase
+              .from("product_colors")
+              .update({ stock_quantity: colorNewQty })
+              .eq("id", item.color_id);
+          }
         }
 
         const { error: historyError } = await supabase
@@ -366,11 +383,11 @@ const PaymentOrdersTab = () => {
       const wasConfirmed = order.payment_status === "confirmed";
 
       if (wasConfirmed) {
-        // 1. Get stock history records for this order to reverse stock deductions
-        const { data: stockRecords, error: stockFetchError } = await supabase
-          .from("stock_history")
-          .select("id, product_id, change_amount")
-          .eq("order_id", selectedOrderId);
+        // 1. Get stock history records and order items for this order to reverse stock deductions
+        const [{ data: stockRecords, error: stockFetchError }, { data: orderItems }] = await Promise.all([
+          supabase.from("stock_history").select("id, product_id, change_amount").eq("order_id", selectedOrderId),
+          supabase.from("order_items").select("product_id, quantity, color_id").eq("order_id", selectedOrderId),
+        ]);
 
         if (stockFetchError) {
           console.error("Failed to fetch stock history:", stockFetchError);
@@ -396,6 +413,24 @@ const PaymentOrdersTab = () => {
                 in_stock: newQty > 0 
               })
               .eq("id", record.product_id);
+          }
+        }
+
+        // 2b. Restore color-specific stock
+        for (const item of orderItems || []) {
+          if (item.color_id) {
+            const { data: colorData } = await supabase
+              .from("product_colors")
+              .select("stock_quantity")
+              .eq("id", item.color_id)
+              .single();
+            
+            if (colorData) {
+              await supabase
+                .from("product_colors")
+                .update({ stock_quantity: (colorData.stock_quantity || 0) + item.quantity })
+                .eq("id", item.color_id);
+            }
           }
         }
 

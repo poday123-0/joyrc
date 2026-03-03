@@ -56,10 +56,11 @@ const Categories = () => {
         setCategories(staticCategories);
       }
 
-      // Fetch products
+      // Fetch products (exclude hidden from shop)
       const { data: prodData } = await supabase
         .from("products")
-        .select(`*, categories (name)`);
+        .select(`*, categories (name)`)
+        .or('hidden_from_shop.is.null,hidden_from_shop.eq.false');
 
       if (prodData && prodData.length > 0) {
         setProducts(
