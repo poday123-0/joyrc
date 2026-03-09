@@ -1129,6 +1129,38 @@ const StockManagementTab = () => {
                       </div>
                     </div>
 
+                    {/* Inline Mode Toggle */}
+                    <div className="flex rounded-xl bg-muted/50 p-1 border border-border/50">
+                      <button
+                        onClick={() => {
+                          setStockMode(prev => ({ ...prev, [product.id]: "add" }));
+                          setAdjustmentAmount(prev => ({ ...prev, [product.id]: 0 }));
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          (stockMode[product.id] || "add") === "add"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <PackagePlus className="w-3.5 h-3.5" />
+                        Add Stock
+                      </button>
+                      <button
+                        onClick={() => {
+                          setStockMode(prev => ({ ...prev, [product.id]: "remove" }));
+                          setAdjustmentAmount(prev => ({ ...prev, [product.id]: 0 }));
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          stockMode[product.id] === "remove"
+                            ? "bg-destructive text-destructive-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <PackageMinus className="w-3.5 h-3.5" />
+                        Remove Stock
+                      </button>
+                    </div>
+
                     {/* Cost Fields - Only for Add mode */}
                     {(stockMode[product.id] || "add") === "add" && (
                       <div className="space-y-2 sm:space-y-3">
