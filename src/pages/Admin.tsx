@@ -457,6 +457,14 @@ const Admin = () => {
             <SheetTitle className="text-left">Admin Menu</SheetTitle>
           </SheetHeader>
           <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-80px)]">
+            <Link
+              to="/home"
+              onClick={() => setSidebarOpen(false)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 mb-2 pb-2 border-b border-border/50"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="font-medium">Exit Admin</span>
+            </Link>
             {filteredTabs.map((tab) => (
               <button
                 key={tab.id}
