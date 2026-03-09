@@ -298,8 +298,18 @@ const StockManagementTab = () => {
   };
 
 
-  const handleSetStock = async (productId: string, currentQty: number, newQty: number, productName: string) => {
-    const isRestock = newQty > currentQty;
+  const handleSetStock = async (productId: string, currentQty: number, changeQty: number, productName: string) => {
+    const mode = stockMode[productId] || "add";
+    const changeAmount = mode === "add" ? changeQty : -changeQty;
+    const newQty = currentQty + changeAmount;
+    
+    if (newQty < 0) {
+      toast({ title: "Cannot remove more than available", description: `Only ${currentQty} units in stock.`, variant: "destructive" });
+      return;
+    }
+    if (changeQty === 0) return;
+
+    const isRestock = mode === "add";
     const costs = stockCosts[productId];
     
     // Validate: Unit price is required when restocking
@@ -312,15 +322,11 @@ const StockManagementTab = () => {
       return;
     }
 
-    const selectedColor = selectedColorId[productId] 
-      ? productColors[productId]?.find(c => c.id === selectedColorId[productId])
-      : null;
-    const colorNote = selectedColor ? `[Color: ${selectedColor.color_name}] ` : "";
-    const userNote = adjustmentNotes[productId] || "";
-    const notes = colorNote + userNote || null;
-    const changeAmount = newQty - currentQty;
-    
-    // Calculate total expense
+    // Validate: Removal reason required when removing
+    if (!isRestock && !removalReason[productId]) {
+      toast({ title: "Reason Required", description: "Please select a reason for removing stock.", variant: "destructive" });
+      return;
+    }
     let totalExpense = 0;
     if (costs && isRestock) {
       const purchaseTotal = (costs.unitPurchasePrice || 0) * changeAmount;
