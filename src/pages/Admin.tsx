@@ -457,6 +457,14 @@ const Admin = () => {
             <SheetTitle className="text-left">Admin Menu</SheetTitle>
           </SheetHeader>
           <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-80px)]">
+            <Link
+              to="/home"
+              onClick={() => setSidebarOpen(false)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 mb-2 pb-2 border-b border-border/50"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="font-medium">Exit Admin</span>
+            </Link>
             {filteredTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -482,12 +490,12 @@ const Admin = () => {
       <div className="lg:hidden sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setActiveTab("dashboard")}
+            <Link
+              to="/home"
               className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
+            </Link>
             <h1 className="font-semibold text-lg text-foreground">Admin</h1>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -523,13 +531,13 @@ const Admin = () => {
       <div className="lg:flex lg:min-h-screen">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex lg:flex-col w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
-            <button
-              onClick={() => setActiveTab("dashboard")}
+          <div className="flex items-center gap-3 mb-2 pb-3 border-b border-border">
+            <Link
+              to="/home"
               className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
+            </Link>
             <h1 className="font-semibold text-lg text-foreground">Admin</h1>
           </div>
 
@@ -574,16 +582,6 @@ const Admin = () => {
                   </button>
                 ))}
               </nav>
-
-              <div className="mt-auto pt-4 border-t border-border/50">
-                <Link
-                  to="/home"
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span className="font-medium">Exit Admin</span>
-                </Link>
-              </div>
             </>
           )}
         </aside>
