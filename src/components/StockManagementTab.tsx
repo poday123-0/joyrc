@@ -395,7 +395,7 @@ const StockManagementTab = () => {
         previous_quantity: currentQty,
         new_quantity: newQty,
         change_amount: changeAmount,
-        change_type: isRestock ? "restock" : "manual_adjustment",
+        change_type: isRestock ? "restock" : "stock_removal",
         notes,
       };
 
