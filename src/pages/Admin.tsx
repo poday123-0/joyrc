@@ -524,12 +524,12 @@ const Admin = () => {
         {/* Desktop Sidebar */}
         <aside className="hidden lg:block w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
-            <Link
-              to="/"
+            <button
+              onClick={() => setActiveTab("dashboard")}
               className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
-            </Link>
+            </button>
             <h1 className="font-semibold text-lg text-foreground">Admin</h1>
           </div>
 
