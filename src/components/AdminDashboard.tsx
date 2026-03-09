@@ -845,24 +845,41 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
               </Popover>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {/* Revenue */}
               <div className="text-center p-3 rounded-xl bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-1">Income</p>
+                <p className="text-xs text-muted-foreground mb-1">Revenue</p>
                 <p className="text-sm font-bold text-[hsl(var(--chart-2))]">{formatMVR(periodStats.income)}</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-1">Expenses</p>
-                <p className="text-sm font-bold text-destructive">{formatMVR(periodStats.expenses)}</p>
+              {/* Product Purchase (Cost) */}
+              <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
+                <p className="text-xs text-muted-foreground mb-1">Product Cost</p>
+                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-primary/5">
-                <p className="text-xs text-muted-foreground mb-1">Net</p>
-                <p className={`text-sm font-bold ${periodStats.income - periodStats.expenses >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {periodStats.income - periodStats.expenses >= 0 ? "+" : ""}{formatMVR(periodStats.income - periodStats.expenses)}
+              {/* Profit = Revenue - Cost */}
+              <div className="text-center p-3 rounded-xl bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-1">Profit</p>
+                <p className={`text-sm font-bold ${periodStats.income - periodStats.cashOut >= 0 ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
+                  {formatMVR(periodStats.income - periodStats.cashOut)}
                 </p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
-                <p className="text-xs text-muted-foreground mb-1">Product Purchase</p>
-                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
+              {/* Total Expenses */}
+              <div className="text-center p-3 rounded-xl bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
+                <p className="text-sm font-bold text-destructive">{formatMVR(periodStats.expenses)}</p>
+              </div>
+              {/* Gross = Profit - Expenses */}
+              <div className="text-center p-3 rounded-xl bg-primary/5">
+                <p className="text-xs text-muted-foreground mb-1">Gross</p>
+                <p className={`text-sm font-bold ${(periodStats.income - periodStats.cashOut - periodStats.expenses) >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {formatMVR(periodStats.income - periodStats.cashOut - periodStats.expenses)}
+                </p>
+              </div>
+              {/* Inventory Value */}
+              <div className="text-center p-3 rounded-xl bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowStockDetails(true)}>
+                <p className="text-xs text-muted-foreground mb-1">Inventory Value</p>
+                <p className="text-sm font-bold text-foreground">{formatMVR(stats.stockValueCost)}</p>
+                <p className="text-[9px] text-muted-foreground">{stats.totalStockItems} items</p>
               </div>
             </div>
           </div>
