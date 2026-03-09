@@ -557,33 +557,34 @@ const Admin = () => {
               </SortableContext>
             </DndContext>
           ) : (
-            <nav className="space-y-1">
-              {filteredTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as Tab)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
-                    activeTab === tab.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  <span className="font-medium">{tab.label}</span>
-                </button>
-              ))}
-            </nav>
+            <>
+              <nav className="space-y-1">
+                {filteredTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as Tab)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
+                      activeTab === tab.id
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span className="font-medium">{tab.label}</span>
+                  </button>
+                ))}
+              </nav>
 
-            {/* Exit Admin */}
-            <div className="mt-auto pt-4 border-t border-border/50">
-              <Link
-                to="/home"
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span className="font-medium">Exit Admin</span>
-              </Link>
-            </div>
+              <div className="mt-auto pt-4 border-t border-border/50">
+                <Link
+                  to="/home"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span className="font-medium">Exit Admin</span>
+                </Link>
+              </div>
+            </>
           )}
         </aside>
 
