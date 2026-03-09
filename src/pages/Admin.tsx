@@ -482,12 +482,12 @@ const Admin = () => {
       <div className="lg:hidden sticky top-0 z-20 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setActiveTab("dashboard")}
+            <Link
+              to="/home"
               className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
+            </Link>
             <h1 className="font-semibold text-lg text-foreground">Admin</h1>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
