@@ -59,7 +59,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete }: BulkRes
   };
 
   const totalUnits = selectedItems.reduce((sum, i) => sum + i.addQty, 0);
-  const totalCost = totalUnits * unitPrice + shippingCost + otherExpenses;
+  const totalCost = totalUnits * (unitPrice + shippingCost + otherExpenses);
 
   const handleBulkRestock = async () => {
     if (selectedItems.length === 0) return;
