@@ -102,6 +102,19 @@ const StockManagementTab = () => {
   const [bulkRestockOpen, setBulkRestockOpen] = useState(false);
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [isGlobalHistoryView, setIsGlobalHistoryView] = useState(false);
+  const [stockMode, setStockMode] = useState<Record<string, "add" | "remove">>({});
+  const [removalReason, setRemovalReason] = useState<Record<string, string>>({});
+
+  const REMOVAL_REASONS = [
+    { value: "damaged", label: "Damaged", icon: "💔" },
+    { value: "lost", label: "Lost / Missing", icon: "🔍" },
+    { value: "returned_supplier", label: "Returned to Supplier", icon: "📦" },
+    { value: "expired", label: "Expired", icon: "⏰" },
+    { value: "defective", label: "Defective", icon: "⚠️" },
+    { value: "stolen", label: "Stolen", icon: "🚨" },
+    { value: "sample", label: "Given as Sample", icon: "🎁" },
+    { value: "other", label: "Other", icon: "📝" },
+  ];
 
   useEffect(() => {
     fetchProducts();
