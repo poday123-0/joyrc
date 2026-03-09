@@ -309,6 +309,13 @@ const StockManagementTab = () => {
     }
     if (changeQty === 0) return;
 
+    // Validate: Color must be selected if product has color variants
+    const hasColors = productColors[productId] && productColors[productId].length > 0;
+    if (hasColors && !selectedColorId[productId]) {
+      toast({ title: "Select a Color", description: "Please select a color variant before adding or removing stock.", variant: "destructive" });
+      return;
+    }
+
     const isRestock = mode === "add";
     const costs = stockCosts[productId];
     
