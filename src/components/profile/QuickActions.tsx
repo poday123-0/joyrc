@@ -12,16 +12,14 @@ const QuickActions = ({ isAdmin, onSignOut }: QuickActionsProps) => {
       to: "/cart",
       icon: ShoppingBag,
       label: "Cart",
-      color: "from-primary/15 to-primary/5",
-      hoverColor: "hover:border-primary/40",
+      gradient: "from-primary/20 to-primary/5",
       iconColor: "text-primary",
     },
     {
       to: "/categories",
       icon: Store,
       label: "Shop",
-      color: "from-accent/15 to-accent/5",
-      hoverColor: "hover:border-accent/40",
+      gradient: "from-accent/20 to-accent/5",
       iconColor: "text-accent-foreground",
     },
     ...(isAdmin
@@ -30,40 +28,39 @@ const QuickActions = ({ isAdmin, onSignOut }: QuickActionsProps) => {
             to: "/admin",
             icon: Settings,
             label: "Admin",
-            color: "from-primary/15 to-primary/5",
-            hoverColor: "hover:border-primary/40",
-            iconColor: "text-primary",
+            gradient: "from-secondary/30 to-secondary/10",
+            iconColor: "text-secondary-foreground",
           },
         ]
       : []),
   ];
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {actions.map((action) => {
         const Icon = action.icon;
         return (
           <Link
             key={action.label}
             to={action.to}
-            className={`group flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-card/70 backdrop-blur-sm border border-border/40 ${action.hoverColor} hover:bg-card hover:shadow-md transition-all duration-300`}
+            className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-card/80 to-card/40 border border-border/30 hover:border-border/60 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
           >
-            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
-              <Icon className={`w-4 h-4 ${action.iconColor}`} />
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+              <Icon className={`w-5 h-5 ${action.iconColor}`} />
             </div>
-            <span className="text-sm font-medium text-foreground">{action.label}</span>
+            <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{action.label}</span>
           </Link>
         );
       })}
-      
+
       <button
         onClick={onSignOut}
-        className="group flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-card/70 backdrop-blur-sm border border-border/40 hover:border-destructive/40 hover:bg-destructive/5 hover:shadow-md transition-all duration-300"
+        className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-card/80 to-card/40 border border-border/30 hover:border-destructive/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
       >
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-destructive/15 to-destructive/5 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-          <LogOut className="w-4 h-4 text-destructive" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-destructive/15 to-destructive/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          <LogOut className="w-5 h-5 text-destructive" />
         </div>
-        <span className="text-sm font-medium text-foreground">Sign Out</span>
+        <span className="text-xs font-medium text-foreground/80 group-hover:text-destructive transition-colors">Sign Out</span>
       </button>
     </div>
   );
