@@ -339,8 +339,8 @@ const StockManagementTab = () => {
     // Calculate total expense
     let totalExpense = 0;
     if (costs && isRestock) {
-      const purchaseTotal = (costs.unitPurchasePrice || 0) * Math.abs(changeAmount);
-      totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+      const perUnit = (costs.unitPurchasePrice || 0) + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+      totalExpense = perUnit * Math.abs(changeAmount);
     }
     
     setSaving(productId);
@@ -1247,15 +1247,15 @@ const StockManagementTab = () => {
                             const costs = stockCosts[product.id];
                             const addQty = adjustmentAmount[product.id] || 0;
                             if (!costs || addQty <= 0) return null;
-                            const purchaseTotal = (costs.unitPurchasePrice || 0) * addQty;
-                            const totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+                            const perUnit = (costs.unitPurchasePrice || 0) + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+                            const totalExpense = perUnit * addQty;
                             if (totalExpense <= 0) return null;
                             return (
                               <div className="col-span-3 p-2 bg-primary/10 rounded-lg">
                                 <p className="text-xs sm:text-sm text-foreground">
                                   <span className="font-medium">Total:</span> {formatMVR(totalExpense)}
                                   <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 sm:ml-2">
-                                    ({addQty} × {formatMVR(costs.unitPurchasePrice || 0)})
+                                    ({addQty} × {formatMVR(perUnit)} per unit)
                                   </span>
                                 </p>
                               </div>
