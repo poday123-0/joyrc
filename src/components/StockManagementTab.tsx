@@ -440,10 +440,10 @@ const StockManagementTab = () => {
       }
 
       toast({ 
-        title: "Stock Updated",
-        description: totalExpense > 0 
-          ? `Added ${changeAmount} units${selectedColor ? ` (${selectedColor.color_name})` : ''}. Expense of ${formatMVR(totalExpense)} recorded.`
-          : undefined
+        title: isRestock ? "Stock Added" : "Stock Removed",
+        description: isRestock
+          ? `Added ${Math.abs(changeAmount)} units${selectedColor ? ` (${selectedColor.color_name})` : ''}${totalExpense > 0 ? `. Expense of ${formatMVR(totalExpense)} recorded.` : ''}`
+          : `Removed ${Math.abs(changeAmount)} units${selectedColor ? ` (${selectedColor.color_name})` : ''}. Reason: ${reasonLabel}`
       });
       
       // Reset all inputs
@@ -452,6 +452,7 @@ const StockManagementTab = () => {
       setSelectedColorId(prev => ({ ...prev, [productId]: "" }));
       setStockCosts(prev => ({ ...prev, [productId]: { unitPurchasePrice: 0, shippingCost: 0, otherExpenses: 0, expenseNotes: "" } }));
       setShowCostFields(prev => ({ ...prev, [productId]: false }));
+      setRemovalReason(prev => ({ ...prev, [productId]: "" }));
       
       fetchProducts();
       if (expandedProductId === productId) {
