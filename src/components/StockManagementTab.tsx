@@ -327,9 +327,19 @@ const StockManagementTab = () => {
       toast({ title: "Reason Required", description: "Please select a reason for removing stock.", variant: "destructive" });
       return;
     }
+
+    const selectedColor = selectedColorId[productId] 
+      ? productColors[productId]?.find(c => c.id === selectedColorId[productId])
+      : null;
+    const colorNote = selectedColor ? `[Color: ${selectedColor.color_name}] ` : "";
+    const reasonLabel = !isRestock ? REMOVAL_REASONS.find(r => r.value === removalReason[productId])?.label || "" : "";
+    const userNote = adjustmentNotes[productId] || "";
+    const notes = (colorNote + (reasonLabel ? `[${reasonLabel}] ` : "") + userNote).trim() || null;
+
+    // Calculate total expense
     let totalExpense = 0;
     if (costs && isRestock) {
-      const purchaseTotal = (costs.unitPurchasePrice || 0) * changeAmount;
+      const purchaseTotal = (costs.unitPurchasePrice || 0) * Math.abs(changeAmount);
       totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
     }
     
