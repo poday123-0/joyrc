@@ -522,7 +522,7 @@ const Admin = () => {
       {/* Desktop Layout */}
       <div className="lg:flex lg:min-h-screen">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
+        <aside className="hidden lg:flex lg:flex-col w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
             <button
               onClick={() => setActiveTab("dashboard")}
