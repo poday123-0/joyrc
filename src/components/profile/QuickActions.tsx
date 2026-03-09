@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingBag, Settings, LogOut, ChevronRight } from "lucide-react";
+import { ShoppingBag, Settings, LogOut, Store } from "lucide-react";
 
 interface QuickActionsProps {
   isAdmin: boolean;
@@ -7,53 +7,63 @@ interface QuickActionsProps {
 }
 
 const QuickActions = ({ isAdmin, onSignOut }: QuickActionsProps) => {
+  const actions = [
+    {
+      to: "/cart",
+      icon: ShoppingBag,
+      label: "Cart",
+      color: "from-primary/15 to-primary/5",
+      hoverColor: "hover:border-primary/40",
+      iconColor: "text-primary",
+    },
+    {
+      to: "/categories",
+      icon: Store,
+      label: "Shop",
+      color: "from-accent/15 to-accent/5",
+      hoverColor: "hover:border-accent/40",
+      iconColor: "text-accent-foreground",
+    },
+    ...(isAdmin
+      ? [
+          {
+            to: "/admin",
+            icon: Settings,
+            label: "Admin",
+            color: "from-primary/15 to-primary/5",
+            hoverColor: "hover:border-primary/40",
+            iconColor: "text-primary",
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <div className="space-y-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-4">
-        Quick Actions
-      </h3>
+    <div className="flex items-center gap-2 flex-wrap">
+      {actions.map((action) => {
+        const Icon = action.icon;
+        return (
+          <Link
+            key={action.label}
+            to={action.to}
+            className={`group flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-card/70 backdrop-blur-sm border border-border/40 ${action.hoverColor} hover:bg-card hover:shadow-md transition-all duration-300`}
+          >
+            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
+              <Icon className={`w-4 h-4 ${action.iconColor}`} />
+            </div>
+            <span className="text-sm font-medium text-foreground">{action.label}</span>
+          </Link>
+        );
+      })}
       
-      <Link 
-        to="/cart" 
-        className="group flex items-center gap-4 p-4 rounded-2xl bg-card/60 backdrop-blur-sm border border-border/40 hover:border-primary/40 hover:bg-card transition-all duration-300 shadow-sm hover:shadow-md"
-      >
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300">
-          <ShoppingBag className="w-5 h-5 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-foreground text-sm">My Cart</h4>
-          <p className="text-xs text-muted-foreground mt-0.5">View your shopping cart</p>
-        </div>
-        <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
-      </Link>
-
-      {isAdmin && (
-        <Link 
-          to="/admin" 
-          className="group flex items-center gap-4 p-4 rounded-2xl bg-card/60 backdrop-blur-sm border border-border/40 hover:border-primary/40 hover:bg-card transition-all duration-300 shadow-sm hover:shadow-md"
-        >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300">
-            <Settings className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-foreground text-sm">Admin Panel</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">Manage products & settings</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
-        </Link>
-      )}
-
       <button
         onClick={onSignOut}
-        className="w-full group flex items-center gap-4 p-4 rounded-2xl bg-card/60 backdrop-blur-sm border border-border/40 hover:border-destructive/40 hover:bg-destructive/5 transition-all duration-300 shadow-sm hover:shadow-md"
+        className="group flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-card/70 backdrop-blur-sm border border-border/40 hover:border-destructive/40 hover:bg-destructive/5 hover:shadow-md transition-all duration-300"
       >
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/5 flex items-center justify-center group-hover:from-destructive/20 group-hover:to-destructive/10 transition-all duration-300">
-          <LogOut className="w-5 h-5 text-destructive" />
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-destructive/15 to-destructive/5 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <LogOut className="w-4 h-4 text-destructive" />
         </div>
-        <div className="flex-1 text-left min-w-0">
-          <h4 className="font-semibold text-foreground text-sm">Sign Out</h4>
-          <p className="text-xs text-muted-foreground mt-0.5">Log out of your account</p>
-        </div>
+        <span className="text-sm font-medium text-foreground">Sign Out</span>
       </button>
     </div>
   );
