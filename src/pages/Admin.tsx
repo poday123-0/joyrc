@@ -523,13 +523,13 @@ const Admin = () => {
       <div className="lg:flex lg:min-h-screen">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex lg:flex-col w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
-            <button
-              onClick={() => setActiveTab("dashboard")}
+          <div className="flex items-center gap-3 mb-2 pb-3 border-b border-border">
+            <Link
+              to="/home"
               className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
+            </Link>
             <h1 className="font-semibold text-lg text-foreground">Admin</h1>
           </div>
 
