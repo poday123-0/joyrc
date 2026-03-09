@@ -945,24 +945,58 @@ const StockManagementTab = () => {
                     </button>
                   </div>
 
-                  {/* Stock Adjustment */}
+                  {/* Stock Adjustment - Add/Remove Tabs */}
                   <div className="space-y-3 sm:space-y-4">
-                    {/* Quantity with +/- buttons - Mobile optimized */}
+                    {/* Mode Tabs */}
+                    <div className="flex rounded-xl bg-muted/50 p-1 border border-border/50">
+                      <button
+                        onClick={() => {
+                          setStockMode(prev => ({ ...prev, [product.id]: "add" }));
+                          setAdjustmentAmount(prev => ({ ...prev, [product.id]: 0 }));
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                          (stockMode[product.id] || "add") === "add"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <PackagePlus className="w-4 h-4" />
+                        Add Stock
+                      </button>
+                      <button
+                        onClick={() => {
+                          setStockMode(prev => ({ ...prev, [product.id]: "remove" }));
+                          setAdjustmentAmount(prev => ({ ...prev, [product.id]: 0 }));
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                          stockMode[product.id] === "remove"
+                            ? "bg-destructive text-destructive-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <PackageMinus className="w-4 h-4" />
+                        Remove Stock
+                      </button>
+                    </div>
+
+                    {/* Quantity Input */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">Set Stock To</label>
+                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
+                            {(stockMode[product.id] || "add") === "add" ? "Quantity to Add" : "Quantity to Remove"}
+                          </label>
                           <div className="flex items-center gap-1.5 sm:gap-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const current = adjustmentAmount[product.id] ?? product.stock_quantity;
+                                const current = adjustmentAmount[product.id] || 0;
                                 setAdjustmentAmount(prev => ({ 
                                   ...prev, 
                                   [product.id]: Math.max(0, current - 1)
                                 }));
                               }}
-                              disabled={saving === product.id || (adjustmentAmount[product.id] ?? product.stock_quantity) === 0}
+                              disabled={saving === product.id || (adjustmentAmount[product.id] || 0) === 0}
                               className="p-2 sm:p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
                             >
                               <Minus className="w-4 h-4" />
@@ -970,32 +1004,43 @@ const StockManagementTab = () => {
                             <input
                               type="number"
                               min="0"
-                              value={adjustmentAmount[product.id] ?? product.stock_quantity}
-                              onChange={(e) => setAdjustmentAmount(prev => ({ 
-                                ...prev, 
-                                [product.id]: parseInt(e.target.value) || 0 
-                              }))}
-                              placeholder="Qty"
+                              max={stockMode[product.id] === "remove" ? product.stock_quantity : undefined}
+                              value={adjustmentAmount[product.id] || 0}
+                              onChange={(e) => {
+                                let val = parseInt(e.target.value) || 0;
+                                if (stockMode[product.id] === "remove") val = Math.min(val, product.stock_quantity);
+                                setAdjustmentAmount(prev => ({ ...prev, [product.id]: Math.max(0, val) }));
+                              }}
+                              placeholder="0"
                               className="w-16 sm:w-20 px-2 sm:px-3 py-2 bg-muted border border-border rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const current = adjustmentAmount[product.id] ?? product.stock_quantity;
+                                const current = adjustmentAmount[product.id] || 0;
+                                const max = stockMode[product.id] === "remove" ? product.stock_quantity : Infinity;
                                 setAdjustmentAmount(prev => ({ 
                                   ...prev, 
-                                  [product.id]: current + 1
+                                  [product.id]: Math.min(current + 1, max)
                                 }));
                               }}
-                              disabled={saving === product.id}
+                              disabled={saving === product.id || (stockMode[product.id] === "remove" && (adjustmentAmount[product.id] || 0) >= product.stock_quantity)}
                               className="p-2 sm:p-2.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
                             >
                               <Plus className="w-4 h-4" />
                             </button>
                           </div>
+                          {/* Result preview */}
+                          {(adjustmentAmount[product.id] || 0) > 0 && (
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {product.stock_quantity} → {(stockMode[product.id] || "add") === "add" 
+                                ? product.stock_quantity + (adjustmentAmount[product.id] || 0) 
+                                : product.stock_quantity - (adjustmentAmount[product.id] || 0)} units
+                            </p>
+                          )}
                         </div>
                         
-                        {/* Color Selection - Inline on mobile */}
+                        {/* Color Selection */}
                         {productColors[product.id] && productColors[product.id].length > 0 && (
                           <div>
                             <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -1030,7 +1075,6 @@ const StockManagementTab = () => {
                                 />
                               ))}
                             </div>
-                            {/* Per-color stock & cost display */}
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {productColors[product.id].map(color => (
                                 <span key={color.id} className="text-[9px] px-1.5 py-0.5 bg-muted rounded-full flex items-center gap-1">
@@ -1043,7 +1087,33 @@ const StockManagementTab = () => {
                         )}
                       </div>
 
-                      {/* Notes - Full width on mobile */}
+                      {/* Removal Reason - only shown in remove mode */}
+                      {stockMode[product.id] === "remove" && (
+                        <div>
+                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1.5">
+                            Reason for Removal <span className="text-destructive">*</span>
+                          </label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                            {REMOVAL_REASONS.map(reason => (
+                              <button
+                                key={reason.value}
+                                type="button"
+                                onClick={() => setRemovalReason(prev => ({ ...prev, [product.id]: reason.value }))}
+                                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs transition-all ${
+                                  removalReason[product.id] === reason.value
+                                    ? "bg-destructive/10 border-destructive/30 text-foreground font-medium"
+                                    : "bg-muted/30 border-border/50 text-muted-foreground hover:bg-muted/50"
+                                }`}
+                              >
+                                <span>{reason.icon}</span>
+                                <span className="truncate">{reason.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Notes */}
                       <div>
                         <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">Notes (optional)</label>
                         <input
@@ -1053,131 +1123,137 @@ const StockManagementTab = () => {
                             ...prev, 
                             [product.id]: e.target.value 
                           }))}
-                          placeholder="Reason for adjustment"
+                          placeholder={stockMode[product.id] === "remove" ? "Additional details..." : "Reason for adjustment"}
                           className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                       </div>
                     </div>
 
-                    {/* Cost Fields - Mobile optimized */}
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-accent">
-                        <Receipt className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                        <span>Purchase Costs</span>
-                        {selectedColorId[product.id] && productColors[product.id]?.find(c => c.id === selectedColorId[product.id]) && (
-                          <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-[9px] flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_hex }} />
-                            {productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_name}
-                          </span>
-                        )}
-                        <span className="text-muted-foreground font-normal hidden sm:inline">(Auto-loaded)</span>
-                      </div>
+                    {/* Cost Fields - Only for Add mode */}
+                    {(stockMode[product.id] || "add") === "add" && (
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-accent">
+                          <Receipt className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          <span>Purchase Costs</span>
+                          {selectedColorId[product.id] && productColors[product.id]?.find(c => c.id === selectedColorId[product.id]) && (
+                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-[9px] flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_hex }} />
+                              {productColors[product.id]?.find(c => c.id === selectedColorId[product.id])?.color_name}
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="grid grid-cols-3 gap-2 p-2 sm:p-3 bg-muted/30 rounded-lg border border-border">
-                        <div>
-                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
-                            Unit Price <span className="text-destructive">*</span>
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={stockCosts[product.id]?.unitPurchasePrice || ""}
-                            onChange={(e) => setStockCosts(prev => ({ 
-                              ...prev, 
-                              [product.id]: {
-                                ...prev[product.id],
-                                unitPurchasePrice: parseFloat(e.target.value) || 0,
-                                shippingCost: prev[product.id]?.shippingCost || 0,
-                                otherExpenses: prev[product.id]?.otherExpenses || 0,
-                                expenseNotes: prev[product.id]?.expenseNotes || ""
-                              }
-                            }))}
-                            placeholder="0"
-                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          />
+                        <div className="grid grid-cols-3 gap-2 p-2 sm:p-3 bg-muted/30 rounded-lg border border-border">
+                          <div>
+                            <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
+                              Unit Price <span className="text-destructive">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={stockCosts[product.id]?.unitPurchasePrice || ""}
+                              onChange={(e) => setStockCosts(prev => ({ 
+                                ...prev, 
+                                [product.id]: {
+                                  ...prev[product.id],
+                                  unitPurchasePrice: parseFloat(e.target.value) || 0,
+                                  shippingCost: prev[product.id]?.shippingCost || 0,
+                                  otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                  expenseNotes: prev[product.id]?.expenseNotes || ""
+                                }
+                              }))}
+                              placeholder="0"
+                              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">Shipping</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={stockCosts[product.id]?.shippingCost || ""}
+                              onChange={(e) => setStockCosts(prev => ({ 
+                                ...prev, 
+                                [product.id]: {
+                                  ...prev[product.id],
+                                  unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                  shippingCost: parseFloat(e.target.value) || 0,
+                                  otherExpenses: prev[product.id]?.otherExpenses || 0,
+                                  expenseNotes: prev[product.id]?.expenseNotes || ""
+                                }
+                              }))}
+                              placeholder="0"
+                              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">Other</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={stockCosts[product.id]?.otherExpenses || ""}
+                              onChange={(e) => setStockCosts(prev => ({ 
+                                ...prev, 
+                                [product.id]: {
+                                  ...prev[product.id],
+                                  unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
+                                  shippingCost: prev[product.id]?.shippingCost || 0,
+                                  otherExpenses: parseFloat(e.target.value) || 0,
+                                  expenseNotes: prev[product.id]?.expenseNotes || ""
+                                }
+                              }))}
+                              placeholder="0"
+                              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                          </div>
+                          
+                          {/* Total Expense Preview */}
+                          {(() => {
+                            const costs = stockCosts[product.id];
+                            const addQty = adjustmentAmount[product.id] || 0;
+                            if (!costs || addQty <= 0) return null;
+                            const purchaseTotal = (costs.unitPurchasePrice || 0) * addQty;
+                            const totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+                            if (totalExpense <= 0) return null;
+                            return (
+                              <div className="col-span-3 p-2 bg-primary/10 rounded-lg">
+                                <p className="text-xs sm:text-sm text-foreground">
+                                  <span className="font-medium">Total:</span> {formatMVR(totalExpense)}
+                                  <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 sm:ml-2">
+                                    ({addQty} × {formatMVR(costs.unitPurchasePrice || 0)})
+                                  </span>
+                                </p>
+                              </div>
+                            );
+                          })()}
                         </div>
-                        <div>
-                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
-                            Shipping
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={stockCosts[product.id]?.shippingCost || ""}
-                            onChange={(e) => setStockCosts(prev => ({ 
-                              ...prev, 
-                              [product.id]: {
-                                ...prev[product.id],
-                                unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
-                                shippingCost: parseFloat(e.target.value) || 0,
-                                otherExpenses: prev[product.id]?.otherExpenses || 0,
-                                expenseNotes: prev[product.id]?.expenseNotes || ""
-                              }
-                            }))}
-                            placeholder="0"
-                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">
-                            Other
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={stockCosts[product.id]?.otherExpenses || ""}
-                            onChange={(e) => setStockCosts(prev => ({ 
-                              ...prev, 
-                              [product.id]: {
-                                ...prev[product.id],
-                                unitPurchasePrice: prev[product.id]?.unitPurchasePrice || 0,
-                                shippingCost: prev[product.id]?.shippingCost || 0,
-                                otherExpenses: parseFloat(e.target.value) || 0,
-                                expenseNotes: prev[product.id]?.expenseNotes || ""
-                              }
-                            }))}
-                            placeholder="0"
-                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                        
-                        {/* Total Expense Preview - Compact on mobile */}
-                        {(() => {
-                          const costs = stockCosts[product.id];
-                          const changeAmount = (adjustmentAmount[product.id] || 0) - product.stock_quantity;
-                          if (!costs || changeAmount <= 0) return null;
-                          const purchaseTotal = (costs.unitPurchasePrice || 0) * changeAmount;
-                          const totalExpense = purchaseTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
-                          if (totalExpense <= 0) return null;
-                          return (
-                            <div className="col-span-3 p-2 bg-primary/10 rounded-lg">
-                              <p className="text-xs sm:text-sm text-foreground">
-                                <span className="font-medium">Total:</span> {formatMVR(totalExpense)}
-                                <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 sm:ml-2">
-                                  ({changeAmount} × {formatMVR(costs.unitPurchasePrice || 0)})
-                                </span>
-                              </p>
-                            </div>
-                          );
-                        })()}
                       </div>
-                    </div>
+                    )}
 
-                    {/* Update Button - Full width on mobile */}
+                    {/* Update Button */}
                     <button
                       onClick={() => handleSetStock(
                         product.id, 
                         product.stock_quantity, 
-                        adjustmentAmount[product.id] ?? product.stock_quantity,
+                        adjustmentAmount[product.id] || 0,
                         product.name
                       )}
-                      disabled={saving === product.id || (adjustmentAmount[product.id] ?? product.stock_quantity) === product.stock_quantity}
-                      className="w-full sm:w-auto px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                      disabled={saving === product.id || (adjustmentAmount[product.id] || 0) === 0}
+                      className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                        stockMode[product.id] === "remove"
+                          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          : "bg-primary text-primary-foreground hover:bg-primary/90"
+                      }`}
                     >
-                      {saving === product.id ? "Saving..." : "Update Stock"}
+                      {saving === product.id 
+                        ? "Saving..." 
+                        : stockMode[product.id] === "remove"
+                          ? `Remove ${adjustmentAmount[product.id] || 0} Units`
+                          : `Add ${adjustmentAmount[product.id] || 0} Units`
+                      }
                     </button>
                   </div>
 
