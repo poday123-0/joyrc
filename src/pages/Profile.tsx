@@ -132,7 +132,7 @@ const Profile = () => {
 
       <div className="container max-w-7xl mx-auto px-4 pt-6 md:pt-10 relative">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 md:mb-12">
+        <div className="flex items-center justify-between mb-6 md:mb-8">
           <Link
             to="/"
             className="w-11 h-11 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-card hover:border-primary/30 transition-all duration-300 shadow-sm"
@@ -146,21 +146,25 @@ const Profile = () => {
         {/* Desktop/Tablet Layout */}
         <div className="lg:grid lg:grid-cols-12 lg:gap-10">
           {/* Sidebar */}
-          <div className="lg:col-span-4 xl:col-span-3 space-y-6 mb-8 lg:mb-0">
-            <ProfileCard
-              fullName={fullName}
-              email={user.email || ""}
-              avatarUrl={profile?.avatar_url}
-              isAdmin={isAdmin}
-            />
-            
-            <div className="hidden lg:block">
-              <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
+          <div className="lg:col-span-4 xl:col-span-3 mb-6 lg:mb-0">
+            <div className="lg:sticky lg:top-6 space-y-5">
+              <ProfileCard
+                fullName={fullName}
+                email={user.email || ""}
+                avatarUrl={profile?.avatar_url}
+                isAdmin={isAdmin}
+              />
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-8 xl:col-span-9">
+          <div className="lg:col-span-8 xl:col-span-9 space-y-5">
+            {/* Quick Actions - Prominent placement */}
+            <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-2xl p-4">
+              <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
+            </div>
+
+            {/* Tabs */}
             <ProfileTabs 
               activeTab={activeTab} 
               onTabChange={setActiveTab} 
@@ -168,24 +172,17 @@ const Profile = () => {
             />
 
             {activeTab === "profile" ? (
-              <div className="grid md:grid-cols-2 gap-6">
-                <EditProfileForm
-                  fullName={fullName}
-                  mobileNumber={mobileNumber}
-                  email={user.email || ""}
-                  address={address}
-                  saving={saving}
-                  onFullNameChange={setFullName}
-                  onMobileNumberChange={setMobileNumber}
-                  onAddressChange={setAddress}
-                  onSave={handleSaveProfile}
-                />
-
-                {/* Mobile Quick Actions */}
-                <div className="lg:hidden">
-                  <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
-                </div>
-              </div>
+              <EditProfileForm
+                fullName={fullName}
+                mobileNumber={mobileNumber}
+                email={user.email || ""}
+                address={address}
+                saving={saving}
+                onFullNameChange={setFullName}
+                onMobileNumberChange={setMobileNumber}
+                onAddressChange={setAddress}
+                onSave={handleSaveProfile}
+              />
             ) : activeTab === "orders" && !isAdmin ? (
               <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
                 <OrdersTab />
