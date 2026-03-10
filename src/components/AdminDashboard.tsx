@@ -305,6 +305,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     const stockHistoryAll = stockHistoryAllRes.data || [];
     const monthlyStockHistory = monthlyStockHistoryRes.data || [];
     const profiles = profilesRes.data || [];
+    const orderItems = orderItemsRes.data || [];
 
     // Calculate inventory cash out (total_expense from stock_history restocks)
     const totalInventoryCashOut = stockHistoryAll.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
