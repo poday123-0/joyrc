@@ -1312,12 +1312,12 @@ const StatCard = ({
 
   return (
     <div 
-      className={`bg-card border border-border rounded-2xl p-4 ${onClick ? "cursor-pointer hover:border-primary/50 transition-colors" : ""} ${className}`}
+      className={`bg-card border border-border rounded-2xl p-3 ${onClick ? "cursor-pointer hover:border-primary/50 hover:shadow-md transition-all" : ""} ${className}`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${variantStyles[variant]}`}>
-          <Icon className="w-4 h-4" />
+      <div className="flex items-center justify-between mb-2">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${variantStyles[variant]}`}>
+          <Icon className="w-3.5 h-3.5" />
         </div>
         {trendUp !== undefined && (
           <div className={`flex items-center gap-0.5 text-xs ${trendUp ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
@@ -1325,9 +1325,9 @@ const StatCard = ({
           </div>
         )}
       </div>
-      <p className="text-lg font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">{title}</p>
-      <p className="text-[10px] text-muted-foreground mt-1">{trend}</p>
+      <p className="text-sm sm:text-base font-bold text-foreground leading-tight">{value}</p>
+      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{title}</p>
+      <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 mt-0.5">{trend}</p>
     </div>
   );
 };
