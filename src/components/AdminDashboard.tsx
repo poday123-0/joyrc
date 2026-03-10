@@ -49,6 +49,9 @@ interface DashboardStats {
   // Inventory cash out stats
   totalInventoryCashOut: number;
   monthlyInventoryCashOut: number;
+  // COGS - cost of goods sold
+  totalCOGS: number;
+  monthlyCOGS: number;
 }
 
 interface AdminDashboardProps {
@@ -81,6 +84,8 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // Inventory cash out stats
     totalInventoryCashOut: 0,
     monthlyInventoryCashOut: 0,
+    totalCOGS: 0,
+    monthlyCOGS: 0,
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -276,17 +281,19 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       stockHistoryRes,
       stockHistoryAllRes,
       monthlyStockHistoryRes,
-      profilesRes
+      profilesRes,
+      orderItemsRes,
     ] = await Promise.all([
       supabase.from("orders").select("*"),
-      supabase.from("products").select("id, stock_quantity, price"),
+      supabase.from("products").select("id, stock_quantity, price, cost_price"),
       supabase.from("transactions").select("*").order("created_at", { ascending: false }),
       supabase.from("transactions").select("*").gte("created_at", startOfMonth),
       supabase.from("transactions").select("*").gte("created_at", startOfWeek),
       supabase.from("stock_history").select("product_id, unit_purchase_price, change_amount, change_type").eq("change_type", "restock"),
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock"),
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock").gte("created_at", startOfMonth),
-      supabase.from("profiles").select("id")
+      supabase.from("profiles").select("id"),
+      supabase.from("order_items").select("product_id, quantity, created_at"),
     ]);
 
     const orders = ordersRes.data || [];
@@ -298,6 +305,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     const stockHistoryAll = stockHistoryAllRes.data || [];
     const monthlyStockHistory = monthlyStockHistoryRes.data || [];
     const profiles = profilesRes.data || [];
+    const orderItems = orderItemsRes.data || [];
 
     // Calculate inventory cash out (total_expense from stock_history restocks)
     const totalInventoryCashOut = stockHistoryAll.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
@@ -360,6 +368,24 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // Count unique customers from profiles
     const totalCustomers = profiles.length;
 
+    // Calculate COGS (Cost of Goods Sold) from order items × product cost_price
+    const productCostPriceMap = new Map<string, number>();
+    products.forEach(p => {
+      productCostPriceMap.set(p.id, Number(p.cost_price || 0));
+    });
+    
+    const totalCOGS = orderItems.reduce((sum, item) => {
+      const costPrice = productCostPriceMap.get(item.product_id) || 0;
+      return sum + (item.quantity * costPrice);
+    }, 0);
+    
+    const monthlyCOGS = orderItems
+      .filter(item => item.created_at >= startOfMonth)
+      .reduce((sum, item) => {
+        const costPrice = productCostPriceMap.get(item.product_id) || 0;
+        return sum + (item.quantity * costPrice);
+      }, 0);
+
     setStats({
       totalRevenue,
       totalExpenses,
@@ -380,6 +406,8 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       totalStockItems,
       totalInventoryCashOut,
       monthlyInventoryCashOut,
+      totalCOGS,
+      monthlyCOGS,
     });
 
     setTransactions(allTransactions as Transaction[]);
@@ -541,9 +569,10 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     );
   }
 
-  const netProfit = stats.totalRevenue - stats.totalExpenses;
-  const monthlyNetProfit = stats.monthlyRevenue - stats.monthlyExpenses;
-  const weeklyNetProfit = stats.weeklyRevenue - stats.weeklyExpenses;
+    const grossProfit = stats.totalRevenue - stats.totalCOGS;
+    const monthlyGrossProfit = stats.monthlyRevenue - stats.monthlyCOGS;
+    const netProfit = grossProfit - stats.totalExpenses;
+    const monthlyNetProfit = monthlyGrossProfit - stats.monthlyExpenses;
 
   // Tab permission definitions for staff quick access cards - matches PERMISSION_AREAS in StaffManagementTab
   const availableTabs = [
@@ -620,7 +649,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
 
       {/* Primary Stats Row - Financial data only for full admins */}
       {isFullAdmin && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <StatCard
             title="Total Revenue"
             value={formatMVR(stats.totalRevenue)}
@@ -629,6 +658,24 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={true}
             variant="success"
             onClick={() => onTabChange?.("transactions")}
+          />
+          <StatCard
+            title="Cost of Sold Items"
+            value={formatMVR(stats.totalCOGS)}
+            icon={Package}
+            trend={`${formatMVR(stats.monthlyCOGS)} this month`}
+            trendUp={false}
+            variant="warning"
+            onClick={() => onTabChange?.("reports")}
+          />
+          <StatCard
+            title="Gross Profit"
+            value={formatMVR(grossProfit)}
+            icon={TrendingUp}
+            trend={`${formatMVR(monthlyGrossProfit)} this month`}
+            trendUp={grossProfit > 0}
+            variant={grossProfit >= 0 ? "success" : "danger"}
+            onClick={() => onTabChange?.("reports")}
           />
           <StatCard
             title="Total Expenses"
@@ -644,7 +691,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             value={formatMVR(netProfit)}
             icon={Wallet}
             trend={`${formatMVR(monthlyNetProfit)} this month`}
-            trendUp={monthlyNetProfit > 0}
+            trendUp={netProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
             onClick={() => onTabChange?.("reports")}
           />
@@ -1265,12 +1312,12 @@ const StatCard = ({
 
   return (
     <div 
-      className={`bg-card border border-border rounded-2xl p-4 ${onClick ? "cursor-pointer hover:border-primary/50 transition-colors" : ""} ${className}`}
+      className={`bg-card border border-border rounded-2xl p-3 ${onClick ? "cursor-pointer hover:border-primary/50 hover:shadow-md transition-all" : ""} ${className}`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${variantStyles[variant]}`}>
-          <Icon className="w-4 h-4" />
+      <div className="flex items-center justify-between mb-2">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${variantStyles[variant]}`}>
+          <Icon className="w-3.5 h-3.5" />
         </div>
         {trendUp !== undefined && (
           <div className={`flex items-center gap-0.5 text-xs ${trendUp ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
@@ -1278,9 +1325,9 @@ const StatCard = ({
           </div>
         )}
       </div>
-      <p className="text-lg font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">{title}</p>
-      <p className="text-[10px] text-muted-foreground mt-1">{trend}</p>
+      <p className="text-sm sm:text-base font-bold text-foreground leading-tight">{value}</p>
+      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{title}</p>
+      <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 mt-0.5">{trend}</p>
     </div>
   );
 };
