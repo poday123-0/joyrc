@@ -49,6 +49,9 @@ interface DashboardStats {
   // Inventory cash out stats
   totalInventoryCashOut: number;
   monthlyInventoryCashOut: number;
+  // COGS - cost of goods sold
+  totalCOGS: number;
+  monthlyCOGS: number;
 }
 
 interface AdminDashboardProps {
