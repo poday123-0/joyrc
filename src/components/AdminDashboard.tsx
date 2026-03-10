@@ -281,17 +281,19 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       stockHistoryRes,
       stockHistoryAllRes,
       monthlyStockHistoryRes,
-      profilesRes
+      profilesRes,
+      orderItemsRes,
     ] = await Promise.all([
       supabase.from("orders").select("*"),
-      supabase.from("products").select("id, stock_quantity, price"),
+      supabase.from("products").select("id, stock_quantity, price, cost_price"),
       supabase.from("transactions").select("*").order("created_at", { ascending: false }),
       supabase.from("transactions").select("*").gte("created_at", startOfMonth),
       supabase.from("transactions").select("*").gte("created_at", startOfWeek),
       supabase.from("stock_history").select("product_id, unit_purchase_price, change_amount, change_type").eq("change_type", "restock"),
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock"),
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock").gte("created_at", startOfMonth),
-      supabase.from("profiles").select("id")
+      supabase.from("profiles").select("id"),
+      supabase.from("order_items").select("product_id, quantity, created_at"),
     ]);
 
     const orders = ordersRes.data || [];
