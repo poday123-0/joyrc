@@ -84,6 +84,8 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // Inventory cash out stats
     totalInventoryCashOut: 0,
     monthlyInventoryCashOut: 0,
+    totalCOGS: 0,
+    monthlyCOGS: 0,
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
