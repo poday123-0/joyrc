@@ -649,7 +649,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
 
       {/* Primary Stats Row - Financial data only for full admins */}
       {isFullAdmin && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <StatCard
             title="Total Revenue"
             value={formatMVR(stats.totalRevenue)}
@@ -658,6 +658,24 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={true}
             variant="success"
             onClick={() => onTabChange?.("transactions")}
+          />
+          <StatCard
+            title="Cost of Sold Items"
+            value={formatMVR(stats.totalCOGS)}
+            icon={Package}
+            trend={`${formatMVR(stats.monthlyCOGS)} this month`}
+            trendUp={false}
+            variant="warning"
+            onClick={() => onTabChange?.("reports")}
+          />
+          <StatCard
+            title="Gross Profit"
+            value={formatMVR(grossProfit)}
+            icon={TrendingUp}
+            trend={`${formatMVR(monthlyGrossProfit)} this month`}
+            trendUp={grossProfit > 0}
+            variant={grossProfit >= 0 ? "success" : "danger"}
+            onClick={() => onTabChange?.("reports")}
           />
           <StatCard
             title="Total Expenses"
@@ -673,7 +691,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             value={formatMVR(netProfit)}
             icon={Wallet}
             trend={`${formatMVR(monthlyNetProfit)} this month`}
-            trendUp={monthlyNetProfit > 0}
+            trendUp={netProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
             onClick={() => onTabChange?.("reports")}
           />
