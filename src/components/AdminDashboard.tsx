@@ -569,9 +569,10 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     );
   }
 
-  const netProfit = stats.totalRevenue - stats.totalExpenses;
-  const monthlyNetProfit = stats.monthlyRevenue - stats.monthlyExpenses;
-  const weeklyNetProfit = stats.weeklyRevenue - stats.weeklyExpenses;
+    const grossProfit = stats.totalRevenue - stats.totalCOGS;
+    const monthlyGrossProfit = stats.monthlyRevenue - stats.monthlyCOGS;
+    const netProfit = grossProfit - stats.totalExpenses;
+    const monthlyNetProfit = monthlyGrossProfit - stats.monthlyExpenses;
 
   // Tab permission definitions for staff quick access cards - matches PERMISSION_AREAS in StaffManagementTab
   const availableTabs = [
