@@ -570,19 +570,19 @@ const Admin = () => {
       <div className="lg:flex lg:min-h-screen">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex lg:flex-col w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
-          <div className="flex items-center gap-3 mb-2 pb-3 border-b border-border">
-            <button
-              onClick={() => setActiveTab("dashboard")}
-              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
-            <div className="flex items-center gap-2.5">
-              {settings?.logo_url && (
-                <img src={settings.logo_url} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-              )}
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Admin</p>
+          <div className="flex flex-col items-center mb-3 pb-3 border-b border-border">
+            <div className="flex items-center justify-between w-full mb-3">
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-foreground" />
+              </button>
             </div>
+            {settings?.logo_url && (
+              <img src={settings.logo_url} alt="Logo" className="w-24 h-16 object-contain mb-1" />
+            )}
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Admin</p>
           </div>
 
           <Link
