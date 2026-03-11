@@ -389,11 +389,9 @@ const StockManagementTab = () => {
       if (selectedColor) {
         const colorNewQty = selectedColor.stock_quantity + changeAmount;
         const colorUpdate: any = { stock_quantity: Math.max(0, colorNewQty) };
-        // Also update color cost_price when restocking (unit price + shipping + other per unit)
+        // Also update color cost_price when restocking (unit price + shipping + other)
         if (isRestock && costs?.unitPurchasePrice) {
-          const shippingPerUnit = (costs.shippingCost || 0) / Math.abs(changeAmount);
-          const otherPerUnit = (costs.otherExpenses || 0) / Math.abs(changeAmount);
-          colorUpdate.cost_price = costs.unitPurchasePrice + shippingPerUnit + otherPerUnit;
+          colorUpdate.cost_price = costs.unitPurchasePrice + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
         }
         const { error: colorError } = await supabase
           .from("product_colors")
