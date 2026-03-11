@@ -32,6 +32,7 @@ interface ProductColor {
   color_name: string;
   color_hex: string;
   image_url: string | null;
+  stock_quantity: number;
 }
 interface Specification {
   name: string;
@@ -96,8 +97,13 @@ const ProductDetail = () => {
   const [preorderQuantity, setPreorderQuantity] = useState(1);
   const [submittingPreorder, setSubmittingPreorder] = useState(false);
 
-  // Check if product is out of stock
-  const isOutOfStock = product ? product.stock_quantity <= 0 : false;
+  // Check if product is out of stock (considering selected color variant)
+  const selectedColorForStock = productColors.find(c => c.id === selectedColorId);
+  const isOutOfStock = product 
+    ? (productColors.length > 0 && selectedColorForStock 
+        ? selectedColorForStock.stock_quantity <= 0 
+        : product.stock_quantity <= 0)
+    : false;
 
   // Get all images for a specific color (including all entries with same hex)
   const getImagesForColor = useCallback((colorId: string): string[] => {
@@ -264,6 +270,8 @@ const ProductDetail = () => {
       
       // Check stock availability before adding
       const selectedColor = productColors.find(c => c.id === selectedColorId);
+      const availableStock = selectedColor ? selectedColor.stock_quantity : product.stock_quantity;
+      
       const currentCartQty = (() => {
         const stored = localStorage.getItem("rcjoy_cart");
         if (!stored) return 0;
@@ -273,10 +281,15 @@ const ProductDetail = () => {
         ).reduce((sum: number, i: any) => sum + i.quantity, 0);
       })();
       
-      if (currentCartQty >= product.stock_quantity) {
+      if (availableStock <= 0) {
+        setShowPreorderDialog(true);
+        return;
+      }
+      
+      if (currentCartQty >= availableStock) {
         toast({
           title: "Stock Limit Reached",
-          description: `Only ${product.stock_quantity} available in stock.`,
+          description: `Only ${availableStock} available${selectedColor ? ` in ${selectedColor.color_name}` : ''}.`,
           variant: "destructive"
         });
         return;
