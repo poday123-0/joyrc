@@ -1205,7 +1205,7 @@ const StockManagementTab = () => {
                     {/* Cost Fields - Only for Add mode */}
                     {(stockMode[product.id] || "add") === "add" && (
                       <div className="space-y-2 sm:space-y-3">
-                        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-accent">
+                        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-accent dark:text-foreground">
                           <Receipt className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           <span>Purchase Costs</span>
                           {selectedColorId[product.id] && productColors[product.id]?.find(c => c.id === selectedColorId[product.id]) && (
