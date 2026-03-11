@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User } from "lucide-react";
+import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User, Sun, Moon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import SearchOverlay from "@/components/SearchOverlay";
+import { useTheme } from "next-themes";
 import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 
 interface HeaderProps {
@@ -16,6 +17,7 @@ const Header = ({ userName }: HeaderProps) => {
   const { totalItems } = useCart();
   const { user, isAdmin } = useAuth();
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -115,6 +117,17 @@ const Header = ({ userName }: HeaderProps) => {
 
           {/* Right Icons */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-foreground/80 hover:text-foreground transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-4 h-4" strokeWidth={1.5} />
+              ) : (
+                <Moon className="w-4 h-4" strokeWidth={1.5} />
+              )}
+            </button>
             <button 
               onClick={() => setIsSearchOpen(true)}
               className="text-foreground/80 hover:text-foreground transition-colors"
