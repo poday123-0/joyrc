@@ -450,9 +450,6 @@ export const StockHistoryDialog = ({
                   </div>
 
                   <div className="flex items-start gap-2 flex-shrink-0">
-                    <p className="text-xs text-muted-foreground text-right">
-                      {formatDate(item.created_at)}
-                    </p>
                     {isSuperAdmin && (
                       <button
                         onClick={() => onDeleteHistory(item.id)}
