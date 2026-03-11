@@ -277,40 +277,28 @@ const SalesReportsTab = () => {
       ) : (
         <>
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-5 h-5 text-emerald-600" />
-                <span className="text-sm text-muted-foreground">Total Revenue</span>
-              </div>
-              <p className="text-2xl font-bold text-emerald-600">{formatMVR(totalRevenue)}</p>
-              <p className="text-xs text-muted-foreground mt-1">{getDateRangeLabel()}</p>
+              <p className="text-xs text-muted-foreground mb-1">Total Revenue</p>
+              <p className="text-lg font-bold text-emerald-600">{formatMVR(totalRevenue)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{getDateRangeLabel()}</p>
             </div>
             <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
-              <div className="flex items-center gap-2 mb-2">
-                <ShoppingCart className="w-5 h-5 text-primary" />
-                <span className="text-sm text-muted-foreground">Total Orders</span>
-              </div>
-              <p className="text-2xl font-bold text-primary">{totalOrders}</p>
-              <p className="text-xs text-muted-foreground mt-1">{confirmedCount} confirmed, {pendingCount} pending</p>
+              <p className="text-xs text-muted-foreground mb-1">Total Orders</p>
+              <p className="text-lg font-bold text-primary">{totalOrders}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{confirmedCount} confirmed, {pendingCount} pending</p>
             </div>
             <div className="p-4 bg-muted/50 rounded-xl border border-border">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-foreground" />
-                <span className="text-sm text-muted-foreground">Avg Order Value</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{formatMVR(avgOrderValue)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Per confirmed order</p>
+              <p className="text-xs text-muted-foreground mb-1">Avg Order Value</p>
+              <p className="text-lg font-bold text-foreground">{formatMVR(avgOrderValue)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Per confirmed order</p>
             </div>
             <div className="p-4 bg-muted/50 rounded-xl border border-border">
-              <div className="flex items-center gap-2 mb-2">
-                <Package className="w-5 h-5 text-foreground" />
-                <span className="text-sm text-muted-foreground">Items Sold</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-xs text-muted-foreground mb-1">Items Sold</p>
+              <p className="text-lg font-bold text-foreground">
                 {Object.values(productSales).reduce((sum, p) => sum + p.quantity, 0)}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Across all orders</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Across all orders</p>
             </div>
           </div>
 

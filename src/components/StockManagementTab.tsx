@@ -646,7 +646,7 @@ const StockManagementTab = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-5">
       {/* Header - Mobile optimized */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">

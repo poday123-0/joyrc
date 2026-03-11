@@ -403,8 +403,8 @@ const UsersManagementTab = () => {
 
       {/* Stats */}
       <div className="p-4 bg-muted/30 rounded-xl">
-        <p className="text-2xl font-bold text-foreground">{users.length}</p>
-        <p className="text-sm text-muted-foreground">Total Customers</p>
+        <p className="text-xs text-muted-foreground mb-1">Total Customers</p>
+        <p className="text-lg font-bold text-foreground">{users.length}</p>
       </div>
 
       {/* Users List */}
