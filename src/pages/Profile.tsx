@@ -124,26 +124,26 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background pb-24 md:pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background pb-28 sm:pb-24 md:pb-12">
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-52 sm:w-80 h-52 sm:h-80 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="container max-w-7xl mx-auto px-4 pt-6 md:pt-10 relative">
+      <div className="container max-w-5xl mx-auto px-3 sm:px-4 md:px-6 pt-4 sm:pt-6 md:pt-10 relative">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 md:mb-8">
+        <div className="flex items-center justify-between mb-5 sm:mb-6 md:mb-8">
           <Link
             to="/"
-            className="w-11 h-11 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-card hover:border-primary/30 transition-all duration-300 shadow-sm"
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-card hover:border-primary/30 transition-all duration-300 shadow-sm"
           >
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </Link>
-          <h1 className="font-bold text-2xl md:text-3xl text-foreground tracking-tight">My Profile</h1>
+          <h1 className="font-bold text-xl sm:text-2xl md:text-3xl text-foreground tracking-tight">My Profile</h1>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`w-11 h-11 rounded-xl bg-card/80 backdrop-blur-sm border flex items-center justify-center hover:bg-card transition-all duration-300 shadow-sm ${
+            className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-card/80 backdrop-blur-sm border flex items-center justify-center hover:bg-card transition-all duration-300 shadow-sm ${
               showSettings ? "border-primary/50 text-primary" : "border-border/50 text-foreground"
             }`}
           >
@@ -151,11 +151,11 @@ const Profile = () => {
           </button>
         </div>
 
-        {/* Desktop/Tablet Layout */}
-        <div className="lg:grid lg:grid-cols-12 lg:gap-10">
-          {/* Sidebar */}
-          <div className="lg:col-span-4 xl:col-span-3 mb-6 lg:mb-0">
-            <div className="lg:sticky lg:top-6 space-y-5">
+        {/* Mobile: Stacked layout / Desktop: Side-by-side */}
+        <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8">
+          {/* Sidebar - Profile Card */}
+          <div className="lg:col-span-4 mb-4 sm:mb-5 lg:mb-0">
+            <div className="lg:sticky lg:top-6">
               <ProfileCard
                 fullName={fullName}
                 email={user.email || ""}
@@ -166,13 +166,13 @@ const Profile = () => {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-8 xl:col-span-9 space-y-5">
-            {/* Quick Actions - Prominent placement */}
-            <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-2xl p-4">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-5">
+            {/* Quick Actions */}
+            <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-2xl p-3 sm:p-4">
               <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
             </div>
 
-            {/* Settings Panel (toggled from header icon) */}
+            {/* Settings Panel */}
             {showSettings && (
               <EditProfileForm
                 fullName={fullName}
@@ -189,7 +189,6 @@ const Profile = () => {
 
             {!isAdmin && !showSettings && (
               <>
-                {/* Tabs */}
                 <ProfileTabs 
                   activeTab={activeTab} 
                   onTabChange={setActiveTab} 
@@ -209,15 +208,15 @@ const Profile = () => {
                     onSave={handleSaveProfile}
                   />
                 ) : activeTab === "orders" ? (
-                  <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                  <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
                     <OrdersTab />
                   </div>
                 ) : activeTab === "messages" ? (
-                  <div className="space-y-6">
-                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
                       <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
                     </div>
-                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
                       <CustomerMessagesTab key={messagesKey} />
                     </div>
                   </div>
