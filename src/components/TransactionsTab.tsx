@@ -95,6 +95,16 @@ const TransactionsTab = () => {
   useEffect(() => {
     fetchTransactions();
     fetchCategories();
+
+    // Realtime subscription for instant updates
+    const channel = supabase
+      .channel('transactions-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        fetchTransactions();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const fetchCategories = async () => {
