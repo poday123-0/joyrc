@@ -258,7 +258,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
             filteredProducts.map(product => {
               const selected = selectedItems.find(i => i.productId === product.id);
               const isExpanded = expandedItem === product.id && !!selected;
-              const itemTotal = selected ? selected.qty * (selected.unitPrice + selected.shippingCost + selected.otherCosts) : 0;
+              const itemTotal = selected ? (selected.unitPrice * selected.qty) + selected.shippingCost + selected.otherCosts : 0;
 
               return (
                 <div key={product.id} className={`rounded-xl border transition-all duration-200 overflow-hidden ${
