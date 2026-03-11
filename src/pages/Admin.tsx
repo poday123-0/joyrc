@@ -1402,6 +1402,45 @@ const ProductsTab = ({
     }
   };
 
+  // Promote a color extra image to main image
+  const handleSetColorMainImage = async (colorId: string, imageId: string, imageUrl: string) => {
+    if (!editingProduct) return;
+    const color = (productColors[editingProduct.id] || []).find(c => c.id === colorId);
+    if (!color) return;
+
+    // If there's an existing main image, move it to product_images as an extra
+    if (color.image_url) {
+      await supabase.from("product_images").insert({
+        product_id: editingProduct.id,
+        image_url: color.image_url,
+        color_id: colorId,
+        sort_order: galleryImages.length,
+        is_360: false,
+      });
+    }
+
+    // Update color's main image
+    const { error } = await supabase
+      .from("product_colors")
+      .update({ image_url: imageUrl })
+      .eq("id", colorId);
+
+    if (!error) {
+      // Remove the promoted image from product_images
+      await supabase.from("product_images").delete().eq("id", imageId);
+      
+      // Update local state
+      setProductColors(prev => ({
+        ...prev,
+        [editingProduct.id]: prev[editingProduct.id]?.map(c =>
+          c.id === colorId ? { ...c, image_url: imageUrl } : c
+        ) || []
+      }));
+      await fetchGalleryImages(editingProduct.id);
+      toast({ title: "Main image updated" });
+    }
+  };
+
   // Delete color-specific image
   const handleDeleteColorImage = async (imageId: string) => {
     const { error } = await supabase.from("product_images").delete().eq("id", imageId);
