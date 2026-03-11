@@ -555,6 +555,7 @@ const Admin = () => {
                 <Menu className="w-5 h-5 text-foreground" />
               </button>
             </div>
+          </div>
         </div>
 
         {/* Mobile Tabs - Horizontal scroll */}
