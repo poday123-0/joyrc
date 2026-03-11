@@ -100,8 +100,11 @@ const StockManagementTab = () => {
   // New feature states
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [bulkRestockOpen, setBulkRestockOpen] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [isGlobalHistoryView, setIsGlobalHistoryView] = useState(false);
+  
+  const anyPanelOpen = showAnalytics || showAllHistory || bulkRestockOpen;
   const [stockMode, setStockMode] = useState<Record<string, "add" | "remove">>({});
   const [removalReason, setRemovalReason] = useState<Record<string, string>>({});
 
