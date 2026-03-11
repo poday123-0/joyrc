@@ -199,7 +199,7 @@ const DeliveryTab = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-end mb-4">
         <span className="text-sm text-muted-foreground">{orders.length} pending</span>
       </div>

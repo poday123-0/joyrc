@@ -646,7 +646,7 @@ const StockManagementTab = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-5">
       {/* Header - Mobile optimized */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -814,42 +814,42 @@ const StockManagementTab = () => {
 
       {!anyPanelOpen && (<>
       {/* Stats - Compact on mobile */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
-        <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
-          <p className="text-lg sm:text-2xl font-bold text-foreground">{products.length}</p>
-          <p className="text-[10px] sm:text-sm text-muted-foreground">Products</p>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="p-4 bg-muted/30 rounded-xl">
+          <p className="text-xs text-muted-foreground mb-1">Products</p>
+          <p className="text-lg font-bold text-foreground">{products.length}</p>
         </div>
-        <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
-          <p className="text-lg sm:text-2xl font-bold text-primary">
+        <div className="p-4 bg-muted/30 rounded-xl">
+          <p className="text-xs text-muted-foreground mb-1">Total Stock</p>
+          <p className="text-lg font-bold text-primary">
             {products.reduce((sum, p) => sum + p.stock_quantity, 0)}
           </p>
-          <p className="text-[10px] sm:text-sm text-muted-foreground">Total Stock</p>
         </div>
         <button
           onClick={() => setStockFilter(stockFilter === "low" ? "all" : "low")}
-          className={`p-2 sm:p-4 rounded-lg sm:rounded-xl text-center sm:text-left transition-all ${
+          className={`p-4 rounded-xl text-left transition-all ${
             stockFilter === "low" 
               ? "bg-amber-500/20 ring-2 ring-amber-500" 
               : "bg-amber-500/10 hover:bg-amber-500/15"
           }`}
         >
-          <p className="text-lg sm:text-2xl font-bold text-amber-500">{lowStockProducts.length}</p>
-          <p className="text-[10px] sm:text-sm text-muted-foreground">Low (≤{lowStockThreshold})</p>
+          <p className="text-xs text-muted-foreground mb-1">Low (≤{lowStockThreshold})</p>
+          <p className="text-lg font-bold text-amber-500">{lowStockProducts.length}</p>
         </button>
         <button
           onClick={() => setStockFilter(stockFilter === "out" ? "all" : "out")}
-          className={`p-2 sm:p-4 rounded-lg sm:rounded-xl text-center sm:text-left transition-all ${
+          className={`p-4 rounded-xl text-left transition-all ${
             stockFilter === "out" 
               ? "bg-destructive/20 ring-2 ring-destructive" 
               : "bg-destructive/10 hover:bg-destructive/15"
           }`}
         >
-          <p className="text-lg sm:text-2xl font-bold text-destructive">{outOfStockProducts.length}</p>
-          <p className="text-[10px] sm:text-sm text-muted-foreground">Out</p>
+          <p className="text-xs text-muted-foreground mb-1">Out of Stock</p>
+          <p className="text-lg font-bold text-destructive">{outOfStockProducts.length}</p>
         </button>
         {/* Threshold Setting */}
-        <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
-          <label className="text-[10px] sm:text-xs text-muted-foreground block mb-1">Low Threshold</label>
+        <div className="p-4 bg-muted/30 rounded-xl">
+          <label className="text-xs text-muted-foreground block mb-1">Low Threshold</label>
           <select
             value={lowStockThreshold}
             onChange={(e) => setLowStockThreshold(parseInt(e.target.value))}
