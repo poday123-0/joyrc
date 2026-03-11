@@ -113,7 +113,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("week");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
-  const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0, cashOut: 0 });
+  const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0, cashOut: 0, cogs: 0 });
   const [periodFilterOpen, setPeriodFilterOpen] = useState(false);
   
   // Stock value details dialog state
