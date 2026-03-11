@@ -1222,20 +1222,8 @@ const ProductsTab = ({
   const handleAddColorImages = async (colorId: string, files: FileList) => {
     if (!editingProduct) return;
     
-    const existingColorImages = galleryImages.filter(img => img.color_id === colorId);
-    const remainingSlots = 3 - existingColorImages.length;
-    
-    if (remainingSlots <= 0) {
-      toast({
-        title: "Maximum Images Reached",
-        description: "Each color can have up to 3 images.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setUploadingColor(true);
-    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    const filesToUpload = Array.from(files);
     
     for (let i = 0; i < filesToUpload.length; i++) {
       const file = filesToUpload[i];
