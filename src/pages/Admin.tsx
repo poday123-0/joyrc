@@ -540,12 +540,21 @@ const Admin = () => {
             ) : (
               <h1 className="font-semibold text-lg text-foreground">Admin</h1>
             )}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors lg:hidden"
-            >
-              <Menu className="w-5 h-5 text-foreground" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                title={theme === "dark" ? "Light Mode" : "Dark Mode"}
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
+              </button>
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors lg:hidden"
+              >
+                <Menu className="w-5 h-5 text-foreground" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -596,13 +605,18 @@ const Admin = () => {
           </Link>
 
           {/* Theme Toggle */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex items-center gap-2.5 px-3 py-2 mb-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all w-full"
-          >
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            <span className="font-medium">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-          </button>
+          <div className="flex items-center justify-between px-3 py-2 mb-3 rounded-xl bg-muted/30">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {theme === "dark" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              <span className="font-medium text-xs">{theme === "dark" ? "Dark" : "Light"}</span>
+            </div>
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className={`relative w-9 h-5 rounded-full transition-colors ${theme === "dark" ? "bg-primary" : "bg-border"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-primary-foreground shadow transition-transform ${theme === "dark" ? "translate-x-4" : "translate-x-0"}`} />
+            </button>
+          </div>
           {isReordering ? (
             <DndContext
               sensors={sensors}
