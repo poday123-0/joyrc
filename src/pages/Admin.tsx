@@ -272,6 +272,7 @@ const Admin = () => {
   const [tabs, setTabs] = useState<TabItem[]>(defaultTabs);
   const [isReordering, setIsReordering] = useState(false);
   const [menuOrderId, setMenuOrderId] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [isFullAdmin, setIsFullAdmin] = useState(false);
 
