@@ -1229,21 +1229,21 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             return (
               <>
                 <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
-                  <div className="p-2 sm:p-3 rounded-xl bg-muted/30 text-center">
+                  <div className="p-2 sm:p-3 rounded-xl bg-muted/30 dark:bg-muted/50 border border-border/30 text-center">
                     <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Total Cost</p>
                     <p className="text-sm sm:text-lg font-bold text-foreground">
                       {formatMVR(filteredDetails.reduce((sum, p) => sum + p.total_cost, 0))}
                     </p>
                   </div>
-                  <div className="p-2 sm:p-3 rounded-xl bg-primary/10 text-center">
+                  <div className="p-2 sm:p-3 rounded-xl bg-primary/10 dark:bg-primary/20 border border-primary/20 text-center">
                     <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Total Selling</p>
                     <p className="text-sm sm:text-lg font-bold text-primary">
                       {formatMVR(filteredDetails.reduce((sum, p) => sum + p.total_selling, 0))}
                     </p>
                   </div>
-                  <div className="p-2 sm:p-3 rounded-xl bg-accent/10 text-center">
+                  <div className="p-2 sm:p-3 rounded-xl bg-accent/10 dark:bg-accent/20 border border-accent/20 text-center">
                     <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Profit</p>
-                    <p className="text-sm sm:text-lg font-bold text-accent">
+                    <p className="text-sm sm:text-lg font-bold text-accent dark:text-emerald-400">
                       {formatMVR(filteredDetails.reduce((sum, p) => sum + (p.total_selling - p.total_cost), 0))}
                     </p>
                   </div>
