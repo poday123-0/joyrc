@@ -266,7 +266,7 @@ const FooterSettingsTab = () => {
             value={settings.footer_company_name || ""}
             onChange={(e) => setSettings({ ...settings, footer_company_name: e.target.value })}
             placeholder="RC Joy Pvt. Ltd"
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
 
