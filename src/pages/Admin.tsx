@@ -1954,19 +1954,17 @@ const ProductsTab = ({
                                     </div>
                                   ))}
                                   {/* Add more images slot */}
-                                  {imageCount < 3 && (
-                                    <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                                      <Upload className="w-4 h-4 text-muted-foreground mb-1" />
-                                      <span className="text-[10px] text-muted-foreground">Add</span>
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={(e) => e.target.files && handleAddColorImages(color.id, e.target.files)}
-                                        className="hidden"
-                                      />
-                                    </label>
-                                  )}
+                                  <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                                    <Upload className="w-4 h-4 text-muted-foreground mb-1" />
+                                    <span className="text-[10px] text-muted-foreground">Add</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      onChange={(e) => e.target.files && handleAddColorImages(color.id, e.target.files)}
+                                      className="hidden"
+                                    />
+                                  </label>
                                 </div>
                               </div>
                             )}
