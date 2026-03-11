@@ -38,6 +38,7 @@ interface StockHistoryDialogProps {
   isSuperAdmin: boolean;
   onDeleteHistory: (historyId: string) => void;
   showProductFilter?: boolean;
+  inline?: boolean;
 }
 
 type PeriodFilter = "all" | "today" | "week" | "month" | "year" | "custom";
