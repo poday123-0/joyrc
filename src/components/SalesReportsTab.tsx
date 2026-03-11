@@ -221,12 +221,6 @@ const SalesReportsTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Sales Reports</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Analyze sales performance and trends
-          </p>
-        </div>
         <div className="flex items-center gap-2">
           <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
             <SelectTrigger className="w-[150px]">

@@ -227,10 +227,7 @@ const VideoShowcasesTab = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 lg:mb-6">
-        <h2 className="font-semibold text-foreground lg:text-lg">
-          Video Showcases ({videos.length})
-        </h2>
+      <div className="flex items-center justify-end mb-4 lg:mb-6">
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-primary text-primary-foreground text-sm font-medium shadow-soft"

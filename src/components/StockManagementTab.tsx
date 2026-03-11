@@ -649,12 +649,6 @@ const StockManagementTab = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Header - Mobile optimized */}
       <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-foreground">Stock Management</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Track and manage product inventory
-          </p>
-        </div>
         <div className="flex flex-wrap items-center gap-2">
           {isSuperAdmin && (
             <button

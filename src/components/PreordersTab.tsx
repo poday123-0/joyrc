@@ -149,11 +149,6 @@ const PreordersTab = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Pre-order Requests</h2>
-          <p className="text-sm text-muted-foreground">
-            {filteredPreorders.length} request{filteredPreorders.length !== 1 ? "s" : ""}
-          </p>
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-40">

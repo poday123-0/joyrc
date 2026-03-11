@@ -684,13 +684,6 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="mb-2">
-        <h2 className="text-lg font-semibold text-foreground">Dashboard Overview</h2>
-        <p className="text-xs text-muted-foreground">
-          {isFullAdmin ? "Monitor your business performance" : "Quick access to your permitted areas"}
-        </p>
-      </div>
 
       {/* Staff Quick Access Cards - shown instead of stats for non-full admins */}
       {!isFullAdmin && staffPermittedTabs.length > 0 && (

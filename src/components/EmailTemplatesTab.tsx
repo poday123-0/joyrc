@@ -119,12 +119,6 @@ const EmailTemplatesTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-foreground">Email Templates</h2>
-          <p className="text-xs text-muted-foreground">Customize automated email notifications</p>
-        </div>
-      </div>
 
       {/* Template Edit Form */}
       {editingTemplate && (

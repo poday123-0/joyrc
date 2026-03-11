@@ -9,12 +9,6 @@ const SystemUsersTab = () => {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold text-foreground">System Users</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage administrators and staff members
-        </p>
-      </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">

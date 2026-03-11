@@ -205,11 +205,7 @@ const MarketingEmailsTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-foreground">Marketing Emails</h2>
-          <p className="text-xs text-muted-foreground">Send promotional emails to customers</p>
-        </div>
+      <div className="flex items-center justify-end">
         <button
           onClick={() => setShowHistory(!showHistory)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:text-foreground"

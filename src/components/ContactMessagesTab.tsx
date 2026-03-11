@@ -214,7 +214,6 @@ const ContactMessagesTab = () => {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="font-semibold text-foreground">Contact Messages</h2>
           {newCount > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
               {newCount} new
