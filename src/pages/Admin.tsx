@@ -1212,7 +1212,7 @@ const ProductsTab = ({
       setColorImageUrl(null);
       toast({ 
         title: "Color Added",
-        description: `${data.color_name} has been added${colorImageFiles.length > 0 ? ` with ${Math.min(colorImageFiles.length, 3)} images` : ''}.`,
+        description: `${data.color_name} has been added${colorImageFiles.length > 0 ? ` with ${colorImageFiles.length} images` : ''}.`,
       });
     }
     setUploadingColor(false);
