@@ -195,7 +195,7 @@ const SupportContentTab = () => {
               placeholder={formData.type === "faq" ? "Answer" : "Content/Value"}
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
               required
             />
             <div className="flex gap-3">
