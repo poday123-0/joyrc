@@ -277,7 +277,7 @@ const FooterSettingsTab = () => {
             onChange={(e) => setSettings({ ...settings, footer_address: e.target.value })}
             placeholder="123 Main Street, City, Country"
             rows={2}
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none"
           />
         </div>
 
