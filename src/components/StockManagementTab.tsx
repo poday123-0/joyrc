@@ -1315,6 +1315,9 @@ const StockManagementTab = () => {
                       setIsGlobalHistoryView(false);
                       setHistoryDialogProductName(product.name);
                       setHistoryDialogOpen(true);
+                      setShowAnalytics(false);
+                      setShowAllHistory(false);
+                      setBulkRestockOpen(false);
                     }}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted text-foreground rounded-lg text-sm font-medium transition-colors border border-border/50"
                   >
