@@ -2991,7 +2991,7 @@ const SettingsTab = ({
                   value={formData.notification_email || ""}
                   onChange={(e) => setFormData({ ...formData, notification_email: e.target.value })}
                   placeholder="noreply@yourdomain.com"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   This email will appear as the sender for order notifications. Must be a verified domain in Resend.
