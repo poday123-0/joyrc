@@ -73,6 +73,7 @@ interface Product {
   rating: number | null;
   in_stock: boolean | null;
   item_code: string | null;
+  hidden_from_shop?: boolean;
 }
 
 interface ProductSpecification {
