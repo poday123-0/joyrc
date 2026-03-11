@@ -1351,6 +1351,34 @@ const ProductsTab = ({
     });
   };
 
+  // Change main image for a color variant
+  const handleChangeColorMainImage = async (colorId: string, file: File) => {
+    if (!editingProduct) return;
+    const compressedFile = await compressImage(file, 1200, 0.8);
+    const fileName = `color-main-${Date.now()}-${compressedFile.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("product-images")
+      .upload(fileName, compressedFile);
+    if (uploadError) {
+      toast({ title: "Upload failed", variant: "destructive" });
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+    const { error } = await supabase
+      .from("product_colors")
+      .update({ image_url: urlData.publicUrl })
+      .eq("id", colorId);
+    if (!error) {
+      setProductColors(prev => ({
+        ...prev,
+        [editingProduct.id]: prev[editingProduct.id]?.map(c =>
+          c.id === colorId ? { ...c, image_url: urlData.publicUrl } : c
+        ) || []
+      }));
+      toast({ title: "Main image updated" });
+    }
+  };
+
   // Delete color-specific image
   const handleDeleteColorImage = async (imageId: string) => {
     const { error } = await supabase.from("product_images").delete().eq("id", imageId);
