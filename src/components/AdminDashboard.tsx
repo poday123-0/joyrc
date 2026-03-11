@@ -1014,30 +1014,31 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
                 <p className="text-xs text-muted-foreground mb-1">Product Cost</p>
                 <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
               </div>
-              {/* Profit = Revenue - Cost */}
+              {/* Profit = Revenue - COGS (cost of goods sold) */}
               <div className="text-center p-3 rounded-xl bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-1">Profit</p>
-                <p className={`text-sm font-bold ${periodStats.income - periodStats.cashOut >= 0 ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
-                  {formatMVR(periodStats.income - periodStats.cashOut)}
+                <p className="text-xs text-muted-foreground mb-1">Gross Profit</p>
+                <p className={`text-sm font-bold ${periodStats.income - periodStats.cogs >= 0 ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
+                  {formatMVR(periodStats.income - periodStats.cogs)}
                 </p>
+                <p className="text-[9px] text-muted-foreground">Revenue - COGS</p>
               </div>
               {/* Total Expenses */}
               <div className="text-center p-3 rounded-xl bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
+                <p className="text-xs text-muted-foreground mb-1">Expenses</p>
                 <p className="text-sm font-bold text-destructive">{formatMVR(periodStats.expenses)}</p>
               </div>
-              {/* Gross = Profit - Expenses */}
+              {/* Net Profit = Gross Profit - Expenses */}
               <div className="text-center p-3 rounded-xl bg-primary/5">
-                <p className="text-xs text-muted-foreground mb-1">Gross</p>
-                <p className={`text-sm font-bold ${(periodStats.income - periodStats.cashOut - periodStats.expenses) >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {formatMVR(periodStats.income - periodStats.cashOut - periodStats.expenses)}
+                <p className="text-xs text-muted-foreground mb-1">Net Profit</p>
+                <p className={`text-sm font-bold ${(periodStats.income - periodStats.cogs - periodStats.expenses) >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {formatMVR(periodStats.income - periodStats.cogs - periodStats.expenses)}
                 </p>
               </div>
-              {/* Inventory Value */}
-              <div className="text-center p-3 rounded-xl bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowStockDetails(true)}>
-                <p className="text-xs text-muted-foreground mb-1">Inventory Value</p>
-                <p className="text-sm font-bold text-foreground">{formatMVR(stats.stockValueCost)}</p>
-                <p className="text-[9px] text-muted-foreground">{stats.totalStockItems} items</p>
+              {/* Cash Out for Inventory */}
+              <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
+                <p className="text-xs text-muted-foreground mb-1">Inventory Purchases</p>
+                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
+                <p className="text-[9px] text-muted-foreground">Cash invested in stock</p>
               </div>
             </div>
           </div>
