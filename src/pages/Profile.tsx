@@ -172,14 +172,8 @@ const Profile = () => {
               <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
             </div>
 
-            {/* Tabs */}
-            <ProfileTabs 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab} 
-              isAdmin={isAdmin} 
-            />
-
-            {activeTab === "profile" ? (
+            {/* Settings Panel (toggled from header icon) */}
+            {showSettings && (
               <EditProfileForm
                 fullName={fullName}
                 mobileNumber={mobileNumber}
@@ -191,20 +185,45 @@ const Profile = () => {
                 onAddressChange={setAddress}
                 onSave={handleSaveProfile}
               />
-            ) : activeTab === "orders" && !isAdmin ? (
-              <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                <OrdersTab />
-              </div>
-            ) : activeTab === "messages" && !isAdmin ? (
-              <div className="space-y-6">
-                <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                  <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
-                </div>
-                <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                  <CustomerMessagesTab key={messagesKey} />
-                </div>
-              </div>
-            ) : null}
+            )}
+
+            {!isAdmin && !showSettings && (
+              <>
+                {/* Tabs */}
+                <ProfileTabs 
+                  activeTab={activeTab} 
+                  onTabChange={setActiveTab} 
+                  isAdmin={isAdmin} 
+                />
+
+                {activeTab === "profile" ? (
+                  <EditProfileForm
+                    fullName={fullName}
+                    mobileNumber={mobileNumber}
+                    email={user.email || ""}
+                    address={address}
+                    saving={saving}
+                    onFullNameChange={setFullName}
+                    onMobileNumberChange={setMobileNumber}
+                    onAddressChange={setAddress}
+                    onSave={handleSaveProfile}
+                  />
+                ) : activeTab === "orders" ? (
+                  <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                    <OrdersTab />
+                  </div>
+                ) : activeTab === "messages" ? (
+                  <div className="space-y-6">
+                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                      <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
+                    </div>
+                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                      <CustomerMessagesTab key={messagesKey} />
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       </div>
