@@ -585,15 +585,17 @@ const Admin = () => {
         <aside className="hidden lg:flex lg:flex-col w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
            <div className="flex items-center gap-3 mb-2 pb-2 border-b border-border">
               <button
-                onClick={() => setActiveTab("dashboard")}
+                onClick={() => navigate("/home")}
                 className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors flex-shrink-0"
               >
                 <ChevronLeft className="w-4 h-4 text-foreground" />
               </button>
-              {settings?.logo_url && (
-                <img src={settings.logo_url} alt="Logo" className="h-8 w-auto object-contain" />
-              )}
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Admin</p>
+              <div className="flex items-center gap-2 min-w-0">
+                {settings?.logo_url && (
+                  <img src={settings.logo_url} alt="Logo" className="h-6 w-auto object-contain flex-shrink-0" />
+                )}
+                <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold truncate">Admin</p>
+              </div>
             </div>
 
           <Link
