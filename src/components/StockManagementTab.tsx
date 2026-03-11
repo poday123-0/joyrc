@@ -752,6 +752,27 @@ const StockManagementTab = () => {
         }}
       />
 
+      {/* Per-Product History - Inline */}
+      <StockHistoryDialog
+        open={historyDialogOpen}
+        onOpenChange={(open) => {
+          setHistoryDialogOpen(open);
+          if (!open) {
+            setIsGlobalHistoryView(false);
+          }
+        }}
+        productName={historyDialogProductName}
+        stockHistory={stockHistory}
+        loading={historyLoading}
+        isSuperAdmin={isSuperAdmin}
+        showProductFilter={isGlobalHistoryView}
+        inline
+        onDeleteHistory={(historyId) => {
+          setDeleteHistoryId(historyId);
+          setDeleteHistoryProductId(expandedProductId);
+        }}
+      />
+
       {/* Clear History Dialog */}
       {showClearDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
