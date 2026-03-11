@@ -1394,7 +1394,7 @@ const StatCard = ({
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke={chartColors[variant]}
+                stroke={chartColor || chartColors[variant]}
                 strokeWidth={1.5}
                 dot={false}
                 isAnimationActive={true}
