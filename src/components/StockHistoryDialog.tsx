@@ -420,19 +420,26 @@ export const StockHistoryDialog = ({
                       </span>
                     </div>
 
-                    {/* Order/User info */}
-                    {(item.order_id || item.profile?.full_name) && (
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {item.order_id && item.change_type === "sale" && (
-                          <span className="text-blue-600 font-medium">
+                    {/* Performed by & Order info */}
+                    <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground mb-1">
+                      {item.profile?.full_name && (
+                        <span className="font-medium text-foreground/70">
+                          {item.profile.full_name}
+                        </span>
+                      )}
+                      {item.profile?.full_name && (
+                        <span>•</span>
+                      )}
+                      <span>{formatDate(item.created_at)}</span>
+                      {item.order_id && item.change_type === "sale" && (
+                        <>
+                          <span>•</span>
+                          <span className="text-blue-600 dark:text-blue-400 font-medium">
                             Order #{item.order_id.slice(0, 8).toUpperCase()}
                           </span>
-                        )}
-                        {item.profile?.full_name && (
-                          <span className="ml-2">by {item.profile.full_name}</span>
-                        )}
-                      </p>
-                    )}
+                        </>
+                      )}
+                    </div>
 
                     {/* Notes */}
                     {item.notes && (
