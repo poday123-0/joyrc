@@ -371,18 +371,20 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // Count unique customers from profiles
     const totalCustomers = profiles.length;
 
-    // Calculate COGS using latest unit_purchase_price from stock_history (actual purchase cost)
-    // productCostMap already built above from stock_history restocks
-    const totalCOGS = orderItems.reduce((sum, item) => {
-      const costPrice = productCostMap.get(item.product_id) || 0;
-      return sum + (item.quantity * costPrice);
+    // Calculate COGS from stock_history sale records (unit_purchase_price × quantity sold)
+    // For sales with stored cost, use that. For older sales without cost, fallback to restock cost map.
+    const totalCOGS = saleHistory.reduce((sum, sh) => {
+      const qty = Math.abs(sh.change_amount || 0);
+      const costPrice = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
+      return sum + (qty * costPrice);
     }, 0);
     
-    const monthlyCOGS = orderItems
-      .filter(item => item.created_at >= startOfMonth)
-      .reduce((sum, item) => {
-        const costPrice = productCostMap.get(item.product_id) || 0;
-        return sum + (item.quantity * costPrice);
+    const monthlyCOGS = saleHistory
+      .filter(sh => sh.created_at >= startOfMonth)
+      .reduce((sum, sh) => {
+        const qty = Math.abs(sh.change_amount || 0);
+        const costPrice = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
+        return sum + (qty * costPrice);
       }, 0);
 
     setStats({
