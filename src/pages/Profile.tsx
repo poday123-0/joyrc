@@ -141,7 +141,14 @@ const Profile = () => {
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </Link>
           <h1 className="font-bold text-2xl md:text-3xl text-foreground tracking-tight">My Profile</h1>
-          <div className="w-11" />
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`w-11 h-11 rounded-xl bg-card/80 backdrop-blur-sm border flex items-center justify-center hover:bg-card transition-all duration-300 shadow-sm ${
+              showSettings ? "border-primary/50 text-primary" : "border-border/50 text-foreground"
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Desktop/Tablet Layout */}
