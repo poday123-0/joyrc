@@ -1402,6 +1402,45 @@ const ProductsTab = ({
     }
   };
 
+  // Promote a color extra image to main image
+  const handleSetColorMainImage = async (colorId: string, imageId: string, imageUrl: string) => {
+    if (!editingProduct) return;
+    const color = (productColors[editingProduct.id] || []).find(c => c.id === colorId);
+    if (!color) return;
+
+    // If there's an existing main image, move it to product_images as an extra
+    if (color.image_url) {
+      await supabase.from("product_images").insert({
+        product_id: editingProduct.id,
+        image_url: color.image_url,
+        color_id: colorId,
+        sort_order: galleryImages.length,
+        is_360: false,
+      });
+    }
+
+    // Update color's main image
+    const { error } = await supabase
+      .from("product_colors")
+      .update({ image_url: imageUrl })
+      .eq("id", colorId);
+
+    if (!error) {
+      // Remove the promoted image from product_images
+      await supabase.from("product_images").delete().eq("id", imageId);
+      
+      // Update local state
+      setProductColors(prev => ({
+        ...prev,
+        [editingProduct.id]: prev[editingProduct.id]?.map(c =>
+          c.id === colorId ? { ...c, image_url: imageUrl } : c
+        ) || []
+      }));
+      await fetchGalleryImages(editingProduct.id);
+      toast({ title: "Main image updated" });
+    }
+  };
+
   // Delete color-specific image
   const handleDeleteColorImage = async (imageId: string) => {
     const { error } = await supabase.from("product_images").delete().eq("id", imageId);
@@ -2113,20 +2152,29 @@ const ProductsTab = ({
                                     </label>
                                   )}
                                   {/* Additional color images */}
-                                  {colorImages.map((img) => (
+                                   {colorImages.map((img) => (
                                     <div key={img.id} className="relative group">
                                       <img 
                                         src={img.image_url} 
                                         alt={`${color.color_name} variant`}
                                         className="w-full aspect-square rounded-lg object-cover"
                                       />
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteColorImage(img.id)}
-                                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                      >
-                                        <X className="w-3 h-3" />
-                                      </button>
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 rounded-lg">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSetColorMainImage(color.id, img.id, img.image_url)}
+                                          className="px-2 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-medium hover:bg-primary/90 transition-colors"
+                                        >
+                                          Set as Main
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteColorImage(img.id)}
+                                          className="px-2 py-1 rounded-md bg-destructive text-destructive-foreground text-[10px] font-medium hover:bg-destructive/90 transition-colors"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
                                     </div>
                                   ))}
                                   {/* Add more images slot */}
