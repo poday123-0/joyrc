@@ -113,7 +113,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
 
         const changeAmount = mode === "add" ? item.qty : -item.qty;
         const newQty = Math.max(0, product.stock_quantity + changeAmount);
-        const itemTotal = item.qty * (item.unitPrice + item.shippingCost + item.otherCosts);
+        const itemTotal = (item.unitPrice * item.qty) + item.shippingCost + item.otherCosts;
 
         const updateData: any = { stock_quantity: newQty, in_stock: newQty > 0 };
         if (mode === "add" && item.unitPrice > 0) {
