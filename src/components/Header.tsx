@@ -117,6 +117,17 @@ const Header = ({ userName }: HeaderProps) => {
 
           {/* Right Icons */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-foreground/80 hover:text-foreground transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-4 h-4" strokeWidth={1.5} />
+              ) : (
+                <Moon className="w-4 h-4" strokeWidth={1.5} />
+              )}
+            </button>
             <button 
               onClick={() => setIsSearchOpen(true)}
               className="text-foreground/80 hover:text-foreground transition-colors"
