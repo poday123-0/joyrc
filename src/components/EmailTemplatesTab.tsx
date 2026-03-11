@@ -38,6 +38,8 @@ const EmailTemplatesTab = () => {
     setLoading(false);
   };
 
+  useRealtimeSubscription('email_templates', fetchTemplates, 'rt-email-templates');
+
   useEffect(() => {
     fetchTemplates();
   }, []);

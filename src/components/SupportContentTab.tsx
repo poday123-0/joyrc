@@ -42,6 +42,8 @@ const SupportContentTab = () => {
     setLoading(false);
   };
 
+  useRealtimeSubscription('support_content', fetchContent, 'rt-support-content');
+
   useEffect(() => {
     fetchContent();
   }, []);

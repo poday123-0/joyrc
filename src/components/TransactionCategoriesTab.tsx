@@ -85,6 +85,8 @@ const TransactionCategoriesTab = ({ onCategoryChange }: TransactionCategoriesTab
     setLoading(false);
   };
 
+  useRealtimeSubscription('transaction_categories', fetchCategories, 'rt-tx-categories');
+
   const resetForm = () => {
     setFormData({ name: "", type: activeTab, icon: "Package" });
     setEditingCategory(null);
