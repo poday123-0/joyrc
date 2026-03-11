@@ -289,7 +289,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_phone || ""}
               onChange={(e) => setSettings({ ...settings, footer_phone: e.target.value })}
               placeholder="+960 123 4567"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
           <div>
