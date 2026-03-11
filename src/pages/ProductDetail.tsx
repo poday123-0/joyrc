@@ -83,7 +83,7 @@ const ProductDetail = () => {
   const [userSelectedColor, setUserSelectedColor] = useState(false);
   const [colorImageIndex, setColorImageIndex] = useState(0);
   const [selectedColorImageIndex, setSelectedColorImageIndex] = useState(0);
-  const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSlideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartRef = useRef<number | null>(null);
   const touchEndRef = useRef<number | null>(null);
   
