@@ -648,9 +648,33 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
         </div>
       )}
 
-      {/* Primary Stats Row - Financial data only for full admins */}
+      {/* Top Financial Cards - Gross & Net Profit */}
       {isFullAdmin && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard
+            title="Gross Profit"
+            value={formatMVR(grossProfit)}
+            icon={TrendingUp}
+            trend={`${formatMVR(monthlyGrossProfit)} this month`}
+            trendUp={grossProfit > 0}
+            variant={grossProfit >= 0 ? "success" : "danger"}
+            onClick={() => onTabChange?.("reports")}
+          />
+          <StatCard
+            title="Net Profit"
+            value={formatMVR(netProfit)}
+            icon={Wallet}
+            trend={`${formatMVR(monthlyNetProfit)} this month`}
+            trendUp={netProfit > 0}
+            variant={netProfit >= 0 ? "primary" : "danger"}
+            onClick={() => onTabChange?.("reports")}
+          />
+        </div>
+      )}
+
+      {/* Secondary Financial Stats */}
+      {isFullAdmin && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard
             title="Total Revenue"
             value={formatMVR(stats.totalRevenue)}
@@ -670,15 +694,6 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             onClick={() => onTabChange?.("reports")}
           />
           <StatCard
-            title="Gross Profit"
-            value={formatMVR(grossProfit)}
-            icon={TrendingUp}
-            trend={`${formatMVR(monthlyGrossProfit)} this month`}
-            trendUp={grossProfit > 0}
-            variant={grossProfit >= 0 ? "success" : "danger"}
-            onClick={() => onTabChange?.("reports")}
-          />
-          <StatCard
             title="Total Expenses"
             value={formatMVR(stats.totalExpenses)}
             icon={TrendingDown}
@@ -686,15 +701,6 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={false}
             variant="danger"
             onClick={() => onTabChange?.("transactions")}
-          />
-          <StatCard
-            title="Net Profit"
-            value={formatMVR(netProfit)}
-            icon={Wallet}
-            trend={`${formatMVR(monthlyNetProfit)} this month`}
-            trendUp={netProfit > 0}
-            variant={netProfit >= 0 ? "primary" : "danger"}
-            onClick={() => onTabChange?.("reports")}
           />
           <StatCard
             title="Product Purchase"
