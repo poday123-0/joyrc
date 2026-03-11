@@ -147,35 +147,47 @@ interface TabItem {
   id: string;
   label: string;
   icon: any;
+  category?: string;
 }
 
 type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
+const TAB_CATEGORIES = [
+  { key: "main", label: "" },
+  { key: "shop", label: "Shop & Catalog" },
+  { key: "sales", label: "Sales & Orders" },
+  { key: "finance", label: "Finance" },
+  { key: "communication", label: "Communication" },
+  { key: "content", label: "Content & Media" },
+  { key: "people", label: "People" },
+  { key: "system", label: "System" },
+];
+
 const defaultTabs: TabItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "pos", label: "Quick POS", icon: Banknote },
-  { id: "products", label: "Products", icon: Package },
-  { id: "stock", label: "Stock", icon: PackageSearch },
-  { id: "transactions", label: "Transactions", icon: CreditCard },
-  { id: "featured", label: "Featured", icon: Star },
-  { id: "videos", label: "Videos", icon: Video },
-  { id: "categories", label: "Categories", icon: Grid3X3 },
-  { id: "orders", label: "Orders", icon: ShoppingCart },
-  { id: "preorders", label: "Pre-orders", icon: Bell },
-  { id: "deliveries", label: "Deliveries", icon: Truck },
-  { id: "reports", label: "Reports", icon: BarChart3 },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "bank", label: "Bank", icon: Building2 },
-  { id: "support", label: "Support", icon: HelpCircle },
-  { id: "admins", label: "System Users", icon: Users },
-  { id: "users", label: "Customers", icon: User },
-  { id: "hero", label: "Hero", icon: ImageIcon },
-  { id: "home-content", label: "Home", icon: FolderOpen },
-  { id: "storage", label: "Storage", icon: HardDrive },
-  { id: "email-templates", label: "Templates", icon: Mail },
-  { id: "marketing", label: "Marketing", icon: Send },
-  { id: "footer", label: "Footer", icon: FolderOpen },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, category: "main" },
+  { id: "pos", label: "Quick POS", icon: Banknote, category: "sales" },
+  { id: "products", label: "Products", icon: Package, category: "shop" },
+  { id: "stock", label: "Stock", icon: PackageSearch, category: "shop" },
+  { id: "categories", label: "Categories", icon: Grid3X3, category: "shop" },
+  { id: "featured", label: "Featured", icon: Star, category: "shop" },
+  { id: "orders", label: "Orders", icon: ShoppingCart, category: "sales" },
+  { id: "preorders", label: "Pre-orders", icon: Bell, category: "sales" },
+  { id: "deliveries", label: "Deliveries", icon: Truck, category: "sales" },
+  { id: "transactions", label: "Transactions", icon: CreditCard, category: "finance" },
+  { id: "reports", label: "Reports", icon: BarChart3, category: "finance" },
+  { id: "bank", label: "Bank", icon: Building2, category: "finance" },
+  { id: "messages", label: "Messages", icon: MessageSquare, category: "communication" },
+  { id: "marketing", label: "Marketing", icon: Send, category: "communication" },
+  { id: "email-templates", label: "Templates", icon: Mail, category: "communication" },
+  { id: "hero", label: "Hero", icon: ImageIcon, category: "content" },
+  { id: "home-content", label: "Home", icon: FolderOpen, category: "content" },
+  { id: "videos", label: "Videos", icon: Video, category: "content" },
+  { id: "footer", label: "Footer", icon: FolderOpen, category: "content" },
+  { id: "support", label: "Support", icon: HelpCircle, category: "content" },
+  { id: "admins", label: "System Users", icon: Users, category: "people" },
+  { id: "users", label: "Customers", icon: User, category: "people" },
+  { id: "storage", label: "Storage", icon: HardDrive, category: "system" },
+  { id: "settings", label: "Settings", icon: Settings, category: "system" },
 ];
 
 // Icon map to resolve icons from saved order
@@ -221,7 +233,7 @@ const SortableMenuItem = ({
       style={style}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
         isActive
-          ? "bg-orange-500 text-white"
+          ? "bg-primary text-primary-foreground"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
       } ${isDragging ? "z-50 shadow-lg" : ""}`}
     >
@@ -466,23 +478,34 @@ const Admin = () => {
               <ExternalLink className="w-4 h-4" />
               <span className="font-medium">Exit Admin</span>
             </Link>
-            {filteredTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id as Tab);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
-                    activeTab === tab.id
-                      ? "bg-orange-500 text-white"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                <span className="font-medium">{tab.label}</span>
-              </button>
-            ))}
+            {TAB_CATEGORIES.map((cat) => {
+              const catTabs = filteredTabs.filter(t => (t.category || "main") === cat.key);
+              if (catTabs.length === 0) return null;
+              return (
+                <div key={cat.key}>
+                  {cat.label && (
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-3 pt-3 pb-1">{cat.label}</p>
+                  )}
+                  {catTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id as Tab);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
+                        activeTab === tab.id
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span className="font-medium">{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
           </nav>
         </SheetContent>
       </Sheet>
@@ -516,7 +539,7 @@ const Admin = () => {
                 onClick={() => setActiveTab(tab.id as Tab)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full whitespace-nowrap transition-all text-xs font-medium ${
                   activeTab === tab.id
-                    ? "bg-orange-500 text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -576,20 +599,31 @@ const Admin = () => {
           ) : (
             <>
               <nav className="space-y-1">
-                {filteredTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as Tab)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
-                      activeTab === tab.id
-                        ? "bg-orange-500 text-white"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <tab.icon className="w-4 h-4" />
-                    <span className="font-medium">{tab.label}</span>
-                  </button>
-                ))}
+                {TAB_CATEGORIES.map((cat) => {
+                  const catTabs = filteredTabs.filter(t => (t.category || "main") === cat.key);
+                  if (catTabs.length === 0) return null;
+                  return (
+                    <div key={cat.key}>
+                      {cat.label && (
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-3 pt-4 pb-1">{cat.label}</p>
+                      )}
+                      {catTabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id as Tab)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
+                            activeTab === tab.id
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <tab.icon className="w-4 h-4" />
+                          <span className="font-medium">{tab.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
               </nav>
             </>
           )}
