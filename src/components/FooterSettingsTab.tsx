@@ -457,8 +457,8 @@ const FooterSettingsTab = () => {
                           onClick={() => toggleLinkActive(link.id, link.is_active)}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                             link.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {link.is_active ? "Active" : "Hidden"}

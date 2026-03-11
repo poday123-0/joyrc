@@ -410,9 +410,9 @@ const ContactMessagesTab = () => {
                   </button>
                   <a
                     href={`tel:${msg.mobile}`}
-                    className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200"
+                    className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-emerald-500/15 flex items-center justify-center hover:bg-emerald-500/25"
                   >
-                    <Phone className="w-4 h-4 sm:w-3 sm:h-3 text-green-600" />
+                    <Phone className="w-4 h-4 sm:w-3 sm:h-3 text-emerald-600 dark:text-emerald-400" />
                   </a>
                   <button
                     onClick={() => handleDeleteClick(msg.id)}

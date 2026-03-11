@@ -232,7 +232,7 @@ const EmailTemplatesTab = () => {
                   onClick={() => toggleActive(template)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                     template.is_active
-                      ? "bg-green-100 text-green-600 hover:bg-green-200"
+                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                   title={template.is_active ? "Disable" : "Enable"}
