@@ -2063,7 +2063,31 @@ const ProductsTab = ({
                                         className="w-full aspect-square rounded-lg object-cover"
                                       />
                                       <span className="absolute bottom-1 left-1 text-[10px] bg-background/80 px-1 rounded">Main</span>
+                                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer rounded-lg">
+                                        <div className="flex flex-col items-center">
+                                          <Upload className="w-4 h-4 text-white mb-0.5" />
+                                          <span className="text-[10px] text-white">Change</span>
+                                        </div>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => e.target.files?.[0] && handleChangeColorMainImage(color.id, e.target.files[0])}
+                                          className="hidden"
+                                        />
+                                      </label>
                                     </div>
+                                  )}
+                                  {!color.image_url && (
+                                    <label className="aspect-square rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
+                                      <Upload className="w-4 h-4 text-primary mb-1" />
+                                      <span className="text-[10px] text-primary">Main</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => e.target.files?.[0] && handleChangeColorMainImage(color.id, e.target.files[0])}
+                                        className="hidden"
+                                      />
+                                    </label>
                                   )}
                                   {/* Additional color images */}
                                   {colorImages.map((img) => (
