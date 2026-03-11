@@ -22,6 +22,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  cost_price: number | null;
   stock_quantity: number;
   image_url: string | null;
   category_id: string | null;
