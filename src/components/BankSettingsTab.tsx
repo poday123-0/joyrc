@@ -50,6 +50,8 @@ const BankSettingsTab = () => {
   };
 
   useRealtimeSubscription('bank_settings', fetchBanks, 'rt-bank-settings');
+
+  const resetForm = () => {
     setFormData({
       bank_name: "",
       account_name: "",
