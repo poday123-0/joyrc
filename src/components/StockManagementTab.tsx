@@ -411,11 +411,9 @@ const StockManagementTab = () => {
         }));
       }
 
-      // Update cost_price on the product if this is a restock (unit price + shipping + other per unit)
+      // Update cost_price on the product if this is a restock (unit price + shipping + other)
       if (isRestock && costs?.unitPurchasePrice) {
-        const shippingPerUnit = (costs.shippingCost || 0) / Math.abs(changeAmount);
-        const otherPerUnit = (costs.otherExpenses || 0) / Math.abs(changeAmount);
-        const totalCostPerUnit = costs.unitPurchasePrice + shippingPerUnit + otherPerUnit;
+        const totalCostPerUnit = costs.unitPurchasePrice + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
         await supabase
           .from("products")
           .update({ cost_price: totalCostPerUnit })
