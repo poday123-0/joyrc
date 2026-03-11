@@ -260,7 +260,7 @@ const PaymentOrdersTab = () => {
       for (const item of items || []) {
         const { data: product, error: productError } = await supabase
           .from("products")
-          .select("stock_quantity")
+          .select("stock_quantity, cost_price")
           .eq("id", item.product_id)
           .single();
 
