@@ -53,7 +53,7 @@
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(185 80% 85%) 0%, hsl(330 80% 90%) 50%, hsl(155 70% 85%) 100%);
     --gradient-primary: linear-gradient(135deg, hsl(330 85% 65%) 0%, hsl(280 70% 60%) 100%);
-    --gradient-cta: linear-gradient(90deg, hsl(155 75% 50%) 0%, hsl(175 70% 45%) 100%);
+    --gradient-cta: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.85) 100%);
     --gradient-card: linear-gradient(180deg, hsl(185 80% 92%) 0%, hsl(200 30% 98%) 100%);
     --gradient-detail-bg: linear-gradient(180deg, hsl(155 70% 88%) 0%, hsl(185 80% 88%) 30%, hsl(330 80% 92%) 70%, hsl(200 30% 98%) 100%);
     --gradient-auth-dark: linear-gradient(180deg, hsl(220 60% 25%) 0%, hsl(220 40% 15%) 100%);
@@ -114,7 +114,7 @@
     /* Gradients - Dark */
     --gradient-hero: linear-gradient(135deg, hsl(185 40% 15%) 0%, hsl(330 40% 15%) 50%, hsl(155 40% 15%) 100%);
     --gradient-primary: linear-gradient(135deg, hsl(330 85% 65%) 0%, hsl(280 70% 60%) 100%);
-    --gradient-cta: linear-gradient(90deg, hsl(155 75% 50%) 0%, hsl(175 70% 45%) 100%);
+    --gradient-cta: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.85) 100%);
     --gradient-card: linear-gradient(180deg, hsl(220 18% 14%) 0%, hsl(220 20% 8%) 100%);
     --gradient-detail-bg: linear-gradient(180deg, hsl(155 30% 12%) 0%, hsl(185 30% 12%) 30%, hsl(330 30% 12%) 70%, hsl(220 20% 8%) 100%);
     --gradient-auth-dark: linear-gradient(180deg, hsl(220 60% 12%) 0%, hsl(220 40% 8%) 100%);
