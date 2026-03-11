@@ -97,8 +97,13 @@ const ProductDetail = () => {
   const [preorderQuantity, setPreorderQuantity] = useState(1);
   const [submittingPreorder, setSubmittingPreorder] = useState(false);
 
-  // Check if product is out of stock
-  const isOutOfStock = product ? product.stock_quantity <= 0 : false;
+  // Check if product is out of stock (considering selected color variant)
+  const selectedColorForStock = productColors.find(c => c.id === selectedColorId);
+  const isOutOfStock = product 
+    ? (productColors.length > 0 && selectedColorForStock 
+        ? selectedColorForStock.stock_quantity <= 0 
+        : product.stock_quantity <= 0)
+    : false;
 
   // Get all images for a specific color (including all entries with same hex)
   const getImagesForColor = useCallback((colorId: string): string[] => {
