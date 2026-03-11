@@ -228,22 +228,24 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
       )}
 
       {/* Product List */}
-      <ScrollArea className="flex-1" style={{ maxHeight: inline ? "50vh" : (isMobile ? "40vh" : "400px") }}>
-        <div className="space-y-1.5">
+      <ScrollArea className="flex-1" style={{ maxHeight: inline ? "50vh" : (isMobile ? "45vh" : "420px") }}>
+        <div className="space-y-2">
           {filteredProducts.map(product => {
             const selected = selectedItems.find(i => i.productId === product.id);
             const isExpanded = expandedItem === product.id && !!selected;
             const itemTotal = selected ? selected.qty * (selected.unitPrice + selected.shippingCost + selected.otherCosts) : 0;
 
             return (
-              <div key={product.id} className={`rounded-xl border transition-colors ${
+              <div key={product.id} className={`rounded-xl border transition-all duration-200 ${
                 selected
-                  ? mode === "add" ? "bg-primary/5 border-primary/30" : "bg-destructive/5 border-destructive/30"
-                  : "bg-muted/30 border-border/50 hover:bg-muted/50"
+                  ? mode === "add" 
+                    ? "bg-primary/5 dark:bg-primary/10 border-primary/30 shadow-sm" 
+                    : "bg-destructive/5 dark:bg-destructive/10 border-destructive/30 shadow-sm"
+                  : "bg-card border-border/50 hover:bg-muted/50 hover:border-border"
               }`}>
                 {/* Product Row */}
                 <div
-                  className="flex items-center gap-3 p-2.5 cursor-pointer"
+                  className="flex items-center gap-3 p-3 cursor-pointer"
                   onClick={() => {
                     if (!selected) {
                       toggleProduct(product.id);
@@ -252,7 +254,8 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
                     }
                   }}
                 >
-                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                  {/* Thumbnail */}
+                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border/30">
                     {product.image_url ? (
                       <img src={product.image_url} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -261,41 +264,58 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
                       </div>
                     )}
                   </div>
+
+                  {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{product.name}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Stock: {product.stock_quantity} {product.item_code && `• ${product.item_code}`}
-                      {selected && mode === "add" && selected.unitPrice > 0 && (
-                        <span className="ml-1 text-primary">• {formatMVR(itemTotal)}</span>
+                    <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded-md ${
+                        product.stock_quantity === 0
+                          ? "bg-destructive/10 text-destructive dark:bg-destructive/20"
+                          : product.stock_quantity <= 5
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 dark:bg-amber-500/20"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20"
+                      }`}>
+                        {product.stock_quantity} in stock
+                      </span>
+                      {product.item_code && (
+                        <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                          {product.item_code}
+                        </span>
                       )}
-                    </p>
+                      {selected && mode === "add" && selected.unitPrice > 0 && (
+                        <span className="text-[10px] font-medium text-primary">{formatMVR(itemTotal)}</span>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Quantity Controls */}
                   {selected && (
-                    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => updateItem(product.id, { qty: Math.max(1, selected.qty - 1) })}
-                        className="p-1 bg-muted rounded hover:bg-muted/80"
+                        className="p-1.5 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
                       >
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-3.5 h-3.5 text-foreground" />
                       </button>
                       <input
                         type="number"
                         value={selected.qty}
                         onChange={(e) => updateItem(product.id, { qty: Math.max(1, parseInt(e.target.value) || 1) })}
-                        className="w-12 text-center text-sm bg-background border border-border rounded py-1"
+                        className="w-12 text-center text-sm font-medium bg-background border border-border rounded-lg py-1.5 text-foreground"
                         min={1}
                       />
                       <button
                         onClick={() => updateItem(product.id, { qty: selected.qty + 1 })}
-                        className="p-1 bg-muted rounded hover:bg-muted/80"
+                        className="p-1.5 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5 text-foreground" />
                       </button>
                       <button
                         onClick={() => toggleProduct(product.id)}
-                        className="p-1 text-muted-foreground hover:text-destructive rounded"
+                        className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   )}
@@ -303,37 +323,37 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
 
                 {/* Expanded Details */}
                 {isExpanded && selected && (
-                  <div className="px-2.5 pb-2.5 space-y-2" onClick={e => e.stopPropagation()}>
+                  <div className="px-3 pb-3 pt-1 border-t border-border/30 space-y-2.5" onClick={e => e.stopPropagation()}>
                     {mode === "add" ? (
                       <>
-                        <div className="grid grid-cols-3 gap-1.5">
+                        <div className="grid grid-cols-3 gap-2">
                           <div>
-                            <label className="block text-[10px] text-muted-foreground mb-0.5">
+                            <label className="block text-[10px] font-medium text-muted-foreground mb-1">
                               Unit Price <span className="text-destructive">*</span>
                             </label>
                             <input
                               type="number" min="0" step="0.01"
                               value={selected.unitPrice || ""}
                               onChange={(e) => updateItem(product.id, { unitPrice: parseFloat(e.target.value) || 0 })}
-                              className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/20"
+                              className="w-full px-2.5 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] text-muted-foreground mb-0.5">Shipping</label>
+                            <label className="block text-[10px] font-medium text-muted-foreground mb-1">Shipping</label>
                             <input
                               type="number" min="0" step="0.01"
                               value={selected.shippingCost || ""}
                               onChange={(e) => updateItem(product.id, { shippingCost: parseFloat(e.target.value) || 0 })}
-                              className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/20"
+                              className="w-full px-2.5 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] text-muted-foreground mb-0.5">Other</label>
+                            <label className="block text-[10px] font-medium text-muted-foreground mb-1">Other</label>
                             <input
                               type="number" min="0" step="0.01"
                               value={selected.otherCosts || ""}
                               onChange={(e) => updateItem(product.id, { otherCosts: parseFloat(e.target.value) || 0 })}
-                              className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/20"
+                              className="w-full px-2.5 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
                           </div>
                         </div>
@@ -342,25 +362,26 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
                           value={selected.notes}
                           onChange={(e) => updateItem(product.id, { notes: e.target.value })}
                           placeholder="Notes (optional)"
-                          className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/20"
+                          className="w-full px-2.5 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                         {itemTotal > 0 && (
-                          <p className="text-[10px] text-muted-foreground">
-                            Subtotal: <span className="font-medium text-foreground">{formatMVR(itemTotal)}</span>
-                            {" "}({selected.qty} × {formatMVR(selected.unitPrice + selected.shippingCost + selected.otherCosts)})
-                          </p>
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
+                            <Receipt className="w-3.5 h-3.5" />
+                            <span>Subtotal: <span className="font-semibold text-foreground">{formatMVR(itemTotal)}</span></span>
+                            <span className="text-[10px]">({selected.qty} × {formatMVR(selected.unitPrice + selected.shippingCost + selected.otherCosts)})</span>
+                          </div>
                         )}
                       </>
                     ) : (
                       <>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {REMOVAL_REASONS.map(reason => (
                             <button
                               key={reason.value}
                               onClick={() => updateItem(product.id, { removalReason: reason.value })}
-                              className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] transition-all ${
+                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] transition-all ${
                                 selected.removalReason === reason.value
-                                  ? "bg-destructive/10 border-destructive/30 text-foreground font-medium"
+                                  ? "bg-destructive/10 dark:bg-destructive/20 border-destructive/30 text-foreground font-medium"
                                   : "bg-muted/30 border-border/50 text-muted-foreground hover:bg-muted/50"
                               }`}
                             >
@@ -374,7 +395,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
                           value={selected.notes}
                           onChange={(e) => updateItem(product.id, { notes: e.target.value })}
                           placeholder="Notes (optional)"
-                          className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary/20"
+                          className="w-full px-2.5 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                       </>
                     )}
@@ -388,9 +409,9 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
 
       {/* Summary & Action */}
       {selectedItems.length > 0 && mode === "add" && totalCost > 0 && (
-        <div className="p-2 bg-primary/10 rounded-lg text-sm">
-          <span className="font-medium">Grand Total: {formatMVR(totalCost)}</span>
-          <span className="text-[10px] text-muted-foreground ml-2">
+        <div className="p-3 bg-primary/10 dark:bg-primary/15 rounded-xl text-sm border border-primary/20">
+          <span className="font-semibold text-foreground">Grand Total: {formatMVR(totalCost)}</span>
+          <span className="text-[11px] text-muted-foreground ml-2">
             ({totalUnits} units across {selectedItems.length} products)
           </span>
         </div>
@@ -399,10 +420,10 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
       <button
         onClick={handleBulkAction}
         disabled={saving || selectedItems.length === 0}
-        className={`w-full py-3 rounded-xl font-medium text-sm transition-colors disabled:opacity-50 ${
+        className={`w-full py-3 rounded-xl font-semibold text-sm transition-all disabled:opacity-40 ${
           mode === "add"
-            ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+            : "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm"
         }`}
       >
         {saving
