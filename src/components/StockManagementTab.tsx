@@ -1127,8 +1127,8 @@ const StockManagementTab = () => {
                             ))}
                           </div>
                         </div>
-                      )}
-
+      )}
+      </>)}
                       {/* Notes */}
                       <div>
                         <label className="block text-[10px] sm:text-xs text-muted-foreground mb-1">Notes (optional)</label>
