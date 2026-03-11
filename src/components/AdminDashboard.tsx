@@ -699,6 +699,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             variant={grossProfit >= 0 ? "success" : "danger"}
             onClick={() => onTabChange?.("reports")}
             chartData={dailyProfitData.map(d => ({ value: d.gross }))}
+            chartColor="#f97316"
           />
           <StatCard
             title="Net Profit"
