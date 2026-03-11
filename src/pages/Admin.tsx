@@ -715,6 +715,7 @@ const ProductsTab = ({
     rating: "4.5",
     in_stock: true,
     item_code: "",
+    hidden_from_shop: false,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
