@@ -700,7 +700,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={netProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
             onClick={() => onTabChange?.("reports")}
-            chartData={dailyProfitData.map(d => ({ value: d.net }))}
+            chartData={dailyProfitData.map(d => ({ value: d.net, day: d.day }))}
             chartColor="#f97316"
           />
         </div>
