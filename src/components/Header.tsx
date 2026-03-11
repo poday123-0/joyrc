@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
@@ -21,22 +21,41 @@ const Header = ({ userName }: HeaderProps) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchLogo = async () => {
-      const { data } = await supabase
-        .from("system_settings")
-        .select("logo_url")
-        .limit(1)
-        .maybeSingle();
-      
-      if (data?.logo_url) {
-        setLogoUrl(data.logo_url);
-      }
-      setLogoLoaded(true);
-    };
-
-    fetchLogo();
+  const fetchLogo = useCallback(async () => {
+    const { data } = await supabase
+      .from("system_settings")
+      .select("logo_url")
+      .limit(1)
+      .maybeSingle();
+    
+    if (data?.logo_url) {
+      setLogoUrl(data.logo_url);
+    }
+    setLogoLoaded(true);
   }, []);
+
+  useEffect(() => {
+    fetchLogo();
+
+    const channel = supabase
+      .channel('header-settings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+        },
+        () => {
+          fetchLogo();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchLogo]);
 
   // Close menu and search on route change
   useEffect(() => {
