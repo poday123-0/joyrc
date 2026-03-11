@@ -755,6 +755,7 @@ const StockManagementTab = () => {
         </div>
       )}
 
+      {!showAnalytics && (<>
       {/* Stats - Compact on mobile */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
         <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
