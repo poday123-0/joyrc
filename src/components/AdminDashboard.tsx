@@ -484,7 +484,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   // Fetch stock details for dialog
   const fetchStockDetails = async () => {
     const [productsRes, stockHistoryRes, categoriesRes] = await Promise.all([
-      supabase.from("products").select("id, name, stock_quantity, price, category_id"),
+      supabase.from("products").select("id, name, stock_quantity, price, cost_price, category_id"),
       supabase.from("stock_history").select("product_id, unit_purchase_price").eq("change_type", "restock"),
       supabase.from("categories").select("id, name").order("name")
     ]);
@@ -497,11 +497,11 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     const categoryMap = new Map<string, string>();
     categories.forEach(c => categoryMap.set(c.id, c.name));
 
-    // Build cost price map (latest cost per product)
+    // Use the product's cost_price directly (includes unit price + shipping + other costs)
     const productCostMap = new Map<string, number>();
-    stockHistory.forEach(sh => {
-      if (sh.unit_purchase_price && !productCostMap.has(sh.product_id)) {
-        productCostMap.set(sh.product_id, Number(sh.unit_purchase_price));
+    products.forEach(p => {
+      if (p.cost_price) {
+        productCostMap.set(p.id, Number(p.cost_price));
       }
     });
 
