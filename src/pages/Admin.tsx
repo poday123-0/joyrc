@@ -691,9 +691,29 @@ const Admin = () => {
         <main className="flex-1 lg:p-6 xl:p-8">
           <div className="container max-w-5xl mx-auto px-4 py-4 lg:px-0 lg:py-0">
             {/* Desktop Header */}
-            <div className="hidden lg:block mb-6">
-              <h2 className="text-xl font-semibold text-foreground capitalize">{activeTab}</h2>
-              <p className="text-sm text-muted-foreground mt-1">Manage your {activeTab} settings</p>
+            <div className="hidden lg:flex lg:items-center lg:justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground capitalize">{activeTab}</h2>
+                <p className="text-sm text-muted-foreground mt-1">Manage your {activeTab} settings</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/home"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span className="font-medium">Exit Admin</span>
+                </Link>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/30">
+                  {theme === "dark" ? <Moon className="w-4 h-4 text-muted-foreground" /> : <Sun className="w-4 h-4 text-muted-foreground" />}
+                  <button
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className={`relative w-9 h-5 rounded-full transition-colors ${theme === "dark" ? "bg-primary" : "bg-border"}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-primary-foreground shadow transition-transform ${theme === "dark" ? "translate-x-4" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Content - with permission checks */}
