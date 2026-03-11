@@ -165,6 +165,8 @@ const PaymentOrdersTab = () => {
     setLoading(false);
   };
 
+  useRealtimeSubscription(['orders', 'order_items'], fetchOrders, 'rt-payment-orders');
+
   const fetchDeliveryStaff = async () => {
     // Fetch staff with delivery permission
     const { data: permissions, error: permError } = await supabase
