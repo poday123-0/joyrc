@@ -313,6 +313,7 @@ const PaymentOrdersTab = () => {
             notes: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
             order_id: selectedOrderId,
             created_by: confirmedBy,
+            unit_purchase_price: Number(product.cost_price || 0),
           });
 
         if (historyError) {
