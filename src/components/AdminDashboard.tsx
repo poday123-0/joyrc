@@ -283,6 +283,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       monthlyStockHistoryRes,
       profilesRes,
       orderItemsRes,
+      saleHistoryRes,
     ] = await Promise.all([
       supabase.from("orders").select("*"),
       supabase.from("products").select("id, stock_quantity, price, cost_price"),
@@ -294,6 +295,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock").gte("created_at", startOfMonth),
       supabase.from("profiles").select("id"),
       supabase.from("order_items").select("product_id, quantity, created_at"),
+      supabase.from("stock_history").select("product_id, unit_purchase_price, change_amount, created_at").eq("change_type", "sale"),
     ]);
 
     const orders = ordersRes.data || [];
@@ -306,6 +308,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     const monthlyStockHistory = monthlyStockHistoryRes.data || [];
     const profiles = profilesRes.data || [];
     const orderItems = orderItemsRes.data || [];
+    const saleHistory = saleHistoryRes.data || [];
 
     // Calculate inventory cash out (total_expense from stock_history restocks)
     const totalInventoryCashOut = stockHistoryAll.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
