@@ -19,7 +19,7 @@ const BottomNavigation = forwardRef<HTMLElement>((_, ref) => {
   return (
     <nav ref={ref} className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
       {/* Apple-style tab bar */}
-      <div className="bg-background/80 backdrop-blur-xl border-t border-border/30 pb-safe">
+      <div className="bg-background/70 backdrop-blur-2xl backdrop-saturate-150 border-t border-border/20 dark:border-white/10 dark:bg-background/60 pb-safe shadow-[0_-1px_3px_rgba(0,0,0,0.05)] dark:shadow-[0_-1px_6px_rgba(0,0,0,0.3)]">
         <div className="flex items-center justify-around h-12">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
