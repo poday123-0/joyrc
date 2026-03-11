@@ -30,7 +30,7 @@ interface BulkRestockDialogProps {
   inline?: boolean;
 }
 
-const BulkRestockDialog = ({ open, onOpenChange, products, onComplete }: BulkRestockDialogProps) => {
+const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = false }: BulkRestockDialogProps) => {
   const isMobile = useIsMobile();
   const [selectedItems, setSelectedItems] = useState<BulkItem[]>([]);
   const [search, setSearch] = useState("");
