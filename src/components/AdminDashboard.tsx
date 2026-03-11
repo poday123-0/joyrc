@@ -450,6 +450,34 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     }
     setDailyProfitData(dailyData);
 
+    // Compute cumulative stock value trend for current month
+    // We track running cost/selling totals by replaying stock changes day by day
+    // Start with current values and work backwards isn't ideal, so we use a simpler approach:
+    // Show the restock investment (cost) and potential selling value accumulated per day
+    const stockTrend: Array<{ day: string; cost: number; selling: number }> = [];
+    let runningCost = 0;
+    let runningSelling = 0;
+    
+    for (let d = new Date(monthStartDate); d <= now; d.setDate(d.getDate() + 1)) {
+      const dayStr = format(d, "yyyy-MM-dd");
+      
+      // Restocks on this day add to cost
+      const dayRestockCost = stockHistoryAll
+        .filter(sh => sh.created_at?.startsWith(dayStr))
+        .reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
+      
+      // Revenue (sales) on this day
+      const daySalesRevenue = allTransactions
+        .filter(t => t.type === "income" && t.created_at?.startsWith(dayStr))
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      runningCost += dayRestockCost;
+      runningSelling += daySalesRevenue;
+      
+      stockTrend.push({ day: format(d, "d"), cost: runningCost, selling: runningSelling });
+    }
+    setStockValueTrend(stockTrend);
+
     setLoading(false);
   };
 
