@@ -911,6 +911,7 @@ const ProductsTab = ({
       rating: (product.rating || 4.5).toString(),
       in_stock: product.in_stock ?? true,
       item_code: product.item_code || "",
+      hidden_from_shop: product.hidden_from_shop ?? false,
     });
     setShowForm(true);
     
