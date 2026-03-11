@@ -1564,7 +1564,7 @@ const ProductsTab = ({
                   placeholder="Item Code / SKU"
                   value={formData.item_code}
                   onChange={(e) => setFormData({ ...formData, item_code: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent font-mono"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
