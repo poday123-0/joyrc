@@ -123,6 +123,26 @@ const StockManagementTab = () => {
     fetchProducts();
     fetchCategories();
     checkSuperAdmin();
+
+    // Realtime subscriptions for instant updates
+    const productsChannel = supabase
+      .channel('stock-products-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        fetchProducts();
+      })
+      .subscribe();
+
+    const stockChannel = supabase
+      .channel('stock-history-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_history' }, () => {
+        fetchProducts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(stockChannel);
+    };
   }, []);
 
   const fetchCategories = async () => {
