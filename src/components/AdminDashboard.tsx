@@ -16,6 +16,7 @@ import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, subDays } f
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 type PeriodFilter = "today" | "week" | "month" | "year" | "custom";
 interface Transaction {
   id: string;
@@ -124,6 +125,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const [stockSearchQuery, setStockSearchQuery] = useState("");
   const [stockCategoryFilter, setStockCategoryFilter] = useState("all");
   const [stockCategories, setStockCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [dailyProfitData, setDailyProfitData] = useState<Array<{ day: string; gross: number; net: number }>>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -412,6 +414,40 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     });
 
     setTransactions(allTransactions as Transaction[]);
+
+    // Compute daily profit data for sparklines (last 14 days)
+    const last14Days: Array<{ day: string; gross: number; net: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const dayDate = subDays(now, i);
+      const dayStr = format(dayDate, "yyyy-MM-dd");
+      const dayLabel = format(dayDate, "MMM d");
+      
+      // Revenue for day
+      const dayRevenue = allTransactions
+        .filter(t => t.type === "income" && t.created_at?.startsWith(dayStr))
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      // COGS for day
+      const dayCOGS = saleHistory
+        .filter(sh => sh.created_at?.startsWith(dayStr))
+        .reduce((sum, sh) => {
+          const qty = Math.abs(sh.change_amount || 0);
+          const cp = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
+          return sum + (qty * cp);
+        }, 0);
+      
+      // Expenses for day
+      const dayExp = allTransactions
+        .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping" && t.created_at?.startsWith(dayStr))
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      const dayGross = dayRevenue - dayCOGS;
+      const dayNet = dayGross - dayExp;
+      
+      last14Days.push({ day: dayLabel, gross: dayGross, net: dayNet });
+    }
+    setDailyProfitData(last14Days);
+
     setLoading(false);
   };
 
@@ -659,6 +695,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={grossProfit > 0}
             variant={grossProfit >= 0 ? "success" : "danger"}
             onClick={() => onTabChange?.("reports")}
+            chartData={dailyProfitData.map(d => ({ value: d.gross }))}
           />
           <StatCard
             title="Net Profit"
@@ -668,6 +705,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={netProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
             onClick={() => onTabChange?.("reports")}
+            chartData={dailyProfitData.map(d => ({ value: d.net }))}
           />
         </div>
       )}
@@ -1300,6 +1338,7 @@ const StatCard = ({
   variant,
   className = "",
   onClick,
+  chartData,
 }: {
   title: string;
   value: string;
@@ -1309,12 +1348,20 @@ const StatCard = ({
   variant: "success" | "danger" | "primary" | "warning";
   className?: string;
   onClick?: () => void;
+  chartData?: Array<{ value: number }>;
 }) => {
   const variantStyles = {
     success: "bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))]",
     danger: "bg-destructive/10 text-destructive",
     primary: "bg-primary/10 text-primary",
     warning: "bg-amber-500/10 text-amber-600 dark:text-amber-500",
+  };
+
+  const chartColors: Record<string, string> = {
+    success: "hsl(var(--chart-2))",
+    danger: "hsl(var(--destructive))",
+    primary: "hsl(var(--primary))",
+    warning: "#d97706",
   };
 
   return (
@@ -1334,6 +1381,23 @@ const StatCard = ({
       </div>
       <p className="text-sm sm:text-base font-bold text-foreground leading-tight">{value}</p>
       <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{title}</p>
+      {chartData && chartData.length > 0 && (
+        <div className="h-10 mt-1.5 -mx-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={chartColors[variant]}
+                strokeWidth={1.5}
+                dot={false}
+                isAnimationActive={true}
+                animationDuration={800}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
       <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 mt-0.5">{trend}</p>
     </div>
   );
