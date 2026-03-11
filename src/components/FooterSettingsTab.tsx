@@ -372,7 +372,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_social_linkedin || ""}
               onChange={(e) => setSettings({ ...settings, footer_social_linkedin: e.target.value })}
               placeholder="LinkedIn URL"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
