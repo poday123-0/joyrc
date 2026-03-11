@@ -143,7 +143,7 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-white/30 shadow-soft;
+    @apply bg-card/70 backdrop-blur-xl border border-border/30 shadow-soft;
   }
 
   .gradient-hero {
