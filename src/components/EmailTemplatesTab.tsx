@@ -158,7 +158,7 @@ const EmailTemplatesTab = () => {
                 type="text"
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 placeholder="Email subject..."
               />
             </div>
@@ -177,14 +177,14 @@ const EmailTemplatesTab = () => {
               
               {showPreview ? (
                 <div
-                  className="w-full p-4 rounded-xl border border-border bg-white min-h-[200px] prose prose-sm max-w-none"
+                  className="w-full p-4 rounded-xl border border-border bg-background min-h-[200px] prose prose-sm max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
                 />
               ) : (
                 <textarea
                   value={formData.html_content}
                   onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
-                  className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-48"
+                  className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-48"
                   placeholder="<h1>Email content...</h1>"
                 />
               )}
@@ -232,7 +232,7 @@ const EmailTemplatesTab = () => {
                   onClick={() => toggleActive(template)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                     template.is_active
-                      ? "bg-green-100 text-green-600 hover:bg-green-200"
+                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                   title={template.is_active ? "Disable" : "Enable"}

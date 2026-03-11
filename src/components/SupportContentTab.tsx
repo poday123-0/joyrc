@@ -177,7 +177,7 @@ const SupportContentTab = () => {
             <select
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value="faq">FAQ</option>
               <option value="contact_info">Contact Info</option>
@@ -188,14 +188,14 @@ const SupportContentTab = () => {
               placeholder={formData.type === "faq" ? "Question" : "Title (e.g., email, phone)"}
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
             <textarea
               placeholder={formData.type === "faq" ? "Answer" : "Content/Value"}
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
               required
             />
             <div className="flex gap-3">
@@ -204,7 +204,7 @@ const SupportContentTab = () => {
                 placeholder="Sort order"
                 value={formData.sort_order}
                 onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                className="w-24 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-24 px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               />
               <label className="flex items-center gap-2 cursor-pointer">
                 <input

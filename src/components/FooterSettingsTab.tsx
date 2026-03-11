@@ -255,7 +255,7 @@ const FooterSettingsTab = () => {
             value={settings.footer_copyright || ""}
             onChange={(e) => setSettings({ ...settings, footer_copyright: e.target.value })}
             placeholder="© 2024 RC Joy. All rights reserved."
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
 
@@ -266,7 +266,7 @@ const FooterSettingsTab = () => {
             value={settings.footer_company_name || ""}
             onChange={(e) => setSettings({ ...settings, footer_company_name: e.target.value })}
             placeholder="RC Joy Pvt. Ltd"
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
 
@@ -277,7 +277,7 @@ const FooterSettingsTab = () => {
             onChange={(e) => setSettings({ ...settings, footer_address: e.target.value })}
             placeholder="123 Main Street, City, Country"
             rows={2}
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none"
           />
         </div>
 
@@ -289,7 +289,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_phone || ""}
               onChange={(e) => setSettings({ ...settings, footer_phone: e.target.value })}
               placeholder="+960 123 4567"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
           <div>
@@ -299,7 +299,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_email || ""}
               onChange={(e) => setSettings({ ...settings, footer_email: e.target.value })}
               placeholder="info@rcjoy.com"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
         </div>
@@ -320,7 +320,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_social_facebook || ""}
               onChange={(e) => setSettings({ ...settings, footer_social_facebook: e.target.value })}
               placeholder="Facebook URL"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -333,7 +333,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_social_instagram || ""}
               onChange={(e) => setSettings({ ...settings, footer_social_instagram: e.target.value })}
               placeholder="Instagram URL"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -346,7 +346,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_social_twitter || ""}
               onChange={(e) => setSettings({ ...settings, footer_social_twitter: e.target.value })}
               placeholder="Twitter/X URL"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -359,7 +359,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_social_youtube || ""}
               onChange={(e) => setSettings({ ...settings, footer_social_youtube: e.target.value })}
               placeholder="YouTube URL"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -372,7 +372,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_social_linkedin || ""}
               onChange={(e) => setSettings({ ...settings, footer_social_linkedin: e.target.value })}
               placeholder="LinkedIn URL"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -387,7 +387,7 @@ const FooterSettingsTab = () => {
               value={settings.footer_social_pinterest || ""}
               onChange={(e) => setSettings({ ...settings, footer_social_pinterest: e.target.value })}
               placeholder="Pinterest URL"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
         </div>
@@ -407,21 +407,21 @@ const FooterSettingsTab = () => {
               value={newLink.column_title}
               onChange={(e) => setNewLink({ ...newLink, column_title: e.target.value })}
               placeholder="Column Title (e.g., About)"
-              className="px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              className="px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
             />
             <input
               type="text"
               value={newLink.link_label}
               onChange={(e) => setNewLink({ ...newLink, link_label: e.target.value })}
               placeholder="Link Text"
-              className="px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              className="px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
             />
             <input
               type="text"
               value={newLink.link_url}
               onChange={(e) => setNewLink({ ...newLink, link_url: e.target.value })}
               placeholder="URL (e.g., /about)"
-              className="px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              className="px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
             />
             <button
               onClick={handleAddLink}
@@ -457,8 +457,8 @@ const FooterSettingsTab = () => {
                           onClick={() => toggleLinkActive(link.id, link.is_active)}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                             link.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {link.is_active ? "Active" : "Hidden"}

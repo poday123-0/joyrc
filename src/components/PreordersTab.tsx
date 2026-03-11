@@ -202,7 +202,7 @@ const PreordersTab = () => {
                   <div className="flex items-center gap-2 mt-1">
                     {getStatusBadge(preorder.status)}
                     {preorder.product && preorder.product.stock_quantity > 0 && (
-                      <Badge variant="outline" className="text-green-600 border-green-300">
+                      <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
                         Now in stock ({preorder.product.stock_quantity})
                       </Badge>
                     )}

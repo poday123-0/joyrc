@@ -1190,7 +1190,7 @@ const PaymentOrdersTab = () => {
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setViewingReceipt(null)}
         >
-          <div className="bg-white rounded-2xl p-4 max-w-lg w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-2xl p-4 max-w-lg w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-semibold">Payment Receipt</h4>
               <button onClick={() => setViewingReceipt(null)} className="text-muted-foreground">

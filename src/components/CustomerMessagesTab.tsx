@@ -125,9 +125,9 @@ const CustomerMessagesTab = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "new": return "bg-primary text-primary-foreground";
-      case "read": return "bg-blue-100 text-blue-700";
-      case "replied": return "bg-green-100 text-green-700";
-      case "closed": return "bg-gray-100 text-gray-700";
+      case "read": return "bg-blue-500/15 text-blue-600 dark:text-blue-400";
+      case "replied": return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
+      case "closed": return "bg-muted text-muted-foreground";
       default: return "bg-muted text-muted-foreground";
     }
   };

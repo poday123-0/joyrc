@@ -193,9 +193,9 @@ const ContactMessagesTab = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "new": return "bg-primary text-primary-foreground";
-      case "read": return "bg-blue-100 text-blue-700";
-      case "replied": return "bg-green-100 text-green-700";
-      case "closed": return "bg-gray-100 text-gray-700";
+      case "read": return "bg-blue-500/15 text-blue-600 dark:text-blue-400";
+      case "replied": return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
+      case "closed": return "bg-muted text-muted-foreground";
       default: return "bg-muted text-muted-foreground";
     }
   };
@@ -316,7 +316,7 @@ const ContactMessagesTab = () => {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Type your reply to the customer..."
-                  className="flex-1 px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-20"
+                  className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-20"
                 />
               </div>
               <button
@@ -335,7 +335,7 @@ const ContactMessagesTab = () => {
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 placeholder="Add internal notes (not visible to customer)..."
-                className="w-full px-3 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-16"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-16"
               />
             </div>
 
@@ -343,7 +343,7 @@ const ContactMessagesTab = () => {
               <button
                 onClick={() => handleUpdateStatus("closed")}
                 disabled={saving}
-                className="flex-1 py-2 rounded-full bg-gray-500 text-white text-sm font-medium disabled:opacity-50"
+                className="flex-1 py-2 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 text-sm font-medium disabled:opacity-50"
               >
                 Close Conversation
               </button>
@@ -410,9 +410,9 @@ const ContactMessagesTab = () => {
                   </button>
                   <a
                     href={`tel:${msg.mobile}`}
-                    className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200"
+                    className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-emerald-500/15 flex items-center justify-center hover:bg-emerald-500/25"
                   >
-                    <Phone className="w-4 h-4 sm:w-3 sm:h-3 text-green-600" />
+                    <Phone className="w-4 h-4 sm:w-3 sm:h-3 text-emerald-600 dark:text-emerald-400" />
                   </a>
                   <button
                     onClick={() => handleDeleteClick(msg.id)}
