@@ -655,26 +655,49 @@ const StockManagementTab = () => {
           </button>
           <button
             onClick={() => {
-              setIsGlobalHistoryView(true);
-              setHistoryDialogProductName("All Products");
-              fetchAllStockHistory();
-              setHistoryDialogOpen(true);
+              const opening = !showAllHistory;
+              setShowAllHistory(opening);
+              if (opening) {
+                setShowAnalytics(false);
+                setBulkRestockOpen(false);
+                setIsGlobalHistoryView(true);
+                setHistoryDialogProductName("All Products");
+                fetchAllStockHistory();
+              }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
+              showAllHistory ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary hover:bg-primary/20"
+            }`}
           >
             <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">All History</span>
           </button>
           <button
-            onClick={() => setBulkRestockOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-emerald-500/10 text-emerald-600 rounded-lg hover:bg-emerald-500/20 transition-colors"
+            onClick={() => {
+              const opening = !bulkRestockOpen;
+              setBulkRestockOpen(opening);
+              if (opening) {
+                setShowAnalytics(false);
+                setShowAllHistory(false);
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
+              bulkRestockOpen ? "bg-emerald-500/20 text-emerald-600" : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+            }`}
           >
             <Boxes className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Bulk Restock</span>
             <span className="sm:hidden">Bulk</span>
           </button>
           <button
-            onClick={() => setShowAnalytics(!showAnalytics)}
+            onClick={() => {
+              const opening = !showAnalytics;
+              setShowAnalytics(opening);
+              if (opening) {
+                setShowAllHistory(false);
+                setBulkRestockOpen(false);
+              }
+            }}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
               showAnalytics ? "bg-accent text-accent-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"
             }`}
