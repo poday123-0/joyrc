@@ -484,7 +484,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   // Fetch stock details for dialog
   const fetchStockDetails = async () => {
     const [productsRes, stockHistoryRes, categoriesRes] = await Promise.all([
-      supabase.from("products").select("id, name, stock_quantity, price, category_id"),
+      supabase.from("products").select("id, name, stock_quantity, price, cost_price, category_id"),
       supabase.from("stock_history").select("product_id, unit_purchase_price").eq("change_type", "restock"),
       supabase.from("categories").select("id, name").order("name")
     ]);
