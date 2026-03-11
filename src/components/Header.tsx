@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User } from "lucide-react";
+import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User, Sun, Moon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import SearchOverlay from "@/components/SearchOverlay";
+import { useTheme } from "next-themes";
 import rcJoyLogo from "@/assets/rc-joy-logo.jpg";
 
 interface HeaderProps {
