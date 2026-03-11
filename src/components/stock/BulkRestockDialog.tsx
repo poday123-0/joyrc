@@ -78,7 +78,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
   };
 
   const totalUnits = selectedItems.reduce((sum, i) => sum + i.qty, 0);
-  const totalCost = selectedItems.reduce((sum, i) => sum + i.qty * (i.unitPrice + i.shippingCost + i.otherCosts), 0);
+  const totalCost = selectedItems.reduce((sum, i) => sum + (i.unitPrice * i.qty) + i.shippingCost + i.otherCosts, 0);
 
   const handleBulkAction = async () => {
     if (selectedItems.length === 0) return;
@@ -113,7 +113,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
 
         const changeAmount = mode === "add" ? item.qty : -item.qty;
         const newQty = Math.max(0, product.stock_quantity + changeAmount);
-        const itemTotal = item.qty * (item.unitPrice + item.shippingCost + item.otherCosts);
+        const itemTotal = (item.unitPrice * item.qty) + item.shippingCost + item.otherCosts;
 
         const updateData: any = { stock_quantity: newQty, in_stock: newQty > 0 };
         if (mode === "add" && item.unitPrice > 0) {
@@ -258,7 +258,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
             filteredProducts.map(product => {
               const selected = selectedItems.find(i => i.productId === product.id);
               const isExpanded = expandedItem === product.id && !!selected;
-              const itemTotal = selected ? selected.qty * (selected.unitPrice + selected.shippingCost + selected.otherCosts) : 0;
+              const itemTotal = selected ? (selected.unitPrice * selected.qty) + selected.shippingCost + selected.otherCosts : 0;
 
               return (
                 <div key={product.id} className={`rounded-xl border transition-all duration-200 overflow-hidden ${
@@ -417,7 +417,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
                               <span className="text-muted-foreground">Subtotal:</span>
                               <span className="font-bold text-foreground">{formatMVR(itemTotal)}</span>
                               <span className="text-[10px] text-muted-foreground ml-auto">
-                                {selected.qty} × {formatMVR(selected.unitPrice + selected.shippingCost + selected.otherCosts)}
+                                ({selected.qty} × {formatMVR(selected.unitPrice)}) + Ship: {formatMVR(selected.shippingCost)} + Other: {formatMVR(selected.otherCosts)}
                               </span>
                             </div>
                           )}

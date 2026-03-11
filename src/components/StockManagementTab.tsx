@@ -366,11 +366,11 @@ const StockManagementTab = () => {
     const userNote = adjustmentNotes[productId] || "";
     const notes = (colorNote + (reasonLabel ? `[${reasonLabel}] ` : "") + userNote).trim() || null;
 
-    // Calculate total expense
+    // Calculate total expense: (unit price × qty) + shipping + other
     let totalExpense = 0;
     if (costs && isRestock) {
-      const perUnit = (costs.unitPurchasePrice || 0) + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
-      totalExpense = perUnit * Math.abs(changeAmount);
+      const unitTotal = (costs.unitPurchasePrice || 0) * Math.abs(changeAmount);
+      totalExpense = unitTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
     }
     
     setSaving(productId);
@@ -1288,17 +1288,33 @@ const StockManagementTab = () => {
                             const costs = stockCosts[product.id];
                             const addQty = adjustmentAmount[product.id] || 0;
                             if (!costs || addQty <= 0) return null;
-                            const perUnit = (costs.unitPurchasePrice || 0) + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
-                            const totalExpense = perUnit * addQty;
+                            const unitTotal = (costs.unitPurchasePrice || 0) * addQty;
+                            const shipping = costs.shippingCost || 0;
+                            const other = costs.otherExpenses || 0;
+                            const totalExpense = unitTotal + shipping + other;
                             if (totalExpense <= 0) return null;
                             return (
-                              <div className="col-span-3 p-2 bg-primary/10 rounded-lg">
-                                <p className="text-xs sm:text-sm text-foreground">
-                                  <span className="font-medium">Total:</span> {formatMVR(totalExpense)}
-                                  <span className="text-[10px] sm:text-xs text-muted-foreground ml-1 sm:ml-2">
-                                    ({addQty} × {formatMVR(perUnit)} per unit)
-                                  </span>
-                                </p>
+                              <div className="col-span-3 p-2.5 bg-primary/10 rounded-lg space-y-1">
+                                <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+                                  <span>Unit: {formatMVR(costs.unitPurchasePrice || 0)} × {addQty}</span>
+                                  <span className="text-foreground font-medium">{formatMVR(unitTotal)}</span>
+                                </div>
+                                {shipping > 0 && (
+                                  <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+                                    <span>Shipping</span>
+                                    <span className="text-foreground">{formatMVR(shipping)}</span>
+                                  </div>
+                                )}
+                                {other > 0 && (
+                                  <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+                                    <span>Other costs</span>
+                                    <span className="text-foreground">{formatMVR(other)}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between text-xs sm:text-sm font-semibold text-primary pt-1 border-t border-primary/20">
+                                  <span>Total</span>
+                                  <span>{formatMVR(totalExpense)}</span>
+                                </div>
                               </div>
                             );
                           })()}
