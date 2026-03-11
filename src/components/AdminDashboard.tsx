@@ -374,7 +374,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     });
 
     const stockValueCost = products.reduce((sum, p) => {
-      const unitCost = productCostMap.get(p.id) || 0;
+      const unitCost = productCostMap.get(p.id) || Number(p.cost_price || 0);
       return sum + ((p.stock_quantity || 0) * unitCost);
     }, 0);
 
@@ -385,7 +385,8 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // For sales with stored cost, use that. For older sales without cost, fallback to restock cost map.
     const totalCOGS = saleHistory.reduce((sum, sh) => {
       const qty = Math.abs(sh.change_amount || 0);
-      const costPrice = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
+      const product = products.find(p => p.id === sh.product_id);
+      const costPrice = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || Number(product?.cost_price || 0));
       return sum + (qty * costPrice);
     }, 0);
     
