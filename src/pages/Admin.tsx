@@ -585,7 +585,7 @@ const Admin = () => {
         <aside className="hidden lg:flex lg:flex-col w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
            <div className="flex items-center gap-3 mb-2 pb-2 border-b border-border">
               <button
-                onClick={() => navigate("/home")}
+                onClick={() => navigate("/profile")}
                 className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors flex-shrink-0"
               >
                 <ChevronLeft className="w-4 h-4 text-foreground" />
