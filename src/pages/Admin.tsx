@@ -1876,7 +1876,7 @@ const ProductsTab = ({
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary via-accent to-destructive" />
                   <h4 className="font-medium text-sm">Product Colors</h4>
-                  <span className="text-xs text-muted-foreground">(up to 3 images per color)</span>
+                  <span className="text-xs text-muted-foreground">(unlimited images per color)</span>
                 </div>
                 
                 {loadingColors ? (
