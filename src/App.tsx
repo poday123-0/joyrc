@@ -7,6 +7,7 @@ import { CartProvider } from "@/hooks/useCart";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useEffect, useState, ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ThemeProvider } from "next-themes";
 import SiteMetadata from "@/components/SiteMetadata";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
@@ -26,22 +27,18 @@ const LandingOrHome = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Wait a tick for isMobile to be determined
     const timer = setTimeout(() => setIsReady(true), 50);
     return () => clearTimeout(timer);
   }, []);
 
-  // Show nothing briefly while detecting device
   if (!isReady || isMobile === undefined) {
     return <div className="min-h-screen bg-background" />;
   }
   
-  // On desktop, go directly to home
   if (isMobile === false) {
     return <Navigate to="/home" replace />;
   }
   
-  // On mobile, show landing with swipe
   return <Landing />;
 };
 
@@ -92,20 +89,22 @@ const AppRoutes = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CartProvider>
-        <TooltipProvider>
-          <SiteMetadata />
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </CartProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <SiteMetadata />
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
