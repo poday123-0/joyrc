@@ -133,6 +133,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const [stockCategoryFilter, setStockCategoryFilter] = useState("all");
   const [stockCategories, setStockCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [dailyProfitData, setDailyProfitData] = useState<Array<{ day: string; gross: number; net: number }>>([]);
+  const [stockValueTrend, setStockValueTrend] = useState<Array<{ day: string; cost: number; selling: number }>>([]);
 
   useEffect(() => {
     fetchDashboardData();
