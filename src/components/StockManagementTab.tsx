@@ -713,12 +713,29 @@ const StockManagementTab = () => {
         <StockAnalytics products={products} />
       )}
 
-      {/* Bulk Restock Dialog */}
+      {/* Bulk Restock - Inline */}
       <BulkRestockDialog
         open={bulkRestockOpen}
         onOpenChange={setBulkRestockOpen}
         products={products}
         onComplete={fetchProducts}
+        inline
+      />
+
+      {/* All History - Inline */}
+      <StockHistoryDialog
+        open={showAllHistory}
+        onOpenChange={setShowAllHistory}
+        productName="All Products"
+        stockHistory={stockHistory}
+        loading={historyLoading}
+        isSuperAdmin={isSuperAdmin}
+        showProductFilter
+        inline
+        onDeleteHistory={(historyId) => {
+          setDeleteHistoryId(historyId);
+          setDeleteHistoryProductId(expandedProductId);
+        }}
       />
 
       {/* Clear History Dialog */}
