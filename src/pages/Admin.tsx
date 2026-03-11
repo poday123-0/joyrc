@@ -484,12 +484,24 @@ const Admin = () => {
             {TAB_CATEGORIES.map((cat) => {
               const catTabs = filteredTabs.filter(t => (t.category || "main") === cat.key);
               if (catTabs.length === 0) return null;
+              const activeInCat = catTabs.some(t => t.id === activeTab);
+              const isCollapsed = cat.label && collapsedCategories.has(cat.key) && !activeInCat;
               return (
                 <div key={cat.key}>
                   {cat.label && (
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-3 pt-3 pb-1">{cat.label}</p>
+                    <button
+                      onClick={() => setCollapsedCategories(prev => {
+                        const next = new Set(prev);
+                        next.has(cat.key) ? next.delete(cat.key) : next.add(cat.key);
+                        return next;
+                      })}
+                      className="w-full flex items-center justify-between px-3 pt-3 pb-1 group"
+                    >
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">{cat.label}</p>
+                      <ChevronDown className={`w-3 h-3 text-muted-foreground/40 transition-transform ${isCollapsed ? "-rotate-90" : ""}`} />
+                    </button>
                   )}
-                  {catTabs.map((tab) => (
+                  {!isCollapsed && catTabs.map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => {
