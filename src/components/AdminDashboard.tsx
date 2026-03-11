@@ -113,7 +113,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("week");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
-  const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0, cashOut: 0 });
+  const [periodStats, setPeriodStats] = useState({ income: 0, expenses: 0, cashOut: 0, cogs: 0 });
   const [periodFilterOpen, setPeriodFilterOpen] = useState(false);
   
   // Stock value details dialog state
@@ -232,8 +232,8 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const fetchPeriodData = async () => {
     const { start, end } = getPeriodDateRange(periodFilter);
     
-    // Fetch transactions and stock history for the period in parallel
-    const [txnsRes, stockRes] = await Promise.all([
+    // Fetch transactions, stock restocks, and sale history for the period
+    const [txnsRes, stockRes, saleRes] = await Promise.all([
       supabase
         .from("transactions")
         .select("type, amount, category")
@@ -244,19 +244,32 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
         .select("total_expense")
         .eq("change_type", "restock")
         .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString()),
+      supabase
+        .from("stock_history")
+        .select("product_id, unit_purchase_price, change_amount")
+        .eq("change_type", "sale")
+        .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString())
     ]);
     
     const txns = txnsRes.data || [];
     const stockHistory = stockRes.data || [];
+    const saleHistory = saleRes.data || [];
     
     const income = txns.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
-    // Exclude inventory-related categories from expenses (tracked separately as Product Cost)
+    // Exclude inventory-related categories from expenses (tracked separately)
     const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping").reduce((sum, t) => sum + Number(t.amount), 0);
-    // Calculate cash out from inventory purchases
+    // Total inventory purchases (cash out)
     const cashOut = stockHistory.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
+    // COGS: cost of goods actually sold in this period
+    const cogs = saleHistory.reduce((sum, sh) => {
+      const qty = Math.abs(sh.change_amount || 0);
+      const cost = Number(sh.unit_purchase_price || 0);
+      return sum + (qty * cost);
+    }, 0);
     
-    setPeriodStats({ income, expenses, cashOut });
+    setPeriodStats({ income, expenses, cashOut, cogs });
   };
 
   // Fetch period data when filter changes
@@ -996,35 +1009,37 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
                 <p className="text-xs text-muted-foreground mb-1">Revenue</p>
                 <p className="text-sm font-bold text-[hsl(var(--chart-2))]">{formatMVR(periodStats.income)}</p>
               </div>
-              {/* Product Purchase (Cost) */}
-              <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
-                <p className="text-xs text-muted-foreground mb-1">Product Cost</p>
-                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
-              </div>
-              {/* Profit = Revenue - Cost */}
+              {/* COGS - cost of goods sold */}
               <div className="text-center p-3 rounded-xl bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-1">Profit</p>
-                <p className={`text-sm font-bold ${periodStats.income - periodStats.cashOut >= 0 ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
-                  {formatMVR(periodStats.income - periodStats.cashOut)}
+                <p className="text-xs text-muted-foreground mb-1">COGS</p>
+                <p className="text-sm font-bold text-foreground">{formatMVR(periodStats.cogs)}</p>
+                <p className="text-[9px] text-muted-foreground">Cost of sold items</p>
+              </div>
+              {/* Profit = Revenue - COGS (cost of goods sold) */}
+              <div className="text-center p-3 rounded-xl bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-1">Gross Profit</p>
+                <p className={`text-sm font-bold ${periodStats.income - periodStats.cogs >= 0 ? "text-[hsl(var(--chart-2))]" : "text-destructive"}`}>
+                  {formatMVR(periodStats.income - periodStats.cogs)}
                 </p>
+                <p className="text-[9px] text-muted-foreground">Revenue - COGS</p>
               </div>
               {/* Total Expenses */}
               <div className="text-center p-3 rounded-xl bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
+                <p className="text-xs text-muted-foreground mb-1">Expenses</p>
                 <p className="text-sm font-bold text-destructive">{formatMVR(periodStats.expenses)}</p>
               </div>
-              {/* Gross = Profit - Expenses */}
+              {/* Net Profit = Gross Profit - Expenses */}
               <div className="text-center p-3 rounded-xl bg-primary/5">
-                <p className="text-xs text-muted-foreground mb-1">Gross</p>
-                <p className={`text-sm font-bold ${(periodStats.income - periodStats.cashOut - periodStats.expenses) >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {formatMVR(periodStats.income - periodStats.cashOut - periodStats.expenses)}
+                <p className="text-xs text-muted-foreground mb-1">Net Profit</p>
+                <p className={`text-sm font-bold ${(periodStats.income - periodStats.cogs - periodStats.expenses) >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {formatMVR(periodStats.income - periodStats.cogs - periodStats.expenses)}
                 </p>
               </div>
-              {/* Inventory Value */}
-              <div className="text-center p-3 rounded-xl bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowStockDetails(true)}>
-                <p className="text-xs text-muted-foreground mb-1">Inventory Value</p>
-                <p className="text-sm font-bold text-foreground">{formatMVR(stats.stockValueCost)}</p>
-                <p className="text-[9px] text-muted-foreground">{stats.totalStockItems} items</p>
+              {/* Cash Out for Inventory */}
+              <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
+                <p className="text-xs text-muted-foreground mb-1">Inventory Purchases</p>
+                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
+                <p className="text-[9px] text-muted-foreground">Cash invested in stock</p>
               </div>
             </div>
           </div>
