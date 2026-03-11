@@ -588,20 +588,31 @@ const Admin = () => {
           ) : (
             <>
               <nav className="space-y-1">
-                {filteredTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as Tab)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
-                      activeTab === tab.id
-                        ? "bg-orange-500 text-white"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <tab.icon className="w-4 h-4" />
-                    <span className="font-medium">{tab.label}</span>
-                  </button>
-                ))}
+                {TAB_CATEGORIES.map((cat) => {
+                  const catTabs = filteredTabs.filter(t => (t.category || "main") === cat.key);
+                  if (catTabs.length === 0) return null;
+                  return (
+                    <div key={cat.key}>
+                      {cat.label && (
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-3 pt-4 pb-1">{cat.label}</p>
+                      )}
+                      {catTabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id as Tab)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
+                            activeTab === tab.id
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <tab.icon className="w-4 h-4" />
+                          <span className="font-medium">{tab.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
               </nav>
             </>
           )}
