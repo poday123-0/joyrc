@@ -16,7 +16,7 @@ import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, subDays } f
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 type PeriodFilter = "today" | "week" | "month" | "year" | "custom";
 interface Transaction {
   id: string;
