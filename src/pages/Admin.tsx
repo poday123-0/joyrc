@@ -581,7 +581,7 @@ const Admin = () => {
                     onClick={() => setActiveTab(tab.id as Tab)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm ${
                       activeTab === tab.id
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-orange-500 text-white"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     }`}
                   >
