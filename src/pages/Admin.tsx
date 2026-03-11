@@ -535,7 +535,11 @@ const Admin = () => {
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
             </Link>
-            <h1 className="font-semibold text-lg text-foreground">Admin</h1>
+            {settings?.logo_url ? (
+              <img src={settings.logo_url} alt="Logo" className="h-8 w-auto object-contain" />
+            ) : (
+              <h1 className="font-semibold text-lg text-foreground">Admin</h1>
+            )}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors lg:hidden"
