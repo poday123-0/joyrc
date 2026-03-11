@@ -562,7 +562,12 @@ const Admin = () => {
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
             </button>
-            <h1 className="font-semibold text-lg text-foreground">Admin</h1>
+            <div className="flex items-center gap-2.5">
+              {settings?.logo_url && (
+                <img src={settings.logo_url} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
+              )}
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Admin</p>
+            </div>
           </div>
 
           <Link
