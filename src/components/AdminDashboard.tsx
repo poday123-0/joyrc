@@ -414,6 +414,40 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     });
 
     setTransactions(allTransactions as Transaction[]);
+
+    // Compute daily profit data for sparklines (last 14 days)
+    const last14Days: Array<{ day: string; gross: number; net: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const dayDate = subDays(now, i);
+      const dayStr = format(dayDate, "yyyy-MM-dd");
+      const dayLabel = format(dayDate, "MMM d");
+      
+      // Revenue for day
+      const dayRevenue = allTransactions
+        .filter(t => t.type === "income" && t.created_at?.startsWith(dayStr))
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      // COGS for day
+      const dayCOGS = saleHistory
+        .filter(sh => sh.created_at?.startsWith(dayStr))
+        .reduce((sum, sh) => {
+          const qty = Math.abs(sh.change_amount || 0);
+          const cp = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
+          return sum + (qty * cp);
+        }, 0);
+      
+      // Expenses for day
+      const dayExp = allTransactions
+        .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping" && t.created_at?.startsWith(dayStr))
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      const dayGross = dayRevenue - dayCOGS;
+      const dayNet = dayGross - dayExp;
+      
+      last14Days.push({ day: dayLabel, gross: dayGross, net: dayNet });
+    }
+    setDailyProfitData(last14Days);
+
     setLoading(false);
   };
 
