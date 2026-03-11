@@ -1,4 +1,5 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import Header from "@/components/Header";
@@ -51,48 +52,51 @@ const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
   const [homeContent, setHomeContent] = useState<HomeContent | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const fetchData = async () => {
-      const [featuredRes, contentRes] = await Promise.all([supabase.from("featured_products").select(`
+  const fetchData = useCallback(async () => {
+    const [featuredRes, contentRes] = await Promise.all([supabase.from("featured_products").select(`
+          id,
+          product_id,
+          category_id,
+          title,
+          subtitle,
+          product:products (
             id,
-            product_id,
-            category_id,
-            title,
-            subtitle,
-            product:products (
-              id,
-              name,
-              price,
-              image_url,
-              rating,
-              description
-            )
-          `).eq("is_active", true).order("sort_order"), supabase.from("system_settings").select(`
-            hero_title,
-            hero_subtitle,
-            feature_1_icon,
-            feature_1_title,
-            feature_1_description,
-            feature_2_icon,
-            feature_2_title,
-            feature_2_description,
-            feature_3_icon,
-            feature_3_title,
-            feature_3_description,
-            cta_title,
-            cta_subtitle,
-            cta_button_text
-          `).limit(1).maybeSingle()]);
-      if (featuredRes.data) {
-        setFeaturedProducts(featuredRes.data as unknown as FeaturedProduct[]);
-      }
-      if (contentRes.data) {
-        setHomeContent(contentRes.data as HomeContent);
-      }
-      setLoading(false);
-    };
-    fetchData();
+            name,
+            price,
+            image_url,
+            rating,
+            description
+          )
+        `).eq("is_active", true).order("sort_order"), supabase.from("system_settings").select(`
+          hero_title,
+          hero_subtitle,
+          feature_1_icon,
+          feature_1_title,
+          feature_1_description,
+          feature_2_icon,
+          feature_2_title,
+          feature_2_description,
+          feature_3_icon,
+          feature_3_title,
+          feature_3_description,
+          cta_title,
+          cta_subtitle,
+          cta_button_text
+        `).limit(1).maybeSingle()]);
+    if (featuredRes.data) {
+      setFeaturedProducts(featuredRes.data as unknown as FeaturedProduct[]);
+    }
+    if (contentRes.data) {
+      setHomeContent(contentRes.data as HomeContent);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useRealtimeSubscription(['featured_products', 'products', 'system_settings'], fetchData, 'rt-index');
   return <div className="min-h-screen bg-background py-0 my-0 pb-[48px] lg:pb-0">
       <Header />
 

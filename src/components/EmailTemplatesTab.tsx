@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Pencil, Save, X, Mail, Eye, EyeOff, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +37,8 @@ const EmailTemplatesTab = () => {
     }
     setLoading(false);
   };
+
+  useRealtimeSubscription('email_templates', fetchTemplates, 'rt-email-templates');
 
   useEffect(() => {
     fetchTemplates();

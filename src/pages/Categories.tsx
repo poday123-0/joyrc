@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,58 +41,58 @@ const Categories = () => {
 
   const activeCategory = searchParams.get("category") || "all";
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
 
-      // Fetch categories
-      const { data: catData } = await supabase
-        .from("categories")
-        .select("*")
-        .order("sort_order");
+    const { data: catData } = await supabase
+      .from("categories")
+      .select("*")
+      .order("sort_order");
 
-      if (catData && catData.length > 0) {
-        setCategories([{ id: "all", name: "All", icon: "🎮" }, ...catData]);
-      } else {
-        setCategories(staticCategories);
-      }
+    if (catData && catData.length > 0) {
+      setCategories([{ id: "all", name: "All", icon: "🎮" }, ...catData]);
+    } else {
+      setCategories(staticCategories);
+    }
 
-      // Fetch products (exclude hidden from shop)
-      const { data: prodData } = await supabase
-        .from("products")
-        .select(`*, categories (name)`)
-        .or('hidden_from_shop.is.null,hidden_from_shop.eq.false');
+    const { data: prodData } = await supabase
+      .from("products")
+      .select(`*, categories (name)`)
+      .or('hidden_from_shop.is.null,hidden_from_shop.eq.false');
 
-      if (prodData && prodData.length > 0) {
-        setProducts(
-          prodData.map((p) => ({
-            ...p,
-            category: p.categories?.name || "RC Toy",
-          }))
-        );
-      } else {
-        setProducts(
-          staticProducts.map((p) => ({
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            image_url: null,
-            category_id: null,
-            rating: p.rating,
-            in_stock: true,
-            stock_quantity: 10,
-            category: p.category,
-            image: p.image,
-          }))
-        );
-      }
+    if (prodData && prodData.length > 0) {
+      setProducts(
+        prodData.map((p) => ({
+          ...p,
+          category: p.categories?.name || "RC Toy",
+        }))
+      );
+    } else {
+      setProducts(
+        staticProducts.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          image_url: null,
+          category_id: null,
+          rating: p.rating,
+          in_stock: true,
+          stock_quantity: 10,
+          category: p.category,
+          image: p.image,
+        }))
+      );
+    }
 
-      setLoading(false);
-    };
-
-    fetchData();
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useRealtimeSubscription(['products', 'categories'], fetchData, 'rt-categories');
 
   // Filter and sort products
   const filteredProducts = products

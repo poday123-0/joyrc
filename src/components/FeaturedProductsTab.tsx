@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Plus, Trash2, GripVertical, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -96,6 +97,8 @@ const FeaturedProductsTab = () => {
 
     setLoading(false);
   };
+
+  useRealtimeSubscription(['featured_products', 'products'], fetchData, 'rt-featured');
 
   const handleAddFeatured = async () => {
     if (!selectedProductId) {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Plus, Trash2, X, Play, Upload, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -71,6 +72,8 @@ const VideoShowcasesTab = () => {
     if (productsRes.data) setProducts(productsRes.data);
     setLoading(false);
   };
+
+  useRealtimeSubscription(['video_showcases', 'products'], fetchData, 'rt-video-showcases');
 
   const resetForm = () => {
     setFormData({ title: "", description: "", product_id: "", is_active: true });

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Plus, Edit2, Trash2, X, Check, Package, Truck, Megaphone, Zap, Home, Users, Wrench, MoreHorizontal, ShoppingCart, Briefcase, RotateCcw, DollarSign, CreditCard, Gift, Receipt, PiggyBank, TrendingDown, TrendingUp, Banknote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -83,6 +84,8 @@ const TransactionCategoriesTab = ({ onCategoryChange }: TransactionCategoriesTab
     }
     setLoading(false);
   };
+
+  useRealtimeSubscription('transaction_categories', fetchCategories, 'rt-tx-categories');
 
   const resetForm = () => {
     setFormData({ name: "", type: activeTab, icon: "Package" });

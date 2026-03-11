@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -70,6 +71,8 @@ const PreordersTab = () => {
     }
     setLoading(false);
   };
+
+  useRealtimeSubscription('preorders', fetchPreorders, 'rt-preorders');
 
   const updateStatus = async (id: string, newStatus: string) => {
     const { error } = await supabase

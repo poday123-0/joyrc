@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Save, Type, Layout } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -61,6 +62,8 @@ const HomeContentTab = () => {
     }
     setLoading(false);
   };
+
+  useRealtimeSubscription('system_settings', fetchContent, 'rt-home-content');
 
   const handleSave = async () => {
     if (!content) return;

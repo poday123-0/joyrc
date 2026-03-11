@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { User, Trash2, Search, RefreshCw, UserPlus, X, KeyRound, Phone, Mail, Edit2, MapPin, ShoppingBag, Package, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -90,6 +91,8 @@ const UsersManagementTab = () => {
     }
     setLoading(false);
   };
+
+  useRealtimeSubscription(['profiles', 'user_roles'], fetchUsers, 'rt-users');
 
   const fetchCustomerOrders = async (userId: string) => {
     setLoadingOrders(true);

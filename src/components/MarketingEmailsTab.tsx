@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Send, Users, Mail, Eye, History, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -96,6 +97,8 @@ const MarketingEmailsTab = () => {
 
     if (data) setSentEmails(data);
   };
+
+  useRealtimeSubscription('marketing_emails', fetchSentEmails, 'rt-marketing-emails');
 
   const toggleSelectAll = () => {
     // Toggle based on filtered users

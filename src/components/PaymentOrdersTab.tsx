@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { 
   Clock, CheckCircle, XCircle, Receipt, Eye, 
   ChevronDown, ChevronUp, CreditCard, AlertCircle,
@@ -163,6 +164,8 @@ const PaymentOrdersTab = () => {
     }
     setLoading(false);
   };
+
+  useRealtimeSubscription(['orders', 'order_items'], fetchOrders, 'rt-payment-orders');
 
   const fetchDeliveryStaff = async () => {
     // Fetch staff with delivery permission

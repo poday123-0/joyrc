@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { 
   Package, Truck, CheckCircle, MapPin, Phone, 
   ChevronDown, ChevronUp, User, Clock
@@ -50,6 +51,8 @@ const DeliveryTab = () => {
       fetchAssignedOrders();
     }
   }, [user]);
+
+  useRealtimeSubscription('orders', () => { if (user) fetchAssignedOrders(); }, 'rt-delivery');
 
   const fetchAssignedOrders = async () => {
     if (!user) return;
