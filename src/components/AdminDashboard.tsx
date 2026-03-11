@@ -1383,12 +1383,27 @@ const StatCard = ({
         <div className="h-10 mt-1.5 -mx-1">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-popover border border-border rounded-md px-2 py-1 shadow-md">
+                        <p className="text-[10px] text-muted-foreground">Day {data.day}</p>
+                        <p className="text-xs font-semibold text-foreground">{formatMVR(data.value)}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="value"
                 stroke={chartColor || chartColors[variant]}
                 strokeWidth={1.5}
                 dot={false}
+                activeDot={{ r: 3, fill: chartColor || chartColors[variant], strokeWidth: 0 }}
                 isAnimationActive={true}
                 animationDuration={800}
               />
