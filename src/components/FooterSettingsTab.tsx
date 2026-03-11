@@ -255,7 +255,7 @@ const FooterSettingsTab = () => {
             value={settings.footer_copyright || ""}
             onChange={(e) => setSettings({ ...settings, footer_copyright: e.target.value })}
             placeholder="© 2024 RC Joy. All rights reserved."
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
 
