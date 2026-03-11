@@ -1247,8 +1247,7 @@ const StockManagementTab = () => {
                           })()}
                         </div>
                       </div>
-      )}
-      </>)}
+                    )}
 
                     {/* Update Button */}
                     <button
