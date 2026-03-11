@@ -78,7 +78,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
   };
 
   const totalUnits = selectedItems.reduce((sum, i) => sum + i.qty, 0);
-  const totalCost = selectedItems.reduce((sum, i) => sum + i.qty * (i.unitPrice + i.shippingCost + i.otherCosts), 0);
+  const totalCost = selectedItems.reduce((sum, i) => sum + (i.unitPrice * i.qty) + i.shippingCost + i.otherCosts, 0);
 
   const handleBulkAction = async () => {
     if (selectedItems.length === 0) return;
