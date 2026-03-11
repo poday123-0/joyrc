@@ -177,7 +177,7 @@ const EmailTemplatesTab = () => {
               
               {showPreview ? (
                 <div
-                  className="w-full p-4 rounded-xl border border-border bg-white min-h-[200px] prose prose-sm max-w-none"
+                  className="w-full p-4 rounded-xl border border-border bg-background min-h-[200px] prose prose-sm max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
                 />
               ) : (
