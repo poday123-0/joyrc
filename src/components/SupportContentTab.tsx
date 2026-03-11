@@ -188,7 +188,7 @@ const SupportContentTab = () => {
               placeholder={formData.type === "faq" ? "Question" : "Title (e.g., email, phone)"}
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
             <textarea
