@@ -197,71 +197,72 @@ const ProductDetail = () => {
     }
   };
   useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
+  const fetchProduct = useCallback(async () => {
+    if (!id) return;
+    const {
+      data: dbProduct,
+      error
+    } = await supabase.from("products").select(`*, categories (name)`).eq("id", id).single();
+    if (dbProduct && !error) {
+      setProduct({
+        ...dbProduct,
+        category: dbProduct.categories?.name || "RC Toy"
+      });
+
       const {
-        data: dbProduct,
-        error
-      } = await supabase.from("products").select(`*, categories (name)`).eq("id", id).single();
-      if (dbProduct && !error) {
-        setProduct({
-          ...dbProduct,
-          category: dbProduct.categories?.name || "RC Toy"
-        });
+        data: specsData
+      } = await supabase.from("product_specifications").select("*").eq("product_id", id).order("sort_order");
+      if (specsData && specsData.length > 0) {
+        setSpecs(specsData.map(s => ({
+          name: s.spec_name,
+          value: s.spec_value,
+          icon: s.icon || null
+        })));
+      }
 
-        // Fetch specifications
-        const {
-          data: specsData
-        } = await supabase.from("product_specifications").select("*").eq("product_id", id).order("sort_order");
-        if (specsData && specsData.length > 0) {
-          setSpecs(specsData.map(s => ({
-            name: s.spec_name,
-            value: s.spec_value,
-            icon: s.icon || null
-          })));
-        }
-
-        // Fetch gallery images (including color associations)
-        const {
-          data: imagesData
-        } = await supabase.from("product_images").select("id, image_url, color_id").eq("product_id", id).order("sort_order");
-        const images: string[] = [];
-        if (dbProduct.image_url) {
-          images.push(dbProduct.image_url);
-        }
-        if (imagesData) {
-          setColorImages(imagesData as ColorImage[]);
-          imagesData.forEach(img => {
-            if (!images.includes(img.image_url)) {
-              images.push(img.image_url);
-            }
-          });
-        }
-        setGalleryImages(images);
-
-        // Fetch product colors
-        const {
-          data: colorsData
-        } = await supabase.from("product_colors").select("*").eq("product_id", id).order("sort_order");
-        if (colorsData && colorsData.length > 0) {
-          setProductColors(colorsData);
-          setSelectedColorId(colorsData[0].id);
-        }
-
-        // Fetch similar products
-        if (dbProduct.category_id) {
-          const {
-            data: similar
-          } = await supabase.from("products").select("id, name, price, image_url, rating").eq("category_id", dbProduct.category_id).neq("id", id).limit(4);
-          if (similar) {
-            setSimilarProducts(similar as Product[]);
+      const {
+        data: imagesData
+      } = await supabase.from("product_images").select("id, image_url, color_id").eq("product_id", id).order("sort_order");
+      const images: string[] = [];
+      if (dbProduct.image_url) {
+        images.push(dbProduct.image_url);
+      }
+      if (imagesData) {
+        setColorImages(imagesData as ColorImage[]);
+        imagesData.forEach(img => {
+          if (!images.includes(img.image_url)) {
+            images.push(img.image_url);
           }
+        });
+      }
+      setGalleryImages(images);
+
+      const {
+        data: colorsData
+      } = await supabase.from("product_colors").select("*").eq("product_id", id).order("sort_order");
+      if (colorsData && colorsData.length > 0) {
+        setProductColors(colorsData);
+        setSelectedColorId(colorsData[0].id);
+      }
+
+      if (dbProduct.category_id) {
+        const {
+          data: similar
+        } = await supabase.from("products").select("id, name, price, image_url, rating").eq("category_id", dbProduct.category_id).neq("id", id).limit(4);
+        if (similar) {
+          setSimilarProducts(similar as Product[]);
         }
       }
-      setLoading(false);
-    };
-    fetchProduct();
+    }
+    setLoading(false);
   }, [id]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
+
+  useRealtimeSubscription(['products', 'product_colors', 'product_images', 'product_specifications'], fetchProduct, 'rt-product-detail');
+
   const handleAddToCart = () => {
     if (product) {
       if (isOutOfStock) {
