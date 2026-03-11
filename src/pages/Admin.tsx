@@ -2003,7 +2003,7 @@ const ProductsTab = ({
                               accept="image/*"
                               multiple
                               onChange={(e) => {
-                                const files = e.target.files ? Array.from(e.target.files).slice(0, 3) : [];
+                                const files = e.target.files ? Array.from(e.target.files) : [];
                                 setColorImageFiles(files);
                               }}
                               className="hidden"
