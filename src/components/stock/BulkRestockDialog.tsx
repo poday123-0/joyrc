@@ -277,6 +277,21 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
     </div>
   );
 
+  if (inline) {
+    if (!open) return null;
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-semibold text-foreground">
+            <Package className="w-5 h-5 text-primary" />
+            Bulk Restock
+          </h3>
+        </div>
+        {content}
+      </div>
+    );
+  }
+
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
