@@ -691,7 +691,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
           <StatCard
             title="Gross Profit"
             value={formatMVR(grossProfit)}
-            icon={TrendingUp}
+            icon={RufiyaaIcon}
             trend={`${formatMVR(monthlyGrossProfit)} this month`}
             trendUp={grossProfit > 0}
             variant={grossProfit >= 0 ? "success" : "danger"}
