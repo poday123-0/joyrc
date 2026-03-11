@@ -184,7 +184,7 @@ const EmailTemplatesTab = () => {
                 <textarea
                   value={formData.html_content}
                   onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
-                  className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-48"
+                  className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-48"
                   placeholder="<h1>Email content...</h1>"
                 />
               )}

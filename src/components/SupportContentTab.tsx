@@ -204,7 +204,7 @@ const SupportContentTab = () => {
                 placeholder="Sort order"
                 value={formData.sort_order}
                 onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                className="w-24 px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-24 px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               />
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
