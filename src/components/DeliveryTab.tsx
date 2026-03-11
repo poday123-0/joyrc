@@ -52,6 +52,8 @@ const DeliveryTab = () => {
     }
   }, [user]);
 
+  useRealtimeSubscription('orders', () => { if (user) fetchAssignedOrders(); }, 'rt-delivery');
+
   const fetchAssignedOrders = async () => {
     if (!user) return;
     

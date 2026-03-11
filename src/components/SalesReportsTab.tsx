@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { 
   TrendingUp, Calendar, DollarSign, ShoppingCart, Package, 
   CreditCard, Download, RefreshCw, ChevronDown

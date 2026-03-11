@@ -44,6 +44,8 @@ const PreordersTab = () => {
     fetchPreorders();
   }, []);
 
+  useRealtimeSubscription('preorders', fetchPreorders, 'rt-preorders');
+
   const fetchPreorders = async () => {
     setLoading(true);
     const { data, error } = await supabase

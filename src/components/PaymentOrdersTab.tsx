@@ -118,6 +118,8 @@ const PaymentOrdersTab = () => {
     fetchDeliveryStaff();
   }, []);
 
+  useRealtimeSubscription(['orders', 'order_items'], fetchOrders, 'rt-payment-orders');
+
   const fetchOrders = async () => {
     setLoading(true);
     const { data, error } = await supabase
