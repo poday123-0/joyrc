@@ -251,8 +251,8 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     const stockHistory = stockRes.data || [];
     
     const income = txns.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
-    // Exclude "Inventory" category from expenses (tracked separately in stock management)
-    const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory").reduce((sum, t) => sum + Number(t.amount), 0);
+    // Exclude inventory-related categories from expenses (tracked separately as Product Cost)
+    const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping").reduce((sum, t) => sum + Number(t.amount), 0);
     // Calculate cash out from inventory purchases
     const cashOut = stockHistory.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
     
