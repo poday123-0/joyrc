@@ -25,7 +25,7 @@ const ProfileTabs = ({ activeTab, onTabChange, isAdmin }: ProfileTabsProps) => {
   ];
 
   return (
-    <div className="flex gap-2 mb-8 p-1.5 bg-muted/40 rounded-2xl backdrop-blur-sm border border-border/30 overflow-x-auto">
+    <div className="flex gap-1.5 sm:gap-2 mb-5 sm:mb-8 p-1 sm:p-1.5 bg-muted/40 rounded-xl sm:rounded-2xl backdrop-blur-sm border border-border/30 overflow-x-auto">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
