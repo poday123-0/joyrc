@@ -1900,7 +1900,7 @@ const ProductsTab = ({
                                 />
                                 <span className="text-sm font-medium">{color.color_name}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {imageCount}/3 images
+                                  {imageCount} image{imageCount !== 1 ? 's' : ''}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
