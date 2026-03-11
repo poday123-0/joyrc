@@ -343,7 +343,7 @@ const ContactMessagesTab = () => {
               <button
                 onClick={() => handleUpdateStatus("closed")}
                 disabled={saving}
-                className="flex-1 py-2 rounded-full bg-gray-500 text-white text-sm font-medium disabled:opacity-50"
+                className="flex-1 py-2 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 text-sm font-medium disabled:opacity-50"
               >
                 Close Conversation
               </button>
