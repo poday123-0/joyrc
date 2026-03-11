@@ -474,7 +474,7 @@ const Admin = () => {
           </SheetHeader>
           <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-80px)]">
             <Link
-              to="/home"
+              to="/profile"
               onClick={() => setSidebarOpen(false)}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 mb-2 pb-2 border-b border-border/50"
             >
@@ -530,7 +530,7 @@ const Admin = () => {
         <div className="container max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link
-              to="/home"
+              to="/profile"
               className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-foreground" />
@@ -585,7 +585,7 @@ const Admin = () => {
         <aside className="hidden lg:flex lg:flex-col w-60 xl:w-64 bg-card border-r border-border p-5 sticky top-0 h-screen overflow-y-auto">
            <div className="flex items-center gap-3 mb-2 pb-2 border-b border-border">
               <button
-                onClick={() => navigate("/home")}
+                onClick={() => navigate("/profile")}
                 className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors flex-shrink-0"
               >
                 <ChevronLeft className="w-4 h-4 text-foreground" />
@@ -677,7 +677,7 @@ const Admin = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Link
-                  to="/home"
+                  to="/profile"
                   className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
                 >
                   <ExternalLink className="w-4 h-4" />
