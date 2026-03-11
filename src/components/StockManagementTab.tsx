@@ -998,9 +998,9 @@ const StockManagementTab = () => {
                         setProducts(prev => prev.map(p => p.id === product.id ? { ...p, hidden_from_shop: newVal } : p));
                         toast({ title: newVal ? "Product hidden from shop" : "Product visible in shop" });
                       }}
-                      className={`relative w-10 h-5 rounded-full transition-colors ${product.hidden_from_shop ? "bg-amber-500" : "bg-muted"}`}
+                      className={`relative inline-flex w-10 h-5 rounded-full transition-colors ${product.hidden_from_shop ? "bg-amber-500" : "bg-muted border border-border"}`}
                     >
-                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${product.hidden_from_shop ? "translate-x-5" : "translate-x-0.5"}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${product.hidden_from_shop ? "translate-x-5" : "translate-x-0"}`} />
                     </button>
                   </div>
 
