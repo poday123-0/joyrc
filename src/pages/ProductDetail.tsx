@@ -196,7 +196,6 @@ const ProductDetail = () => {
       });
     }
   };
-  useEffect(() => {
   const fetchProduct = useCallback(async () => {
     if (!id) return;
     const {
