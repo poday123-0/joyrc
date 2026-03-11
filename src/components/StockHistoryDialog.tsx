@@ -487,6 +487,22 @@ export const StockHistoryDialog = ({
     </div>
   );
 
+  // Inline mode - render content directly without dialog/sheet wrapper
+  if (inline) {
+    if (!open) return null;
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-semibold text-foreground">
+            <History className="w-5 h-5 text-primary" />
+            <span className="truncate">{productName}</span>
+          </h3>
+        </div>
+        {content}
+      </div>
+    );
+  }
+
   // Use Sheet on mobile for better UX
   if (isMobile) {
     return (
