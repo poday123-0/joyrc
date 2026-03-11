@@ -79,6 +79,8 @@ const HeroBackgroundsTab = () => {
   };
 
   useRealtimeSubscription('hero_backgrounds', fetchBackgrounds, 'rt-hero-bg');
+
+  useEffect(() => {
     fetchBackgrounds();
   }, []);
 

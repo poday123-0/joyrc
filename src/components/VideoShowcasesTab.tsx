@@ -74,6 +74,8 @@ const VideoShowcasesTab = () => {
   };
 
   useRealtimeSubscription(['video_showcases', 'products'], fetchData, 'rt-video-showcases');
+
+  const resetForm = () => {
     setFormData({ title: "", description: "", product_id: "", is_active: true });
     setVideoFile(null);
     setThumbnailFile(null);
