@@ -336,12 +336,6 @@ const StaffManagementTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Staff Management</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage staff members and their permissions
-          </p>
-        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAddUser(true)}

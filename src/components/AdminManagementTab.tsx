@@ -263,8 +263,7 @@ const AdminManagementTab = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-foreground">Admin Users ({admins.length})</h2>
+      <div className="flex items-center justify-end mb-4">
         <div className="flex items-center gap-2">
           {currentUserIsSuperAdmin && superAdmins.length > 1 && (
             <button

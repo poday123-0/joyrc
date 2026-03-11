@@ -153,8 +153,7 @@ const SupportContentTab = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-foreground">Support Content</h2>
+      <div className="flex items-center justify-end mb-4">
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-cta text-white text-sm font-medium shadow-soft"
