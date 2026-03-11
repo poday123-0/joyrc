@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ShoppingBag, Search, Menu, Home, Grid3X3, HelpCircle, Settings, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
