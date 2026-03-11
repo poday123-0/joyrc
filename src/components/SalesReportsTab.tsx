@@ -131,7 +131,8 @@ const SalesReportsTab = () => {
     setLoading(false);
   };
 
-  // Calculate metrics
+  useRealtimeSubscription(['orders', 'transactions'], fetchData, 'rt-sales-reports');
+
   const confirmedOrders = orders.filter(o => o.payment_status === "confirmed");
   const totalRevenue = confirmedOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);
   const totalOrders = orders.length;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { User, Trash2, Search, RefreshCw, Shield, ShieldOff, UserPlus, X, KeyRound, Settings, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";

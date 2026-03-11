@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { Plus, Trash2, X, Play, Upload, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
