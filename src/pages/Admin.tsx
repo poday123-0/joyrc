@@ -1175,9 +1175,9 @@ const ProductsTab = ({
         variant: "destructive" 
       });
     } else if (data) {
-      // Upload additional images (up to 3 total) as color-linked product_images
+      // Upload additional images as color-linked product_images
       if (colorImageFiles.length > 0) {
-        for (let i = 0; i < Math.min(colorImageFiles.length, 3); i++) {
+        for (let i = 0; i < colorImageFiles.length; i++) {
           const file = colorImageFiles[i];
           const compressedFile = await compressImage(file, 1200, 0.8);
           const fileName = `color-img-${Date.now()}-${i}-${compressedFile.name}`;
@@ -1212,7 +1212,7 @@ const ProductsTab = ({
       setColorImageUrl(null);
       toast({ 
         title: "Color Added",
-        description: `${data.color_name} has been added${colorImageFiles.length > 0 ? ` with ${Math.min(colorImageFiles.length, 3)} images` : ''}.`,
+        description: `${data.color_name} has been added${colorImageFiles.length > 0 ? ` with ${colorImageFiles.length} images` : ''}.`,
       });
     }
     setUploadingColor(false);
@@ -1222,20 +1222,8 @@ const ProductsTab = ({
   const handleAddColorImages = async (colorId: string, files: FileList) => {
     if (!editingProduct) return;
     
-    const existingColorImages = galleryImages.filter(img => img.color_id === colorId);
-    const remainingSlots = 3 - existingColorImages.length;
-    
-    if (remainingSlots <= 0) {
-      toast({
-        title: "Maximum Images Reached",
-        description: "Each color can have up to 3 images.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setUploadingColor(true);
-    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    const filesToUpload = Array.from(files);
     
     for (let i = 0; i < filesToUpload.length; i++) {
       const file = filesToUpload[i];
@@ -1532,13 +1520,69 @@ const ProductsTab = ({
                 />
                 <span className="text-sm">In Stock</span>
               </label>
-              <div className="flex-1 min-w-[200px]">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                  className="text-sm"
-                />
+            </div>
+
+            {/* Main Product Image */}
+            <div className="border border-border rounded-xl p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Main Product Image</p>
+              <div className="flex items-center gap-4">
+                {/* Preview */}
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-muted/50 border border-border flex-shrink-0 group">
+                  {(imageFile || editingProduct?.image_url) ? (
+                    <>
+                      <img
+                        src={imageFile ? URL.createObjectURL(imageFile) : editingProduct?.image_url || ''}
+                        alt="Main product"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <label className="cursor-pointer p-1.5 bg-background/80 rounded-full hover:bg-background">
+                          <Upload className="w-4 h-4 text-foreground" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </>
+                  ) : (
+                    <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/70 transition-colors">
+                      <Upload className="w-5 h-5 text-muted-foreground mb-1" />
+                      <span className="text-[10px] text-muted-foreground">Upload</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">
+                    {imageFile ? imageFile.name : (editingProduct?.image_url ? 'Current image set' : 'No image selected')}
+                  </p>
+                  {(imageFile || editingProduct?.image_url) && (
+                    <div className="flex gap-2 mt-1.5">
+                      <label className="text-xs text-primary cursor-pointer hover:underline">
+                        Change
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                      </label>
+                      {imageFile && (
+                        <button type="button" onClick={() => setImageFile(null)} className="text-xs text-destructive hover:underline">
+                          Remove new
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1820,7 +1864,7 @@ const ProductsTab = ({
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary via-accent to-destructive" />
                   <h4 className="font-medium text-sm">Product Colors</h4>
-                  <span className="text-xs text-muted-foreground">(up to 3 images per color)</span>
+                  <span className="text-xs text-muted-foreground">(unlimited images per color)</span>
                 </div>
                 
                 {loadingColors ? (
@@ -1844,7 +1888,7 @@ const ProductsTab = ({
                                 />
                                 <span className="text-sm font-medium">{color.color_name}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {imageCount}/3 images
+                                  {imageCount} image{imageCount !== 1 ? 's' : ''}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
@@ -1898,19 +1942,17 @@ const ProductsTab = ({
                                     </div>
                                   ))}
                                   {/* Add more images slot */}
-                                  {imageCount < 3 && (
-                                    <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                                      <Upload className="w-4 h-4 text-muted-foreground mb-1" />
-                                      <span className="text-[10px] text-muted-foreground">Add</span>
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={(e) => e.target.files && handleAddColorImages(color.id, e.target.files)}
-                                        className="hidden"
-                                      />
-                                    </label>
-                                  )}
+                                  <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                                    <Upload className="w-4 h-4 text-muted-foreground mb-1" />
+                                    <span className="text-[10px] text-muted-foreground">Add</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      onChange={(e) => e.target.files && handleAddColorImages(color.id, e.target.files)}
+                                      className="hidden"
+                                    />
+                                  </label>
                                 </div>
                               </div>
                             )}
@@ -1961,7 +2003,7 @@ const ProductsTab = ({
                               accept="image/*"
                               multiple
                               onChange={(e) => {
-                                const files = e.target.files ? Array.from(e.target.files).slice(0, 3) : [];
+                                const files = e.target.files ? Array.from(e.target.files) : [];
                                 setColorImageFiles(files);
                               }}
                               className="hidden"
