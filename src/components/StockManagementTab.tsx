@@ -100,8 +100,11 @@ const StockManagementTab = () => {
   // New feature states
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [bulkRestockOpen, setBulkRestockOpen] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [isGlobalHistoryView, setIsGlobalHistoryView] = useState(false);
+  
+  const anyPanelOpen = showAnalytics || showAllHistory || bulkRestockOpen;
   const [stockMode, setStockMode] = useState<Record<string, "add" | "remove">>({});
   const [removalReason, setRemovalReason] = useState<Record<string, string>>({});
 
@@ -652,26 +655,49 @@ const StockManagementTab = () => {
           </button>
           <button
             onClick={() => {
-              setIsGlobalHistoryView(true);
-              setHistoryDialogProductName("All Products");
-              fetchAllStockHistory();
-              setHistoryDialogOpen(true);
+              const opening = !showAllHistory;
+              setShowAllHistory(opening);
+              if (opening) {
+                setShowAnalytics(false);
+                setBulkRestockOpen(false);
+                setIsGlobalHistoryView(true);
+                setHistoryDialogProductName("All Products");
+                fetchAllStockHistory();
+              }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
+              showAllHistory ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary hover:bg-primary/20"
+            }`}
           >
             <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">All History</span>
           </button>
           <button
-            onClick={() => setBulkRestockOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm bg-emerald-500/10 text-emerald-600 rounded-lg hover:bg-emerald-500/20 transition-colors"
+            onClick={() => {
+              const opening = !bulkRestockOpen;
+              setBulkRestockOpen(opening);
+              if (opening) {
+                setShowAnalytics(false);
+                setShowAllHistory(false);
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
+              bulkRestockOpen ? "bg-emerald-500/20 text-emerald-600" : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+            }`}
           >
             <Boxes className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Bulk Restock</span>
             <span className="sm:hidden">Bulk</span>
           </button>
           <button
-            onClick={() => setShowAnalytics(!showAnalytics)}
+            onClick={() => {
+              const opening = !showAnalytics;
+              setShowAnalytics(opening);
+              if (opening) {
+                setShowAllHistory(false);
+                setBulkRestockOpen(false);
+              }
+            }}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
               showAnalytics ? "bg-accent text-accent-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"
             }`}
@@ -687,12 +713,29 @@ const StockManagementTab = () => {
         <StockAnalytics products={products} />
       )}
 
-      {/* Bulk Restock Dialog */}
+      {/* Bulk Restock - Inline */}
       <BulkRestockDialog
         open={bulkRestockOpen}
         onOpenChange={setBulkRestockOpen}
         products={products}
         onComplete={fetchProducts}
+        inline
+      />
+
+      {/* All History - Inline */}
+      <StockHistoryDialog
+        open={showAllHistory}
+        onOpenChange={setShowAllHistory}
+        productName="All Products"
+        stockHistory={stockHistory}
+        loading={historyLoading}
+        isSuperAdmin={isSuperAdmin}
+        showProductFilter
+        inline
+        onDeleteHistory={(historyId) => {
+          setDeleteHistoryId(historyId);
+          setDeleteHistoryProductId(expandedProductId);
+        }}
       />
 
       {/* Clear History Dialog */}
@@ -755,7 +798,7 @@ const StockManagementTab = () => {
         </div>
       )}
 
-      {!showAnalytics && (<>
+      {!anyPanelOpen && (<>
       {/* Stats - Compact on mobile */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
         <div className="p-2 sm:p-4 bg-muted/30 rounded-lg sm:rounded-xl text-center sm:text-left">
