@@ -407,7 +407,7 @@ const FooterSettingsTab = () => {
               value={newLink.column_title}
               onChange={(e) => setNewLink({ ...newLink, column_title: e.target.value })}
               placeholder="Column Title (e.g., About)"
-              className="px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              className="px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
             />
             <input
               type="text"
