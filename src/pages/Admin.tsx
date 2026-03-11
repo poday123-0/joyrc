@@ -2927,7 +2927,7 @@ const SettingsTab = ({
                   type="text"
                   value={formData.primary_color}
                   onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                  className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                   className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
             </div>
