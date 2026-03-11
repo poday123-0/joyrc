@@ -2469,7 +2469,7 @@ const CategoriesTab = ({
                 placeholder="Sort order"
                 value={formData.sort_order}
                 onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
             
