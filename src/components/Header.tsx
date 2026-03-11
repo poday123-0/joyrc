@@ -17,6 +17,7 @@ const Header = ({ userName }: HeaderProps) => {
   const { totalItems } = useCart();
   const { user, isAdmin } = useAuth();
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
