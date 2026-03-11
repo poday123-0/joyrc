@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { useParams, Link } from "react-router-dom";
 import { ShoppingBag, Zap, Battery, Gauge, Radio, Box, ChevronLeft, ChevronRight, Clock, Ruler, Scale, Thermometer, Wifi, Camera, Star, LucideIcon, AlertCircle, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
