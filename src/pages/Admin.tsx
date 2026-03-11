@@ -677,7 +677,7 @@ const Admin = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Link
-                  to="/home"
+                  to="/profile"
                   className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
                 >
                   <ExternalLink className="w-4 h-4" />
