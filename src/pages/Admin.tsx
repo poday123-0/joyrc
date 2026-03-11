@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff
 } from "lucide-react";
 import {
   DndContext,
@@ -73,6 +73,7 @@ interface Product {
   rating: number | null;
   in_stock: boolean | null;
   item_code: string | null;
+  hidden_from_shop?: boolean;
 }
 
 interface ProductSpecification {
@@ -714,6 +715,7 @@ const ProductsTab = ({
     rating: "4.5",
     in_stock: true,
     item_code: "",
+    hidden_from_shop: false,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -815,7 +817,7 @@ const ProductsTab = ({
   };
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", price: "", old_price: "", category_id: "", rating: "4.5", in_stock: true, item_code: "" });
+    setFormData({ name: "", description: "", price: "", old_price: "", category_id: "", rating: "4.5", in_stock: true, item_code: "", hidden_from_shop: false });
     setImageFile(null);
     setEditingProduct(null);
     setSpecifications([]);
@@ -909,6 +911,7 @@ const ProductsTab = ({
       rating: (product.rating || 4.5).toString(),
       in_stock: product.in_stock ?? true,
       item_code: product.item_code || "",
+      hidden_from_shop: product.hidden_from_shop ?? false,
     });
     setShowForm(true);
     
@@ -1325,6 +1328,7 @@ const ProductsTab = ({
         in_stock: formData.in_stock,
         image_url: imageUrl,
         item_code: formData.item_code.trim() || null,
+        hidden_from_shop: formData.hidden_from_shop,
       };
 
       if (editingProduct) {
@@ -1520,6 +1524,24 @@ const ProductsTab = ({
                 />
                 <span className="text-sm">In Stock</span>
               </label>
+
+              {/* Visible in Shop Toggle */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, hidden_from_shop: !formData.hidden_from_shop })}
+                  className={`relative inline-flex w-10 h-5 rounded-full transition-colors ${!formData.hidden_from_shop ? "bg-primary" : "bg-muted border border-border"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${!formData.hidden_from_shop ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
+                <span className="text-sm flex items-center gap-1">
+                  {formData.hidden_from_shop ? (
+                    <><EyeOff className="w-3.5 h-3.5 text-amber-500" /> Hidden from Shop</>
+                  ) : (
+                    <><Eye className="w-3.5 h-3.5 text-primary" /> Visible in Shop</>
+                  )}
+                </span>
+              </div>
             </div>
 
             {/* Main Product Image */}

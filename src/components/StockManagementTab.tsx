@@ -982,27 +982,6 @@ const StockManagementTab = () => {
               {/* Expanded Section - Mobile optimized */}
               {expandedProductId === product.id && (
                 <div className="p-3 sm:p-4 bg-background border-t border-border space-y-3 sm:space-y-4">
-                  {/* Hide from Shop Toggle */}
-                  <div className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg border border-border/50">
-                    <div className="flex items-center gap-2">
-                      {product.hidden_from_shop ? <EyeOff className="w-4 h-4 text-amber-500" /> : <Eye className="w-4 h-4 text-primary" />}
-                      <div>
-                        <p className="text-xs sm:text-sm font-medium">{product.hidden_from_shop ? "Hidden from Shop" : "Visible in Shop"}</p>
-                        <p className="text-[10px] text-muted-foreground">Still available in POS when hidden</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        const newVal = !product.hidden_from_shop;
-                        await supabase.from("products").update({ hidden_from_shop: newVal } as any).eq("id", product.id);
-                        setProducts(prev => prev.map(p => p.id === product.id ? { ...p, hidden_from_shop: newVal } : p));
-                        toast({ title: newVal ? "Product hidden from shop" : "Product visible in shop" });
-                      }}
-                      className={`relative inline-flex w-10 h-5 rounded-full transition-colors ${product.hidden_from_shop ? "bg-amber-500" : "bg-muted border border-border"}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${product.hidden_from_shop ? "translate-x-5" : "translate-x-0"}`} />
-                    </button>
-                  </div>
 
                   {/* Stock Adjustment - Add/Remove Tabs */}
                   <div className="space-y-3 sm:space-y-4">
