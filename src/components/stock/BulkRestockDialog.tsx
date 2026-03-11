@@ -417,7 +417,7 @@ const BulkRestockDialog = ({ open, onOpenChange, products, onComplete, inline = 
                               <span className="text-muted-foreground">Subtotal:</span>
                               <span className="font-bold text-foreground">{formatMVR(itemTotal)}</span>
                               <span className="text-[10px] text-muted-foreground ml-auto">
-                                {selected.qty} × {formatMVR(selected.unitPrice + selected.shippingCost + selected.otherCosts)}
+                                ({selected.qty} × {formatMVR(selected.unitPrice)}) + Ship: {formatMVR(selected.shippingCost)} + Other: {formatMVR(selected.otherCosts)}
                               </span>
                             </div>
                           )}
