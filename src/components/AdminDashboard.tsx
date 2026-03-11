@@ -16,7 +16,7 @@ import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, subDays } f
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 type PeriodFilter = "today" | "week" | "month" | "year" | "custom";
 interface Transaction {
   id: string;
@@ -689,7 +689,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={grossProfit > 0}
             variant={grossProfit >= 0 ? "success" : "danger"}
             onClick={() => onTabChange?.("reports")}
-            chartData={dailyProfitData.map(d => ({ value: d.gross }))}
+            chartData={dailyProfitData.map(d => ({ value: d.gross, day: d.day }))}
             chartColor="#f97316"
           />
           <StatCard
@@ -700,7 +700,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={netProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
             onClick={() => onTabChange?.("reports")}
-            chartData={dailyProfitData.map(d => ({ value: d.net }))}
+            chartData={dailyProfitData.map(d => ({ value: d.net, day: d.day }))}
             chartColor="#f97316"
           />
         </div>
@@ -1345,7 +1345,7 @@ const StatCard = ({
   variant: "success" | "danger" | "primary" | "warning";
   className?: string;
   onClick?: () => void;
-  chartData?: Array<{ value: number }>;
+  chartData?: Array<{ value: number; day?: string }>;
   chartColor?: string;
 }) => {
   const variantStyles = {
@@ -1383,12 +1383,27 @@ const StatCard = ({
         <div className="h-10 mt-1.5 -mx-1">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-popover border border-border rounded-md px-2 py-1 shadow-md">
+                        <p className="text-[10px] text-muted-foreground">Day {data.day}</p>
+                        <p className="text-xs font-semibold text-foreground">{formatMVR(data.value)}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="value"
                 stroke={chartColor || chartColors[variant]}
                 strokeWidth={1.5}
                 dot={false}
+                activeDot={{ r: 3, fill: chartColor || chartColors[variant], strokeWidth: 0 }}
                 isAnimationActive={true}
                 animationDuration={800}
               />
