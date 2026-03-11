@@ -414,7 +414,7 @@ const FooterSettingsTab = () => {
               value={newLink.link_label}
               onChange={(e) => setNewLink({ ...newLink, link_label: e.target.value })}
               placeholder="Link Text"
-              className="px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              className="px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
             />
             <input
               type="text"
