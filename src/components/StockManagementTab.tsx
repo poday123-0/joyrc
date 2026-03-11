@@ -366,11 +366,11 @@ const StockManagementTab = () => {
     const userNote = adjustmentNotes[productId] || "";
     const notes = (colorNote + (reasonLabel ? `[${reasonLabel}] ` : "") + userNote).trim() || null;
 
-    // Calculate total expense
+    // Calculate total expense: (unit price × qty) + shipping + other
     let totalExpense = 0;
     if (costs && isRestock) {
-      const perUnit = (costs.unitPurchasePrice || 0) + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
-      totalExpense = perUnit * Math.abs(changeAmount);
+      const unitTotal = (costs.unitPurchasePrice || 0) * Math.abs(changeAmount);
+      totalExpense = unitTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
     }
     
     setSaving(productId);
