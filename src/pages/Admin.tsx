@@ -1556,7 +1556,7 @@ const ProductsTab = ({
                   placeholder="Product name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                   required
                 />
                 <input
@@ -1564,7 +1564,7 @@ const ProductsTab = ({
                   placeholder="Item Code / SKU"
                   value={formData.item_code}
                   onChange={(e) => setFormData({ ...formData, item_code: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent font-mono"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -1574,7 +1574,7 @@ const ProductsTab = ({
                   placeholder="Old Price (MVR)"
                   value={formData.old_price}
                   onChange={(e) => setFormData({ ...formData, old_price: e.target.value })}
-                  className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <input
                   type="number"
@@ -1582,13 +1582,13 @@ const ProductsTab = ({
                   placeholder="New Price (MVR)"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                   required
                 />
                 <select
                   value={formData.category_id}
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   <option value="">Category</option>
                   {categories.map((cat) => (
@@ -1602,7 +1602,7 @@ const ProductsTab = ({
               placeholder="Description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
             />
             
             <div className="flex flex-wrap items-center gap-4">
@@ -2453,7 +2453,7 @@ const CategoriesTab = ({
               placeholder="Category name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+               className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
             <div className="grid grid-cols-2 gap-3">
@@ -2462,14 +2462,14 @@ const CategoriesTab = ({
                 placeholder="Icon (emoji)"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                 className="px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
               />
               <input
                 type="number"
                 placeholder="Sort order"
                 value={formData.sort_order}
                 onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                className="px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
             
@@ -2908,7 +2908,7 @@ const SettingsTab = ({
               type="text"
               value={formData.site_name}
               onChange={(e) => setFormData({ ...formData, site_name: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+               className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
           </div>
@@ -2927,7 +2927,7 @@ const SettingsTab = ({
                   type="text"
                   value={formData.primary_color}
                   onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                  className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                   className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
             </div>
@@ -2944,7 +2944,7 @@ const SettingsTab = ({
                   type="text"
                   value={formData.secondary_color}
                   onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                  className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                 />
               </div>
             </div>
@@ -2956,7 +2956,7 @@ const SettingsTab = ({
               type="text"
               value={formData.hero_title}
               onChange={(e) => setFormData({ ...formData, hero_title: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+               className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -2966,7 +2966,7 @@ const SettingsTab = ({
               type="text"
               value={formData.hero_subtitle}
               onChange={(e) => setFormData({ ...formData, hero_subtitle: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+               className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -2981,7 +2981,7 @@ const SettingsTab = ({
                   value={formData.notification_sender_name}
                   onChange={(e) => setFormData({ ...formData, notification_sender_name: e.target.value })}
                   placeholder="e.g., RC Joy"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
               <div>
@@ -2991,7 +2991,7 @@ const SettingsTab = ({
                   value={formData.notification_email || ""}
                   onChange={(e) => setFormData({ ...formData, notification_email: e.target.value })}
                   placeholder="noreply@yourdomain.com"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   This email will appear as the sender for order notifications. Must be a verified domain in Resend.
@@ -3107,7 +3107,7 @@ const SettingsTab = ({
                   value={formData.site_title}
                   onChange={(e) => setFormData({ ...formData, site_title: e.target.value })}
                   placeholder="e.g., RC Joy - Premium RC Toys"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   This appears in browser tabs and search results.
