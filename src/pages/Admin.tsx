@@ -2130,26 +2130,38 @@ const ProductsTab = ({
                     </div>
 
                     {/* Add new color form */}
-                    <div className="bg-muted/20 rounded-xl p-3">
-                      <p className="text-xs text-muted-foreground mb-2">Add new color:</p>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="text"
-                          placeholder="Color name (e.g., Red, Black)"
-                          value={newColor.name}
-                          onChange={(e) => handleColorNameChange(e.target.value)}
-                          className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-                        />
-                        <div className="flex gap-2">
+                    <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
+                      <p className="text-xs font-medium text-foreground mb-3">Add new color</p>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-3">
+                          {/* Color picker with preview */}
+                          <div className="relative flex-shrink-0">
+                            <div 
+                              className="w-10 h-10 rounded-full border-2 border-border shadow-sm overflow-hidden cursor-pointer"
+                              style={{ backgroundColor: newColor.hex }}
+                            >
+                              <input
+                                type="color"
+                                value={newColor.hex}
+                                onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                            </div>
+                          </div>
                           <input
-                            type="color"
-                            value={newColor.hex}
-                            onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
-                            className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                            type="text"
+                            placeholder="Color name (e.g., Red, Black)"
+                            value={newColor.name}
+                            onChange={(e) => handleColorNameChange(e.target.value)}
+                            className="flex-1 px-3 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
                           />
-                          <label className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 text-xs text-muted-foreground">
-                            <Upload className="w-3 h-3" />
-                            {colorImageFile ? '1 file' : 'Main'}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-dashed border-border bg-background cursor-pointer hover:bg-muted/50 transition-colors">
+                            <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
+                              {colorImageFile ? '1 file selected' : 'Main image'}
+                            </span>
                             <input
                               type="file"
                               accept="image/*"
@@ -2160,9 +2172,11 @@ const ProductsTab = ({
                               className="hidden"
                             />
                           </label>
-                          <label className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-primary/50 bg-primary/5 cursor-pointer hover:bg-primary/10 text-xs text-primary">
-                            <Image className="w-3 h-3" />
-                            {colorImageFiles.length > 0 ? `+${colorImageFiles.length}` : '+Extra'}
+                          <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-dashed border-primary/40 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
+                            <Image className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-xs text-primary">
+                              {colorImageFiles.length > 0 ? `${colorImageFiles.length} extra` : 'Extra images'}
+                            </span>
                             <input
                               type="file"
                               accept="image/*"
@@ -2179,8 +2193,9 @@ const ProductsTab = ({
                           type="button"
                           onClick={handleAddColor}
                           disabled={uploadingColor || !newColor.name.trim()}
-                          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap disabled:opacity-50"
+                          className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
                         >
+                          <Plus className="w-4 h-4" />
                           {uploadingColor ? "Adding..." : "Add Color"}
                         </button>
                       </div>
