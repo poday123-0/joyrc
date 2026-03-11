@@ -580,6 +580,14 @@ const Admin = () => {
             <span className="font-medium">Exit Admin</span>
           </Link>
 
+          {/* Theme Toggle */}
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex items-center gap-2.5 px-3 py-2 mb-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all w-full"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span className="font-medium">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+          </button>
           {isReordering ? (
             <DndContext
               sensors={sensors}
