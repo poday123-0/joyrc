@@ -1345,7 +1345,7 @@ const StatCard = ({
   variant: "success" | "danger" | "primary" | "warning";
   className?: string;
   onClick?: () => void;
-  chartData?: Array<{ value: number }>;
+  chartData?: Array<{ value: number; day?: string }>;
   chartColor?: string;
 }) => {
   const variantStyles = {
