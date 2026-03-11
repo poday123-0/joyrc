@@ -695,6 +695,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={grossProfit > 0}
             variant={grossProfit >= 0 ? "success" : "danger"}
             onClick={() => onTabChange?.("reports")}
+            chartData={dailyProfitData.map(d => ({ value: d.gross }))}
           />
           <StatCard
             title="Net Profit"
@@ -704,6 +705,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             trendUp={netProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
             onClick={() => onTabChange?.("reports")}
+            chartData={dailyProfitData.map(d => ({ value: d.net }))}
           />
         </div>
       )}
