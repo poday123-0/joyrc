@@ -368,21 +368,17 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // Count unique customers from profiles
     const totalCustomers = profiles.length;
 
-    // Calculate COGS (Cost of Goods Sold) from order items × product cost_price
-    const productCostPriceMap = new Map<string, number>();
-    products.forEach(p => {
-      productCostPriceMap.set(p.id, Number(p.cost_price || 0));
-    });
-    
+    // Calculate COGS using latest unit_purchase_price from stock_history (actual purchase cost)
+    // productCostMap already built above from stock_history restocks
     const totalCOGS = orderItems.reduce((sum, item) => {
-      const costPrice = productCostPriceMap.get(item.product_id) || 0;
+      const costPrice = productCostMap.get(item.product_id) || 0;
       return sum + (item.quantity * costPrice);
     }, 0);
     
     const monthlyCOGS = orderItems
       .filter(item => item.created_at >= startOfMonth)
       .reduce((sum, item) => {
-        const costPrice = productCostPriceMap.get(item.product_id) || 0;
+        const costPrice = productCostMap.get(item.product_id) || 0;
         return sum + (item.quantity * costPrice);
       }, 0);
 

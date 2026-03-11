@@ -76,7 +76,7 @@ const VideoShowcase = () => {
   const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const youtubeStartTimeRef = useRef<number>(0);
   const navigate = useNavigate();
 
