@@ -206,7 +206,7 @@ const QuickPOSTab = () => {
     setSelectedCustomerId(null);
   };
 
-  // Search existing customers by name or phone - server-side filtering for speed
+  // Search existing customers by name or phone - direct DB query for speed
   const searchCustomers = useCallback(async (query: string) => {
     if (query.length < 2) {
       setCustomerResults([]);
@@ -216,20 +216,20 @@ const QuickPOSTab = () => {
 
     setSearchingCustomers(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Use edge function with query param for server-side filtering
-      const { data: customerData, error } = await supabase.functions.invoke(`get-customer-users?q=${encodeURIComponent(query)}&limit=10`, {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
+      const { data: profiles, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, mobile_number")
+        .or(`full_name.ilike.%${query}%,mobile_number.ilike.%${query}%`)
+        .order("created_at", { ascending: false })
+        .limit(10);
 
       if (error) throw error;
 
-      const customers = (customerData?.customers || []).map((c: any) => ({
+      const customers = (profiles || []).map((c) => ({
         user_id: c.user_id,
         full_name: c.full_name,
         mobile_number: c.mobile_number,
-        email: c.email,
+        email: "",
       }));
 
       setCustomerResults(customers);
@@ -241,13 +241,13 @@ const QuickPOSTab = () => {
     }
   }, []);
 
-  // Debounce customer search - reduced delay for faster feel
+  // Debounce customer search - minimal delay for real-time feel
   useEffect(() => {
     const timer = setTimeout(() => {
       if (customerSearch && !selectedCustomerId) {
         searchCustomers(customerSearch);
       }
-    }, 150);
+    }, 100);
     return () => clearTimeout(timer);
   }, [customerSearch, searchCustomers, selectedCustomerId]);
 
