@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff, Sun, Moon
 } from "lucide-react";
 import {
   DndContext,
@@ -61,6 +61,7 @@ import DeliveryTab from "@/components/DeliveryTab";
 import QuickPOSTab from "@/components/QuickPOSTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
 
 interface Product {
   id: string;
@@ -261,6 +262,7 @@ const SortableMenuItem = ({
 const Admin = () => {
   const { isAdmin, isSuperAdmin, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -578,6 +580,14 @@ const Admin = () => {
             <span className="font-medium">Exit Admin</span>
           </Link>
 
+          {/* Theme Toggle */}
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex items-center gap-2.5 px-3 py-2 mb-3 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all w-full"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span className="font-medium">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+          </button>
           {isReordering ? (
             <DndContext
               sensors={sensors}
