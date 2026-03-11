@@ -260,20 +260,30 @@ const PaymentOrdersTab = () => {
 
       if (itemsError) throw itemsError;
 
+      // Aggregate total quantity per product to avoid overwrite bug
+      const productTotalDeductions = new Map<string, number>();
       for (const item of items || []) {
+        const current = productTotalDeductions.get(item.product_id) || 0;
+        productTotalDeductions.set(item.product_id, current + item.quantity);
+      }
+
+      // Deduct from main product stock (once per product)
+      const productStockMap = new Map<string, { prev: number; newQty: number; costPrice: number }>();
+      for (const [productId, totalQty] of productTotalDeductions) {
         const { data: product, error: productError } = await supabase
           .from("products")
           .select("stock_quantity, cost_price")
-          .eq("id", item.product_id)
+          .eq("id", productId)
           .single();
 
         if (productError) {
-          console.error(`Failed to get product ${item.product_id}:`, productError);
+          console.error(`Failed to get product ${productId}:`, productError);
           continue;
         }
 
         const currentQty = product.stock_quantity || 0;
-        const newQty = Math.max(0, currentQty - item.quantity);
+        const newQty = Math.max(0, currentQty - totalQty);
+        productStockMap.set(productId, { prev: currentQty, newQty, costPrice: Number(product.cost_price || 0) });
 
         const { error: updateError } = await supabase
           .from("products")
@@ -281,14 +291,15 @@ const PaymentOrdersTab = () => {
             stock_quantity: newQty,
             in_stock: newQty > 0
           })
-          .eq("id", item.product_id);
+          .eq("id", productId);
 
         if (updateError) {
-          console.error(`Failed to update stock for ${item.product_id}:`, updateError);
-          continue;
+          console.error(`Failed to update stock for ${productId}:`, updateError);
         }
+      }
 
-        // Also deduct from color-specific stock if color was selected
+      // Deduct from color-specific stock and create history per item
+      for (const item of items || []) {
         if (item.color_id) {
           const { data: colorData } = await supabase
             .from("product_colors")
@@ -305,18 +316,23 @@ const PaymentOrdersTab = () => {
           }
         }
 
+        const stockInfo = productStockMap.get(item.product_id);
+        const prevQty = stockInfo?.prev ?? 0;
+        const newQty = stockInfo?.newQty ?? 0;
+        const costPrice = stockInfo?.costPrice ?? 0;
+
         const { error: historyError } = await supabase
           .from("stock_history")
           .insert({
             product_id: item.product_id,
-            previous_quantity: currentQty,
+            previous_quantity: prevQty,
             new_quantity: newQty,
             change_amount: -item.quantity,
             change_type: "sale",
             notes: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
             order_id: selectedOrderId,
             created_by: confirmedBy,
-            unit_purchase_price: Number(product.cost_price || 0),
+            unit_purchase_price: costPrice,
           });
 
         if (historyError) {

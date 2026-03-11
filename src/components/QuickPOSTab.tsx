@@ -433,9 +433,19 @@ const QuickPOSTab = () => {
 
       if (itemsError) throw itemsError;
 
-      // Update stock and create history
+      // Aggregate total quantity sold per product to avoid overwrite bug
+      const productTotalDeductions = new Map<string, number>();
       for (const item of cart) {
-        const newQty = item.product.stock_quantity - item.quantity;
+        const current = productTotalDeductions.get(item.product.id) || 0;
+        productTotalDeductions.set(item.product.id, current + item.quantity);
+      }
+
+      // Deduct from main product stock (once per product)
+      const productStockUpdated = new Map<string, number>();
+      for (const [productId, totalQty] of productTotalDeductions) {
+        const product = cart.find(i => i.product.id === productId)!.product;
+        const newQty = Math.max(0, product.stock_quantity - totalQty);
+        productStockUpdated.set(productId, newQty);
 
         const { error: stockError } = await supabase
           .from("products")
@@ -443,11 +453,13 @@ const QuickPOSTab = () => {
             stock_quantity: newQty,
             in_stock: newQty > 0 
           })
-          .eq("id", item.product.id);
+          .eq("id", productId);
 
         if (stockError) throw stockError;
+      }
 
-        // Also deduct from color-specific stock if color was selected
+      // Deduct from color-specific stock and create history per cart item
+      for (const item of cart) {
         if (item.selectedColor) {
           const colorNewQty = Math.max(0, item.selectedColor.stock_quantity - item.quantity);
           await supabase
@@ -456,9 +468,12 @@ const QuickPOSTab = () => {
             .eq("id", item.selectedColor.id);
         }
 
+        const prevQty = item.product.stock_quantity;
+        const newQty = productStockUpdated.get(item.product.id) ?? prevQty;
+
         await supabase.from("stock_history").insert({
           product_id: item.product.id,
-          previous_quantity: item.product.stock_quantity,
+          previous_quantity: prevQty,
           new_quantity: newQty,
           change_amount: -item.quantity,
           change_type: "sale",
