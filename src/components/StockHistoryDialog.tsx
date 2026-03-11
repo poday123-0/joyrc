@@ -72,6 +72,7 @@ export const StockHistoryDialog = ({
   isSuperAdmin,
   onDeleteHistory,
   showProductFilter = false,
+  inline = false,
 }: StockHistoryDialogProps) => {
   const isMobile = useIsMobile();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
