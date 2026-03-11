@@ -1532,13 +1532,69 @@ const ProductsTab = ({
                 />
                 <span className="text-sm">In Stock</span>
               </label>
-              <div className="flex-1 min-w-[200px]">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                  className="text-sm"
-                />
+            </div>
+
+            {/* Main Product Image */}
+            <div className="border border-border rounded-xl p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Main Product Image</p>
+              <div className="flex items-center gap-4">
+                {/* Preview */}
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-muted/50 border border-border flex-shrink-0 group">
+                  {(imageFile || editingProduct?.image_url) ? (
+                    <>
+                      <img
+                        src={imageFile ? URL.createObjectURL(imageFile) : editingProduct?.image_url || ''}
+                        alt="Main product"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <label className="cursor-pointer p-1.5 bg-background/80 rounded-full hover:bg-background">
+                          <Upload className="w-4 h-4 text-foreground" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </>
+                  ) : (
+                    <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/70 transition-colors">
+                      <Upload className="w-5 h-5 text-muted-foreground mb-1" />
+                      <span className="text-[10px] text-muted-foreground">Upload</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">
+                    {imageFile ? imageFile.name : (editingProduct?.image_url ? 'Current image set' : 'No image selected')}
+                  </p>
+                  {(imageFile || editingProduct?.image_url) && (
+                    <div className="flex gap-2 mt-1.5">
+                      <label className="text-xs text-primary cursor-pointer hover:underline">
+                        Change
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                      </label>
+                      {imageFile && (
+                        <button type="button" onClick={() => setImageFile(null)} className="text-xs text-destructive hover:underline">
+                          Remove new
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
