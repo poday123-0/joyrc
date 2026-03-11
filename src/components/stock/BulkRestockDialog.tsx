@@ -27,6 +27,7 @@ interface BulkRestockDialogProps {
   onOpenChange: (open: boolean) => void;
   products: Product[];
   onComplete: () => void;
+  inline?: boolean;
 }
 
 const BulkRestockDialog = ({ open, onOpenChange, products, onComplete }: BulkRestockDialogProps) => {
