@@ -465,6 +465,7 @@ const QuickPOSTab = () => {
           notes: `POS Sale - Order #${order.id.slice(0, 8)}${item.selectedColor ? ` (${item.selectedColor.color_name})` : ''}`,
           order_id: order.id,
           created_by: user.id,
+          unit_purchase_price: item.product.cost_price || 0,
         });
       }
 
