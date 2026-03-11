@@ -167,13 +167,7 @@ const Profile = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-8 space-y-4 sm:space-y-5">
-            {/* Quick Actions */}
-            <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-2xl p-3 sm:p-4">
-              <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
-            </div>
-
-            {/* Settings Panel */}
-            {showSettings && (
+            {showSettings ? (
               <EditProfileForm
                 fullName={fullName}
                 mobileNumber={mobileNumber}
@@ -185,42 +179,49 @@ const Profile = () => {
                 onAddressChange={setAddress}
                 onSave={handleSaveProfile}
               />
-            )}
-
-            {!isAdmin && !showSettings && (
+            ) : (
               <>
-                <ProfileTabs 
-                  activeTab={activeTab} 
-                  onTabChange={setActiveTab} 
-                  isAdmin={isAdmin} 
-                />
+                {/* Quick Actions */}
+                <div className="bg-card/40 backdrop-blur-sm border border-border/30 rounded-2xl p-3 sm:p-4">
+                  <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
+                </div>
 
-                {activeTab === "profile" ? (
-                  <EditProfileForm
-                    fullName={fullName}
-                    mobileNumber={mobileNumber}
-                    email={user.email || ""}
-                    address={address}
-                    saving={saving}
-                    onFullNameChange={setFullName}
-                    onMobileNumberChange={setMobileNumber}
-                    onAddressChange={setAddress}
-                    onSave={handleSaveProfile}
-                  />
-                ) : activeTab === "orders" ? (
-                  <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
-                    <OrdersTab />
-                  </div>
-                ) : activeTab === "messages" ? (
-                  <div className="space-y-4 sm:space-y-6">
-                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
-                      <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
-                    </div>
-                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
-                      <CustomerMessagesTab key={messagesKey} />
-                    </div>
-                  </div>
-                ) : null}
+                {!isAdmin && (
+                  <>
+                    <ProfileTabs 
+                      activeTab={activeTab} 
+                      onTabChange={setActiveTab} 
+                      isAdmin={isAdmin} 
+                    />
+
+                    {activeTab === "profile" ? (
+                      <EditProfileForm
+                        fullName={fullName}
+                        mobileNumber={mobileNumber}
+                        email={user.email || ""}
+                        address={address}
+                        saving={saving}
+                        onFullNameChange={setFullName}
+                        onMobileNumberChange={setMobileNumber}
+                        onAddressChange={setAddress}
+                        onSave={handleSaveProfile}
+                      />
+                    ) : activeTab === "orders" ? (
+                      <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
+                        <OrdersTab />
+                      </div>
+                    ) : activeTab === "messages" ? (
+                      <div className="space-y-4 sm:space-y-6">
+                        <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
+                          <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
+                        </div>
+                        <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
+                          <CustomerMessagesTab key={messagesKey} />
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                )}
               </>
             )}
           </div>
