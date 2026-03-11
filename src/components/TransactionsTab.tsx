@@ -132,100 +132,84 @@ const TransactionsTab = () => {
         description: "Failed to load transactions",
         variant: "destructive",
       });
-    } else {
-      // Fetch profile names for added_by users and customer info for orders
-      const transactionsWithDetails = await Promise.all(
-        (data || []).map(async (tx) => {
-          let profile = null;
-          let customer_name = null;
-          let customer_phone = null;
-          let customer_address = null;
-
-          // Get profile of who added this transaction
-          if (tx.added_by) {
-            const { data: profileData } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("user_id", tx.added_by)
-              .single();
-            profile = profileData;
-          }
-
-          // Get customer info from order if this is linked to an order
-          let item_code = null;
-          let sold_by_name = null;
-          let payment_method = null;
-          let order_status = null;
-
-          if (tx.order_id) {
-            const { data: orderData } = await supabase
-              .from("orders")
-              .select("user_id, phone, shipping_address, payment_method, status, assigned_to")
-              .eq("id", tx.order_id)
-              .single();
-            
-            if (orderData) {
-              customer_phone = orderData.phone;
-              customer_address = orderData.shipping_address;
-              payment_method = orderData.payment_method;
-              order_status = orderData.status;
-              
-              // Get customer name from profile
-              if (orderData.user_id) {
-                const { data: customerProfile } = await supabase
-                  .from("profiles")
-                  .select("full_name")
-                  .eq("user_id", orderData.user_id)
-                  .single();
-                customer_name = customerProfile?.full_name || null;
-              }
-
-              // Get sold by name (assigned_to or added_by)
-              const soldById = orderData.assigned_to || tx.added_by;
-              if (soldById) {
-                const { data: soldByProfile } = await supabase
-                  .from("profiles")
-                  .select("full_name")
-                  .eq("user_id", soldById)
-                  .single();
-                sold_by_name = soldByProfile?.full_name || null;
-              }
-            }
-
-            // Get item code from order_items -> products
-            if (tx.product_name) {
-              const { data: orderItems } = await supabase
-                .from("order_items")
-                .select("product_id")
-                .eq("order_id", tx.order_id)
-                .limit(1);
-              
-              if (orderItems && orderItems.length > 0) {
-                const { data: productData } = await supabase
-                  .from("products")
-                  .select("item_code")
-                  .eq("id", orderItems[0].product_id)
-                  .single();
-                item_code = productData?.item_code || null;
-              }
-            }
-          }
-
-          return { 
-            ...tx, 
-            profile,
-            customer_name,
-            customer_phone,
-            customer_address,
-            item_code,
-            sold_by_name,
-            payment_method,
-            order_status
-          };
-        })
-      );
-      setTransactions(transactionsWithDetails as Transaction[]);
+      setLoading(false);
+      return;
     }
+
+    const txList = data || [];
+
+    // Batch fetch all needed profiles at once
+    const addedByIds = [...new Set(txList.filter(tx => tx.added_by).map(tx => tx.added_by!))];
+    const orderIds = [...new Set(txList.filter(tx => tx.order_id).map(tx => tx.order_id!))];
+
+    // Parallel batch queries
+    const [profilesRes, ordersRes] = await Promise.all([
+      addedByIds.length > 0
+        ? supabase.from("profiles").select("user_id, full_name").in("user_id", addedByIds)
+        : { data: [] as any[] },
+      orderIds.length > 0
+        ? supabase.from("orders").select("id, user_id, phone, shipping_address, payment_method, status, assigned_to").in("id", orderIds)
+        : { data: [] as any[] },
+    ]);
+
+    const profileMap = new Map((profilesRes.data || []).map((p: any) => [p.user_id, p.full_name]));
+    const orderMap = new Map((ordersRes.data || []).map((o: any) => [o.id, o]));
+
+    // Get customer & sold-by profiles from orders
+    const orderUserIds = [...new Set((ordersRes.data || []).flatMap((o: any) => [o.user_id, o.assigned_to].filter(Boolean)))];
+    const missingProfileIds = orderUserIds.filter(id => !profileMap.has(id));
+    
+    if (missingProfileIds.length > 0) {
+      const { data: extraProfiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", missingProfileIds);
+      (extraProfiles || []).forEach((p: any) => profileMap.set(p.user_id, p.full_name));
+    }
+
+    // Batch fetch item codes for order-linked transactions
+    let itemCodeMap = new Map<string, string>();
+    if (orderIds.length > 0) {
+      const { data: orderItemsData } = await supabase
+        .from("order_items")
+        .select("order_id, product_id")
+        .in("order_id", orderIds);
+      
+      if (orderItemsData && orderItemsData.length > 0) {
+        const productIds = [...new Set(orderItemsData.map(oi => oi.product_id))];
+        const { data: productsData } = await supabase
+          .from("products")
+          .select("id, item_code")
+          .in("id", productIds);
+        
+        const prodCodeMap = new Map((productsData || []).map(p => [p.id, p.item_code]));
+        // Map order_id -> first item's item_code
+        const orderItemCodeMap = new Map<string, string>();
+        orderItemsData.forEach(oi => {
+          if (!orderItemCodeMap.has(oi.order_id)) {
+            const code = prodCodeMap.get(oi.product_id);
+            if (code) orderItemCodeMap.set(oi.order_id, code);
+          }
+        });
+        itemCodeMap = orderItemCodeMap;
+      }
+    }
+
+    const transactionsWithDetails = txList.map(tx => {
+      const order = tx.order_id ? orderMap.get(tx.order_id) : null;
+      const soldById = order?.assigned_to || tx.added_by;
+
+      return {
+        ...tx,
+        profile: tx.added_by ? { full_name: profileMap.get(tx.added_by) || null } : null,
+        customer_name: order ? (profileMap.get(order.user_id) || null) : null,
+        customer_phone: order?.phone || null,
+        customer_address: order?.shipping_address || null,
+        item_code: tx.order_id ? (itemCodeMap.get(tx.order_id) || null) : null,
+        sold_by_name: soldById ? (profileMap.get(soldById) || null) : null,
+        payment_method: order?.payment_method || null,
+        order_status: order?.status || null,
+      };
+    });
+
+    setTransactions(transactionsWithDetails as Transaction[]);
     setLoading(false);
   };
 

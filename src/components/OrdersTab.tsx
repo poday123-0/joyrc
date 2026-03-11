@@ -73,6 +73,16 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   useEffect(() => {
     if (user) {
       fetchOrders();
+
+      // Realtime subscription for instant updates
+      const channel = supabase
+        .channel('orders-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+          fetchOrders();
+        })
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
     }
   }, [user, isAdmin]);
 
