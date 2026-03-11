@@ -98,7 +98,7 @@ const FeaturedProductsTab = () => {
     setLoading(false);
   };
 
-  const handleAddFeatured = async () => {
+  useRealtimeSubscription(['featured_products', 'products'], fetchData, 'rt-featured');
     if (!selectedProductId) {
       toast({
         title: "Error",

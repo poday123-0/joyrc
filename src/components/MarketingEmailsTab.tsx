@@ -98,7 +98,7 @@ const MarketingEmailsTab = () => {
     if (data) setSentEmails(data);
   };
 
-  const toggleSelectAll = () => {
+  useRealtimeSubscription('marketing_emails', fetchSentEmails, 'rt-marketing-emails');
     // Toggle based on filtered users
     const filteredIds = new Set(filteredUsers.map((u) => u.id));
     const allFilteredSelected = filteredUsers.every((u) => selectedUsers.has(u.id));

@@ -126,7 +126,7 @@ const StaffManagementTab = () => {
     setLoading(false);
   };
 
-  const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
+  useRealtimeSubscription(['profiles', 'user_roles', 'staff_permissions'], fetchUsers, 'rt-staff');
     try {
       if (isCurrentlyAdmin) {
         const { error } = await supabase

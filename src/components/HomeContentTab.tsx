@@ -63,7 +63,7 @@ const HomeContentTab = () => {
     setLoading(false);
   };
 
-  const handleSave = async () => {
+  useRealtimeSubscription('system_settings', fetchContent, 'rt-home-content');
     if (!content) return;
     setSaving(true);
 

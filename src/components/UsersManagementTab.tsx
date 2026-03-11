@@ -92,7 +92,7 @@ const UsersManagementTab = () => {
     setLoading(false);
   };
 
-  const fetchCustomerOrders = async (userId: string) => {
+  useRealtimeSubscription(['profiles', 'user_roles'], fetchUsers, 'rt-users');
     setLoadingOrders(true);
     try {
       const { data: orders, error } = await supabase
