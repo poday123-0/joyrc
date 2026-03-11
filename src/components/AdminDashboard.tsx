@@ -415,38 +415,41 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
 
     setTransactions(allTransactions as Transaction[]);
 
-    // Compute daily profit data for sparklines (last 14 days)
-    const last14Days: Array<{ day: string; gross: number; net: number }> = [];
-    for (let i = 13; i >= 0; i--) {
-      const dayDate = subDays(now, i);
-      const dayStr = format(dayDate, "yyyy-MM-dd");
-      const dayLabel = format(dayDate, "MMM d");
+    // Compute weekly profit data for sparklines (current month, grouped by week)
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const weeklyProfitData: Array<{ day: string; gross: number; net: number }> = [];
+    let weekStart = new Date(monthStart);
+    let weekNum = 1;
+    
+    while (weekStart <= now) {
+      const weekEnd = new Date(Math.min(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1, now.getTime()));
+      const wStartStr = format(weekStart, "yyyy-MM-dd");
+      const wEndStr = format(weekEnd, "yyyy-MM-dd");
       
-      // Revenue for day
-      const dayRevenue = allTransactions
-        .filter(t => t.type === "income" && t.created_at?.startsWith(dayStr))
+      const weekRevenue = allTransactions
+        .filter(t => t.type === "income" && t.created_at >= wStartStr && t.created_at <= wEndStr + "T23:59:59")
         .reduce((sum, t) => sum + Number(t.amount), 0);
       
-      // COGS for day
-      const dayCOGS = saleHistory
-        .filter(sh => sh.created_at?.startsWith(dayStr))
+      const weekCOGS = saleHistory
+        .filter(sh => sh.created_at >= wStartStr && sh.created_at <= wEndStr + "T23:59:59")
         .reduce((sum, sh) => {
           const qty = Math.abs(sh.change_amount || 0);
           const cp = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
           return sum + (qty * cp);
         }, 0);
       
-      // Expenses for day
-      const dayExp = allTransactions
-        .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping" && t.created_at?.startsWith(dayStr))
+      const weekExp = allTransactions
+        .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping" && t.created_at >= wStartStr && t.created_at <= wEndStr + "T23:59:59")
         .reduce((sum, t) => sum + Number(t.amount), 0);
       
-      const dayGross = dayRevenue - dayCOGS;
-      const dayNet = dayGross - dayExp;
+      const wGross = weekRevenue - weekCOGS;
+      const wNet = wGross - weekExp;
       
-      last14Days.push({ day: dayLabel, gross: dayGross, net: dayNet });
+      weeklyProfitData.push({ day: `W${weekNum}`, gross: wGross, net: wNet });
+      weekStart = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+      weekNum++;
     }
-    setDailyProfitData(last14Days);
+    setDailyProfitData(weeklyProfitData);
 
     setLoading(false);
   };
@@ -696,6 +699,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             variant={grossProfit >= 0 ? "success" : "danger"}
             onClick={() => onTabChange?.("reports")}
             chartData={dailyProfitData.map(d => ({ value: d.gross }))}
+            chartColor="#f97316"
           />
           <StatCard
             title="Net Profit"
@@ -1339,6 +1343,7 @@ const StatCard = ({
   className = "",
   onClick,
   chartData,
+  chartColor,
 }: {
   title: string;
   value: string;
@@ -1349,6 +1354,7 @@ const StatCard = ({
   className?: string;
   onClick?: () => void;
   chartData?: Array<{ value: number }>;
+  chartColor?: string;
 }) => {
   const variantStyles = {
     success: "bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))]",
@@ -1388,7 +1394,7 @@ const StatCard = ({
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke={chartColors[variant]}
+                stroke={chartColor || chartColors[variant]}
                 strokeWidth={1.5}
                 dot={false}
                 isAnimationActive={true}
