@@ -1297,6 +1297,7 @@ const StockManagementTab = () => {
           ))}
         </div>
       )}
+      </>)}
       {/* Delete Individual History Confirm Dialog */}
       <ConfirmDialog
         open={!!deleteHistoryId}
