@@ -262,6 +262,7 @@ const SortableMenuItem = ({
 const Admin = () => {
   const { isAdmin, isSuperAdmin, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
