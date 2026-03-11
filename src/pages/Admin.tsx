@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff, Sun, Moon
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff, Sun, Moon, ChevronDown
 } from "lucide-react";
 import {
   DndContext,
@@ -272,6 +272,7 @@ const Admin = () => {
   const [tabs, setTabs] = useState<TabItem[]>(defaultTabs);
   const [isReordering, setIsReordering] = useState(false);
   const [menuOrderId, setMenuOrderId] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [isFullAdmin, setIsFullAdmin] = useState(false);
 
@@ -483,12 +484,24 @@ const Admin = () => {
             {TAB_CATEGORIES.map((cat) => {
               const catTabs = filteredTabs.filter(t => (t.category || "main") === cat.key);
               if (catTabs.length === 0) return null;
+              const activeInCat = catTabs.some(t => t.id === activeTab);
+              const isCollapsed = cat.label && collapsedCategories.has(cat.key) && !activeInCat;
               return (
                 <div key={cat.key}>
                   {cat.label && (
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-3 pt-3 pb-1">{cat.label}</p>
+                    <button
+                      onClick={() => setCollapsedCategories(prev => {
+                        const next = new Set(prev);
+                        next.has(cat.key) ? next.delete(cat.key) : next.add(cat.key);
+                        return next;
+                      })}
+                      className="w-full flex items-center justify-between px-3 pt-3 pb-1 group"
+                    >
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">{cat.label}</p>
+                      <ChevronDown className={`w-3 h-3 text-muted-foreground/40 transition-transform ${isCollapsed ? "-rotate-90" : ""}`} />
+                    </button>
                   )}
-                  {catTabs.map((tab) => (
+                  {!isCollapsed && catTabs.map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => {
@@ -617,12 +630,24 @@ const Admin = () => {
                 {TAB_CATEGORIES.map((cat) => {
                   const catTabs = filteredTabs.filter(t => (t.category || "main") === cat.key);
                   if (catTabs.length === 0) return null;
+                  const activeInCat = catTabs.some(t => t.id === activeTab);
+                  const isCollapsed = cat.label && collapsedCategories.has(cat.key) && !activeInCat;
                   return (
                     <div key={cat.key}>
                       {cat.label && (
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-3 pt-4 pb-1">{cat.label}</p>
+                        <button
+                          onClick={() => setCollapsedCategories(prev => {
+                            const next = new Set(prev);
+                            next.has(cat.key) ? next.delete(cat.key) : next.add(cat.key);
+                            return next;
+                          })}
+                          className="w-full flex items-center justify-between px-3 pt-4 pb-1 group"
+                        >
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">{cat.label}</p>
+                          <ChevronDown className={`w-3 h-3 text-muted-foreground/40 transition-transform ${isCollapsed ? "-rotate-90" : ""}`} />
+                        </button>
                       )}
-                      {catTabs.map((tab) => (
+                      {!isCollapsed && catTabs.map((tab) => (
                         <button
                           key={tab.id}
                           onClick={() => setActiveTab(tab.id as Tab)}
