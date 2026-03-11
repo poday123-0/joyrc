@@ -374,7 +374,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     });
 
     const stockValueCost = products.reduce((sum, p) => {
-      const unitCost = productCostMap.get(p.id) || 0;
+      const unitCost = productCostMap.get(p.id) || Number(p.cost_price || 0);
       return sum + ((p.stock_quantity || 0) * unitCost);
     }, 0);
 
