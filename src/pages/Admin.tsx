@@ -1175,9 +1175,9 @@ const ProductsTab = ({
         variant: "destructive" 
       });
     } else if (data) {
-      // Upload additional images (up to 3 total) as color-linked product_images
+      // Upload additional images as color-linked product_images
       if (colorImageFiles.length > 0) {
-        for (let i = 0; i < Math.min(colorImageFiles.length, 3); i++) {
+        for (let i = 0; i < colorImageFiles.length; i++) {
           const file = colorImageFiles[i];
           const compressedFile = await compressImage(file, 1200, 0.8);
           const fileName = `color-img-${Date.now()}-${i}-${compressedFile.name}`;
