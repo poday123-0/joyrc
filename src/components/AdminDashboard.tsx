@@ -1343,6 +1343,7 @@ const StatCard = ({
   className = "",
   onClick,
   chartData,
+  chartColor,
 }: {
   title: string;
   value: string;
@@ -1353,6 +1354,7 @@ const StatCard = ({
   className?: string;
   onClick?: () => void;
   chartData?: Array<{ value: number }>;
+  chartColor?: string;
 }) => {
   const variantStyles = {
     success: "bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))]",
