@@ -24,21 +24,41 @@ const Login = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const { data } = await supabase
-        .from("system_settings")
-        .select("logo_url, google_login_enabled")
-        .limit(1)
-        .maybeSingle();
-      
-      if (data) {
-        if (data.logo_url) setLogoUrl(data.logo_url);
-        setGoogleLoginEnabled(data.google_login_enabled ?? true);
-      }
-    };
-    fetchSettings();
+  const fetchSettings = useCallback(async () => {
+    const { data } = await supabase
+      .from("system_settings")
+      .select("logo_url, google_login_enabled")
+      .limit(1)
+      .maybeSingle();
+    
+    if (data) {
+      if (data.logo_url) setLogoUrl(data.logo_url);
+      setGoogleLoginEnabled(data.google_login_enabled ?? true);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchSettings();
+
+    const channel = supabase
+      .channel('login-settings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'system_settings',
+        },
+        () => {
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSettings]);
 
   // Single effect to handle auth state - set up listener FIRST, then check session
   useEffect(() => {
