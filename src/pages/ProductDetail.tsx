@@ -270,6 +270,8 @@ const ProductDetail = () => {
       
       // Check stock availability before adding
       const selectedColor = productColors.find(c => c.id === selectedColorId);
+      const availableStock = selectedColor ? selectedColor.stock_quantity : product.stock_quantity;
+      
       const currentCartQty = (() => {
         const stored = localStorage.getItem("rcjoy_cart");
         if (!stored) return 0;
@@ -279,10 +281,15 @@ const ProductDetail = () => {
         ).reduce((sum: number, i: any) => sum + i.quantity, 0);
       })();
       
-      if (currentCartQty >= product.stock_quantity) {
+      if (availableStock <= 0) {
+        setShowPreorderDialog(true);
+        return;
+      }
+      
+      if (currentCartQty >= availableStock) {
         toast({
           title: "Stock Limit Reached",
-          description: `Only ${product.stock_quantity} available in stock.`,
+          description: `Only ${availableStock} available${selectedColor ? ` in ${selectedColor.color_name}` : ''}.`,
           variant: "destructive"
         });
         return;
