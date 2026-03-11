@@ -817,7 +817,7 @@ const ProductsTab = ({
   };
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", price: "", old_price: "", category_id: "", rating: "4.5", in_stock: true, item_code: "" });
+    setFormData({ name: "", description: "", price: "", old_price: "", category_id: "", rating: "4.5", in_stock: true, item_code: "", hidden_from_shop: false });
     setImageFile(null);
     setEditingProduct(null);
     setSpecifications([]);
