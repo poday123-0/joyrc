@@ -232,8 +232,8 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const fetchPeriodData = async () => {
     const { start, end } = getPeriodDateRange(periodFilter);
     
-    // Fetch transactions and stock history for the period in parallel
-    const [txnsRes, stockRes] = await Promise.all([
+    // Fetch transactions, stock restocks, and sale history for the period
+    const [txnsRes, stockRes, saleRes] = await Promise.all([
       supabase
         .from("transactions")
         .select("type, amount, category")
@@ -244,19 +244,32 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
         .select("total_expense")
         .eq("change_type", "restock")
         .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString()),
+      supabase
+        .from("stock_history")
+        .select("product_id, unit_purchase_price, change_amount")
+        .eq("change_type", "sale")
+        .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString())
     ]);
     
     const txns = txnsRes.data || [];
     const stockHistory = stockRes.data || [];
+    const saleHistory = saleRes.data || [];
     
     const income = txns.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0);
-    // Exclude inventory-related categories from expenses (tracked separately as Product Cost)
+    // Exclude inventory-related categories from expenses (tracked separately)
     const expenses = txns.filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping").reduce((sum, t) => sum + Number(t.amount), 0);
-    // Calculate cash out from inventory purchases
+    // Total inventory purchases (cash out)
     const cashOut = stockHistory.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
+    // COGS: cost of goods actually sold in this period
+    const cogs = saleHistory.reduce((sum, sh) => {
+      const qty = Math.abs(sh.change_amount || 0);
+      const cost = Number(sh.unit_purchase_price || 0);
+      return sum + (qty * cost);
+    }, 0);
     
-    setPeriodStats({ income, expenses, cashOut });
+    setPeriodStats({ income, expenses, cashOut, cogs });
   };
 
   // Fetch period data when filter changes
