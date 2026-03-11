@@ -1372,26 +1372,6 @@ const StockManagementTab = () => {
         variant="destructive"
         confirmText={deletingHistory ? "Deleting..." : "Delete"}
       />
-
-      {/* Stock History Dialog */}
-      <StockHistoryDialog
-        open={historyDialogOpen}
-        onOpenChange={(open) => {
-          setHistoryDialogOpen(open);
-          if (!open) {
-            setIsGlobalHistoryView(false);
-          }
-        }}
-        productName={historyDialogProductName}
-        stockHistory={stockHistory}
-        loading={historyLoading}
-        isSuperAdmin={isSuperAdmin}
-        showProductFilter={isGlobalHistoryView}
-        onDeleteHistory={(historyId) => {
-          setDeleteHistoryId(historyId);
-          setDeleteHistoryProductId(expandedProductId);
-        }}
-      />
     </div>
   );
 };
