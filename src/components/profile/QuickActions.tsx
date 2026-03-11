@@ -30,9 +30,9 @@ const QuickActions = ({ isAdmin, onSignOut }: QuickActionsProps) => {
             to: "/admin",
             icon: Settings,
             label: "Admin",
-            bg: "bg-muted",
-            iconColor: "text-muted-foreground",
-            hoverBorder: "hover:border-muted-foreground/40",
+            bg: "bg-purple-500/10 dark:bg-purple-500/20",
+            iconColor: "text-purple-600 dark:text-purple-400",
+            hoverBorder: "hover:border-purple-500/40",
           },
         ]
       : []),
