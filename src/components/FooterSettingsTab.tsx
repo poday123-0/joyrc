@@ -421,7 +421,7 @@ const FooterSettingsTab = () => {
               value={newLink.link_url}
               onChange={(e) => setNewLink({ ...newLink, link_url: e.target.value })}
               placeholder="URL (e.g., /about)"
-              className="px-3 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              className="px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
             />
             <button
               onClick={handleAddLink}
