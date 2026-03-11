@@ -17,6 +17,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
+
+// Maldivian Rufiyaa (MVR) icon component
+const RufiyaaIcon = ({ className }: { className?: string }) => (
+  <span className={className} style={{ fontWeight: 700, fontSize: '0.85em', lineHeight: 1 }}>
+    ރ
+  </span>
+);
 type PeriodFilter = "today" | "week" | "month" | "year" | "custom";
 interface Transaction {
   id: string;
@@ -684,7 +691,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
           <StatCard
             title="Gross Profit"
             value={formatMVR(grossProfit)}
-            icon={TrendingUp}
+            icon={RufiyaaIcon}
             trend={`${formatMVR(monthlyGrossProfit)} this month`}
             trendUp={grossProfit > 0}
             variant={grossProfit >= 0 ? "success" : "danger"}
@@ -695,7 +702,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
           <StatCard
             title="Net Profit"
             value={formatMVR(netProfit)}
-            icon={Wallet}
+            icon={RufiyaaIcon}
             trend={`${formatMVR(monthlyNetProfit)} this month`}
             trendUp={netProfit > 0}
             variant={netProfit >= 0 ? "primary" : "danger"}
