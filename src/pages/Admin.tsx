@@ -599,28 +599,51 @@ const Admin = () => {
             </div>
 
           {isReordering ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={tabs.map(t => t.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <nav className="space-y-1">
-                  {tabs.map((tab) => (
-                    <SortableMenuItem
-                      key={tab.id}
-                      tab={tab}
-                      isActive={activeTab === tab.id}
-                      onClick={() => setActiveTab(tab.id as Tab)}
-                      isReordering={isReordering}
-                    />
-                  ))}
-                </nav>
-              </SortableContext>
-            </DndContext>
+            <nav className="space-y-1">
+              {TAB_CATEGORIES.map((cat) => {
+                const catTabs = tabs.filter(t => (t.category || "main") === cat.key);
+                if (catTabs.length === 0) return null;
+                return (
+                  <div key={cat.key}>
+                    {cat.label && (
+                      <p className="px-3 pt-4 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">{cat.label}</p>
+                    )}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(event) => {
+                        const { active, over } = event;
+                        if (over && active.id !== over.id) {
+                          setTabs((items) => {
+                            const allIds = items.map(t => t.id);
+                            const oldIndex = allIds.indexOf(active.id as string);
+                            const newIndex = allIds.indexOf(over.id as string);
+                            const newTabs = arrayMove(items, oldIndex, newIndex);
+                            saveMenuOrder(newTabs);
+                            return newTabs;
+                          });
+                        }
+                      }}
+                    >
+                      <SortableContext
+                        items={catTabs.map(t => t.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {catTabs.map((tab) => (
+                          <SortableMenuItem
+                            key={tab.id}
+                            tab={tab}
+                            isActive={activeTab === tab.id}
+                            onClick={() => setActiveTab(tab.id as Tab)}
+                            isReordering={isReordering}
+                          />
+                        ))}
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                );
+              })}
+            </nav>
           ) : (
             <>
               <nav className="space-y-1">
