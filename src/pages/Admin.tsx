@@ -3107,7 +3107,7 @@ const SettingsTab = ({
                   value={formData.site_title}
                   onChange={(e) => setFormData({ ...formData, site_title: e.target.value })}
                   placeholder="e.g., RC Joy - Premium RC Toys"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   This appears in browser tabs and search results.
