@@ -133,6 +133,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
   const [stockCategoryFilter, setStockCategoryFilter] = useState("all");
   const [stockCategories, setStockCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [dailyProfitData, setDailyProfitData] = useState<Array<{ day: string; gross: number; net: number }>>([]);
+  const [stockValueTrend, setStockValueTrend] = useState<Array<{ day: string; cost: number; selling: number }>>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -448,6 +449,34 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       dailyData.push({ day: format(d, "d"), gross: dayRevenue - dayCOGS, net: dayRevenue - dayCOGS - dayExp });
     }
     setDailyProfitData(dailyData);
+
+    // Compute cumulative stock value trend for current month
+    // We track running cost/selling totals by replaying stock changes day by day
+    // Start with current values and work backwards isn't ideal, so we use a simpler approach:
+    // Show the restock investment (cost) and potential selling value accumulated per day
+    const stockTrend: Array<{ day: string; cost: number; selling: number }> = [];
+    let runningCost = 0;
+    let runningSelling = 0;
+    
+    for (let d = new Date(monthStartDate); d <= now; d.setDate(d.getDate() + 1)) {
+      const dayStr = format(d, "yyyy-MM-dd");
+      
+      // Restocks on this day add to cost
+      const dayRestockCost = stockHistoryAll
+        .filter(sh => sh.created_at?.startsWith(dayStr))
+        .reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
+      
+      // Revenue (sales) on this day
+      const daySalesRevenue = allTransactions
+        .filter(t => t.type === "income" && t.created_at?.startsWith(dayStr))
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      runningCost += dayRestockCost;
+      runningSelling += daySalesRevenue;
+      
+      stockTrend.push({ day: format(d, "d"), cost: runningCost, selling: runningSelling });
+    }
+    setStockValueTrend(stockTrend);
 
     setLoading(false);
   };
@@ -834,6 +863,33 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
                 <p className="text-[10px] text-muted-foreground">Potential revenue</p>
               </div>
             </div>
+
+            {/* Stock Value Trend Chart */}
+            {stockValueTrend.length > 1 && (
+              <div className="mt-3 h-16 -mx-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stockValueTrend}>
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-popover border border-border rounded-md px-2 py-1 shadow-md">
+                              <p className="text-[10px] text-muted-foreground">Day {data.day}</p>
+                              <p className="text-[10px] font-semibold" style={{ color: '#ea580c' }}>Cost: {formatMVR(data.cost)}</p>
+                              <p className="text-[10px] font-semibold" style={{ color: '#f97316' }}>Sales: {formatMVR(data.selling)}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Line type="monotone" dataKey="cost" stroke="#ea580c" strokeWidth={1.5} dot={false} activeDot={{ r: 3, fill: '#ea580c', strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="selling" stroke="#f97316" strokeWidth={1.5} dot={false} activeDot={{ r: 3, fill: '#f97316', strokeWidth: 0 }} strokeDasharray="4 2" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
             
             {stats.stockValueCost > 0 && (
               <div className="mt-3 p-2 rounded-lg bg-muted/20 text-center">
