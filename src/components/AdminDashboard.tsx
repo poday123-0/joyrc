@@ -283,6 +283,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       monthlyStockHistoryRes,
       profilesRes,
       orderItemsRes,
+      saleHistoryRes,
     ] = await Promise.all([
       supabase.from("orders").select("*"),
       supabase.from("products").select("id, stock_quantity, price, cost_price"),
@@ -294,6 +295,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock").gte("created_at", startOfMonth),
       supabase.from("profiles").select("id"),
       supabase.from("order_items").select("product_id, quantity, created_at"),
+      supabase.from("stock_history").select("product_id, unit_purchase_price, change_amount, created_at").eq("change_type", "sale"),
     ]);
 
     const orders = ordersRes.data || [];
@@ -306,6 +308,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     const monthlyStockHistory = monthlyStockHistoryRes.data || [];
     const profiles = profilesRes.data || [];
     const orderItems = orderItemsRes.data || [];
+    const saleHistory = saleHistoryRes.data || [];
 
     // Calculate inventory cash out (total_expense from stock_history restocks)
     const totalInventoryCashOut = stockHistoryAll.reduce((sum, sh) => sum + Number(sh.total_expense || 0), 0);
@@ -368,18 +371,20 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // Count unique customers from profiles
     const totalCustomers = profiles.length;
 
-    // Calculate COGS using latest unit_purchase_price from stock_history (actual purchase cost)
-    // productCostMap already built above from stock_history restocks
-    const totalCOGS = orderItems.reduce((sum, item) => {
-      const costPrice = productCostMap.get(item.product_id) || 0;
-      return sum + (item.quantity * costPrice);
+    // Calculate COGS from stock_history sale records (unit_purchase_price × quantity sold)
+    // For sales with stored cost, use that. For older sales without cost, fallback to restock cost map.
+    const totalCOGS = saleHistory.reduce((sum, sh) => {
+      const qty = Math.abs(sh.change_amount || 0);
+      const costPrice = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
+      return sum + (qty * costPrice);
     }, 0);
     
-    const monthlyCOGS = orderItems
-      .filter(item => item.created_at >= startOfMonth)
-      .reduce((sum, item) => {
-        const costPrice = productCostMap.get(item.product_id) || 0;
-        return sum + (item.quantity * costPrice);
+    const monthlyCOGS = saleHistory
+      .filter(sh => sh.created_at >= startOfMonth)
+      .reduce((sum, sh) => {
+        const qty = Math.abs(sh.change_amount || 0);
+        const costPrice = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
+        return sum + (qty * costPrice);
       }, 0);
 
     setStats({

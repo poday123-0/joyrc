@@ -22,6 +22,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  cost_price: number | null;
   stock_quantity: number;
   image_url: string | null;
   category_id: string | null;
@@ -97,7 +98,7 @@ const QuickPOSTab = () => {
   const fetchProducts = async () => {
     const { data: productsData, error } = await supabase
       .from("products")
-      .select("id, name, price, stock_quantity, image_url, category_id, item_code")
+      .select("id, name, price, stock_quantity, image_url, category_id, item_code, cost_price")
       .gt("stock_quantity", 0)
       .order("name");
 
@@ -464,6 +465,7 @@ const QuickPOSTab = () => {
           notes: `POS Sale - Order #${order.id.slice(0, 8)}${item.selectedColor ? ` (${item.selectedColor.color_name})` : ''}`,
           order_id: order.id,
           created_by: user.id,
+          unit_purchase_price: item.product.cost_price || 0,
         });
       }
 

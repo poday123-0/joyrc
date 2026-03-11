@@ -260,7 +260,7 @@ const PaymentOrdersTab = () => {
       for (const item of items || []) {
         const { data: product, error: productError } = await supabase
           .from("products")
-          .select("stock_quantity")
+          .select("stock_quantity, cost_price")
           .eq("id", item.product_id)
           .single();
 
@@ -313,6 +313,7 @@ const PaymentOrdersTab = () => {
             notes: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
             order_id: selectedOrderId,
             created_by: confirmedBy,
+            unit_purchase_price: Number(product.cost_price || 0),
           });
 
         if (historyError) {
