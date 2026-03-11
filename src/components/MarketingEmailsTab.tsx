@@ -248,7 +248,7 @@ const MarketingEmailsTab = () => {
               type="text"
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
               placeholder="Email subject..."
             />
           </div>
@@ -267,14 +267,14 @@ const MarketingEmailsTab = () => {
             
             {showPreview ? (
               <div
-                className="w-full p-4 rounded-xl border border-border bg-white min-h-[150px] prose prose-sm max-w-none"
+                className="w-full p-4 rounded-xl border border-border bg-background min-h-[150px] prose prose-sm max-w-none dark:prose-invert"
                 dangerouslySetInnerHTML={{ __html: formData.html_content }}
               />
             ) : (
               <textarea
                 value={formData.html_content}
                 onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-36"
+                className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-36"
                 placeholder="<h1>Hello!</h1><p>Your email content...</p>"
               />
             )}

@@ -189,7 +189,7 @@ const BankSettingsTab = () => {
               placeholder="Bank Name (e.g., Bank of Maldives)"
               value={formData.bank_name}
               onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
             <input
@@ -197,7 +197,7 @@ const BankSettingsTab = () => {
               placeholder="Account Holder Name"
               value={formData.account_name}
               onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
             <input
@@ -205,7 +205,7 @@ const BankSettingsTab = () => {
               placeholder="Account Number"
               value={formData.account_number}
               onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
-              className="w-full px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               required
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -214,14 +214,14 @@ const BankSettingsTab = () => {
                 placeholder="Branch (optional)"
                 value={formData.branch}
                 onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                className="px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               />
               <input
                 type="text"
                 placeholder="SWIFT Code (optional)"
                 value={formData.swift_code}
                 onChange={(e) => setFormData({ ...formData, swift_code: e.target.value })}
-                className="px-4 py-2 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
