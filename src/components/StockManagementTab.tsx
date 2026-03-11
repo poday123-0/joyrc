@@ -752,6 +752,27 @@ const StockManagementTab = () => {
         }}
       />
 
+      {/* Per-Product History - Inline */}
+      <StockHistoryDialog
+        open={historyDialogOpen}
+        onOpenChange={(open) => {
+          setHistoryDialogOpen(open);
+          if (!open) {
+            setIsGlobalHistoryView(false);
+          }
+        }}
+        productName={historyDialogProductName}
+        stockHistory={stockHistory}
+        loading={historyLoading}
+        isSuperAdmin={isSuperAdmin}
+        showProductFilter={isGlobalHistoryView}
+        inline
+        onDeleteHistory={(historyId) => {
+          setDeleteHistoryId(historyId);
+          setDeleteHistoryProductId(expandedProductId);
+        }}
+      />
+
       {/* Clear History Dialog */}
       {showClearDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1315,6 +1336,9 @@ const StockManagementTab = () => {
                       setIsGlobalHistoryView(false);
                       setHistoryDialogProductName(product.name);
                       setHistoryDialogOpen(true);
+                      setShowAnalytics(false);
+                      setShowAllHistory(false);
+                      setBulkRestockOpen(false);
                     }}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted text-foreground rounded-lg text-sm font-medium transition-colors border border-border/50"
                   >
@@ -1347,26 +1371,6 @@ const StockManagementTab = () => {
         description="This will permanently delete this stock history entry. This action cannot be undone."
         variant="destructive"
         confirmText={deletingHistory ? "Deleting..." : "Delete"}
-      />
-
-      {/* Stock History Dialog */}
-      <StockHistoryDialog
-        open={historyDialogOpen}
-        onOpenChange={(open) => {
-          setHistoryDialogOpen(open);
-          if (!open) {
-            setIsGlobalHistoryView(false);
-          }
-        }}
-        productName={historyDialogProductName}
-        stockHistory={stockHistory}
-        loading={historyLoading}
-        isSuperAdmin={isSuperAdmin}
-        showProductFilter={isGlobalHistoryView}
-        onDeleteHistory={(historyId) => {
-          setDeleteHistoryId(historyId);
-          setDeleteHistoryProductId(expandedProductId);
-        }}
       />
     </div>
   );
