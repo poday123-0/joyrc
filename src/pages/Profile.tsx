@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -31,6 +31,7 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages">("profile");
+  const [showSettings, setShowSettings] = useState(false);
   const [messagesKey, setMessagesKey] = useState(0);
 
   useEffect(() => {
@@ -140,7 +141,14 @@ const Profile = () => {
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </Link>
           <h1 className="font-bold text-2xl md:text-3xl text-foreground tracking-tight">My Profile</h1>
-          <div className="w-11" />
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`w-11 h-11 rounded-xl bg-card/80 backdrop-blur-sm border flex items-center justify-center hover:bg-card transition-all duration-300 shadow-sm ${
+              showSettings ? "border-primary/50 text-primary" : "border-border/50 text-foreground"
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Desktop/Tablet Layout */}
@@ -164,14 +172,8 @@ const Profile = () => {
               <QuickActions isAdmin={isAdmin} onSignOut={handleSignOut} />
             </div>
 
-            {/* Tabs */}
-            <ProfileTabs 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab} 
-              isAdmin={isAdmin} 
-            />
-
-            {activeTab === "profile" ? (
+            {/* Settings Panel (toggled from header icon) */}
+            {showSettings && (
               <EditProfileForm
                 fullName={fullName}
                 mobileNumber={mobileNumber}
@@ -183,20 +185,45 @@ const Profile = () => {
                 onAddressChange={setAddress}
                 onSave={handleSaveProfile}
               />
-            ) : activeTab === "orders" && !isAdmin ? (
-              <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                <OrdersTab />
-              </div>
-            ) : activeTab === "messages" && !isAdmin ? (
-              <div className="space-y-6">
-                <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                  <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
-                </div>
-                <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
-                  <CustomerMessagesTab key={messagesKey} />
-                </div>
-              </div>
-            ) : null}
+            )}
+
+            {!isAdmin && !showSettings && (
+              <>
+                {/* Tabs */}
+                <ProfileTabs 
+                  activeTab={activeTab} 
+                  onTabChange={setActiveTab} 
+                  isAdmin={isAdmin} 
+                />
+
+                {activeTab === "profile" ? (
+                  <EditProfileForm
+                    fullName={fullName}
+                    mobileNumber={mobileNumber}
+                    email={user.email || ""}
+                    address={address}
+                    saving={saving}
+                    onFullNameChange={setFullName}
+                    onMobileNumberChange={setMobileNumber}
+                    onAddressChange={setAddress}
+                    onSave={handleSaveProfile}
+                  />
+                ) : activeTab === "orders" ? (
+                  <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                    <OrdersTab />
+                  </div>
+                ) : activeTab === "messages" ? (
+                  <div className="space-y-6">
+                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                      <SendMessageTab onMessageSent={() => setMessagesKey(prev => prev + 1)} />
+                    </div>
+                    <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-5 md:p-8 shadow-lg">
+                      <CustomerMessagesTab key={messagesKey} />
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       </div>
