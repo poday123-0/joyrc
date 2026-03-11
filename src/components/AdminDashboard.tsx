@@ -863,6 +863,33 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
                 <p className="text-[10px] text-muted-foreground">Potential revenue</p>
               </div>
             </div>
+
+            {/* Stock Value Trend Chart */}
+            {stockValueTrend.length > 1 && (
+              <div className="mt-3 h-16 -mx-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stockValueTrend}>
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-popover border border-border rounded-md px-2 py-1 shadow-md">
+                              <p className="text-[10px] text-muted-foreground">Day {data.day}</p>
+                              <p className="text-[10px] font-semibold" style={{ color: '#ea580c' }}>Cost: {formatMVR(data.cost)}</p>
+                              <p className="text-[10px] font-semibold" style={{ color: '#f97316' }}>Sales: {formatMVR(data.selling)}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Line type="monotone" dataKey="cost" stroke="#ea580c" strokeWidth={1.5} dot={false} activeDot={{ r: 3, fill: '#ea580c', strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="selling" stroke="#f97316" strokeWidth={1.5} dot={false} activeDot={{ r: 3, fill: '#f97316', strokeWidth: 0 }} strokeDasharray="4 2" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
             
             {stats.stockValueCost > 0 && (
               <div className="mt-3 p-2 rounded-lg bg-muted/20 text-center">
