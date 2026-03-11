@@ -2981,7 +2981,7 @@ const SettingsTab = ({
                   value={formData.notification_sender_name}
                   onChange={(e) => setFormData({ ...formData, notification_sender_name: e.target.value })}
                   placeholder="e.g., RC Joy"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
               <div>
