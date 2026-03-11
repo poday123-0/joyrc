@@ -415,41 +415,32 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
 
     setTransactions(allTransactions as Transaction[]);
 
-    // Compute weekly profit data for sparklines (current month, grouped by week)
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const weeklyProfitData: Array<{ day: string; gross: number; net: number }> = [];
-    let weekStart = new Date(monthStart);
-    let weekNum = 1;
+    // Compute daily profit data for sparklines (current month, per day)
+    const monthStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const dailyData: Array<{ day: string; gross: number; net: number }> = [];
     
-    while (weekStart <= now) {
-      const weekEnd = new Date(Math.min(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1, now.getTime()));
-      const wStartStr = format(weekStart, "yyyy-MM-dd");
-      const wEndStr = format(weekEnd, "yyyy-MM-dd");
+    for (let d = new Date(monthStartDate); d <= now; d.setDate(d.getDate() + 1)) {
+      const dayStr = format(d, "yyyy-MM-dd");
       
-      const weekRevenue = allTransactions
-        .filter(t => t.type === "income" && t.created_at >= wStartStr && t.created_at <= wEndStr + "T23:59:59")
+      const dayRevenue = allTransactions
+        .filter(t => t.type === "income" && t.created_at?.startsWith(dayStr))
         .reduce((sum, t) => sum + Number(t.amount), 0);
       
-      const weekCOGS = saleHistory
-        .filter(sh => sh.created_at >= wStartStr && sh.created_at <= wEndStr + "T23:59:59")
+      const dayCOGS = saleHistory
+        .filter(sh => sh.created_at?.startsWith(dayStr))
         .reduce((sum, sh) => {
           const qty = Math.abs(sh.change_amount || 0);
           const cp = sh.unit_purchase_price ? Number(sh.unit_purchase_price) : (productCostMap.get(sh.product_id) || 0);
           return sum + (qty * cp);
         }, 0);
       
-      const weekExp = allTransactions
-        .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping" && t.created_at >= wStartStr && t.created_at <= wEndStr + "T23:59:59")
+      const dayExp = allTransactions
+        .filter(t => t.type === "expense" && t.category !== "Inventory" && t.category !== "Stock Purchase" && t.category !== "Shipping" && t.created_at?.startsWith(dayStr))
         .reduce((sum, t) => sum + Number(t.amount), 0);
       
-      const wGross = weekRevenue - weekCOGS;
-      const wNet = wGross - weekExp;
-      
-      weeklyProfitData.push({ day: `W${weekNum}`, gross: wGross, net: wNet });
-      weekStart = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
-      weekNum++;
+      dailyData.push({ day: format(d, "d"), gross: dayRevenue - dayCOGS, net: dayRevenue - dayCOGS - dayExp });
     }
-    setDailyProfitData(weeklyProfitData);
+    setDailyProfitData(dailyData);
 
     setLoading(false);
   };
@@ -710,6 +701,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
             variant={netProfit >= 0 ? "primary" : "danger"}
             onClick={() => onTabChange?.("reports")}
             chartData={dailyProfitData.map(d => ({ value: d.net }))}
+            chartColor="#f97316"
           />
         </div>
       )}
