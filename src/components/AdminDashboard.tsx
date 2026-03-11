@@ -1009,10 +1009,11 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
                 <p className="text-xs text-muted-foreground mb-1">Revenue</p>
                 <p className="text-sm font-bold text-[hsl(var(--chart-2))]">{formatMVR(periodStats.income)}</p>
               </div>
-              {/* Product Purchase (Cost) */}
-              <div className="text-center p-3 rounded-xl bg-muted/30 border border-orange-200 dark:border-orange-800">
-                <p className="text-xs text-muted-foreground mb-1">Product Cost</p>
-                <p className="text-sm font-bold text-orange-600 dark:text-orange-400">{formatMVR(periodStats.cashOut)}</p>
+              {/* COGS - cost of goods sold */}
+              <div className="text-center p-3 rounded-xl bg-muted/30">
+                <p className="text-xs text-muted-foreground mb-1">COGS</p>
+                <p className="text-sm font-bold text-foreground">{formatMVR(periodStats.cogs)}</p>
+                <p className="text-[9px] text-muted-foreground">Cost of sold items</p>
               </div>
               {/* Profit = Revenue - COGS (cost of goods sold) */}
               <div className="text-center p-3 rounded-xl bg-muted/30">
