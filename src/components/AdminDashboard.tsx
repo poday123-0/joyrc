@@ -1338,6 +1338,7 @@ const StatCard = ({
   variant,
   className = "",
   onClick,
+  chartData,
 }: {
   title: string;
   value: string;
@@ -1347,12 +1348,20 @@ const StatCard = ({
   variant: "success" | "danger" | "primary" | "warning";
   className?: string;
   onClick?: () => void;
+  chartData?: Array<{ value: number }>;
 }) => {
   const variantStyles = {
     success: "bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))]",
     danger: "bg-destructive/10 text-destructive",
     primary: "bg-primary/10 text-primary",
     warning: "bg-amber-500/10 text-amber-600 dark:text-amber-500",
+  };
+
+  const chartColors: Record<string, string> = {
+    success: "hsl(var(--chart-2))",
+    danger: "hsl(var(--destructive))",
+    primary: "hsl(var(--primary))",
+    warning: "#d97706",
   };
 
   return (
@@ -1372,6 +1381,23 @@ const StatCard = ({
       </div>
       <p className="text-sm sm:text-base font-bold text-foreground leading-tight">{value}</p>
       <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{title}</p>
+      {chartData && chartData.length > 0 && (
+        <div className="h-10 mt-1.5 -mx-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={chartColors[variant]}
+                strokeWidth={1.5}
+                dot={false}
+                isAnimationActive={true}
+                animationDuration={800}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
       <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 mt-0.5">{trend}</p>
     </div>
   );
