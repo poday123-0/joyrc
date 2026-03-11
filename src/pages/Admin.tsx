@@ -1328,6 +1328,7 @@ const ProductsTab = ({
         in_stock: formData.in_stock,
         image_url: imageUrl,
         item_code: formData.item_code.trim() || null,
+        hidden_from_shop: formData.hidden_from_shop,
       };
 
       if (editingProduct) {
