@@ -124,11 +124,11 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background pb-28 sm:pb-24 md:pb-12">
+    <div className="min-h-screen bg-background pb-28 sm:pb-24 md:pb-12">
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-52 sm:w-80 h-52 sm:h-80 bg-accent/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/3 dark:bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-52 sm:w-80 h-52 sm:h-80 bg-accent/3 dark:bg-accent/5 rounded-full blur-3xl" />
       </div>
 
       <div className="container max-w-5xl mx-auto px-3 sm:px-4 md:px-6 pt-4 sm:pt-6 md:pt-10 relative">
