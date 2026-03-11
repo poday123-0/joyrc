@@ -1523,6 +1523,24 @@ const ProductsTab = ({
                 />
                 <span className="text-sm">In Stock</span>
               </label>
+
+              {/* Visible in Shop Toggle */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, hidden_from_shop: !formData.hidden_from_shop })}
+                  className={`relative inline-flex w-10 h-5 rounded-full transition-colors ${!formData.hidden_from_shop ? "bg-primary" : "bg-muted border border-border"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${!formData.hidden_from_shop ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
+                <span className="text-sm flex items-center gap-1">
+                  {formData.hidden_from_shop ? (
+                    <><EyeOff className="w-3.5 h-3.5 text-amber-500" /> Hidden from Shop</>
+                  ) : (
+                    <><Eye className="w-3.5 h-3.5 text-primary" /> Visible in Shop</>
+                  )}
+                </span>
+              </div>
             </div>
 
             {/* Main Product Image */}
