@@ -546,6 +546,14 @@ const StockManagementTab = () => {
 
       if (resetError) throw resetError;
 
+      // Also reset all color variant stock quantities to 0
+      const { error: colorResetError } = await supabase
+        .from("product_colors")
+        .update({ stock_quantity: 0, cost_price: 0 })
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (colorResetError) throw colorResetError;
+
       // Delete all stock history
       const { error: deleteError } = await supabase
         .from("stock_history")
