@@ -313,7 +313,7 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       supabase.from("transactions").select("*").order("created_at", { ascending: false }),
       supabase.from("transactions").select("*").gte("created_at", startOfMonth),
       supabase.from("transactions").select("*").gte("created_at", startOfWeek),
-      supabase.from("stock_history").select("product_id, unit_purchase_price, change_amount, change_type").eq("change_type", "restock"),
+      supabase.from("stock_history").select("product_id, unit_purchase_price, shipping_cost, other_expenses, change_amount, change_type").eq("change_type", "restock"),
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock"),
       supabase.from("stock_history").select("total_expense, shipping_cost, other_expenses, unit_purchase_price, change_amount, change_type, created_at").eq("change_type", "restock").gte("created_at", startOfMonth),
       supabase.from("profiles").select("id"),
