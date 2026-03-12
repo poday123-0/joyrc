@@ -1302,7 +1302,7 @@ const StockManagementTab = () => {
                                 </div>
                                 {shipping > 0 && (
                                   <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-                                    <span>Shipping</span>
+                                     <span>Shipping ({formatMVR(costs.shippingCost || 0)} × {addQty})</span>
                                     <span className="text-foreground">{formatMVR(shipping)}</span>
                                   </div>
                                 )}
