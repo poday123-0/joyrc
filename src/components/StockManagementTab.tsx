@@ -369,8 +369,9 @@ const StockManagementTab = () => {
     // Calculate total expense: (unit price × qty) + shipping + other
     let totalExpense = 0;
     if (costs && isRestock) {
-      const unitTotal = (costs.unitPurchasePrice || 0) * Math.abs(changeAmount);
-      totalExpense = unitTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+      const qty = Math.abs(changeAmount);
+      const unitTotal = (costs.unitPurchasePrice || 0) * qty;
+      totalExpense = unitTotal + (costs.shippingCost || 0) * qty + (costs.otherExpenses || 0) * qty;
     }
     
     setSaving(productId);
