@@ -1290,8 +1290,8 @@ const StockManagementTab = () => {
                             const addQty = adjustmentAmount[product.id] || 0;
                             if (!costs || addQty <= 0) return null;
                             const unitTotal = (costs.unitPurchasePrice || 0) * addQty;
-                            const shipping = costs.shippingCost || 0;
-                            const other = costs.otherExpenses || 0;
+                            const shipping = (costs.shippingCost || 0) * addQty;
+                            const other = (costs.otherExpenses || 0) * addQty;
                             const totalExpense = unitTotal + shipping + other;
                             if (totalExpense <= 0) return null;
                             return (
