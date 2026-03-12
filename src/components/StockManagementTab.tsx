@@ -1297,7 +1297,7 @@ const StockManagementTab = () => {
                             return (
                               <div className="col-span-3 p-2.5 bg-primary/10 rounded-lg space-y-1">
                                 <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-                                  <span>Unit: {formatMVR(costs.unitPurchasePrice || 0)} × {addQty}</span>
+                                  <span>Unit: {formatMVR(costs.unitPurchasePrice || 0)} × {addQty} = {formatMVR(unitTotal)}</span>
                                   <span className="text-foreground font-medium">{formatMVR(unitTotal)}</span>
                                 </div>
                                 {shipping > 0 && (
