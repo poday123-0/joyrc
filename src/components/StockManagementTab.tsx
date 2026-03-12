@@ -1308,7 +1308,7 @@ const StockManagementTab = () => {
                                 )}
                                 {other > 0 && (
                                   <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-                                    <span>Other costs</span>
+                                     <span>Other ({formatMVR(costs.otherExpenses || 0)} × {addQty})</span>
                                     <span className="text-foreground">{formatMVR(other)}</span>
                                   </div>
                                 )}
