@@ -378,16 +378,27 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
     // Calculate stock value at selling price
     const stockValueSelling = products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * Number(p.price || 0)), 0);
 
-    // Calculate stock value at cost price (using latest unit_purchase_price from stock_history)
+    // Calculate stock value at cost price using fully loaded cost (unit + shipping + other)
+    // productCostMap stores the latest fully-loaded per-unit cost from stock_history
     const productCostMap = new Map<string, number>();
     stockHistory.forEach(sh => {
-      if (sh.unit_purchase_price && !productCostMap.has(sh.product_id)) {
-        productCostMap.set(sh.product_id, Number(sh.unit_purchase_price));
+      if (!productCostMap.has(sh.product_id)) {
+        // Fully loaded cost = unit price + shipping + other expenses (all per unit)
+        const unitPrice = Number(sh.unit_purchase_price || 0);
+        const shipping = Number(sh.shipping_cost || 0);
+        const other = Number(sh.other_expenses || 0);
+        const loadedCost = unitPrice + shipping + other;
+        if (loadedCost > 0) {
+          productCostMap.set(sh.product_id, loadedCost);
+        }
       }
     });
 
+    // Use product.cost_price first (already fully loaded), fallback to stock_history map
     const stockValueCost = products.reduce((sum, p) => {
-      const unitCost = productCostMap.get(p.id) || Number(p.cost_price || 0);
+      const unitCost = Number(p.cost_price || 0) > 0 
+        ? Number(p.cost_price) 
+        : (productCostMap.get(p.id) || 0);
       return sum + ((p.stock_quantity || 0) * unitCost);
     }, 0);
 
