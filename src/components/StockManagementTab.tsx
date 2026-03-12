@@ -369,8 +369,9 @@ const StockManagementTab = () => {
     // Calculate total expense: (unit price × qty) + shipping + other
     let totalExpense = 0;
     if (costs && isRestock) {
-      const unitTotal = (costs.unitPurchasePrice || 0) * Math.abs(changeAmount);
-      totalExpense = unitTotal + (costs.shippingCost || 0) + (costs.otherExpenses || 0);
+      const qty = Math.abs(changeAmount);
+      const unitTotal = (costs.unitPurchasePrice || 0) * qty;
+      totalExpense = unitTotal + (costs.shippingCost || 0) * qty + (costs.otherExpenses || 0) * qty;
     }
     
     setSaving(productId);
@@ -1290,25 +1291,25 @@ const StockManagementTab = () => {
                             const addQty = adjustmentAmount[product.id] || 0;
                             if (!costs || addQty <= 0) return null;
                             const unitTotal = (costs.unitPurchasePrice || 0) * addQty;
-                            const shipping = costs.shippingCost || 0;
-                            const other = costs.otherExpenses || 0;
+                            const shipping = (costs.shippingCost || 0) * addQty;
+                            const other = (costs.otherExpenses || 0) * addQty;
                             const totalExpense = unitTotal + shipping + other;
                             if (totalExpense <= 0) return null;
                             return (
                               <div className="col-span-3 p-2.5 bg-primary/10 rounded-lg space-y-1">
                                 <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-                                  <span>Unit: {formatMVR(costs.unitPurchasePrice || 0)} × {addQty}</span>
+                                  <span>Unit: {formatMVR(costs.unitPurchasePrice || 0)} × {addQty} = {formatMVR(unitTotal)}</span>
                                   <span className="text-foreground font-medium">{formatMVR(unitTotal)}</span>
                                 </div>
                                 {shipping > 0 && (
                                   <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-                                    <span>Shipping</span>
+                                     <span>Shipping ({formatMVR(costs.shippingCost || 0)} × {addQty})</span>
                                     <span className="text-foreground">{formatMVR(shipping)}</span>
                                   </div>
                                 )}
                                 {other > 0 && (
                                   <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-                                    <span>Other costs</span>
+                                     <span>Other ({formatMVR(costs.otherExpenses || 0)} × {addQty})</span>
                                     <span className="text-foreground">{formatMVR(other)}</span>
                                   </div>
                                 )}
