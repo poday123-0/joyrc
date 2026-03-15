@@ -1536,17 +1536,19 @@ const OrderCard = ({
             <span className="font-semibold text-foreground text-sm sm:text-base truncate">
               {getOrderNum(order)}
             </span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              {new Date(order.created_at).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </p>
             <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text} flex-shrink-0`}>
               {statusConfig.label}
             </span>
           </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">
-            {new Date(order.created_at).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </p>
         </div>
         <div className="text-right flex-shrink-0">
           <p className="font-bold text-foreground text-sm sm:text-base">{formatMVR(order.total_amount)}</p>
