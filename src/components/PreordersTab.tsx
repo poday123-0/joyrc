@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { DataFilterBar, useDataFilter, FilterState } from "@/components/DataFilterBar";
 
 interface Preorder {
   id: string;
@@ -37,7 +38,6 @@ interface Preorder {
 const PreordersTab = () => {
   const [preorders, setPreorders] = useState<Preorder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,8 +121,19 @@ const PreordersTab = () => {
     setDeleteId(null);
   };
 
-  const filteredPreorders = preorders.filter(p => 
-    statusFilter === "all" || p.status === statusFilter
+  const preorderStatusOptions = [
+    { value: "all", label: "All Status" },
+    { value: "pending", label: "Pending", color: "bg-amber-500/20 text-amber-600" },
+    { value: "contacted", label: "Contacted", color: "bg-blue-500/20 text-blue-600" },
+    { value: "fulfilled", label: "Fulfilled", color: "bg-emerald-500/20 text-emerald-600" },
+    { value: "cancelled", label: "Cancelled", color: "bg-rose-500/20 text-rose-500" },
+  ];
+
+  const { filters, setFilters, filteredData: filteredPreorders } = useDataFilter(
+    preorders,
+    (p) => p.created_at,
+    (p) => `${p.customer_name} ${p.customer_phone} ${p.customer_email || ""} ${p.product?.name || ""} ${p.notes || ""}`,
+    (p) => p.status,
   );
 
   const getStatusBadge = (status: string) => {
@@ -150,21 +161,13 @@ const PreordersTab = () => {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-end">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="contacted">Contacted</SelectItem>
-            <SelectItem value="fulfilled">Fulfilled</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Filter Bar */}
+      <DataFilterBar
+        searchPlaceholder="Search by customer name, phone, product..."
+        statusOptions={preorderStatusOptions}
+        statusLabel="Pre-order Status"
+        onFiltersChange={setFilters}
+      />
 
       {/* Pre-orders List */}
       {filteredPreorders.length === 0 ? (

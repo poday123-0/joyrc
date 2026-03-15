@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Package, Truck, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Upload, CreditCard, AlertCircle, CheckCircle2, User, Trash2, Eye, EyeOff, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
+import { DataFilterBar, useDataFilter, FilterState } from "@/components/DataFilterBar";
 
 interface Order {
   id: string;
@@ -343,6 +344,23 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     setShowPassword(false);
   };
 
+  const orderStatusOptions = [
+    { value: "all", label: "All Status" },
+    { value: "pending", label: "Pending", color: "bg-gold/20 text-gold" },
+    { value: "processing", label: "Processing", color: "bg-cyan-light/50 text-teal" },
+    { value: "on_delivery", label: "On Delivery", color: "bg-cyan-light/50 text-teal" },
+    { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
+    { value: "delivered", label: "Delivered", color: "bg-primary/20 text-primary" },
+    { value: "cancelled", label: "Cancelled", color: "bg-coral/20 text-coral" },
+  ];
+
+  const { filters, setFilters, filteredData: filteredOrders } = useDataFilter(
+    orders,
+    (o) => o.created_at,
+    (o) => `${o.id} ${o.shipping_address || ""} ${o.phone || ""} ${o.notes || ""}`,
+    (o) => o.status,
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -366,8 +384,17 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   }
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {orders.map((order) => {
+    <div className="space-y-4">
+      {isAdmin && (
+        <DataFilterBar
+          searchPlaceholder="Search by order ID, address, phone..."
+          statusOptions={orderStatusOptions}
+          statusLabel="Order Status"
+          onFiltersChange={setFilters}
+        />
+      )}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {filteredOrders.map((order) => {
         const statusConfig = statusColors[order.status] || statusColors.pending;
         const StatusIcon = statusConfig.icon;
         const paymentConfig = paymentStatusColors[order.payment_status || "pending"] || paymentStatusColors.pending;
@@ -691,6 +718,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };

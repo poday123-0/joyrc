@@ -10,6 +10,7 @@ import { formatMVR } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { DataFilterBar, useDataFilter } from "@/components/DataFilterBar";
 
 interface Order {
   id: string;
@@ -176,6 +177,19 @@ const DeliveryTab = () => {
     setSelectedOrderId(null);
   };
 
+  const { filters, setFilters, filteredData: filteredOrders } = useDataFilter(
+    orders,
+    (o) => o.created_at,
+    (o) => `${o.id} ${o.shipping_address || ""} ${o.phone || ""} ${o.notes || ""} ${customerProfiles[o.user_id]?.full_name || ""}`,
+    (o) => o.status,
+  );
+
+  const deliveryStatusOptions = [
+    { value: "all", label: "All Status" },
+    { value: "on_delivery", label: "On Delivery", color: "bg-cyan-light/50 text-teal" },
+    { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -200,12 +214,19 @@ const DeliveryTab = () => {
 
   return (
     <div className="space-y-5">
+      <DataFilterBar
+        searchPlaceholder="Search by order ID, customer, address..."
+        statusOptions={deliveryStatusOptions}
+        statusLabel="Delivery Status"
+        onFiltersChange={setFilters}
+      />
+
       <div className="flex items-center justify-end mb-4">
-        <span className="text-sm text-muted-foreground">{orders.length} pending</span>
+        <span className="text-sm text-muted-foreground">{filteredOrders.length} deliveries</span>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {orders.map((order) => {
+        {filteredOrders.map((order) => {
           const isExpanded = expandedOrder === order.id;
           const items = orderItems[order.id] || [];
           const customer = customerProfiles[order.user_id];
