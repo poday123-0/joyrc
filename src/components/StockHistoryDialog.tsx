@@ -690,14 +690,24 @@ export const StockHistoryDialog = ({
                             const cleanNotes = item.notes
                               .replace(/\[Color:\s*[^\]]+\]\s*/g, "")
                               .trim();
+                            // Try to find hex from available colors
+                            const productId = item.product_id;
+                            const colors = productId ? availableColors[productId] : undefined;
+                            const matchedColor = colorName && colors
+                              ? colors.find(c => c.color_name.toLowerCase() === colorName.toLowerCase())
+                              : null;
+                            const bgColor = matchedColor ? matchedColor.color_hex : colorName?.toLowerCase();
                             return (
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                {colorName && (
-                                  <span 
-                                    className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0" 
-                                    style={{ backgroundColor: colorName.toLowerCase() }}
-                                    title={colorName}
-                                  />
+                                {colorName && bgColor && (
+                                  <span className="flex items-center gap-1">
+                                    <span 
+                                      className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0" 
+                                      style={{ backgroundColor: bgColor }}
+                                      title={colorName}
+                                    />
+                                    <span className="text-foreground/70 font-medium">{colorName}</span>
+                                  </span>
                                 )}
                                 {cleanNotes && (
                                   <span className="italic truncate">"{cleanNotes}"</span>
