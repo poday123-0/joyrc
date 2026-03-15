@@ -1238,7 +1238,9 @@ const PaymentOrdersTab = () => {
                   assignedStaffName={assignedStaff?.full_name || undefined}
                   confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
                   customerName={customerProfiles[order.user_id]?.full_name || undefined}
-                  getPaymentStatusConfig={getPaymentStatusConfig}
+                   bankNames={bankNames}
+                   cardTypeNames={cardTypeNames}
+                   getPaymentStatusConfig={getPaymentStatusConfig}
                 />
               );
             })}
