@@ -2228,21 +2228,20 @@ const ProductsTab = ({
                                     const newFirst = reordered[0];
                                     const previousFirst = allImages[0];
 
-                                    if (newFirst.id !== previousFirst.id) {
-                                      // Main image changed — promote the new first to main
-                                      if (newFirst.extraId) {
-                                        await handleSetColorMainImage(color.id, newFirst.extraId, newFirst.url);
+                                    if (newFirst.id !== previousFirst.id && newFirst.extraId) {
+                                      // Main image changed — only promote the new first to main
+                                      // handleSetColorMainImage already handles swapping and re-fetching
+                                      await handleSetColorMainImage(color.id, newFirst.extraId, newFirst.url);
+                                    } else {
+                                      // Main didn't change — just reorder the extras
+                                      const newExtras = reordered
+                                        .filter(img => !img.isMain)
+                                        .filter(img => img.extraId)
+                                        .map(img => ({ id: img.extraId!, url: img.url }));
+                                      
+                                      if (newExtras.length > 0) {
+                                        await handleReorderColorImages(color.id, newExtras);
                                       }
-                                    }
-
-                                    // Also update sort order of remaining extras
-                                    const newExtras = reordered
-                                      .filter(img => img.id !== newFirst.id || !newFirst.isMain)
-                                      .filter(img => img.extraId)
-                                      .map(img => ({ id: img.extraId!, url: img.url }));
-                                    
-                                    if (newExtras.length > 0) {
-                                      await handleReorderColorImages(color.id, newExtras);
                                     }
                                   }}
                                 >
