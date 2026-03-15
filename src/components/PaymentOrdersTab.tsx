@@ -739,6 +739,7 @@ const PaymentOrdersTab = () => {
     setEditingOrderId(order.id);
     setEditNotes(order.notes || "");
     setEditComment("");
+    setEditOrderNumber(order.order_number || "");
   };
 
   const handleSaveEdit = async () => {
