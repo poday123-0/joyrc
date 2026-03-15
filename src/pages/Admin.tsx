@@ -3050,6 +3050,7 @@ const SettingsTab = ({
       notification_email: formData.notification_email.trim() || null,
       notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
       google_login_enabled: formData.google_login_enabled,
+      order_number_prefix: formData.order_number_prefix?.trim() || "RCJOY",
       site_title: formData.site_title.trim() || null,
       favicon_url: formData.favicon_url || null,
       og_image_url: formData.og_image_url || null,
