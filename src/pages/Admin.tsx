@@ -2180,81 +2180,98 @@ const ProductsTab = ({
                             {/* Expandable image section */}
                             {isExpanded && (
                               <div className="mt-3 pt-3 border-t border-border">
-                                <div className="grid grid-cols-4 gap-2 mb-2">
-                                  {/* Main color image */}
-                                  {color.image_url && (
-                                    <div className="relative group">
-                                      <img 
-                                        src={color.image_url} 
-                                        alt={color.color_name}
-                                        className="w-full aspect-square rounded-lg object-cover"
-                                      />
-                                      <span className="absolute bottom-1 left-1 text-[10px] bg-background/80 px-1 rounded">Main</span>
-                                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer rounded-lg">
-                                        <div className="flex flex-col items-center">
-                                          <Upload className="w-4 h-4 text-white mb-0.5" />
-                                          <span className="text-[10px] text-white">Change</span>
-                                        </div>
+                                <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
+                                  <GripVertical className="w-3 h-3" />
+                                  Drag to reorder — first image becomes main
+                                </p>
+                                <DndContext
+                                  sensors={useSensors(
+                                    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+                                    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+                                  )}
+                                  collisionDetection={closestCenter}
+                                  onDragEnd={(event: DragEndEvent) => {
+                                    const { active, over } = event;
+                                    if (!over || active.id === over.id || !editingProduct) return;
+
+                                    // Build combined list: main image first, then extras
+                                    const allImages: { id: string; url: string; isMain: boolean; extraId?: string }[] = [];
+                                    if (color.image_url) {
+                                      allImages.push({ id: `main-${color.id}`, url: color.image_url, isMain: true });
+                                    }
+                                    colorImages.forEach(img => {
+                                      allImages.push({ id: img.id, url: img.image_url, isMain: false, extraId: img.id });
+                                    });
+
+                                    const oldIndex = allImages.findIndex(i => i.id === active.id);
+                                    const newIndex = allImages.findIndex(i => i.id === over.id);
+                                    if (oldIndex === -1 || newIndex === -1) return;
+
+                                    const reordered = arrayMove(allImages, oldIndex, newIndex);
+                                    const newFirst = reordered[0];
+
+                                    // If the first image changed, we need to swap main
+                                    if (newFirst.id !== `main-${color.id}`) {
+                                      // An extra image was dragged to first position
+                                      if (newFirst.extraId) {
+                                        handleSetColorMainImage(color.id, newFirst.extraId, newFirst.url);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <SortableContext
+                                    items={[
+                                      ...(color.image_url ? [`main-${color.id}`] : []),
+                                      ...colorImages.map(img => img.id),
+                                    ]}
+                                    strategy={rectSortingStrategy}
+                                  >
+                                    <div className="grid grid-cols-4 gap-2 mb-2">
+                                      {color.image_url && (
+                                        <SortableColorImageItem
+                                          id={`main-${color.id}`}
+                                          imageUrl={color.image_url}
+                                          isMain={true}
+                                          colorName={color.color_name}
+                                        />
+                                      )}
+                                      {!color.image_url && (
+                                        <label className="aspect-square rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
+                                          <Upload className="w-4 h-4 text-primary mb-1" />
+                                          <span className="text-[10px] text-primary">Main</span>
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => e.target.files?.[0] && handleChangeColorMainImage(color.id, e.target.files[0])}
+                                            className="hidden"
+                                          />
+                                        </label>
+                                      )}
+                                      {colorImages.map((img) => (
+                                        <SortableColorImageItem
+                                          key={img.id}
+                                          id={img.id}
+                                          imageUrl={img.image_url}
+                                          isMain={false}
+                                          colorName={color.color_name}
+                                          onDelete={() => handleDeleteColorImage(img.id)}
+                                        />
+                                      ))}
+                                      {/* Add more images slot */}
+                                      <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <Upload className="w-4 h-4 text-muted-foreground mb-1" />
+                                        <span className="text-[10px] text-muted-foreground">Add</span>
                                         <input
                                           type="file"
                                           accept="image/*"
-                                          onChange={(e) => e.target.files?.[0] && handleChangeColorMainImage(color.id, e.target.files[0])}
+                                          multiple
+                                          onChange={(e) => e.target.files && handleAddColorImages(color.id, e.target.files)}
                                           className="hidden"
                                         />
                                       </label>
                                     </div>
-                                  )}
-                                  {!color.image_url && (
-                                    <label className="aspect-square rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors">
-                                      <Upload className="w-4 h-4 text-primary mb-1" />
-                                      <span className="text-[10px] text-primary">Main</span>
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => e.target.files?.[0] && handleChangeColorMainImage(color.id, e.target.files[0])}
-                                        className="hidden"
-                                      />
-                                    </label>
-                                  )}
-                                  {/* Additional color images */}
-                                   {colorImages.map((img) => (
-                                    <div key={img.id} className="relative group">
-                                      <img 
-                                        src={img.image_url} 
-                                        alt={`${color.color_name} variant`}
-                                        className="w-full aspect-square rounded-lg object-cover"
-                                      />
-                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 rounded-lg">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleSetColorMainImage(color.id, img.id, img.image_url)}
-                                          className="px-2 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-medium hover:bg-primary/90 transition-colors"
-                                        >
-                                          Set as Main
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleDeleteColorImage(img.id)}
-                                          className="px-2 py-1 rounded-md bg-destructive text-destructive-foreground text-[10px] font-medium hover:bg-destructive/90 transition-colors"
-                                        >
-                                          Remove
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {/* Add more images slot */}
-                                  <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                                    <Upload className="w-4 h-4 text-muted-foreground mb-1" />
-                                    <span className="text-[10px] text-muted-foreground">Add</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      multiple
-                                      onChange={(e) => e.target.files && handleAddColorImages(color.id, e.target.files)}
-                                      className="hidden"
-                                    />
-                                  </label>
-                                </div>
+                                  </SortableContext>
+                                </DndContext>
                               </div>
                             )}
                           </div>
