@@ -486,17 +486,88 @@ const TransactionsTab = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-1.5">
-        <button
-          onClick={() => {
-            setShowForm(true);
-            setTimeout(() => {
-              document.getElementById('transaction-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-          }}
-          className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors text-xs"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add Transaction
-        </button>
+        <Sheet open={showForm} onOpenChange={(open) => { if (!open) resetForm(); else setShowForm(true); }}>
+          <SheetTrigger asChild>
+            <button
+              className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors text-xs"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Transaction
+            </button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{editingTransaction ? "Edit Transaction" : "New Transaction"}</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: "income" })}
+                    className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+                      formData.type === "income"
+                        ? "bg-emerald-500 text-white shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <ArrowUpRight className="w-4 h-4" /> Income
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: "expense" })}
+                    className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+                      formData.type === "expense"
+                        ? "bg-rose-500 text-white shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <ArrowDownRight className="w-4 h-4" /> Expense
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {(formData.type === "income" ? incomeCategories : expenseCategories).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Amount (MVR)"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    required
+                  />
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Description (optional)"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors"
+                >
+                  {saving ? "Saving..." : editingTransaction ? "Update Transaction" : "Add Transaction"}
+                </button>
+              </form>
+            </div>
+          </SheetContent>
+        </Sheet>
         
         <Sheet>
           <SheetTrigger asChild>
@@ -549,89 +620,6 @@ const TransactionsTab = () => {
         />
       )}
 
-      {/* Add/Edit Form */}
-      {showForm && (
-        <div id="transaction-form" className="p-4 bg-card border border-border rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-foreground">
-              {editingTransaction ? "Edit Transaction" : "New Transaction"}
-            </h4>
-            <button 
-              onClick={resetForm}
-              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80"
-            >
-              <X className="w-4 h-4 text-muted-foreground" />
-            </button>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, type: "income" })}
-                className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
-                  formData.type === "income"
-                    ? "bg-emerald-500 text-white shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                <ArrowUpRight className="w-4 h-4" /> Income
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, type: "expense" })}
-                className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
-                  formData.type === "expense"
-                    ? "bg-rose-500 text-white shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                <ArrowDownRight className="w-4 h-4" /> Expense
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                required
-              >
-                <option value="">Select Category</option>
-                {(formData.type === "income" ? incomeCategories : expenseCategories).map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Amount (MVR)"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                required
-              />
-            </div>
-
-            <input
-              type="text"
-              placeholder="Description (optional)"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors"
-            >
-              {saving ? "Saving..." : editingTransaction ? "Update Transaction" : "Add Transaction"}
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Transactions List */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
