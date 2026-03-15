@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt, Calendar, Clock } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt, Calendar, Clock, Banknote, CreditCard, Building2, FileCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -78,6 +78,7 @@ const QuickPOSTab = () => {
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
   const [newCustomerData, setNewCustomerData] = useState({ name: "", phone: "", email: "", address: "" });
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
     orderId: string;
@@ -405,7 +406,7 @@ const QuickPOSTab = () => {
           total_amount: totalAmount,
           status: isDelivery ? "processing" : "completed",
           payment_status: "confirmed",
-          payment_method: "cash",
+          payment_method: paymentMethod,
           payment_confirmed_at: new Date().toISOString(),
           notes: orderNotes,
           shipping_address: isDelivery ? customerDetails.address.trim() : null,
@@ -1045,6 +1046,28 @@ const QuickPOSTab = () => {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-muted-foreground">Total</span>
                 <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
+              </div>
+              <div className="flex gap-1.5 mb-3">
+                {[
+                  { value: "cash", label: "Cash", icon: Banknote },
+                  { value: "bank_transfer", label: "Transfer", icon: Building2 },
+                  { value: "card", label: "Card", icon: CreditCard },
+                  { value: "check", label: "Check", icon: FileCheck },
+                ].map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPaymentMethod(value)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      paymentMethod === value
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {label}
+                  </button>
+                ))}
               </div>
 
               <button
