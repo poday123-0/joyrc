@@ -11,8 +11,15 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
+export interface ColorOption {
+  id: string;
+  color_name: string;
+  color_hex: string;
+}
+
 interface StockHistoryItem {
   id: string;
+  product_id?: string;
   previous_quantity: number;
   new_quantity: number;
   change_amount: number;
@@ -49,6 +56,7 @@ interface StockHistoryDialogProps {
   isSuperAdmin: boolean;
   onDeleteHistory: (historyId: string) => void;
   onEditHistory?: (data: StockHistoryEditData) => void;
+  availableColors?: Record<string, ColorOption[]>;
   showProductFilter?: boolean;
   inline?: boolean;
 }
