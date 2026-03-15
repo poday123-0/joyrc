@@ -213,9 +213,19 @@ const StockManagementTab = () => {
               .single();
             profile = profileData;
           }
+          let order_number: string | null = null;
+          if (item.order_id) {
+            const { data: orderData } = await supabase
+              .from("orders")
+              .select("order_number")
+              .eq("id", item.order_id)
+              .single();
+            order_number = orderData?.order_number || null;
+          }
           return { 
             ...item, 
             profile,
+            order_number,
             product_name: productInfo?.name,
             product_item_code: productInfo?.item_code
           };
@@ -253,9 +263,19 @@ const StockManagementTab = () => {
               .single();
             profile = profileData;
           }
+          let order_number: string | null = null;
+          if (item.order_id) {
+            const { data: orderData } = await supabase
+              .from("orders")
+              .select("order_number")
+              .eq("id", item.order_id)
+              .single();
+            order_number = orderData?.order_number || null;
+          }
           return { 
             ...item, 
             profile,
+            order_number,
             product_name: (item.products as any)?.name,
             product_item_code: (item.products as any)?.item_code
           };

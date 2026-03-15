@@ -24,6 +24,7 @@ interface StockHistoryItem {
   other_expenses?: number | null;
   total_expense?: number | null;
   order_id?: string | null;
+  order_number?: string | null;
   profile?: { full_name: string | null } | null;
   product_name?: string;
   product_item_code?: string | null;
@@ -414,7 +415,7 @@ export const StockHistoryDialog = ({
                         <>
                           <span>•</span>
                           <span className="text-blue-600 dark:text-blue-400 font-medium">
-                            Order {item.notes?.match(/Order (RCJOY\/\S+)/)?.[1] || `#${item.order_id.slice(0, 8).toUpperCase()}`}
+                            Order {item.order_number || `#${item.order_id.slice(0, 8).toUpperCase()}`}
                           </span>
                         </>
                       )}

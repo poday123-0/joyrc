@@ -21,6 +21,7 @@ interface Transaction {
   amount: number;
   description: string | null;
   order_id: string | null;
+  order_number?: string | null;
   created_at: string;
   product_name: string | null;
   unit_purchase_price: number | null;
@@ -448,7 +449,7 @@ const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: Tran
                             <p className="font-semibold text-sm text-foreground">{tx.category}</p>
                             {tx.order_id && (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Order {tx.description?.match(/(RCJOY\/\S+)/)?.[1] || `#${tx.order_id.slice(0, 8).toUpperCase()}`}
+                                Order {tx.order_number || `#${tx.order_id.slice(0, 8).toUpperCase()}`}
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-0.5">
