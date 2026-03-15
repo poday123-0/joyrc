@@ -148,7 +148,7 @@ const TransactionsTab = () => {
         ? supabase.from("profiles").select("user_id, full_name").in("user_id", addedByIds)
         : { data: [] as any[] },
       orderIds.length > 0
-        ? supabase.from("orders").select("id, user_id, phone, shipping_address, payment_method, status, assigned_to").in("id", orderIds)
+        ? supabase.from("orders").select("id, order_number, user_id, phone, shipping_address, payment_method, status, assigned_to").in("id", orderIds)
         : { data: [] as any[] },
     ]);
 
