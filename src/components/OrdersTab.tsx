@@ -9,6 +9,7 @@ import { DataFilterBar, useDataFilter, FilterState } from "@/components/DataFilt
 
 interface Order {
   id: string;
+  order_number: string | null;
   user_id: string;
   status: string;
   total_amount: number;
@@ -22,6 +23,9 @@ interface Order {
   assigned_to: string | null;
   assigned_at: string | null;
 }
+
+const getOrderNum = (order: { order_number?: string | null; id: string }) =>
+  order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`;
 
 interface OrderItem {
   id: string;

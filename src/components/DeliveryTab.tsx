@@ -14,6 +14,7 @@ import { DataFilterBar, useDataFilter } from "@/components/DataFilterBar";
 
 interface Order {
   id: string;
+  order_number: string | null;
   user_id: string;
   status: string;
   payment_status: string;
@@ -25,6 +26,9 @@ interface Order {
   assigned_to: string | null;
   assigned_at: string | null;
 }
+
+const getOrderNum = (order: { order_number?: string | null; id: string }) =>
+  order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`;
 
 interface OrderItem {
   id: string;
