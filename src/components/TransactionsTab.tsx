@@ -520,10 +520,7 @@ const TransactionsTab = () => {
             { value: "all", label: "All Types" },
             { value: "income", label: "Income", color: "bg-emerald-500/20 text-emerald-500" },
             { value: "expense", label: "Expenses", color: "bg-coral/20 text-coral" },
-            ...(uniqueCategories.length > 0 ? [
-              { value: "__divider__", label: "──────" },
-              ...uniqueCategories.map(cat => ({ value: `cat:${cat}`, label: cat })),
-            ] : []),
+            ...uniqueCategories.map(cat => ({ value: `cat:${cat}`, label: cat })),
           ]}
           statusLabel="Type & Category"
           onFiltersChange={(filters) => {
