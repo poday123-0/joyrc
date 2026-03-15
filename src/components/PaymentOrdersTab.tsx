@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { DataFilterBar, useDataFilter } from "@/components/DataFilterBar";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { 
   Clock, CheckCircle, XCircle, Receipt, Eye, 
@@ -945,6 +946,23 @@ const PaymentOrdersTab = () => {
     }
   };
 
+  const orderStatusOpts = [
+    { value: "all", label: "All Status" },
+    { value: "pending", label: "Pending", color: "bg-gold/20 text-gold" },
+    { value: "processing", label: "Processing", color: "bg-cyan-light/50 text-teal" },
+    { value: "on_delivery", label: "On Delivery", color: "bg-cyan-light/50 text-teal" },
+    { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
+    { value: "delivered", label: "Delivered", color: "bg-primary/20 text-primary" },
+    { value: "cancelled", label: "Cancelled", color: "bg-coral/20 text-coral" },
+  ];
+
+  const { filters: orderFilters, setFilters: setOrderFilters, filteredData: filteredOrders } = useDataFilter(
+    orders,
+    (o) => o.created_at,
+    (o) => `${o.id} ${o.shipping_address || ""} ${o.phone || ""} ${o.notes || ""} ${customerProfiles[o.user_id]?.full_name || ""}`,
+    (o) => o.status,
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -953,11 +971,18 @@ const PaymentOrdersTab = () => {
     );
   }
 
-  const pendingPayments = orders.filter(o => o.payment_status === "uploaded" || o.payment_status === "pending");
-  const otherOrders = orders.filter(o => o.payment_status !== "uploaded" && o.payment_status !== "pending");
+  const pendingPayments = filteredOrders.filter(o => o.payment_status === "uploaded" || o.payment_status === "pending");
+  const otherOrders = filteredOrders.filter(o => o.payment_status !== "uploaded" && o.payment_status !== "pending");
 
   return (
     <div className="space-y-6">
+      {/* Filter Bar */}
+      <DataFilterBar
+        searchPlaceholder="Search by order ID, customer, address, phone..."
+        statusOptions={orderStatusOpts}
+        statusLabel="Order Status"
+        onFiltersChange={setOrderFilters}
+      />
       {/* Admin Actions - Add Order & Import */}
       {(isSuperAdmin || isAdmin) && (
         <div className="flex flex-wrap items-center gap-3 p-4 glass-card rounded-2xl">
