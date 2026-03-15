@@ -730,7 +730,7 @@ export const StockHistoryDialog = ({
 
                       {/* Cost details */}
                       {item.total_expense && item.total_expense > 0 && (
-                        <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-3 text-xs flex-wrap">
+                        <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
                           <span className="text-muted-foreground">
                             Unit: <span className="text-foreground font-medium">{formatMVR(item.unit_purchase_price || 0)}</span>
                           </span>
@@ -744,7 +744,7 @@ export const StockHistoryDialog = ({
                               Other: <span className="text-foreground">{formatMVR(item.other_expenses)}</span>
                             </span>
                           )}
-                          <span className="ml-auto font-semibold text-primary">
+                          <span className="col-span-2 sm:col-span-1 sm:ml-auto font-semibold text-primary text-right">
                             Total: {formatMVR(item.total_expense)}
                           </span>
                         </div>
