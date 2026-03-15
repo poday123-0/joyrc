@@ -784,7 +784,7 @@ const PaymentOrdersTab = () => {
     setSelectedOrderId(null);
   };
 
-
+  const handleEditOrder = (order: Order) => {
     setEditingOrderId(order.id);
     setEditNotes(order.notes || "");
     setEditComment("");
