@@ -169,8 +169,16 @@ const SalesReportsTab = () => {
     paymentBreakdown[method].amount += Number(order.total_amount);
   });
 
+  const paymentMethodLabels: Record<string, string> = {
+    cash: "Cash",
+    bank_transfer: "Bank Transfer",
+    card: "Card",
+    check: "Check",
+    unknown: "Unknown",
+  };
+
   const paymentData = Object.entries(paymentBreakdown).map(([name, data]) => ({
-    name: name === "bank_transfer" ? "Bank Transfer" : name.charAt(0).toUpperCase() + name.slice(1),
+    name: paymentMethodLabels[name] || name.charAt(0).toUpperCase() + name.slice(1),
     value: data.amount,
     count: data.count,
   }));
@@ -397,7 +405,7 @@ const SalesReportsTab = () => {
                     {paymentData.map((item, index) => (
                       <div key={item.name} className="flex items-center gap-2 text-xs">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                        <span className="text-muted-foreground">{item.name}: {item.count}</span>
+                        <span className="text-muted-foreground">{item.name}: {item.count} ({formatMVR(item.value)})</span>
                       </div>
                     ))}
                   </div>
