@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { History, Trash2, Package, TrendingUp, TrendingDown, Calendar as CalendarIcon, Filter, X, Search, Hash } from "lucide-react";
+import { History, Trash2, Package, TrendingUp, TrendingDown, Calendar as CalendarIcon, Filter, X, Search, Hash, Pencil, Check, XCircle } from "lucide-react";
 import { formatMVR } from "@/lib/currency";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,16 @@ interface StockHistoryItem {
   product_item_code?: string | null;
 }
 
+export interface StockHistoryEditData {
+  id: string;
+  created_at: string;
+  notes: string | null;
+  unit_purchase_price: number | null;
+  shipping_cost: number | null;
+  other_expenses: number | null;
+  change_amount: number;
+}
+
 interface StockHistoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +48,7 @@ interface StockHistoryDialogProps {
   loading: boolean;
   isSuperAdmin: boolean;
   onDeleteHistory: (historyId: string) => void;
+  onEditHistory?: (data: StockHistoryEditData) => void;
   showProductFilter?: boolean;
   inline?: boolean;
 }
@@ -73,6 +84,7 @@ export const StockHistoryDialog = ({
   loading,
   isSuperAdmin,
   onDeleteHistory,
+  onEditHistory,
   showProductFilter = false,
   inline = false,
 }: StockHistoryDialogProps) => {
@@ -85,6 +97,44 @@ export const StockHistoryDialog = ({
     to: undefined,
   });
   const [showFilters, setShowFilters] = useState(false);
+
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState<Date | undefined>(undefined);
+  const [editNotes, setEditNotes] = useState("");
+  const [editUnitPrice, setEditUnitPrice] = useState("");
+  const [editShipping, setEditShipping] = useState("");
+  const [editOther, setEditOther] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
+
+  const startEditing = (item: StockHistoryItem) => {
+    setEditingId(item.id);
+    setEditDate(new Date(item.created_at));
+    setEditNotes(item.notes || "");
+    setEditUnitPrice(item.unit_purchase_price?.toString() || "");
+    setEditShipping(item.shipping_cost?.toString() || "");
+    setEditOther(item.other_expenses?.toString() || "");
+    setEditQuantity(Math.abs(item.change_amount).toString());
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+  };
+
+  const saveEditing = (item: StockHistoryItem) => {
+    if (!onEditHistory || !editDate) return;
+    const qty = parseInt(editQuantity) || Math.abs(item.change_amount);
+    onEditHistory({
+      id: item.id,
+      created_at: editDate.toISOString(),
+      notes: editNotes || null,
+      unit_purchase_price: editUnitPrice ? parseFloat(editUnitPrice) : null,
+      shipping_cost: editShipping ? parseFloat(editShipping) : null,
+      other_expenses: editOther ? parseFloat(editOther) : null,
+      change_amount: item.change_amount > 0 ? qty : -qty,
+    });
+    setEditingId(null);
+  };
 
   // Filter history based on selected filters
   const filteredHistory = useMemo(() => {
@@ -352,119 +402,267 @@ export const StockHistoryDialog = ({
       ) : (
         <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "60vh" : "450px", minHeight: "200px" }}>
           <div className="space-y-2 pb-4">
-            {filteredHistory.map((item) => (
-              <div
-                key={item.id}
-                className="p-3 bg-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    {/* Product name (only in global view) */}
-                    {showProductFilter && item.product_name && (
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <Package className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-sm font-medium text-foreground truncate">{item.product_name}</span>
-                        {item.product_item_code && (
-                          <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                            {item.product_item_code}
-                          </span>
-                        )}
+            {filteredHistory.map((item) => {
+              const isEditing = editingId === item.id;
+
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "p-3 bg-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors",
+                    isEditing && "border-primary/50 bg-primary/5"
+                  )}
+                >
+                  {isEditing ? (
+                    /* ---- EDIT MODE ---- */
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-primary">Editing Entry</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => saveEditing(item)}
+                            className="p-1.5 text-emerald-600 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                            title="Save"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={cancelEditing}
+                            className="p-1.5 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                            title="Cancel"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    )}
-                    
-                    {/* Change badge and type */}
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          item.change_amount > 0
-                            ? "bg-emerald-500/20 text-emerald-600"
-                            : "bg-rose-500/20 text-rose-500"
-                        }`}
-                      >
-                        {item.change_amount > 0 ? "+" : ""}
-                        {item.change_amount}
-                      </span>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          item.change_type === "sale"
-                            ? "bg-blue-500/20 text-blue-600"
-                            : item.change_type === "restock"
-                            ? "bg-emerald-500/20 text-emerald-600"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {getChangeTypeLabel(item.change_type)}
-                      </span>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                        {item.previous_quantity} → {item.new_quantity}
-                      </span>
-                    </div>
 
-                    {/* Performed by & Order info */}
-                    <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground mb-1">
-                      {item.profile?.full_name && (
-                        <span className="font-medium text-foreground/70">
-                          {item.profile.full_name}
-                        </span>
+                      {/* Date picker */}
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Date & Time</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="w-full flex items-center gap-2 px-3 py-2 mt-1 bg-background border border-border rounded-lg text-xs text-left">
+                              <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                              {editDate ? format(editDate, "MMM d, yyyy hh:mm a") : "Pick date"}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={editDate}
+                              onSelect={setEditDate}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                            {/* Time input */}
+                            <div className="px-3 pb-3">
+                              <label className="text-[10px] text-muted-foreground">Time</label>
+                              <input
+                                type="time"
+                                className="w-full mt-1 px-2 py-1.5 border border-border rounded-lg text-xs bg-background"
+                                value={editDate ? format(editDate, "HH:mm") : ""}
+                                onChange={(e) => {
+                                  if (editDate && e.target.value) {
+                                    const [h, m] = e.target.value.split(":").map(Number);
+                                    const newDate = new Date(editDate);
+                                    newDate.setHours(h, m);
+                                    setEditDate(newDate);
+                                  }
+                                }}
+                              />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {/* Quantity */}
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Quantity</label>
+                        <Input
+                          type="number"
+                          value={editQuantity}
+                          onChange={(e) => setEditQuantity(e.target.value)}
+                          className="h-8 text-xs mt-1"
+                          min="1"
+                        />
+                      </div>
+
+                      {/* Notes */}
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Notes</label>
+                        <Input
+                          value={editNotes}
+                          onChange={(e) => setEditNotes(e.target.value)}
+                          placeholder="Notes..."
+                          className="h-8 text-xs mt-1"
+                        />
+                      </div>
+
+                      {/* Cost fields - only for restock */}
+                      {item.change_type === "restock" && (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Unit Price</label>
+                            <Input
+                              type="number"
+                              value={editUnitPrice}
+                              onChange={(e) => setEditUnitPrice(e.target.value)}
+                              placeholder="0"
+                              className="h-8 text-xs mt-1"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Shipping</label>
+                            <Input
+                              type="number"
+                              value={editShipping}
+                              onChange={(e) => setEditShipping(e.target.value)}
+                              placeholder="0"
+                              className="h-8 text-xs mt-1"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Other</label>
+                            <Input
+                              type="number"
+                              value={editOther}
+                              onChange={(e) => setEditOther(e.target.value)}
+                              placeholder="0"
+                              className="h-8 text-xs mt-1"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                        </div>
                       )}
-                      {item.profile?.full_name && (
-                        <span>•</span>
-                      )}
-                      <span>{formatDate(item.created_at)}</span>
-                      {item.order_id && item.change_type === "sale" && (
-                        <>
-                          <span>•</span>
-                          <span className="text-blue-600 dark:text-blue-400 font-medium">
-                            Order {item.order_number || `#${item.order_id.slice(0, 8).toUpperCase()}`}
+                    </div>
+                  ) : (
+                    /* ---- VIEW MODE ---- */
+                    <>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          {/* Product name (only in global view) */}
+                          {showProductFilter && item.product_name && (
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Package className="w-3.5 h-3.5 text-primary" />
+                              <span className="text-sm font-medium text-foreground truncate">{item.product_name}</span>
+                              {item.product_item_code && (
+                                <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                                  {item.product_item_code}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Change badge and type */}
+                          <div className="flex items-center gap-2 flex-wrap mb-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                item.change_amount > 0
+                                  ? "bg-emerald-500/20 text-emerald-600"
+                                  : "bg-rose-500/20 text-rose-500"
+                              }`}
+                            >
+                              {item.change_amount > 0 ? "+" : ""}
+                              {item.change_amount}
+                            </span>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                item.change_type === "sale"
+                                  ? "bg-blue-500/20 text-blue-600"
+                                  : item.change_type === "restock"
+                                  ? "bg-emerald-500/20 text-emerald-600"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {getChangeTypeLabel(item.change_type)}
+                            </span>
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                              {item.previous_quantity} → {item.new_quantity}
+                            </span>
+                          </div>
+
+                          {/* Performed by & Order info */}
+                          <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground mb-1">
+                            {item.profile?.full_name && (
+                              <span className="font-medium text-foreground/70">
+                                {item.profile.full_name}
+                              </span>
+                            )}
+                            {item.profile?.full_name && (
+                              <span>•</span>
+                            )}
+                            <span>{formatDate(item.created_at)}</span>
+                            {item.order_id && item.change_type === "sale" && (
+                              <>
+                                <span>•</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                  Order {item.order_number || `#${item.order_id.slice(0, 8).toUpperCase()}`}
+                                </span>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Notes */}
+                          {item.notes && (
+                            <p className="text-xs text-muted-foreground italic truncate">
+                              "{item.notes}"
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-start gap-1 flex-shrink-0">
+                          {isSuperAdmin && onEditHistory && (
+                            <button
+                              onClick={() => startEditing(item)}
+                              className="p-1.5 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              title="Edit entry"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => onDeleteHistory(item.id)}
+                              className="p-1.5 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                              title="Delete entry"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Cost details */}
+                      {item.total_expense && item.total_expense > 0 && (
+                        <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-3 text-xs flex-wrap">
+                          <span className="text-muted-foreground">
+                            Unit: <span className="text-foreground font-medium">{formatMVR(item.unit_purchase_price || 0)}</span>
                           </span>
-                        </>
+                          {item.shipping_cost && item.shipping_cost > 0 && (
+                            <span className="text-muted-foreground">
+                              Ship: <span className="text-foreground">{formatMVR(item.shipping_cost)}</span>
+                            </span>
+                          )}
+                          {item.other_expenses && item.other_expenses > 0 && (
+                            <span className="text-muted-foreground">
+                              Other: <span className="text-foreground">{formatMVR(item.other_expenses)}</span>
+                            </span>
+                          )}
+                          <span className="ml-auto font-semibold text-primary">
+                            Total: {formatMVR(item.total_expense)}
+                          </span>
+                        </div>
                       )}
-                    </div>
-
-                    {/* Notes */}
-                    {item.notes && (
-                      <p className="text-xs text-muted-foreground italic truncate">
-                        "{item.notes}"
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-start gap-2 flex-shrink-0">
-                    {isSuperAdmin && (
-                      <button
-                        onClick={() => onDeleteHistory(item.id)}
-                        className="p-1.5 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                        title="Delete entry"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
-
-                {/* Cost details */}
-                {item.total_expense && item.total_expense > 0 && (
-                  <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-3 text-xs flex-wrap">
-                    <span className="text-muted-foreground">
-                      Unit: <span className="text-foreground font-medium">{formatMVR(item.unit_purchase_price || 0)}</span>
-                    </span>
-                    {item.shipping_cost && item.shipping_cost > 0 && (
-                      <span className="text-muted-foreground">
-                        Ship: <span className="text-foreground">{formatMVR(item.shipping_cost)}</span>
-                      </span>
-                    )}
-                    {item.other_expenses && item.other_expenses > 0 && (
-                      <span className="text-muted-foreground">
-                        Other: <span className="text-foreground">{formatMVR(item.other_expenses)}</span>
-                      </span>
-                    )}
-                    <span className="ml-auto font-semibold text-primary">
-                      Total: {formatMVR(item.total_expense)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       )}
