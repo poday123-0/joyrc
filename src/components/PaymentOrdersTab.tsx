@@ -5,7 +5,7 @@ import {
   Clock, CheckCircle, XCircle, Receipt, Eye, 
   ChevronDown, ChevronUp, CreditCard, AlertCircle,
   Trash2, Edit, Download, Upload, FileSpreadsheet,
-  Truck, UserPlus, Plus, FileText
+  Truck, UserPlus, Plus, FileText, RotateCcw
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
