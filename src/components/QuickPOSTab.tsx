@@ -919,7 +919,6 @@ const QuickPOSTab = () => {
                 </div>
               </div>
             )}
-            )}
           </div>
         </div>
 
