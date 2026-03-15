@@ -231,6 +231,49 @@ const BankSettingsTab = () => {
                 className="px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
+            {/* Bank Logo Upload */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Bank Logo (optional)</label>
+              <div className="flex items-center gap-3">
+                {formData.logo_url && (
+                  <img src={formData.logo_url} alt="Bank logo" className="w-10 h-10 rounded-lg object-contain border border-border" />
+                )}
+                <label className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border cursor-pointer hover:bg-muted/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingLogo}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingLogo(true);
+                      try {
+                        const ext = file.name.split('.').pop();
+                        const fileName = `bank-logos/${Date.now()}.${ext}`;
+                        const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file);
+                        if (uploadError) throw uploadError;
+                        const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                        setFormData(prev => ({ ...prev, logo_url: urlData.publicUrl }));
+                      } catch (err: any) {
+                        toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+                      } finally {
+                        setUploadingLogo(false);
+                      }
+                    }}
+                  />
+                  {uploadingLogo ? (
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span className="text-xs text-muted-foreground">{uploadingLogo ? "Uploading..." : "Upload Logo"}</span>
+                </label>
+                {formData.logo_url && (
+                  <button type="button" onClick={() => setFormData({ ...formData, logo_url: "" })} className="text-xs text-destructive hover:underline">Remove</button>
+                )}
+              </div>
+            </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
