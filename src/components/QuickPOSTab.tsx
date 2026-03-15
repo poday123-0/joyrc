@@ -79,6 +79,11 @@ const QuickPOSTab = () => {
   const [newCustomerData, setNewCustomerData] = useState({ name: "", phone: "", email: "", address: "" });
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [selectedBankId, setSelectedBankId] = useState<string>("");
+  const [selectedCardTypeId, setSelectedCardTypeId] = useState<string>("");
+  const [banks, setBanks] = useState<Array<{ id: string; bank_name: string; account_name: string; account_number: string }>>([]);
+  const [cardTypes, setCardTypes] = useState<Array<{ id: string; name: string }>>([]);
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
     orderId: string;
@@ -95,6 +100,8 @@ const QuickPOSTab = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchBanks();
+    fetchCardTypes();
   }, []);
 
   const fetchProducts = async () => {
@@ -124,6 +131,16 @@ const QuickPOSTab = () => {
 
     setProducts(productsWithColors);
     setLoading(false);
+  };
+
+  const fetchBanks = async () => {
+    const { data } = await supabase.from("bank_settings").select("id, bank_name, account_name, account_number").eq("is_active", true).order("bank_name");
+    if (data) setBanks(data);
+  };
+
+  const fetchCardTypes = async () => {
+    const { data } = await supabase.from("card_types").select("id, name").eq("is_active", true).order("sort_order");
+    if (data) setCardTypes(data);
   };
 
   const filteredProducts = products.filter(p => {
@@ -411,6 +428,9 @@ const QuickPOSTab = () => {
           notes: orderNotes,
           shipping_address: isDelivery ? customerDetails.address.trim() : null,
           phone: customerDetails.phone.trim() || null,
+          payment_reference: paymentReference.trim() || null,
+          payment_bank_id: paymentMethod === "bank_transfer" && selectedBankId ? selectedBankId : null,
+          payment_card_type_id: paymentMethod === "card" && selectedCardTypeId ? selectedCardTypeId : null,
         })
         .select()
         .single();
@@ -538,6 +558,9 @@ const QuickPOSTab = () => {
       clearCart();
       setShowCart(false);
       setShowInvoice(true);
+      setPaymentReference("");
+      setSelectedBankId("");
+      setSelectedCardTypeId("");
       fetchProducts();
     } catch (error: any) {
       toast({
@@ -1057,7 +1080,7 @@ const QuickPOSTab = () => {
                   <button
                     key={value}
                     type="button"
-                    onClick={() => setPaymentMethod(value)}
+                    onClick={() => { setPaymentMethod(value); setPaymentReference(""); setSelectedBankId(""); setSelectedCardTypeId(""); }}
                     className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-medium transition-all min-w-0 ${
                       paymentMethod === value
                         ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
@@ -1070,8 +1093,62 @@ const QuickPOSTab = () => {
                 ))}
               </div>
 
+              {/* Conditional Payment Details */}
+              {paymentMethod === "bank_transfer" && (
+                <div className="space-y-2 mb-3">
+                  <select
+                    value={selectedBankId}
+                    onChange={(e) => setSelectedBankId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Select Bank</option>
+                    {banks.map(b => (
+                      <option key={b.id} value={b.id}>{b.bank_name} - {b.account_number}</option>
+                    ))}
+                  </select>
+                  <Input
+                    placeholder="Reference Number"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
+
+              {paymentMethod === "check" && (
+                <div className="mb-3">
+                  <Input
+                    placeholder="Check Number"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
+
+              {paymentMethod === "card" && (
+                <div className="space-y-2 mb-3">
+                  <select
+                    value={selectedCardTypeId}
+                    onChange={(e) => setSelectedCardTypeId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Select Card Type</option>
+                    {cardTypes.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <Input
+                    placeholder="Reference / Last 4 digits"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
+
+
               <button
-                onClick={completeSale}
                 disabled={cart.length === 0 || processing}
                 className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-[0.98] transition-all"
               >

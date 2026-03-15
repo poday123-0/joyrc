@@ -4,6 +4,7 @@ import { Plus, X, Pencil, Trash2, Building2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import CardTypesTab from "@/components/CardTypesTab";
 
 interface BankSetting {
   id: string;
@@ -302,6 +303,11 @@ const BankSettingsTab = () => {
         variant="destructive"
         onConfirm={handleConfirmDelete}
       />
+
+      {/* Card Types Section */}
+      <div className="mt-8 pt-6 border-t border-border">
+        <CardTypesTab />
+      </div>
     </div>
   );
 };
