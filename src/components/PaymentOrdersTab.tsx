@@ -1064,30 +1064,24 @@ const PaymentOrdersTab = () => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          {orderFilters.status === "all" ? (
-            <>
-              {[
-                { key: "pending", bg: "bg-gold/20", text: "text-gold" },
-                { key: "processing", bg: "bg-cyan-light/50", text: "text-teal" },
-                { key: "on_delivery", bg: "bg-blue-500/20", text: "text-blue-500" },
-                { key: "shipped", bg: "bg-mint/30", text: "text-mint" },
-                { key: "delivered", bg: "bg-primary/20", text: "text-primary" },
-                { key: "completed", bg: "bg-emerald-500/20", text: "text-emerald-500" },
-                { key: "cancelled", bg: "bg-coral/20", text: "text-coral" },
-                { key: "returned", bg: "bg-gold/20", text: "text-gold" },
-              ].map(s => {
-                const count = filteredOrders.filter(o => o.status === s.key).length;
-                if (count === 0) return null;
-                return (
-                  <span key={s.key} className={`text-[10px] px-1.5 py-0.5 rounded-full ${s.bg} ${s.text} capitalize font-medium`}>
-                    {s.key.replace("_", " ")} {count}
-                  </span>
-                );
-              })}
-            </>
-          ) : (
-            <span className="text-sm text-muted-foreground">{filteredOrders.length} filtered orders</span>
-          )}
+          {[
+            { key: "pending", bg: "bg-gold/20", text: "text-gold" },
+            { key: "processing", bg: "bg-cyan-light/50", text: "text-teal" },
+            { key: "on_delivery", bg: "bg-blue-500/20", text: "text-blue-500" },
+            { key: "shipped", bg: "bg-mint/30", text: "text-mint" },
+            { key: "delivered", bg: "bg-primary/20", text: "text-primary" },
+            { key: "completed", bg: "bg-emerald-500/20", text: "text-emerald-500" },
+            { key: "cancelled", bg: "bg-coral/20", text: "text-coral" },
+            { key: "returned", bg: "bg-gold/20", text: "text-gold" },
+          ].map(s => {
+            const count = filteredOrders.filter(o => o.status === s.key).length;
+            if (count === 0) return null;
+            return (
+              <span key={s.key} className={`text-[10px] px-1.5 py-0.5 rounded-full ${s.bg} ${s.text} capitalize font-medium`}>
+                {s.key.replace("_", " ")} {count}
+              </span>
+            );
+          })}
         </div>
       </div>
 
