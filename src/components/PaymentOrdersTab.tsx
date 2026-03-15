@@ -42,6 +42,9 @@ interface Order {
   assigned_to: string | null;
   assigned_at: string | null;
   confirmed_by: string | null;
+  payment_reference: string | null;
+  payment_bank_id: string | null;
+  payment_card_type_id: string | null;
 }
 
 const getOrderNum = (order: { order_number?: string | null; id: string }) =>
@@ -127,10 +130,24 @@ const PaymentOrdersTab = () => {
     notes?: string;
   } | null>(null);
 
+  // Payment lookup state
+  const [bankNames, setBankNames] = useState<Record<string, string>>({});
+  const [cardTypeNames, setCardTypeNames] = useState<Record<string, string>>({});
+
   useEffect(() => {
     fetchOrders();
     fetchDeliveryStaff();
+    fetchPaymentLookups();
   }, []);
+
+  const fetchPaymentLookups = async () => {
+    const [{ data: banks }, { data: cards }] = await Promise.all([
+      supabase.from("bank_settings").select("id, bank_name"),
+      supabase.from("card_types").select("id, name"),
+    ]);
+    if (banks) setBankNames(Object.fromEntries(banks.map(b => [b.id, b.bank_name])));
+    if (cards) setCardTypeNames(Object.fromEntries(cards.map(c => [c.id, c.name])));
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -1221,7 +1238,9 @@ const PaymentOrdersTab = () => {
                   assignedStaffName={assignedStaff?.full_name || undefined}
                   confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
                   customerName={customerProfiles[order.user_id]?.full_name || undefined}
-                  getPaymentStatusConfig={getPaymentStatusConfig}
+                   bankNames={bankNames}
+                   cardTypeNames={cardTypeNames}
+                   getPaymentStatusConfig={getPaymentStatusConfig}
                 />
               );
             })}
@@ -1298,6 +1317,8 @@ const PaymentOrdersTab = () => {
                 assignedStaffName={assignedStaff?.full_name || undefined}
                 confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
                 customerName={customerProfiles[order.user_id]?.full_name || undefined}
+                bankNames={bankNames}
+                cardTypeNames={cardTypeNames}
                 getPaymentStatusConfig={getPaymentStatusConfig}
               />
             );
@@ -1522,6 +1543,8 @@ const OrderCard = ({
   assignedStaffName,
   confirmedByName,
   customerName,
+  bankNames,
+  cardTypeNames,
   getPaymentStatusConfig,
 }: {
   order: Order;
@@ -1554,6 +1577,8 @@ const OrderCard = ({
   assignedStaffName?: string;
   confirmedByName?: string;
   customerName?: string;
+  bankNames?: Record<string, string>;
+  cardTypeNames?: Record<string, string>;
   getPaymentStatusConfig: (status: string) => any;
 }) => {
   const statusConfig = getPaymentStatusConfig(order.payment_status || "pending");
@@ -1626,6 +1651,31 @@ const OrderCard = ({
                   <span className="font-medium flex-shrink-0 ml-2">{formatMVR(item.product_price * item.quantity)}</span>
                 </div>
               ))}
+            </div>
+
+            {/* Payment Info */}
+            <div className="p-2.5 bg-muted/30 rounded-lg">
+              <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Payment</h5>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                  {order.payment_method === "bank_transfer" ? "Bank Transfer"
+                    : order.payment_method === "card" ? "Card"
+                    : order.payment_method === "check" ? "Check"
+                    : order.payment_method === "cash" ? "Cash"
+                    : order.payment_method || "Unknown"}
+                </span>
+                {order.payment_method === "bank_transfer" && order.payment_bank_id && bankNames[order.payment_bank_id] && (
+                  <span className="text-xs text-muted-foreground">🏦 {bankNames[order.payment_bank_id]}</span>
+                )}
+                {order.payment_method === "card" && order.payment_card_type_id && cardTypeNames[order.payment_card_type_id] && (
+                  <span className="text-xs text-muted-foreground">💳 {cardTypeNames[order.payment_card_type_id]}</span>
+                )}
+                {order.payment_reference && (
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {order.payment_method === "check" ? `Check #${order.payment_reference}` : `Ref: ${order.payment_reference}`}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Contact info */}
