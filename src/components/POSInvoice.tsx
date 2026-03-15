@@ -132,7 +132,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     lines.push(divider);
     lines.push(``);
     lines.push(`📄 *INVOICE*`);
-    lines.push(`#${invoice.orderId.slice(0, 8).toUpperCase()}`);
+    lines.push(`${invoice.orderNumber || `#${invoice.orderId.slice(0, 8).toUpperCase()}`}`);
     lines.push(`📅 ${new Date(invoice.orderDate).toLocaleDateString()} at ${new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
     lines.push(``);
     
