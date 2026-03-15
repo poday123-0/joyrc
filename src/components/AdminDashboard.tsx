@@ -446,7 +446,19 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
       monthlyCOGS,
     });
 
-    setTransactions(allTransactions as Transaction[]);
+    // Enrich transactions with order numbers
+    const orderMap = new Map(orders.map((o: any) => [o.id, o.order_number]));
+    const enrichedTransactions = (allTransactions as Transaction[]).map(tx => {
+      if (tx.order_id && tx.description) {
+        const orderNumber = orderMap.get(tx.order_id);
+        if (orderNumber) {
+          // Replace truncated order ID patterns like "Order #de06b26d" or "Order de06b26d"
+          return { ...tx, description: tx.description.replace(/Order\s*#?[a-f0-9]{8}/gi, `Order ${orderNumber}`) };
+        }
+      }
+      return tx;
+    });
+    setTransactions(enrichedTransactions);
 
     // Compute daily profit data for sparklines (current month, per day)
     const monthStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
