@@ -2191,7 +2191,7 @@ const ProductsTab = ({
                                   Drag to reorder — first image becomes main
                                 </p>
                                 <DndContext
-                                  sensors={sensors}
+                                  sensors={colorImageSensors}
                                   collisionDetection={closestCenter}
                                   onDragEnd={(event: DragEndEvent) => {
                                     const { active, over } = event;
