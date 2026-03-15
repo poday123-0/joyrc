@@ -935,6 +935,12 @@ const ProductsTab = ({
   const [expandedColorId, setExpandedColorId] = useState<string | null>(null);
   const [colorImageFile, setColorImageFile] = useState<File | null>(null); // Keep for backwards compatibility
 
+  // Sensors for color image drag-and-drop
+  const colorImageSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   // Existing images dialog state
   const [showExistingImagesDialog, setShowExistingImagesDialog] = useState(false);
   const [existingImagesMode, setExistingImagesMode] = useState<"gallery" | "gallery360" | "color">("gallery");
