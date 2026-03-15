@@ -16,6 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, endOfDay, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
+import { DataFilterBar } from "@/components/DataFilterBar";
+import type { PeriodFilter } from "@/components/DataFilterBar";
 
 type DatePeriod = "all" | "today" | "week" | "month" | "year" | "custom";
 
