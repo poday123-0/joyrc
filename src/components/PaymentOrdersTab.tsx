@@ -5,7 +5,7 @@ import {
   Clock, CheckCircle, XCircle, Receipt, Eye, 
   ChevronDown, ChevronUp, CreditCard, AlertCircle,
   Trash2, Edit, Download, Upload, FileSpreadsheet,
-  Truck, UserPlus, Plus, FileText
+  Truck, UserPlus, Plus, FileText, RotateCcw
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -105,6 +105,10 @@ const PaymentOrdersTab = () => {
   
   // Add order dialog state
   const [showAddOrderDialog, setShowAddOrderDialog] = useState(false);
+  
+  // Return state
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
   
   // Invoice state
   const [showInvoice, setShowInvoice] = useState(false);
@@ -736,6 +740,50 @@ const PaymentOrdersTab = () => {
     }
   };
 
+  const handleReturnOrder = async () => {
+    if (!selectedOrderId || !returnReason.trim()) return;
+    const order = orders.find(o => o.id === selectedOrderId);
+    if (!order) return;
+
+    try {
+      const timestamp = new Date().toLocaleString();
+      const existingNotes = order.notes || "";
+      const returnNote = `\n[RETURN - ${timestamp}] Reason: ${returnReason.trim()}`;
+      
+      const { error } = await supabase
+        .from("orders")
+        .update({ 
+          status: "returned",
+          notes: existingNotes + returnNote
+        })
+        .eq("id", selectedOrderId);
+
+      if (error) throw error;
+
+      // Notify customer
+      await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: "Order Returned 🔄",
+        message: `Your order ${getOrderNum(order)} has been marked as returned. Reason: ${returnReason.trim()}`,
+        type: "warning",
+        link: "/profile",
+      });
+
+      toast({
+        title: "Order Returned",
+        description: `Order marked as returned. Customer notified.`,
+      });
+
+      fetchOrders();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+
+    setReturnDialogOpen(false);
+    setReturnReason("");
+    setSelectedOrderId(null);
+  };
+
   const handleEditOrder = (order: Order) => {
     setEditingOrderId(order.id);
     setEditNotes(order.notes || "");
@@ -971,6 +1019,7 @@ const PaymentOrdersTab = () => {
     { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
     { value: "delivered", label: "Delivered", color: "bg-primary/20 text-primary" },
     { value: "cancelled", label: "Cancelled", color: "bg-coral/20 text-coral" },
+    { value: "returned", label: "Returned", color: "bg-gold/20 text-gold" },
   ];
 
   const { filters: orderFilters, setFilters: setOrderFilters, filteredData: filteredOrders } = useDataFilter(
@@ -1161,6 +1210,10 @@ const PaymentOrdersTab = () => {
                     setAssignDialogOpen(true);
                   }}
                   onUpdateStatus={(status) => handleUpdateOrderStatus(order.id, status)}
+                  onReturn={() => {
+                    setSelectedOrderId(order.id);
+                    setReturnDialogOpen(true);
+                  }}
                   deliveryStaff={deliveryStaff}
                   assignedStaffName={assignedStaff?.full_name || undefined}
                   confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
@@ -1234,6 +1287,10 @@ const PaymentOrdersTab = () => {
                   setAssignDialogOpen(true);
                 }}
                 onUpdateStatus={(status) => handleUpdateOrderStatus(order.id, status)}
+                onReturn={() => {
+                  setSelectedOrderId(order.id);
+                  setReturnDialogOpen(true);
+                }}
                 deliveryStaff={deliveryStaff}
                 assignedStaffName={assignedStaff?.full_name || undefined}
                 confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
@@ -1363,7 +1420,61 @@ const PaymentOrdersTab = () => {
         </div>
       )}
 
-      {/* Invoice Modal */}
+      {/* Return Dialog */}
+      {returnDialogOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setReturnDialogOpen(false);
+            setReturnReason("");
+            setSelectedOrderId(null);
+          }}
+        >
+          <div 
+            className="bg-card rounded-2xl p-6 max-w-md w-full shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-destructive" />
+              Return Products
+            </h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please provide a reason for returning this order. The customer will be notified.
+            </p>
+            
+            <Textarea
+              placeholder="Enter return reason..."
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+
+            <div className="flex gap-2 mt-4">
+              <Button 
+                onClick={handleReturnOrder}
+                disabled={!returnReason.trim()}
+                variant="destructive"
+                className="flex-1 gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Confirm Return
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setReturnDialogOpen(false);
+                  setReturnReason("");
+                  setSelectedOrderId(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {showInvoice && invoiceData && (
         <POSInvoice
           invoice={invoiceData}
@@ -1403,6 +1514,7 @@ const OrderCard = ({
   onViewInvoice,
   onAssignDelivery,
   onUpdateStatus,
+  onReturn,
   deliveryStaff,
   assignedStaffName,
   confirmedByName,
@@ -1434,6 +1546,7 @@ const OrderCard = ({
   onViewInvoice?: () => void;
   onAssignDelivery?: () => void;
   onUpdateStatus?: (status: string) => void;
+  onReturn?: () => void;
   deliveryStaff?: DeliveryStaff[];
   assignedStaffName?: string;
   confirmedByName?: string;
@@ -1660,8 +1773,8 @@ const OrderCard = ({
                   </Button>
                 )}
 
-                {/* Status update buttons */}
-                {onUpdateStatus && (
+                {/* Status update buttons - disabled after delivery */}
+                {onUpdateStatus && order.status !== "delivered" && order.status !== "returned" && (
                   <div className="flex flex-wrap gap-2">
                     {["on_delivery", "shipped", "delivered"].map((status) => (
                       <Button
@@ -1678,6 +1791,33 @@ const OrderCard = ({
                         {status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
                       </Button>
                     ))}
+                  </div>
+                )}
+
+                {/* Delivered state - show return button */}
+                {order.status === "delivered" && onReturn && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-primary">Delivered</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onReturn}
+                      className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Return Products
+                    </Button>
+                  </div>
+                )}
+
+                {/* Returned state */}
+                {order.status === "returned" && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <RotateCcw className="w-4 h-4 text-destructive" />
+                    <span className="font-medium text-destructive">Returned</span>
                   </div>
                 )}
               </div>
