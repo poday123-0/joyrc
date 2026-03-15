@@ -133,6 +133,16 @@ const QuickPOSTab = () => {
     setLoading(false);
   };
 
+  const fetchBanks = async () => {
+    const { data } = await supabase.from("bank_settings").select("id, bank_name, account_name, account_number").eq("is_active", true).order("bank_name");
+    if (data) setBanks(data);
+  };
+
+  const fetchCardTypes = async () => {
+    const { data } = await supabase.from("card_types").select("id, name").eq("is_active", true).order("sort_order");
+    if (data) setCardTypes(data);
+  };
+
   const filteredProducts = products.filter(p => {
     const matchesName = searchQuery ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
     const matchesItemCode = itemCodeSearch ? (p.item_code && p.item_code.toLowerCase().includes(itemCodeSearch.toLowerCase())) : true;
