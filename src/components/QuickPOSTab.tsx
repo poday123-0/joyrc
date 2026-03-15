@@ -1047,6 +1047,28 @@ const QuickPOSTab = () => {
                 <span className="text-sm text-muted-foreground">Total</span>
                 <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
               </div>
+              <div className="flex gap-1.5 mb-3">
+                {[
+                  { value: "cash", label: "Cash", icon: Banknote },
+                  { value: "bank_transfer", label: "Transfer", icon: Building2 },
+                  { value: "card", label: "Card", icon: CreditCard },
+                  { value: "check", label: "Check", icon: FileCheck },
+                ].map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPaymentMethod(value)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      paymentMethod === value
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
 
               <button
                 onClick={completeSale}
