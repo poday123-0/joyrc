@@ -655,7 +655,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">Delete Order</h3>
-                <p className="text-sm text-muted-foreground">Order #{deleteOrderId.slice(0, 8).toUpperCase()}</p>
+                <p className="text-sm text-muted-foreground">Order {orders.find(o => o.id === deleteOrderId)?.order_number || `#${deleteOrderId.slice(0, 8).toUpperCase()}`}</p>
               </div>
             </div>
             

@@ -247,7 +247,7 @@ const DeliveryTab = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">
-                      #{order.id.slice(0, 8).toUpperCase()}
+                      {getOrderNum(order)}
                     </span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary capitalize">
                       {order.status === "on_delivery" ? "On Delivery" : order.status}

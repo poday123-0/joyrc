@@ -489,7 +489,7 @@ const QuickPOSTab = () => {
         type: "income",
         category: "Product Sales",
         amount: totalAmount,
-        description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order #${order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
+        description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order ${order.order_number || order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
         order_id: order.id,
         added_by: user.id,
       });
