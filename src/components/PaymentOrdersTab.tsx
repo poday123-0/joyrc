@@ -1584,13 +1584,17 @@ const OrderCard = ({
             {/* Order items */}
             <div>
               <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h5>
+              {items.length === 0 && (
+                <p className="text-xs text-muted-foreground">Loading items...</p>
+              )}
               {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
+                <div key={item.id} className="flex justify-between text-sm py-0.5">
                   <span>
-                    {item.item_code && <span className="text-muted-foreground">[{item.item_code}] </span>}
-                    {item.product_name} x{item.quantity}
+                    {item.item_code && <span className="text-primary font-mono text-xs">[{item.item_code}] </span>}
+                    <span className="font-medium">{item.product_name}</span>
+                    <span className="text-muted-foreground"> x{item.quantity}</span>
                   </span>
-                  <span className="font-medium">{formatMVR(item.product_price * item.quantity)}</span>
+                  <span className="font-medium flex-shrink-0 ml-2">{formatMVR(item.product_price * item.quantity)}</span>
                 </div>
               ))}
             </div>
