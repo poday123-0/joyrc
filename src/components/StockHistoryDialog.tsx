@@ -433,7 +433,7 @@ export const StockHistoryDialog = ({
           )}
         </div>
       ) : (
-        <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "60vh" : "450px", minHeight: "200px" }}>
+        <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "calc(90vh - 280px)" : "450px", minHeight: "200px" }}>
           <div className="space-y-2 pb-4">
             {filteredHistory.map((item) => {
               const isEditing = editingId === item.id;
