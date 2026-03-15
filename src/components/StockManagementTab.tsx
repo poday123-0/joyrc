@@ -1376,26 +1376,6 @@ const StockManagementTab = () => {
                     </button>
                   </div>
 
-                  {/* View History Button */}
-                  <button
-                    onClick={() => {
-                      setIsGlobalHistoryView(false);
-                      setHistoryDialogProductName(product.name);
-                      setHistoryDialogOpen(true);
-                      setShowAnalytics(false);
-                      setShowAllHistory(false);
-                      setBulkRestockOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-muted/50 hover:bg-muted text-foreground rounded-lg text-sm font-medium transition-colors border border-border/50"
-                  >
-                    <History className="w-4 h-4" />
-                    View Stock History
-                    {stockHistory.length > 0 && (
-                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
-                        {stockHistory.length}
-                      </span>
-                    )}
-                  </button>
                 </div>
               )}
             </div>
