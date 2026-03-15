@@ -3253,6 +3253,24 @@ const SettingsTab = ({
           </div>
         </div>
 
+          {/* Order Number Prefix */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Order Number Format</h3>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Order Number Prefix</label>
+              <input
+                type="text"
+                value={formData.order_number_prefix || "RCJOY"}
+                onChange={(e) => setFormData({ ...formData, order_number_prefix: e.target.value.toUpperCase() })}
+                placeholder="e.g., RCJOY"
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Orders will be numbered as <span className="font-mono font-medium text-foreground">{formData.order_number_prefix || "RCJOY"}/YY/MM/00001</span>
+              </p>
+            </div>
+          </div>
+
           {/* Google Login Toggle */}
           <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between">
