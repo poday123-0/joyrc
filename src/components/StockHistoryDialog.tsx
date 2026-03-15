@@ -267,6 +267,27 @@ export const StockHistoryDialog = ({
 
   const content = (
     <div className="flex flex-col h-full">
+      {/* Stats Summary */}
+      {filteredHistory.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="p-3 bg-emerald-500/10 rounded-lg text-center">
+            <TrendingUp className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+            <p className="text-lg font-bold text-emerald-600">{stats.added}</p>
+            <p className="text-[10px] text-muted-foreground">Added</p>
+          </div>
+          <div className="p-3 bg-rose-500/10 rounded-lg text-center">
+            <TrendingDown className="w-4 h-4 text-rose-500 mx-auto mb-1" />
+            <p className="text-lg font-bold text-rose-500">{stats.removed}</p>
+            <p className="text-[10px] text-muted-foreground">Sold/Removed</p>
+          </div>
+          <div className="p-3 bg-primary/10 rounded-lg text-center">
+            <Package className="w-4 h-4 text-primary mx-auto mb-1" />
+            <p className="text-lg font-bold text-primary">{stats.entries}</p>
+            <p className="text-[10px] text-muted-foreground">Entries</p>
+          </div>
+        </div>
+      )}
+
       {/* Product Search - always visible when showProductFilter is true */}
       {showProductFilter && (
         <div className="mb-3 p-3 bg-muted/30 rounded-xl border border-border/50">
@@ -392,26 +413,6 @@ export const StockHistoryDialog = ({
         )}
       </div>
 
-      {/* Stats Summary */}
-      {filteredHistory.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="p-3 bg-emerald-500/10 rounded-lg text-center">
-            <TrendingUp className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
-            <p className="text-lg font-bold text-emerald-600">{stats.added}</p>
-            <p className="text-[10px] text-muted-foreground">Added</p>
-          </div>
-          <div className="p-3 bg-rose-500/10 rounded-lg text-center">
-            <TrendingDown className="w-4 h-4 text-rose-500 mx-auto mb-1" />
-            <p className="text-lg font-bold text-rose-500">{stats.removed}</p>
-            <p className="text-[10px] text-muted-foreground">Sold/Removed</p>
-          </div>
-          <div className="p-3 bg-primary/10 rounded-lg text-center">
-            <Package className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-lg font-bold text-primary">{stats.entries}</p>
-            <p className="text-[10px] text-muted-foreground">Entries</p>
-          </div>
-        </div>
-      )}
 
       {/* History List */}
       {loading ? (
