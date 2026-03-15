@@ -652,20 +652,20 @@ export const StockHistoryDialog = ({
                           </div>
 
                           {/* Performed by & Order info */}
-                          <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground mb-1">
+                          <div className="flex items-center gap-1.5 flex-wrap text-[10px] sm:text-xs text-muted-foreground mb-1">
                             {item.profile?.full_name && (
                               <span className="font-medium text-foreground/70">
                                 {item.profile.full_name}
                               </span>
                             )}
                             {item.profile?.full_name && (
-                              <span>•</span>
+                              <span className="hidden sm:inline">•</span>
                             )}
-                            <span>{formatDate(item.created_at)}</span>
+                            <span className="break-all">{formatDate(item.created_at)}</span>
                             {item.order_id && item.change_type === "sale" && (
                               <>
                                 <span>•</span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                <span className="text-blue-600 dark:text-blue-400 font-medium truncate max-w-[150px] sm:max-w-none">
                                   Order {item.order_number || `#${item.order_id.slice(0, 8).toUpperCase()}`}
                                 </span>
                               </>
