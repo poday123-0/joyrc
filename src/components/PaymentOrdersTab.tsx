@@ -89,6 +89,7 @@ const PaymentOrdersTab = () => {
   const [editComment, setEditComment] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editOrderNumber, setEditOrderNumber] = useState("");
+  const [editOrderDate, setEditOrderDate] = useState("");
   
   // Import state
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -740,6 +741,7 @@ const PaymentOrdersTab = () => {
     setEditNotes(order.notes || "");
     setEditComment("");
     setEditOrderNumber(order.order_number || "");
+    setEditOrderDate(new Date(order.created_at).toISOString().split("T")[0]);
   };
 
   const handleSaveEdit = async () => {
@@ -753,6 +755,9 @@ const PaymentOrdersTab = () => {
       const updateData: Record<string, any> = { notes: newNotes };
       if (editOrderNumber.trim()) {
         updateData.order_number = editOrderNumber.trim();
+      }
+      if (editOrderDate) {
+        updateData.created_at = new Date(editOrderDate).toISOString();
       }
 
       const { error } = await supabase
@@ -1127,6 +1132,8 @@ const PaymentOrdersTab = () => {
                   onEditNotesChange={setEditNotes}
                   onEditCommentChange={setEditComment}
                   onEditOrderNumberChange={setEditOrderNumber}
+                  editOrderDate={editOrderDate}
+                  onEditOrderDateChange={setEditOrderDate}
                   onViewReceipt={(url) => setViewingReceipt(url)}
                   onViewInvoice={() => {
                     const items = (orderItems[order.id] || []).map(item => ({
@@ -1199,6 +1206,8 @@ const PaymentOrdersTab = () => {
                 onEditNotesChange={setEditNotes}
                 onEditCommentChange={setEditComment}
                 onEditOrderNumberChange={setEditOrderNumber}
+                editOrderDate={editOrderDate}
+                onEditOrderDateChange={setEditOrderDate}
                 onViewInvoice={() => {
                   const items = (orderItems[order.id] || []).map(item => ({
                     name: item.product_name,
@@ -1378,6 +1387,7 @@ const OrderCard = ({
   editNotes,
   editComment,
   editOrderNumber,
+  editOrderDate,
   onToggle,
   onConfirm,
   onReject,
@@ -1388,6 +1398,7 @@ const OrderCard = ({
   onEditNotesChange,
   onEditCommentChange,
   onEditOrderNumberChange,
+  onEditOrderDateChange,
   onViewReceipt,
   onViewInvoice,
   onAssignDelivery,
@@ -1407,6 +1418,7 @@ const OrderCard = ({
   editNotes: string;
   editComment: string;
   editOrderNumber?: string;
+  editOrderDate?: string;
   onToggle: () => void;
   onConfirm?: () => void;
   onReject?: () => void;
@@ -1417,6 +1429,7 @@ const OrderCard = ({
   onEditNotesChange?: (value: string) => void;
   onEditCommentChange?: (value: string) => void;
   onEditOrderNumberChange?: (value: string) => void;
+  onEditOrderDateChange?: (value: string) => void;
   onViewReceipt?: (url: string) => void;
   onViewInvoice?: () => void;
   onAssignDelivery?: () => void;
@@ -1517,8 +1530,20 @@ const OrderCard = ({
                     Approved by <span className="font-medium text-foreground">{confirmedByName}</span>
                   </p>
                 )}
-              </div>
-            )}
+                  </div>
+                )}
+                {isSuperAdmin && (
+                  <div>
+                    <Label htmlFor="edit-order-date" className="text-xs">Order Date</Label>
+                    <Input
+                      id="edit-order-date"
+                      type="date"
+                      value={editOrderDate || ""}
+                      onChange={(e) => onEditOrderDateChange?.(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                )}
 
             {/* Edit form */}
             {isEditing && onEditNotesChange && onEditCommentChange && onSaveEdit && onCancelEdit && (
@@ -1661,7 +1686,7 @@ const OrderCard = ({
             {/* Admin actions */}
             {!isEditing && (
               <div className="flex gap-2 pt-2 border-t border-border">
-                {onEdit && (
+                {isSuperAdmin && onEdit && (
                   <Button
                     size="sm"
                     variant="outline"
