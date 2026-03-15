@@ -271,6 +271,7 @@ export const DataFilterBar = ({
               )}
             >
               {statusOptions.find(o => o.value === status)?.label || "All Status"}
+              {showStatusOptions ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />}
             </button>
             {showStatusOptions && statusOptions.filter(o => o.value !== status).map(option => (
               <button
