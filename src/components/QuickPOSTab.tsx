@@ -1096,16 +1096,27 @@ const QuickPOSTab = () => {
               {/* Conditional Payment Details */}
               {paymentMethod === "bank_transfer" && (
                 <div className="space-y-2 mb-3">
-                  <select
-                    value={selectedBankId}
-                    onChange={(e) => setSelectedBankId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    <option value="">Select Bank</option>
+                  <div className="grid grid-cols-2 gap-1.5">
                     {banks.map(b => (
-                      <option key={b.id} value={b.id}>{b.bank_name} - {b.account_number}</option>
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => setSelectedBankId(b.id)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          selectedBankId === b.id
+                            ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                            : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {b.logo_url ? (
+                          <img src={b.logo_url} alt={b.bank_name} className="w-5 h-5 rounded object-contain flex-shrink-0" />
+                        ) : (
+                          <Building2 className="w-4 h-4 flex-shrink-0" />
+                        )}
+                        <span className="truncate">{b.bank_name}</span>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                   <Input
                     placeholder="Reference Number"
                     value={paymentReference}
