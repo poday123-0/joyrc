@@ -169,8 +169,16 @@ const SalesReportsTab = () => {
     paymentBreakdown[method].amount += Number(order.total_amount);
   });
 
+  const paymentMethodLabels: Record<string, string> = {
+    cash: "Cash",
+    bank_transfer: "Bank Transfer",
+    card: "Card",
+    check: "Check",
+    unknown: "Unknown",
+  };
+
   const paymentData = Object.entries(paymentBreakdown).map(([name, data]) => ({
-    name: name === "bank_transfer" ? "Bank Transfer" : name.charAt(0).toUpperCase() + name.slice(1),
+    name: paymentMethodLabels[name] || name.charAt(0).toUpperCase() + name.slice(1),
     value: data.amount,
     count: data.count,
   }));
