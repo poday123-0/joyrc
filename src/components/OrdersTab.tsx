@@ -83,7 +83,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   useEffect(() => {
     if (user) {
       fetchOrders();
-
+      fetchPaymentLookups();
       // Realtime subscription for instant updates
       const channel = supabase
         .channel('orders-realtime')
