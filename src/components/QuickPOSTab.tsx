@@ -82,7 +82,7 @@ const QuickPOSTab = () => {
   const [paymentReference, setPaymentReference] = useState("");
   const [selectedBankId, setSelectedBankId] = useState<string>("");
   const [selectedCardTypeId, setSelectedCardTypeId] = useState<string>("");
-  const [banks, setBanks] = useState<Array<{ id: string; bank_name: string; account_name: string; account_number: string }>>([]);
+  const [banks, setBanks] = useState<Array<{ id: string; bank_name: string; logo_url: string | null }>>([]);
   const [cardTypes, setCardTypes] = useState<Array<{ id: string; name: string }>>([]);
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
