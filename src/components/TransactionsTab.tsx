@@ -551,7 +551,7 @@ const TransactionsTab = () => {
 
       {/* Add/Edit Form */}
       {showForm && (
-        <div className="p-4 bg-card border border-border rounded-xl">
+        <div id="transaction-form" className="p-4 bg-card border border-border rounded-xl">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-semibold text-foreground">
               {editingTransaction ? "Edit Transaction" : "New Transaction"}
