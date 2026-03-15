@@ -1476,7 +1476,7 @@ const ProductsTab = ({
   // Promote a color extra image to main image
   const handleSetColorMainImage = async (colorId: string, imageId: string, imageUrl: string) => {
     if (!editingProduct) return;
-    const color = (productColors[editingProduct.id] || []).find(c => c.id === colorId);
+    const color = productColors.find(c => c.id === colorId);
     if (!color) return;
 
     // If there's an existing main image, move it to product_images as an extra
@@ -1501,14 +1501,31 @@ const ProductsTab = ({
       await supabase.from("product_images").delete().eq("id", imageId);
       
       // Update local state
-      setProductColors(prev => ({
-        ...prev,
-        [editingProduct.id]: prev[editingProduct.id]?.map(c =>
-          c.id === colorId ? { ...c, image_url: imageUrl } : c
-        ) || []
-      }));
+      setProductColors(prev => prev.map(c =>
+        c.id === colorId ? { ...c, image_url: imageUrl } : c
+      ));
       await fetchGalleryImages(editingProduct.id);
       toast({ title: "Main image updated" });
+    }
+  };
+
+  // Reorder color images (update sort_order in DB and local state)
+  const handleReorderColorImages = async (colorId: string, reorderedExtras: { id: string; url: string }[]) => {
+    // Update local state immediately for responsive UI
+    setGalleryImages(prev => {
+      const otherImages = prev.filter(img => img.color_id !== colorId);
+      const reorderedImages = reorderedExtras.map((item, idx) => {
+        const existing = prev.find(img => img.id === item.id);
+        return existing ? { ...existing, sort_order: idx } : null;
+      }).filter(Boolean) as ProductImage[];
+      return [...otherImages, ...reorderedImages];
+    });
+
+    // Update sort_order in DB
+    for (let i = 0; i < reorderedExtras.length; i++) {
+      await supabase.from("product_images")
+        .update({ sort_order: i })
+        .eq("id", reorderedExtras[i].id);
     }
   };
 
