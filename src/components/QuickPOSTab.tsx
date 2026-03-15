@@ -406,7 +406,7 @@ const QuickPOSTab = () => {
           total_amount: totalAmount,
           status: isDelivery ? "processing" : "completed",
           payment_status: "confirmed",
-          payment_method: "cash",
+          payment_method: paymentMethod,
           payment_confirmed_at: new Date().toISOString(),
           notes: orderNotes,
           shipping_address: isDelivery ? customerDetails.address.trim() : null,
