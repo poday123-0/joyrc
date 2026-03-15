@@ -93,6 +93,7 @@ export const StockHistoryDialog = ({
   isSuperAdmin,
   onDeleteHistory,
   onEditHistory,
+  availableColors = {},
   showProductFilter = false,
   inline = false,
 }: StockHistoryDialogProps) => {
