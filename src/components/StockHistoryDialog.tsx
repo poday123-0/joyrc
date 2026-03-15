@@ -699,8 +699,9 @@ export const StockHistoryDialog = ({
 
                           {/* Notes with color circle */}
                           {item.notes && (() => {
-                            const colorMatch = item.notes.match(/\[Color:\s*([^\]]+)\]/);
-                            const colorName = colorMatch ? colorMatch[1].trim() : null;
+                            const bracketMatch = item.notes.match(/\[Color:\s*([^\]]+)\]/);
+                            const parenMatch = item.notes.match(/\(([^)]+)\)\s*$/);
+                            const colorName = bracketMatch ? bracketMatch[1].trim() : (parenMatch ? parenMatch[1].trim() : null);
                             const cleanNotes = item.notes
                               .replace(/\[Color:\s*[^\]]+\]\s*/g, "")
                               .replace(/\s*\([^)]*\)\s*$/, "")
@@ -710,7 +711,7 @@ export const StockHistoryDialog = ({
                             const matchedColor = colorName && colors
                               ? colors.find(c => c.color_name.toLowerCase() === colorName.toLowerCase())
                               : null;
-                            const bgColor = matchedColor ? matchedColor.color_hex : colorName?.toLowerCase();
+                            const bgColor = matchedColor ? matchedColor.color_hex : null;
                             return (
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                 {colorName && bgColor && (
