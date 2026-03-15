@@ -108,6 +108,7 @@ const PaymentOrdersTab = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceData, setInvoiceData] = useState<{
     orderId: string;
+    orderNumber?: string;
     orderDate: string;
     items: { name: string; quantity: number; price: number; color?: string | null }[];
     total: number;
