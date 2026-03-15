@@ -334,7 +334,7 @@ const PaymentOrdersTab = () => {
             new_quantity: newQty,
             change_amount: -item.quantity,
             change_type: "sale",
-            notes: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
+            notes: `Order ${order.order_number || selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
             order_id: selectedOrderId,
             created_by: confirmedBy,
             unit_purchase_price: costPrice,
