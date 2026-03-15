@@ -1093,7 +1093,61 @@ const QuickPOSTab = () => {
                 ))}
               </div>
 
-              <button
+              {/* Conditional Payment Details */}
+              {paymentMethod === "bank_transfer" && (
+                <div className="space-y-2 mb-3">
+                  <select
+                    value={selectedBankId}
+                    onChange={(e) => setSelectedBankId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Select Bank</option>
+                    {banks.map(b => (
+                      <option key={b.id} value={b.id}>{b.bank_name} - {b.account_number}</option>
+                    ))}
+                  </select>
+                  <Input
+                    placeholder="Reference Number"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
+
+              {paymentMethod === "check" && (
+                <div className="mb-3">
+                  <Input
+                    placeholder="Check Number"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
+
+              {paymentMethod === "card" && (
+                <div className="space-y-2 mb-3">
+                  <select
+                    value={selectedCardTypeId}
+                    onChange={(e) => setSelectedCardTypeId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Select Card Type</option>
+                    {cardTypes.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <Input
+                    placeholder="Reference / Last 4 digits"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
+
+
                 onClick={completeSale}
                 disabled={cart.length === 0 || processing}
                 className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-[0.98] transition-all"
