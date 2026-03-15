@@ -252,7 +252,7 @@ export const DataFilterBar = ({
       {/* Status Filter */}
       {statusOptions && statusOptions.length > 0 && (
         <div>
-          <div className="flex flex-wrap gap-1.5">
+          <div>
             <button
               onClick={() => setShowStatusOptions(!showStatusOptions)}
               className={cn(
@@ -265,19 +265,23 @@ export const DataFilterBar = ({
               {statusOptions.find(o => o.value === status)?.label || "All Status"}
               {showStatusOptions ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />}
             </button>
-            {showStatusOptions && statusOptions.filter(o => o.value !== status).map(option => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  setStatus(option.value);
-                  setShowStatusOptions(false);
-                  emitChange({ status: option.value });
-                }}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-muted/50 text-muted-foreground hover:bg-muted"
-              >
-                {option.label}
-              </button>
-            ))}
+            {showStatusOptions && (
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {statusOptions.filter(o => o.value !== status).map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setStatus(option.value);
+                      setShowStatusOptions(false);
+                      emitChange({ status: option.value });
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-muted/50 text-muted-foreground hover:bg-muted"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
