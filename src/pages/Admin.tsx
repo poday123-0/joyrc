@@ -260,6 +260,70 @@ const SortableMenuItem = ({
   );
 };
 
+// Sortable color image item for drag-and-drop reordering
+const SortableColorImageItem = ({ 
+  id, 
+  imageUrl, 
+  isMain, 
+  colorName,
+  onDelete,
+}: { 
+  id: string; 
+  imageUrl: string; 
+  isMain: boolean;
+  colorName: string;
+  onDelete?: () => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative group">
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <img 
+          src={imageUrl} 
+          alt={colorName}
+          className={`w-full aspect-square rounded-lg object-cover border-2 transition-all ${
+            isMain ? "border-primary shadow-md" : "border-transparent"
+          } ${isDragging ? "shadow-xl scale-105" : ""}`}
+        />
+        {isMain && (
+          <span className="absolute bottom-1 left-1 text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded font-medium">Main</span>
+        )}
+        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <GripVertical className="w-3.5 h-3.5 text-white drop-shadow-lg" />
+        </div>
+      </div>
+      {!isMain && onDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="absolute top-1 left-1 w-5 h-5 rounded-full bg-destructive/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <X className="w-3 h-3 text-destructive-foreground" />
+        </button>
+      )}
+    </div>
+  );
+};
+
 const Admin = () => {
   const { isAdmin, isSuperAdmin, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
