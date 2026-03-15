@@ -363,7 +363,7 @@ const PaymentOrdersTab = () => {
           type: "income",
           category: "Product Sales",
           amount: order.total_amount,
-          description: `Order #${selectedOrderId.slice(0, 8).toUpperCase()}`,
+          description: `Order ${order.order_number || selectedOrderId.slice(0, 8).toUpperCase()}`,
           order_id: selectedOrderId,
         });
 
