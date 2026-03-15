@@ -78,6 +78,7 @@ const QuickPOSTab = () => {
   const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
   const [newCustomerData, setNewCustomerData] = useState({ name: "", phone: "", email: "", address: "" });
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
     orderId: string;
