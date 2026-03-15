@@ -10,6 +10,7 @@ import { formatMVR } from "@/lib/currency";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { DataFilterBar, useDataFilter } from "@/components/DataFilterBar";
 
 interface Order {
   id: string;
