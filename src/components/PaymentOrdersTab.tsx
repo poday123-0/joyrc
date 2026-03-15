@@ -1019,6 +1019,7 @@ const PaymentOrdersTab = () => {
     { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
     { value: "delivered", label: "Delivered", color: "bg-primary/20 text-primary" },
     { value: "cancelled", label: "Cancelled", color: "bg-coral/20 text-coral" },
+    { value: "returned", label: "Returned", color: "bg-gold/20 text-gold" },
   ];
 
   const { filters: orderFilters, setFilters: setOrderFilters, filteredData: filteredOrders } = useDataFilter(
