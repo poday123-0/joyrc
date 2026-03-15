@@ -138,7 +138,7 @@ const DeliveryTab = () => {
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Order Delivered! 📦",
-        message: `Your order #${selectedOrderId.slice(0, 8).toUpperCase()} has been delivered. Thank you for shopping with us!`,
+        message: `Your order ${getOrderNum(order)} has been delivered. Thank you for shopping with us!`,
         type: "success",
         link: "/profile",
       });
