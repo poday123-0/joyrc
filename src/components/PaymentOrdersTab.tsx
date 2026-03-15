@@ -1063,7 +1063,7 @@ const PaymentOrdersTab = () => {
             <p className="text-lg font-bold text-foreground">{formatMVR(filteredRevenue)}</p>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">{filteredOrders.filter(o => o.payment_status === "confirmed").length} confirmed orders</p>
+        <p className="text-sm text-muted-foreground">{filteredOrders.length} filtered orders</p>
       </div>
 
       {/* Filter Bar */}
