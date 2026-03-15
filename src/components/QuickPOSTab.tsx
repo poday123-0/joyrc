@@ -1047,7 +1047,7 @@ const QuickPOSTab = () => {
                 <span className="text-sm text-muted-foreground">Total</span>
                 <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
               </div>
-              <div className="flex gap-1.5 mb-3">
+              <div className="grid grid-cols-4 gap-1.5 mb-3">
                 {[
                   { value: "cash", label: "Cash", icon: Banknote },
                   { value: "bank_transfer", label: "Transfer", icon: Building2 },
@@ -1058,14 +1058,14 @@ const QuickPOSTab = () => {
                     key={value}
                     type="button"
                     onClick={() => setPaymentMethod(value)}
-                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-medium transition-all min-w-0 ${
                       paymentMethod === value
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
+                        : "bg-muted/60 text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
-                    {label}
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate w-full text-center">{label}</span>
                   </button>
                 ))}
               </div>
