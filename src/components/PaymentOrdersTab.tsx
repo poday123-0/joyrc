@@ -1560,21 +1560,21 @@ const OrderCard = ({
     <div className="glass-card rounded-2xl shadow-soft overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center gap-3 text-left"
+        className="w-full p-3 sm:p-4 flex items-center gap-2 sm:gap-3 text-left"
       >
-        <div className={`w-10 h-10 rounded-full ${statusConfig.bg} flex items-center justify-center`}>
-          <StatusIcon className={`w-5 h-5 ${statusConfig.text}`} />
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${statusConfig.bg} flex items-center justify-center flex-shrink-0`}>
+          <StatusIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${statusConfig.text}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-foreground">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <span className="font-semibold text-foreground text-sm sm:text-base truncate">
               {getOrderNum(order)}
             </span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text}`}>
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text} flex-shrink-0`}>
               {statusConfig.label}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             {new Date(order.created_at).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
@@ -1582,8 +1582,8 @@ const OrderCard = ({
             })}
           </p>
         </div>
-        <div className="text-right">
-          <p className="font-bold text-foreground">{formatMVR(order.total_amount)}</p>
+        <div className="text-right flex-shrink-0">
+          <p className="font-bold text-foreground text-sm sm:text-base">{formatMVR(order.total_amount)}</p>
           {isExpanded ? (
             <ChevronUp className="w-4 h-4 text-muted-foreground ml-auto" />
           ) : (
