@@ -212,7 +212,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Invoice #${invoice.orderId.slice(0, 8).toUpperCase()}</title>
+          <title>Invoice ${invoice.orderNumber || `#${invoice.orderId.slice(0, 8).toUpperCase()}`}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
