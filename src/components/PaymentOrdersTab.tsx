@@ -42,6 +42,9 @@ interface Order {
   assigned_to: string | null;
   assigned_at: string | null;
   confirmed_by: string | null;
+  payment_reference: string | null;
+  payment_bank_id: string | null;
+  payment_card_type_id: string | null;
 }
 
 const getOrderNum = (order: { order_number?: string | null; id: string }) =>
