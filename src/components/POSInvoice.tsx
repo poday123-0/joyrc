@@ -21,6 +21,7 @@ interface InvoiceItem {
 
 interface InvoiceData {
   orderId: string;
+  orderNumber?: string;
   orderDate: string;
   items: InvoiceItem[];
   total: number;
