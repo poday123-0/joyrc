@@ -1571,6 +1571,8 @@ const OrderCard = ({
   assignedStaffName?: string;
   confirmedByName?: string;
   customerName?: string;
+  bankNames?: Record<string, string>;
+  cardTypeNames?: Record<string, string>;
   getPaymentStatusConfig: (status: string) => any;
 }) => {
   const statusConfig = getPaymentStatusConfig(order.payment_status || "pending");
