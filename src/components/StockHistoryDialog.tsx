@@ -608,7 +608,7 @@ export const StockHistoryDialog = ({
                   ) : (
                     /* ---- VIEW MODE ---- */
                     <>
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col gap-2">
                         <div className="flex-1 min-w-0">
                           {/* Product name (only in global view) */}
                           {showProductFilter && item.product_name && (
@@ -623,32 +623,56 @@ export const StockHistoryDialog = ({
                             </div>
                           )}
                           
-                          {/* Change badge and type */}
-                          <div className="flex items-center gap-2 flex-wrap mb-2">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                item.change_amount > 0
-                                  ? "bg-emerald-500/20 text-emerald-600"
-                                  : "bg-rose-500/20 text-rose-500"
-                              }`}
-                            >
-                              {item.change_amount > 0 ? "+" : ""}
-                              {item.change_amount}
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                item.change_type === "sale"
-                                  ? "bg-blue-500/20 text-blue-600"
-                                  : item.change_type === "restock"
-                                  ? "bg-emerald-500/20 text-emerald-600"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              {getChangeTypeLabel(item.change_type)}
-                            </span>
-                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                              {item.previous_quantity} → {item.new_quantity}
-                            </span>
+                          {/* Change badge, type, and action buttons row */}
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                  item.change_amount > 0
+                                    ? "bg-emerald-500/20 text-emerald-600"
+                                    : "bg-rose-500/20 text-rose-500"
+                                }`}
+                              >
+                                {item.change_amount > 0 ? "+" : ""}
+                                {item.change_amount}
+                              </span>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  item.change_type === "sale"
+                                    ? "bg-blue-500/20 text-blue-600"
+                                    : item.change_type === "restock"
+                                    ? "bg-emerald-500/20 text-emerald-600"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {getChangeTypeLabel(item.change_type)}
+                              </span>
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                {item.previous_quantity} → {item.new_quantity}
+                              </span>
+                            </div>
+
+                            {/* Edit/Delete buttons - always visible */}
+                            {isSuperAdmin && (
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
+                                {onEditHistory && (
+                                  <button
+                                    onClick={() => startEditing(item)}
+                                    className="p-1.5 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                    title="Edit entry"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => onDeleteHistory(item.id)}
+                                  className="p-1.5 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                  title="Delete entry"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
                           </div>
 
                           {/* Performed by & Order info */}
@@ -679,7 +703,6 @@ export const StockHistoryDialog = ({
                             const cleanNotes = item.notes
                               .replace(/\[Color:\s*[^\]]+\]\s*/g, "")
                               .trim();
-                            // Try to find hex from available colors
                             const productId = item.product_id;
                             const colors = productId ? availableColors[productId] : undefined;
                             const matchedColor = colorName && colors
@@ -704,27 +727,6 @@ export const StockHistoryDialog = ({
                               </div>
                             );
                           })()}
-                        </div>
-
-                        <div className="flex items-start gap-1 flex-shrink-0">
-                          {isSuperAdmin && onEditHistory && (
-                            <button
-                              onClick={() => startEditing(item)}
-                              className="p-1.5 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                              title="Edit entry"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {isSuperAdmin && (
-                            <button
-                              onClick={() => onDeleteHistory(item.id)}
-                              className="p-1.5 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                              title="Delete entry"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
                         </div>
                       </div>
 
