@@ -58,6 +58,8 @@ interface OrderItem {
   product_price: number;
   quantity: number;
   color_name?: string | null;
+  product_id: string;
+  item_code?: string | null;
 }
 
 interface ImportOrder {
