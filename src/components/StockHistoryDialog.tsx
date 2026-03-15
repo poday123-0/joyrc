@@ -11,8 +11,15 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
+export interface ColorOption {
+  id: string;
+  color_name: string;
+  color_hex: string;
+}
+
 interface StockHistoryItem {
   id: string;
+  product_id?: string;
   previous_quantity: number;
   new_quantity: number;
   change_amount: number;
@@ -49,6 +56,7 @@ interface StockHistoryDialogProps {
   isSuperAdmin: boolean;
   onDeleteHistory: (historyId: string) => void;
   onEditHistory?: (data: StockHistoryEditData) => void;
+  availableColors?: Record<string, ColorOption[]>;
   showProductFilter?: boolean;
   inline?: boolean;
 }
@@ -85,6 +93,7 @@ export const StockHistoryDialog = ({
   isSuperAdmin,
   onDeleteHistory,
   onEditHistory,
+  availableColors = {},
   showProductFilter = false,
   inline = false,
 }: StockHistoryDialogProps) => {
@@ -523,15 +532,47 @@ export const StockHistoryDialog = ({
                       </div>
 
                       {/* Color */}
-                      <div>
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Color</label>
-                        <Input
-                          value={editColor}
-                          onChange={(e) => setEditColor(e.target.value)}
-                          placeholder="e.g. Red, Blue..."
-                          className="h-8 text-xs mt-1"
-                        />
-                      </div>
+                      {(() => {
+                        const colors = item.product_id ? availableColors[item.product_id] : undefined;
+                        if (!colors || colors.length === 0) return null;
+                        return (
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Color</label>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                              <button
+                                onClick={() => setEditColor("")}
+                                className={cn(
+                                  "px-2 py-1 rounded-lg text-[10px] font-medium transition-colors border",
+                                  !editColor
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border/50 bg-muted/50 text-muted-foreground hover:bg-muted"
+                                )}
+                              >
+                                None
+                              </button>
+                              {colors.map(color => (
+                                <button
+                                  key={color.id}
+                                  onClick={() => setEditColor(color.color_name)}
+                                  className={cn(
+                                    "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors border",
+                                    editColor === color.color_name
+                                      ? "border-primary bg-primary/10 text-primary"
+                                      : "border-border/50 bg-muted/50 text-muted-foreground hover:bg-muted"
+                                  )}
+                                  title={color.color_name}
+                                >
+                                  <span
+                                    className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0"
+                                    style={{ backgroundColor: color.color_hex }}
+                                  />
+                                  {color.color_name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Cost fields - only for restock */}
                       {item.change_type === "restock" && (
@@ -649,14 +690,24 @@ export const StockHistoryDialog = ({
                             const cleanNotes = item.notes
                               .replace(/\[Color:\s*[^\]]+\]\s*/g, "")
                               .trim();
+                            // Try to find hex from available colors
+                            const productId = item.product_id;
+                            const colors = productId ? availableColors[productId] : undefined;
+                            const matchedColor = colorName && colors
+                              ? colors.find(c => c.color_name.toLowerCase() === colorName.toLowerCase())
+                              : null;
+                            const bgColor = matchedColor ? matchedColor.color_hex : colorName?.toLowerCase();
                             return (
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                {colorName && (
-                                  <span 
-                                    className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0" 
-                                    style={{ backgroundColor: colorName.toLowerCase() }}
-                                    title={colorName}
-                                  />
+                                {colorName && bgColor && (
+                                  <span className="flex items-center gap-1">
+                                    <span 
+                                      className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0" 
+                                      style={{ backgroundColor: bgColor }}
+                                      title={colorName}
+                                    />
+                                    <span className="text-foreground/70 font-medium">{colorName}</span>
+                                  </span>
                                 )}
                                 {cleanNotes && (
                                   <span className="italic truncate">"{cleanNotes}"</span>
