@@ -183,21 +183,44 @@ export const StockHistoryDialog = ({
 
   const content = (
     <div className="flex flex-col h-full">
+      {/* Product Search - always visible when showProductFilter is true */}
+      {showProductFilter && (
+        <div className="mb-3 p-3 bg-muted/30 rounded-xl border border-border/50">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search by name, item code, or notes..."
+              className="pl-9 h-9 text-sm"
+            />
+            {productSearch && (
+              <button
+                onClick={() => setProductSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Filter Toggle Button */}
       <button
         onClick={() => setShowFilters(!showFilters)}
         className={cn(
           "flex items-center justify-center gap-2 px-3 py-2 mb-3 rounded-lg text-sm font-medium transition-colors",
-          showFilters || hasActiveFilters
+          showFilters || (periodFilter !== "all" || typeFilter !== "all")
             ? "bg-primary/10 text-primary"
             : "bg-muted/50 text-muted-foreground hover:bg-muted"
         )}
       >
         <Filter className="w-4 h-4" />
         Filters
-        {hasActiveFilters && (
+        {(periodFilter !== "all" || typeFilter !== "all") && (
           <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">
-            {(periodFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0) + (showProductFilter && productSearch.trim() ? 1 : 0)}
+            {(periodFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0)}
           </span>
         )}
       </button>
@@ -205,30 +228,6 @@ export const StockHistoryDialog = ({
       {/* Filters Panel */}
       {showFilters && (
         <div className="mb-4 p-3 bg-muted/30 rounded-xl border border-border/50 space-y-3">
-          {/* Product Search - only when showProductFilter is true */}
-          {showProductFilter && (
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Search Product</p>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Search by name, item code, or notes..."
-                  className="pl-9 h-9 text-sm"
-                />
-                {productSearch && (
-                  <button
-                    onClick={() => setProductSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Period Filter */}
           <div>
             <p className="text-xs font-medium text-muted-foreground mb-2">Time Period</p>
@@ -318,7 +317,7 @@ export const StockHistoryDialog = ({
           </div>
 
           {/* Clear Filters */}
-          {hasActiveFilters && (
+          {(periodFilter !== "all" || typeFilter !== "all") && (
             <button
               onClick={clearFilters}
               className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors"
