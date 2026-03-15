@@ -616,7 +616,7 @@ const PaymentOrdersTab = () => {
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Order Out for Delivery! 🚚",
-        message: `Great news! Your order #${selectedOrderId.slice(0, 8).toUpperCase()} is now out for delivery.`,
+        message: `Great news! Your order ${getOrderNum(order)} is now out for delivery.`,
         type: "success",
         link: "/profile",
       });
