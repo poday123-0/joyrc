@@ -485,20 +485,20 @@ const TransactionsTab = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors text-sm"
+          className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors text-xs"
         >
-          <Plus className="w-4 h-4" /> Add Transaction
+          <Plus className="w-3.5 h-3.5" /> Add Transaction
         </button>
         
         <Sheet>
           <SheetTrigger asChild>
             <button
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors text-sm"
+              className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors text-xs"
             >
-              <Settings2 className="w-4 h-4" /> Categories
+              <Settings2 className="w-3.5 h-3.5" /> Categories
             </button>
           </SheetTrigger>
           <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
