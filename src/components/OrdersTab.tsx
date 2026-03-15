@@ -727,6 +727,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
         </div>
       )}
     </div>
+    </div>
   );
 };
 
