@@ -740,7 +740,51 @@ const PaymentOrdersTab = () => {
     }
   };
 
-  const handleEditOrder = (order: Order) => {
+  const handleReturnOrder = async () => {
+    if (!selectedOrderId || !returnReason.trim()) return;
+    const order = orders.find(o => o.id === selectedOrderId);
+    if (!order) return;
+
+    try {
+      const timestamp = new Date().toLocaleString();
+      const existingNotes = order.notes || "";
+      const returnNote = `\n[RETURN - ${timestamp}] Reason: ${returnReason.trim()}`;
+      
+      const { error } = await supabase
+        .from("orders")
+        .update({ 
+          status: "returned",
+          notes: existingNotes + returnNote
+        })
+        .eq("id", selectedOrderId);
+
+      if (error) throw error;
+
+      // Notify customer
+      await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: "Order Returned 🔄",
+        message: `Your order ${getOrderNum(order)} has been marked as returned. Reason: ${returnReason.trim()}`,
+        type: "warning",
+        link: "/profile",
+      });
+
+      toast({
+        title: "Order Returned",
+        description: `Order marked as returned. Customer notified.`,
+      });
+
+      fetchOrders();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+
+    setReturnDialogOpen(false);
+    setReturnReason("");
+    setSelectedOrderId(null);
+  };
+
+
     setEditingOrderId(order.id);
     setEditNotes(order.notes || "");
     setEditComment("");
