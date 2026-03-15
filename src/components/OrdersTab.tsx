@@ -76,6 +76,8 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const [deleting, setDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [bankNames, setBankNames] = useState<Record<string, string>>({});
+  const [cardTypeNames, setCardTypeNames] = useState<Record<string, string>>({});
   const { user, isSuperAdmin } = useAuth();
 
   useEffect(() => {
