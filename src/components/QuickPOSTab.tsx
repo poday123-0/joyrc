@@ -721,15 +721,6 @@ const QuickPOSTab = () => {
         </div>
       )}
 
-  const fetchBanks = async () => {
-    const { data } = await supabase.from("bank_settings").select("id, bank_name, account_name, account_number").eq("is_active", true).order("bank_name");
-    if (data) setBanks(data);
-  };
-
-  const fetchCardTypes = async () => {
-    const { data } = await supabase.from("card_types").select("id, name").eq("is_active", true).order("sort_order");
-    if (data) setCardTypes(data);
-  };
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:h-full">
         {/* Products Panel */}
