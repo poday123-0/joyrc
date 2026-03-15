@@ -177,6 +177,19 @@ const DeliveryTab = () => {
     setSelectedOrderId(null);
   };
 
+  const { filters, setFilters, filteredData: filteredOrders } = useDataFilter(
+    orders,
+    (o) => o.created_at,
+    (o) => `${o.id} ${o.shipping_address || ""} ${o.phone || ""} ${o.notes || ""} ${customerProfiles[o.user_id]?.full_name || ""}`,
+    (o) => o.status,
+  );
+
+  const deliveryStatusOptions = [
+    { value: "all", label: "All Status" },
+    { value: "on_delivery", label: "On Delivery", color: "bg-cyan-light/50 text-teal" },
+    { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -198,19 +211,6 @@ const DeliveryTab = () => {
       </div>
     );
   }
-
-  const { filters, setFilters, filteredData: filteredOrders } = useDataFilter(
-    orders,
-    (o) => o.created_at,
-    (o) => `${o.id} ${o.shipping_address || ""} ${o.phone || ""} ${o.notes || ""} ${customerProfiles[o.user_id]?.full_name || ""}`,
-    (o) => o.status,
-  );
-
-  const deliveryStatusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "on_delivery", label: "On Delivery", color: "bg-cyan-light/50 text-teal" },
-    { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
-  ];
 
   return (
     <div className="space-y-5">
