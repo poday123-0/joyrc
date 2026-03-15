@@ -750,9 +750,14 @@ const PaymentOrdersTab = () => {
       const currentNotes = orders.find(o => o.id === editingOrderId)?.notes || "";
       const newNotes = `${currentNotes}\n\n[${timestamp}] Edit by admin: ${editComment}\nUpdated notes: ${editNotes}`.trim();
 
+      const updateData: Record<string, any> = { notes: newNotes };
+      if (editOrderNumber.trim()) {
+        updateData.order_number = editOrderNumber.trim();
+      }
+
       const { error } = await supabase
         .from("orders")
-        .update({ notes: newNotes })
+        .update(updateData)
         .eq("id", editingOrderId);
 
       if (error) throw error;
