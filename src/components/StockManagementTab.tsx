@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { StockHistoryDialog } from "@/components/StockHistoryDialog";
+import { StockHistoryDialog, StockHistoryEditData } from "@/components/StockHistoryDialog";
 import StockAnalytics from "@/components/stock/StockAnalytics";
 import BulkRestockDialog from "@/components/stock/BulkRestockDialog";
 
@@ -675,6 +675,47 @@ const StockManagementTab = () => {
     setDeleteHistoryProductId(null);
   };
 
+  const handleEditHistoryItem = async (data: StockHistoryEditData) => {
+    try {
+      const unitPrice = data.unit_purchase_price || 0;
+      const shipping = data.shipping_cost || 0;
+      const other = data.other_expenses || 0;
+      const qty = Math.abs(data.change_amount);
+      const totalExpense = qty > 0 ? (unitPrice + shipping + other) * qty : 0;
+
+      const { error } = await supabase
+        .from("stock_history")
+        .update({
+          created_at: data.created_at,
+          notes: data.notes,
+          unit_purchase_price: data.unit_purchase_price,
+          shipping_cost: data.shipping_cost,
+          other_expenses: data.other_expenses,
+          change_amount: data.change_amount,
+          total_expense: totalExpense > 0 ? totalExpense : null,
+        })
+        .eq("id", data.id);
+
+      if (error) throw error;
+
+      toast({ title: "History entry updated" });
+
+      // Refresh history
+      if (isGlobalHistoryView) {
+        fetchAllStockHistory();
+      } else if (expandedProductId) {
+        const product = products.find(p => p.id === expandedProductId);
+        fetchStockHistory(expandedProductId, product ? { name: product.name, item_code: product.item_code || null } : undefined);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update history entry",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Header - Mobile optimized */}
@@ -780,6 +821,7 @@ const StockManagementTab = () => {
           setDeleteHistoryId(historyId);
           setDeleteHistoryProductId(expandedProductId);
         }}
+        onEditHistory={handleEditHistoryItem}
       />
 
       {/* Per-Product History - Inline */}
@@ -801,6 +843,7 @@ const StockManagementTab = () => {
           setDeleteHistoryId(historyId);
           setDeleteHistoryProductId(expandedProductId);
         }}
+        onEditHistory={handleEditHistoryItem}
       />
 
       {/* Clear History Dialog */}
