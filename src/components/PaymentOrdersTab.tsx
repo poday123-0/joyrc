@@ -225,11 +225,15 @@ const PaymentOrdersTab = () => {
 
     const { data, error } = await supabase
       .from("order_items")
-      .select("*")
+      .select("*, products:product_id(item_code)")
       .eq("order_id", orderId);
 
     if (!error && data) {
-      setOrderItems((prev) => ({ ...prev, [orderId]: data }));
+      const mapped = data.map((item: any) => ({
+        ...item,
+        item_code: item.products?.item_code || null,
+      }));
+      setOrderItems((prev) => ({ ...prev, [orderId]: mapped }));
     }
   };
 
