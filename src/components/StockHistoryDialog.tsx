@@ -102,15 +102,39 @@ export const StockHistoryDialog = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState<Date | undefined>(undefined);
   const [editNotes, setEditNotes] = useState("");
+  const [editColor, setEditColor] = useState("");
   const [editUnitPrice, setEditUnitPrice] = useState("");
   const [editShipping, setEditShipping] = useState("");
   const [editOther, setEditOther] = useState("");
   const [editQuantity, setEditQuantity] = useState("");
 
+  // Parse color and clean notes from the notes string
+  const parseNotesAndColor = (notes: string | null) => {
+    if (!notes) return { color: "", cleanNotes: "" };
+    const colorMatch = notes.match(/\[Color:\s*([^\]]+)\]/);
+    const color = colorMatch ? colorMatch[1].trim() : "";
+    // Remove color tag and any reason tag, keep the rest
+    const cleanNotes = notes
+      .replace(/\[Color:\s*[^\]]+\]\s*/g, "")
+      .replace(/\[[^\]]+\]\s*/g, "")
+      .trim();
+    return { color, cleanNotes };
+  };
+
+  // Rebuild notes with color prefix
+  const buildNotes = (color: string, rawNotes: string) => {
+    const parts: string[] = [];
+    if (color.trim()) parts.push(`[Color: ${color.trim()}]`);
+    if (rawNotes.trim()) parts.push(rawNotes.trim());
+    return parts.join(" ") || null;
+  };
+
   const startEditing = (item: StockHistoryItem) => {
+    const { color, cleanNotes } = parseNotesAndColor(item.notes);
     setEditingId(item.id);
     setEditDate(new Date(item.created_at));
-    setEditNotes(item.notes || "");
+    setEditNotes(cleanNotes);
+    setEditColor(color);
     setEditUnitPrice(item.unit_purchase_price?.toString() || "");
     setEditShipping(item.shipping_cost?.toString() || "");
     setEditOther(item.other_expenses?.toString() || "");
@@ -127,7 +151,7 @@ export const StockHistoryDialog = ({
     onEditHistory({
       id: item.id,
       created_at: editDate.toISOString(),
-      notes: editNotes || null,
+      notes: buildNotes(editColor, editNotes),
       unit_purchase_price: editUnitPrice ? parseFloat(editUnitPrice) : null,
       shipping_cost: editShipping ? parseFloat(editShipping) : null,
       other_expenses: editOther ? parseFloat(editOther) : null,
