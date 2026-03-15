@@ -965,7 +965,7 @@ const QuickPOSTab = () => {
           </div>
 
           {/* Content Area - No scroll on mobile */}
-          <div className="flex-1 lg:overflow-y-auto lg:min-h-0">
+          <div className="flex-1">
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-24 text-muted-foreground p-3">
                 <ShoppingBag className="w-8 h-8 mb-1 opacity-50" />
