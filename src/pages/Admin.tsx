@@ -141,6 +141,7 @@ interface SystemSettings {
   notification_email: string | null;
   notification_sender_name: string | null;
   google_login_enabled: boolean;
+  order_number_prefix: string | null;
   site_title: string | null;
   favicon_url: string | null;
   og_image_url: string | null;
@@ -2888,6 +2889,7 @@ const SettingsTab = ({
     notification_email: settings.notification_email || "",
     notification_sender_name: settings.notification_sender_name || "RC Joy",
     google_login_enabled: settings.google_login_enabled ?? true,
+    order_number_prefix: settings.order_number_prefix || "RCJOY",
     site_title: settings.site_title || "",
     favicon_url: settings.favicon_url || "",
     og_image_url: settings.og_image_url || "",
@@ -2929,6 +2931,7 @@ const SettingsTab = ({
         notification_email: settings.notification_email || "",
         notification_sender_name: settings.notification_sender_name || "RC Joy",
         google_login_enabled: settings.google_login_enabled ?? true,
+        order_number_prefix: settings.order_number_prefix || "RCJOY",
         site_title: settings.site_title || "",
         favicon_url: settings.favicon_url || "",
         og_image_url: settings.og_image_url || "",
@@ -3047,6 +3050,7 @@ const SettingsTab = ({
       notification_email: formData.notification_email.trim() || null,
       notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
       google_login_enabled: formData.google_login_enabled,
+      order_number_prefix: formData.order_number_prefix?.trim() || "RCJOY",
       site_title: formData.site_title.trim() || null,
       favicon_url: formData.favicon_url || null,
       og_image_url: formData.og_image_url || null,
@@ -3248,6 +3252,24 @@ const SettingsTab = ({
               </div>
           </div>
         </div>
+
+          {/* Order Number Prefix */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Order Number Format</h3>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Order Number Prefix</label>
+              <input
+                type="text"
+                value={formData.order_number_prefix || "RCJOY"}
+                onChange={(e) => setFormData({ ...formData, order_number_prefix: e.target.value.toUpperCase() })}
+                placeholder="e.g., RCJOY"
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent font-mono"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Orders will be numbered as <span className="font-mono font-medium text-foreground">{formData.order_number_prefix || "RCJOY"}/YY/MM/00001</span>
+              </p>
+            </div>
+          </div>
 
           {/* Google Login Toggle */}
           <div className="pt-4 border-t border-border">

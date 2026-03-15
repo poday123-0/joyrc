@@ -1119,6 +1119,7 @@ export type Database = {
           notification_email: string | null
           notification_sender_name: string | null
           og_image_url: string | null
+          order_number_prefix: string | null
           primary_color: string | null
           secondary_color: string | null
           site_name: string
@@ -1159,6 +1160,7 @@ export type Database = {
           notification_email?: string | null
           notification_sender_name?: string | null
           og_image_url?: string | null
+          order_number_prefix?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           site_name?: string
@@ -1199,6 +1201,7 @@ export type Database = {
           notification_email?: string | null
           notification_sender_name?: string | null
           og_image_url?: string | null
+          order_number_prefix?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           site_name?: string
