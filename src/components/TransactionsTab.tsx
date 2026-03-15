@@ -487,7 +487,12 @@ const TransactionsTab = () => {
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-1.5">
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setShowForm(true);
+            setTimeout(() => {
+              document.getElementById('transaction-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+          }}
           className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors text-xs"
         >
           <Plus className="w-3.5 h-3.5" /> Add Transaction
