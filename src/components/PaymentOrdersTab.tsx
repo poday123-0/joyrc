@@ -1571,6 +1571,7 @@ const OrderCard = ({
               order.status === "delivered" ? "bg-primary/20 text-primary" :
               order.status === "cancelled" ? "bg-coral/20 text-coral" :
               order.status === "returned" ? "bg-gold/20 text-gold" :
+              order.status === "completed" ? "bg-emerald-500/20 text-emerald-500" :
               "bg-muted text-muted-foreground"
             }`}>
               {order.status.replace("_", " ")}
