@@ -106,6 +106,10 @@ const PaymentOrdersTab = () => {
   // Add order dialog state
   const [showAddOrderDialog, setShowAddOrderDialog] = useState(false);
   
+  // Return state
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
+  
   // Invoice state
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceData, setInvoiceData] = useState<{
