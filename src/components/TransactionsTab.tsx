@@ -620,11 +620,6 @@ const TransactionsTab = () => {
         />
       )}
 
-              {saving ? "Saving..." : editingTransaction ? "Update Transaction" : "Add Transaction"}
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Transactions List */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
