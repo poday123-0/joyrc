@@ -63,6 +63,7 @@ const BankSettingsTab = () => {
       branch: "",
       swift_code: "",
       is_active: true,
+      logo_url: "",
     });
     setEditingBank(null);
     setShowForm(false);
