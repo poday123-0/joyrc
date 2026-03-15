@@ -741,6 +741,7 @@ const PaymentOrdersTab = () => {
     setEditNotes(order.notes || "");
     setEditComment("");
     setEditOrderNumber(order.order_number || "");
+    setEditOrderDate(new Date(order.created_at).toISOString().split("T")[0]);
   };
 
   const handleSaveEdit = async () => {
