@@ -134,7 +134,7 @@ const QuickPOSTab = () => {
   };
 
   const fetchBanks = async () => {
-    const { data } = await supabase.from("bank_settings").select("id, bank_name, account_name, account_number").eq("is_active", true).order("bank_name");
+    const { data } = await supabase.from("bank_settings").select("id, bank_name, logo_url").eq("is_active", true).order("bank_name");
     if (data) setBanks(data);
   };
 

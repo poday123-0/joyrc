@@ -14,6 +14,7 @@ interface BankSetting {
   branch: string | null;
   swift_code: string | null;
   is_active: boolean;
+  logo_url: string | null;
 }
 
 const BankSettingsTab = () => {
