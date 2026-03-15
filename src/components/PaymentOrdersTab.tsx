@@ -1451,6 +1451,7 @@ const OrderCard = ({
   onViewInvoice,
   onAssignDelivery,
   onUpdateStatus,
+  onReturn,
   deliveryStaff,
   assignedStaffName,
   confirmedByName,
