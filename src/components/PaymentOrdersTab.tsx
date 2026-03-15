@@ -1049,46 +1049,6 @@ const PaymentOrdersTab = () => {
         statusLabel="Order Status"
         onFiltersChange={setOrderFilters}
       />
-      {/* Admin Actions - Add Order & Import */}
-      {(isSuperAdmin || isAdmin) && (
-        <div className="flex flex-wrap items-center gap-3 p-4 glass-card rounded-2xl">
-          <div className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-primary" />
-            <span className="text-sm text-foreground font-medium">Manage Orders</span>
-          </div>
-          <div className="flex-1" />
-          <Button
-            size="sm"
-            onClick={() => setShowAddOrderDialog(true)}
-            className="gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Order
-          </Button>
-          {isSuperAdmin && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadTemplate}
-                className="gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Template
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowImportDialog(true)}
-                className="gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                Import CSV
-              </Button>
-            </>
-          )}
-        </div>
-      )}
 
       {/* Add Order Dialog */}
       <AddOrderDialog
