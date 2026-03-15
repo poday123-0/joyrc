@@ -1080,7 +1080,7 @@ const QuickPOSTab = () => {
                   <button
                     key={value}
                     type="button"
-                    onClick={() => setPaymentMethod(value)}
+                    onClick={() => { setPaymentMethod(value); setPaymentReference(""); setSelectedBankId(""); setSelectedCardTypeId(""); }}
                     className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-medium transition-all min-w-0 ${
                       paymentMethod === value
                         ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
