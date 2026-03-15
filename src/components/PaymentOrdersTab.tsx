@@ -1798,14 +1798,14 @@ const OrderCard = ({
                 {order.status === "delivered" && onReturn && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                      <span className="font-medium text-green-600">Delivered</span>
+                      <CheckCircle className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-primary">Delivered</span>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={onReturn}
-                      className="w-full gap-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+                      className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
                     >
                       <RotateCcw className="w-4 h-4" />
                       Return Products
@@ -1816,8 +1816,8 @@ const OrderCard = ({
                 {/* Returned state */}
                 {order.status === "returned" && (
                   <div className="flex items-center gap-2 text-sm">
-                    <RotateCcw className="w-4 h-4 text-orange-500" />
-                    <span className="font-medium text-orange-600">Returned</span>
+                    <RotateCcw className="w-4 h-4 text-destructive" />
+                    <span className="font-medium text-destructive">Returned</span>
                   </div>
                 )}
               </div>
