@@ -558,6 +558,9 @@ const QuickPOSTab = () => {
       clearCart();
       setShowCart(false);
       setShowInvoice(true);
+      setPaymentReference("");
+      setSelectedBankId("");
+      setSelectedCardTypeId("");
       fetchProducts();
     } catch (error: any) {
       toast({
