@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, X, Calendar as CalendarIcon } from "lucide-react";
+import { Search, X, Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -188,6 +188,7 @@ export const DataFilterBar = ({
             )}
           >
             {periodOptions.find(o => o.value === period)?.label || "All Time"}
+            {showPeriodOptions ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />}
           </button>
           {showPeriodOptions && periodOptions.filter(o => o.value !== period).map(option => (
             <button
@@ -270,6 +271,7 @@ export const DataFilterBar = ({
               )}
             >
               {statusOptions.find(o => o.value === status)?.label || "All Status"}
+              {showStatusOptions ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />}
             </button>
             {showStatusOptions && statusOptions.filter(o => o.value !== status).map(option => (
               <button
