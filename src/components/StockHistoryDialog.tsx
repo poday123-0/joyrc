@@ -206,128 +206,107 @@ export const StockHistoryDialog = ({
         </div>
       )}
 
-      {/* Filter Toggle Button */}
-      <button
-        onClick={() => setShowFilters(!showFilters)}
-        className={cn(
-          "flex items-center justify-center gap-2 px-3 py-2 mb-3 rounded-lg text-sm font-medium transition-colors",
-          showFilters || (periodFilter !== "all" || typeFilter !== "all")
-            ? "bg-primary/10 text-primary"
-            : "bg-muted/50 text-muted-foreground hover:bg-muted"
-        )}
-      >
-        <Filter className="w-4 h-4" />
-        Filters
-        {(periodFilter !== "all" || typeFilter !== "all") && (
-          <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">
-            {(periodFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0)}
-          </span>
-        )}
-      </button>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="mb-4 p-3 bg-muted/30 rounded-xl border border-border/50 space-y-3">
-          {/* Period Filter */}
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">Time Period</p>
-            <div className="flex flex-wrap gap-1.5">
-              {periodOptions.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    setPeriodFilter(option.value);
-                    if (option.value !== "custom") {
-                      setCustomDateRange({ from: undefined, to: undefined });
-                    }
-                  }}
-                  className={cn(
-                    "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                    periodFilter === option.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Custom Date Range Picker */}
-            {periodFilter === "custom" && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
-                      <CalendarIcon className="w-3.5 h-3.5" />
-                      {customDateRange.from ? format(customDateRange.from, "MMM d, yyyy") : "Start date"}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={customDateRange.from}
-                      onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <span className="text-xs text-muted-foreground">to</span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
-                      <CalendarIcon className="w-3.5 h-3.5" />
-                      {customDateRange.to ? format(customDateRange.to, "MMM d, yyyy") : "End date"}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={customDateRange.to}
-                      onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )}
+      {/* Filters - always visible */}
+      <div className="mb-4 p-3 bg-muted/30 rounded-xl border border-border/50 space-y-3">
+        {/* Period Filter */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Time Period</p>
+          <div className="flex flex-wrap gap-1.5">
+            {periodOptions.map(option => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  setPeriodFilter(option.value);
+                  if (option.value !== "custom") {
+                    setCustomDateRange({ from: undefined, to: undefined });
+                  }
+                }}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  periodFilter === option.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
 
-          {/* Type Filter */}
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">Change Type</p>
-            <div className="flex flex-wrap gap-1.5">
-              {typeOptions.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => setTypeFilter(option.value)}
-                  className={cn(
-                    "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                    typeFilter === option.value
-                      ? option.color
-                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
+          {/* Custom Date Range Picker */}
+          {periodFilter === "custom" && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    {customDateRange.from ? format(customDateRange.from, "MMM d, yyyy") : "Start date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customDateRange.from}
+                    onSelect={(date) => setCustomDateRange(prev => ({ ...prev, from: date }))}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <span className="text-xs text-muted-foreground">to</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    {customDateRange.to ? format(customDateRange.to, "MMM d, yyyy") : "End date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customDateRange.to}
+                    onSelect={(date) => setCustomDateRange(prev => ({ ...prev, to: date }))}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-          </div>
-
-          {/* Clear Filters */}
-          {(periodFilter !== "all" || typeFilter !== "all") && (
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors"
-            >
-              <X className="w-3 h-3" />
-              Clear filters
-            </button>
           )}
         </div>
-      )}
+
+        {/* Type Filter */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Change Type</p>
+          <div className="flex flex-wrap gap-1.5">
+            {typeOptions.map(option => (
+              <button
+                key={option.value}
+                onClick={() => setTypeFilter(option.value)}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  typeFilter === option.value
+                    ? option.color
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Clear Filters */}
+        {(periodFilter !== "all" || typeFilter !== "all") && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors"
+          >
+            <X className="w-3 h-3" />
+            Clear filters
+          </button>
+        )}
+      </div>
 
       {/* Stats Summary */}
       {filteredHistory.length > 0 && (
