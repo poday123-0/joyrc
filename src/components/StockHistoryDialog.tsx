@@ -713,14 +713,11 @@ export const StockHistoryDialog = ({
                             return (
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                 {colorName && bgColor && (
-                                  <span className="flex items-center gap-1">
-                                    <span 
-                                      className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0" 
-                                      style={{ backgroundColor: bgColor }}
-                                      title={colorName}
-                                    />
-                                    <span className="text-foreground/70 font-medium">{colorName}</span>
-                                  </span>
+                                  <span 
+                                    className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0" 
+                                    style={{ backgroundColor: bgColor }}
+                                    title={colorName}
+                                  />
                                 )}
                                 {cleanNotes && (
                                   <span className="italic truncate">"{cleanNotes}"</span>
