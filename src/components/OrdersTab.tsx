@@ -344,14 +344,6 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     setShowPassword(false);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const orderStatusOptions = [
     { value: "all", label: "All Status" },
     { value: "pending", label: "Pending", color: "bg-gold/20 text-gold" },
@@ -362,14 +354,6 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     { value: "cancelled", label: "Cancelled", color: "bg-coral/20 text-coral" },
   ];
 
-  const paymentStatusOpts = [
-    { value: "all", label: "All Payments" },
-    { value: "pending", label: "Awaiting", color: "bg-gold/20 text-gold" },
-    { value: "uploaded", label: "Uploaded", color: "bg-cyan-light/50 text-teal" },
-    { value: "confirmed", label: "Confirmed", color: "bg-primary/20 text-primary" },
-    { value: "rejected", label: "Rejected", color: "bg-coral/20 text-coral" },
-  ];
-
   const { filters, setFilters, filteredData: filteredOrders } = useDataFilter(
     orders,
     (o) => o.created_at,
@@ -377,7 +361,15 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     (o) => o.status,
   );
 
-  if (orders.length === 0 && !loading) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (orders.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
