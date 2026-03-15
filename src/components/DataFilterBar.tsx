@@ -188,6 +188,7 @@ export const DataFilterBar = ({
             )}
           >
             {periodOptions.find(o => o.value === period)?.label || "All Time"}
+            {showPeriodOptions ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />}
           </button>
           {showPeriodOptions && periodOptions.filter(o => o.value !== period).map(option => (
             <button
