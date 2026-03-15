@@ -1515,6 +1515,18 @@ const OrderCard = ({
             {/* Edit form */}
             {isEditing && onEditNotesChange && onEditCommentChange && onSaveEdit && onCancelEdit && (
               <div className="space-y-3 p-3 bg-muted/30 rounded-xl">
+                {(isSuperAdmin || isAdmin) && (
+                  <div>
+                    <Label htmlFor="edit-order-number" className="text-xs">Order Number</Label>
+                    <Input
+                      id="edit-order-number"
+                      placeholder="e.g. RCJOY/25/03/00001"
+                      value={editOrderNumber}
+                      onChange={(e) => setEditOrderNumber(e.target.value)}
+                      className="mt-1 font-mono"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="edit-comment" className="text-xs">Edit Comment (required)</Label>
                   <Input
