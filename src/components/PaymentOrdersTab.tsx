@@ -1686,7 +1686,7 @@ const OrderCard = ({
             {/* Admin actions */}
             {!isEditing && (
               <div className="flex gap-2 pt-2 border-t border-border">
-                {onEdit && (
+                {isSuperAdmin && onEdit && (
                   <Button
                     size="sm"
                     variant="outline"
