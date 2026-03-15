@@ -21,6 +21,7 @@ interface Transaction {
   amount: number;
   description: string | null;
   order_id: string | null;
+  order_number?: string | null;
   created_at: string;
   product_name: string | null;
   unit_purchase_price: number | null;
