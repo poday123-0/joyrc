@@ -221,7 +221,7 @@ export const DataFilterBar = ({
       {/* Status Options Dropdown */}
       {statusOptions && statusOptions.length > 0 && showStatusOptions && (
         <div className="flex flex-wrap gap-1.5">
-          {statusOptions.filter(o => o.value !== status).map(option => (
+          {statusOptions.map(option => (
             <button
               key={option.value}
               onClick={() => {
@@ -229,7 +229,12 @@ export const DataFilterBar = ({
                 setShowStatusOptions(false);
                 emitChange({ status: option.value });
               }}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-muted/50 text-muted-foreground hover:bg-muted"
+              className={cn(
+                "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                status === option.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              )}
             >
               {option.label}
             </button>
