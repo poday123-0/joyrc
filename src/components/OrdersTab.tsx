@@ -473,6 +473,9 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                             : order.payment_method === "cash" ? "Cash"
                             : order.payment_method || "Unknown"}
                         </p>
+                        {order.payment_reference && (
+                          <p className="text-[10px] text-muted-foreground font-mono">Ref: {order.payment_reference}</p>
+                        )}
                       </div>
                     </div>
 
