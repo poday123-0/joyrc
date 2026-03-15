@@ -60,6 +60,7 @@ import TransactionsTab from "@/components/TransactionsTab";
 import PreordersTab from "@/components/PreordersTab";
 import DeliveryTab from "@/components/DeliveryTab";
 import QuickPOSTab from "@/components/QuickPOSTab";
+import LoansTab from "@/components/LoansTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
