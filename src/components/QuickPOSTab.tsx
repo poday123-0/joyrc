@@ -1154,16 +1154,22 @@ const QuickPOSTab = () => {
 
               {paymentMethod === "card" && (
                 <div className="space-y-2 mb-3">
-                  <select
-                    value={selectedCardTypeId}
-                    onChange={(e) => setSelectedCardTypeId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    <option value="">Select Card Type</option>
+                  <div className="flex flex-wrap gap-1.5">
                     {cardTypes.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedCardTypeId(c.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          selectedCardTypeId === c.id
+                            ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                            : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {c.name}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                   <Input
                     placeholder="Reference / Last 4 digits"
                     value={paymentReference}
