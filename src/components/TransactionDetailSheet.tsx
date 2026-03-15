@@ -448,7 +448,7 @@ const TransactionDetailSheet = ({ open, onOpenChange, type, transactions }: Tran
                             <p className="font-semibold text-sm text-foreground">{tx.category}</p>
                             {tx.order_id && (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Order #{tx.order_id.slice(0, 8).toUpperCase()}
+                                Order {tx.description?.match(/(RCJOY\/\S+)/)?.[1] || `#${tx.order_id.slice(0, 8).toUpperCase()}`}
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-0.5">

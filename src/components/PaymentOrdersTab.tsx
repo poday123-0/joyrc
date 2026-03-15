@@ -28,6 +28,7 @@ import AddOrderDialog from "@/components/AddOrderDialog";
 
 interface Order {
   id: string;
+  order_number: string | null;
   user_id: string;
   status: string;
   payment_status: string;
@@ -42,6 +43,9 @@ interface Order {
   assigned_at: string | null;
   confirmed_by: string | null;
 }
+
+const getOrderNum = (order: { order_number?: string | null; id: string }) =>
+  order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`;
 
 interface DeliveryStaff {
   user_id: string;
@@ -84,6 +88,7 @@ const PaymentOrdersTab = () => {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editComment, setEditComment] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editOrderNumber, setEditOrderNumber] = useState("");
   
   // Import state
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -104,6 +109,7 @@ const PaymentOrdersTab = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceData, setInvoiceData] = useState<{
     orderId: string;
+    orderNumber?: string;
     orderDate: string;
     items: { name: string; quantity: number; price: number; color?: string | null }[];
     total: number;
@@ -330,7 +336,7 @@ const PaymentOrdersTab = () => {
             new_quantity: newQty,
             change_amount: -item.quantity,
             change_type: "sale",
-            notes: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
+            notes: `Order ${order.order_number || selectedOrderId.slice(0, 8).toUpperCase()} - ${item.product_name}`,
             order_id: selectedOrderId,
             created_by: confirmedBy,
             unit_purchase_price: costPrice,
@@ -359,7 +365,7 @@ const PaymentOrdersTab = () => {
           type: "income",
           category: "Product Sales",
           amount: order.total_amount,
-          description: `Order #${selectedOrderId.slice(0, 8).toUpperCase()}`,
+          description: `Order ${order.order_number || selectedOrderId.slice(0, 8).toUpperCase()}`,
           order_id: selectedOrderId,
         });
 
@@ -602,7 +608,7 @@ const PaymentOrdersTab = () => {
       await supabase.from("notifications").insert({
         user_id: selectedStaffId,
         title: "New Delivery Assigned 🚚",
-        message: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} has been assigned to you for delivery.`,
+        message: `Order ${getOrderNum(order)} has been assigned to you for delivery.`,
         type: "info",
         link: "/admin",
       });
@@ -612,7 +618,7 @@ const PaymentOrdersTab = () => {
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Order Out for Delivery! 🚚",
-        message: `Great news! Your order #${selectedOrderId.slice(0, 8).toUpperCase()} is now out for delivery.`,
+        message: `Great news! Your order ${getOrderNum(order)} is now out for delivery.`,
         type: "success",
         link: "/profile",
       });
@@ -668,17 +674,17 @@ const PaymentOrdersTab = () => {
       const statusMessages: Record<string, { title: string; message: string; type: string }> = {
         on_delivery: {
           title: "Order Out for Delivery! 🚚",
-          message: `Your order #${orderId.slice(0, 8).toUpperCase()} is now out for delivery.`,
+          message: `Your order ${getOrderNum(order)} is now out for delivery.`,
           type: "success",
         },
         delivered: {
           title: "Order Delivered! 📦",
-          message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered. Enjoy!`,
+          message: `Your order ${getOrderNum(order)} has been delivered. Enjoy!`,
           type: "success",
         },
         shipped: {
           title: "Order Shipped! 🚚",
-          message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way.`,
+          message: `Your order ${getOrderNum(order)} has been shipped and is on its way.`,
           type: "success",
         },
       };
@@ -733,6 +739,7 @@ const PaymentOrdersTab = () => {
     setEditingOrderId(order.id);
     setEditNotes(order.notes || "");
     setEditComment("");
+    setEditOrderNumber(order.order_number || "");
   };
 
   const handleSaveEdit = async () => {
@@ -743,9 +750,14 @@ const PaymentOrdersTab = () => {
       const currentNotes = orders.find(o => o.id === editingOrderId)?.notes || "";
       const newNotes = `${currentNotes}\n\n[${timestamp}] Edit by admin: ${editComment}\nUpdated notes: ${editNotes}`.trim();
 
+      const updateData: Record<string, any> = { notes: newNotes };
+      if (editOrderNumber.trim()) {
+        updateData.order_number = editOrderNumber.trim();
+      }
+
       const { error } = await supabase
         .from("orders")
-        .update({ notes: newNotes })
+        .update(updateData)
         .eq("id", editingOrderId);
 
       if (error) throw error;
@@ -1091,6 +1103,7 @@ const PaymentOrdersTab = () => {
                   isEditing={editingOrderId === order.id}
                   editNotes={editNotes}
                   editComment={editComment}
+                  editOrderNumber={editOrderNumber}
                   onToggle={() => handleToggleExpand(order.id)}
                   onConfirm={() => {
                     setSelectedOrderId(order.id);
@@ -1113,6 +1126,7 @@ const PaymentOrdersTab = () => {
                   }}
                   onEditNotesChange={setEditNotes}
                   onEditCommentChange={setEditComment}
+                  onEditOrderNumberChange={setEditOrderNumber}
                   onViewReceipt={(url) => setViewingReceipt(url)}
                   onViewInvoice={() => {
                     const items = (orderItems[order.id] || []).map(item => ({
@@ -1123,6 +1137,7 @@ const PaymentOrdersTab = () => {
                     }));
                     setInvoiceData({
                       orderId: order.id,
+                      orderNumber: order.order_number || undefined,
                       orderDate: order.created_at,
                       items,
                       total: order.total_amount,
@@ -1168,6 +1183,7 @@ const PaymentOrdersTab = () => {
                 isEditing={editingOrderId === order.id}
                 editNotes={editNotes}
                 editComment={editComment}
+                editOrderNumber={editOrderNumber}
                 onToggle={() => handleToggleExpand(order.id)}
                 onDelete={() => {
                   setSelectedOrderId(order.id);
@@ -1182,6 +1198,7 @@ const PaymentOrdersTab = () => {
                 }}
                 onEditNotesChange={setEditNotes}
                 onEditCommentChange={setEditComment}
+                onEditOrderNumberChange={setEditOrderNumber}
                 onViewInvoice={() => {
                   const items = (orderItems[order.id] || []).map(item => ({
                     name: item.product_name,
@@ -1191,6 +1208,7 @@ const PaymentOrdersTab = () => {
                   }));
                   setInvoiceData({
                     orderId: order.id,
+                    orderNumber: order.order_number || undefined,
                     orderDate: order.created_at,
                     items,
                     total: order.total_amount,
@@ -1359,6 +1377,7 @@ const OrderCard = ({
   isEditing,
   editNotes,
   editComment,
+  editOrderNumber,
   onToggle,
   onConfirm,
   onReject,
@@ -1368,6 +1387,7 @@ const OrderCard = ({
   onCancelEdit,
   onEditNotesChange,
   onEditCommentChange,
+  onEditOrderNumberChange,
   onViewReceipt,
   onViewInvoice,
   onAssignDelivery,
@@ -1386,6 +1406,7 @@ const OrderCard = ({
   isEditing: boolean;
   editNotes: string;
   editComment: string;
+  editOrderNumber?: string;
   onToggle: () => void;
   onConfirm?: () => void;
   onReject?: () => void;
@@ -1395,6 +1416,7 @@ const OrderCard = ({
   onCancelEdit?: () => void;
   onEditNotesChange?: (value: string) => void;
   onEditCommentChange?: (value: string) => void;
+  onEditOrderNumberChange?: (value: string) => void;
   onViewReceipt?: (url: string) => void;
   onViewInvoice?: () => void;
   onAssignDelivery?: () => void;
@@ -1420,7 +1442,7 @@ const OrderCard = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-foreground">
-              #{order.id.slice(0, 8).toUpperCase()}
+              {getOrderNum(order)}
             </span>
             <span className={`text-xs px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text}`}>
               {statusConfig.label}
@@ -1501,6 +1523,18 @@ const OrderCard = ({
             {/* Edit form */}
             {isEditing && onEditNotesChange && onEditCommentChange && onSaveEdit && onCancelEdit && (
               <div className="space-y-3 p-3 bg-muted/30 rounded-xl">
+                {(isSuperAdmin || isAdmin) && (
+                  <div>
+                    <Label htmlFor="edit-order-number" className="text-xs">Order Number</Label>
+                    <Input
+                      id="edit-order-number"
+                      placeholder="e.g. RCJOY/25/03/00001"
+                      value={editOrderNumber || ""}
+                      onChange={(e) => onEditOrderNumberChange?.(e.target.value)}
+                      className="mt-1 font-mono"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="edit-comment" className="text-xs">Edit Comment (required)</Label>
                   <Input

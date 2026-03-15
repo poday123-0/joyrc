@@ -9,6 +9,7 @@ import { DataFilterBar, useDataFilter, FilterState } from "@/components/DataFilt
 
 interface Order {
   id: string;
+  order_number: string | null;
   user_id: string;
   status: string;
   total_amount: number;
@@ -22,6 +23,9 @@ interface Order {
   assigned_to: string | null;
   assigned_at: string | null;
 }
+
+const getOrderNum = (order: { order_number?: string | null; id: string }) =>
+  order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`;
 
 interface OrderItem {
   id: string;
@@ -172,22 +176,22 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     const notificationMessages: Record<string, { title: string; message: string; type: string }> = {
       processing: {
         title: "Order Processing 📦",
-        message: `Your order #${orderId.slice(0, 8).toUpperCase()} is now being processed and will be shipped soon.`,
+        message: `Your order ${getOrderNum(order)} is now being processed and will be shipped soon.`,
         type: "info",
       },
       shipped: {
         title: "Order Shipped! 🚚",
-        message: `Great news! Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way to you.`,
+        message: `Great news! Your order ${getOrderNum(order)} has been shipped and is on its way to you.`,
         type: "success",
       },
       delivered: {
         title: "Order Delivered! 🎉",
-        message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered. Enjoy your purchase!`,
+        message: `Your order ${getOrderNum(order)} has been delivered. Enjoy your purchase!`,
         type: "success",
       },
       cancelled: {
         title: "Order Cancelled",
-        message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been cancelled. Contact support if you have questions.`,
+        message: `Your order ${getOrderNum(order)} has been cancelled. Contact support if you have questions.`,
         type: "error",
       },
     };
@@ -417,7 +421,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-foreground">
-                    #{order.id.slice(0, 8).toUpperCase()}
+                    {getOrderNum(order)}
                   </span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text}`}>
                     {statusConfig.label}
@@ -651,7 +655,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">Delete Order</h3>
-                <p className="text-sm text-muted-foreground">Order #{deleteOrderId.slice(0, 8).toUpperCase()}</p>
+                <p className="text-sm text-muted-foreground">Order {orders.find(o => o.id === deleteOrderId)?.order_number || `#${deleteOrderId.slice(0, 8).toUpperCase()}`}</p>
               </div>
             </div>
             

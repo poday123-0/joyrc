@@ -81,6 +81,7 @@ const QuickPOSTab = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
     orderId: string;
+    orderNumber?: string;
     orderDate: string;
     items: Array<{ name: string; quantity: number; price: number; color?: string | null }>;
     total: number;
@@ -477,7 +478,7 @@ const QuickPOSTab = () => {
           new_quantity: newQty,
           change_amount: -item.quantity,
           change_type: "sale",
-          notes: `POS Sale - Order #${order.id.slice(0, 8)}${item.selectedColor ? ` (${item.selectedColor.color_name})` : ''}`,
+          notes: `POS Sale - Order ${order.order_number || order.id.slice(0, 8)}${item.selectedColor ? ` (${item.selectedColor.color_name})` : ''}`,
           order_id: order.id,
           created_by: user.id,
           unit_purchase_price: item.product.cost_price || 0,
@@ -489,7 +490,7 @@ const QuickPOSTab = () => {
         type: "income",
         category: "Product Sales",
         amount: totalAmount,
-        description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order #${order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
+        description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order ${order.order_number || order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
         order_id: order.id,
         added_by: user.id,
       });
@@ -512,6 +513,7 @@ const QuickPOSTab = () => {
       // Store order data for invoice
       setLastOrderData({
         orderId: order.id,
+        orderNumber: order.order_number || undefined,
         orderDate: new Date().toISOString(),
         items: cart.map(item => ({
           name: item.product.name,

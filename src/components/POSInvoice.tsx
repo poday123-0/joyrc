@@ -21,6 +21,7 @@ interface InvoiceItem {
 
 interface InvoiceData {
   orderId: string;
+  orderNumber?: string;
   orderDate: string;
   items: InvoiceItem[];
   total: number;
@@ -104,7 +105,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
       });
       
       const link = document.createElement('a');
-      link.download = `invoice-${invoice.orderId.slice(0, 8).toUpperCase()}.png`;
+      link.download = `invoice-${(invoice.orderNumber || invoice.orderId.slice(0, 8)).toUpperCase()}.png`;
       link.href = dataUrl;
       link.click();
       
@@ -131,7 +132,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     lines.push(divider);
     lines.push(``);
     lines.push(`📄 *INVOICE*`);
-    lines.push(`#${invoice.orderId.slice(0, 8).toUpperCase()}`);
+    lines.push(`${invoice.orderNumber || `#${invoice.orderId.slice(0, 8).toUpperCase()}`}`);
     lines.push(`📅 ${new Date(invoice.orderDate).toLocaleDateString()} at ${new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
     lines.push(``);
     
@@ -211,7 +212,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Invoice #${invoice.orderId.slice(0, 8).toUpperCase()}</title>
+          <title>Invoice ${invoice.orderNumber || `#${invoice.orderId.slice(0, 8).toUpperCase()}`}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
@@ -334,7 +335,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="space-y-0.5 invoice-meta-row">
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Invoice #</p>
-                  <p className="font-bold text-foreground invoice-meta-value">{invoice.orderId.slice(0, 8).toUpperCase()}</p>
+                  <p className="font-bold text-foreground invoice-meta-value">{invoice.orderNumber || invoice.orderId.slice(0, 8).toUpperCase()}</p>
                 </div>
                 <div className="space-y-0.5 text-right invoice-meta-row">
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Type</p>

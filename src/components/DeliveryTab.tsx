@@ -14,6 +14,7 @@ import { DataFilterBar, useDataFilter } from "@/components/DataFilterBar";
 
 interface Order {
   id: string;
+  order_number: string | null;
   user_id: string;
   status: string;
   payment_status: string;
@@ -25,6 +26,9 @@ interface Order {
   assigned_to: string | null;
   assigned_at: string | null;
 }
+
+const getOrderNum = (order: { order_number?: string | null; id: string }) =>
+  order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`;
 
 interface OrderItem {
   id: string;
@@ -134,7 +138,7 @@ const DeliveryTab = () => {
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Order Delivered! 📦",
-        message: `Your order #${selectedOrderId.slice(0, 8).toUpperCase()} has been delivered. Thank you for shopping with us!`,
+        message: `Your order ${getOrderNum(order)} has been delivered. Thank you for shopping with us!`,
         type: "success",
         link: "/profile",
       });
@@ -243,7 +247,7 @@ const DeliveryTab = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">
-                      #{order.id.slice(0, 8).toUpperCase()}
+                      {getOrderNum(order)}
                     </span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary capitalize">
                       {order.status === "on_delivery" ? "On Delivery" : order.status}
