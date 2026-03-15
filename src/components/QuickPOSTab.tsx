@@ -866,7 +866,7 @@ const QuickPOSTab = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-hidden p-2 sm:p-3">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-3">
             {displayProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Package className="w-10 h-10 mb-2 opacity-50" />
