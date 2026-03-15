@@ -433,7 +433,7 @@ export const StockHistoryDialog = ({
           )}
         </div>
       ) : (
-        <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "60vh" : "450px", minHeight: "200px" }}>
+        <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "calc(90vh - 280px)" : "450px", minHeight: "200px" }}>
           <div className="space-y-2 pb-4">
             {filteredHistory.map((item) => {
               const isEditing = editingId === item.id;
@@ -652,20 +652,20 @@ export const StockHistoryDialog = ({
                           </div>
 
                           {/* Performed by & Order info */}
-                          <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground mb-1">
+                          <div className="flex items-center gap-1.5 flex-wrap text-[10px] sm:text-xs text-muted-foreground mb-1">
                             {item.profile?.full_name && (
                               <span className="font-medium text-foreground/70">
                                 {item.profile.full_name}
                               </span>
                             )}
                             {item.profile?.full_name && (
-                              <span>•</span>
+                              <span className="hidden sm:inline">•</span>
                             )}
-                            <span>{formatDate(item.created_at)}</span>
+                            <span className="break-all">{formatDate(item.created_at)}</span>
                             {item.order_id && item.change_type === "sale" && (
                               <>
                                 <span>•</span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                <span className="text-blue-600 dark:text-blue-400 font-medium truncate max-w-[150px] sm:max-w-none">
                                   Order {item.order_number || `#${item.order_id.slice(0, 8).toUpperCase()}`}
                                 </span>
                               </>
@@ -730,7 +730,7 @@ export const StockHistoryDialog = ({
 
                       {/* Cost details */}
                       {item.total_expense && item.total_expense > 0 && (
-                        <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-3 text-xs flex-wrap">
+                        <div className="mt-2 pt-2 border-t border-border/50 grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
                           <span className="text-muted-foreground">
                             Unit: <span className="text-foreground font-medium">{formatMVR(item.unit_purchase_price || 0)}</span>
                           </span>
@@ -744,7 +744,7 @@ export const StockHistoryDialog = ({
                               Other: <span className="text-foreground">{formatMVR(item.other_expenses)}</span>
                             </span>
                           )}
-                          <span className="ml-auto font-semibold text-primary">
+                          <span className="col-span-2 sm:col-span-1 sm:ml-auto font-semibold text-primary text-right">
                             Total: {formatMVR(item.total_expense)}
                           </span>
                         </div>
