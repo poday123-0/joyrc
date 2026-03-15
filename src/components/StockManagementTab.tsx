@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { StockHistoryDialog } from "@/components/StockHistoryDialog";
+import { StockHistoryDialog, StockHistoryEditData } from "@/components/StockHistoryDialog";
 import StockAnalytics from "@/components/stock/StockAnalytics";
 import BulkRestockDialog from "@/components/stock/BulkRestockDialog";
 
