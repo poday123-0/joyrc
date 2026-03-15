@@ -532,15 +532,47 @@ export const StockHistoryDialog = ({
                       </div>
 
                       {/* Color */}
-                      <div>
-                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Color</label>
-                        <Input
-                          value={editColor}
-                          onChange={(e) => setEditColor(e.target.value)}
-                          placeholder="e.g. Red, Blue..."
-                          className="h-8 text-xs mt-1"
-                        />
-                      </div>
+                      {(() => {
+                        const colors = item.product_id ? availableColors[item.product_id] : undefined;
+                        if (!colors || colors.length === 0) return null;
+                        return (
+                          <div>
+                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Color</label>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                              <button
+                                onClick={() => setEditColor("")}
+                                className={cn(
+                                  "px-2 py-1 rounded-lg text-[10px] font-medium transition-colors border",
+                                  !editColor
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border/50 bg-muted/50 text-muted-foreground hover:bg-muted"
+                                )}
+                              >
+                                None
+                              </button>
+                              {colors.map(color => (
+                                <button
+                                  key={color.id}
+                                  onClick={() => setEditColor(color.color_name)}
+                                  className={cn(
+                                    "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors border",
+                                    editColor === color.color_name
+                                      ? "border-primary bg-primary/10 text-primary"
+                                      : "border-border/50 bg-muted/50 text-muted-foreground hover:bg-muted"
+                                  )}
+                                  title={color.color_name}
+                                >
+                                  <span
+                                    className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0"
+                                    style={{ backgroundColor: color.color_hex }}
+                                  />
+                                  {color.color_name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Cost fields - only for restock */}
                       {item.change_type === "restock" && (
