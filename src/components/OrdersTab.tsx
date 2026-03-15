@@ -76,12 +76,14 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   const [deleting, setDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [bankNames, setBankNames] = useState<Record<string, string>>({});
+  const [cardTypeNames, setCardTypeNames] = useState<Record<string, string>>({});
   const { user, isSuperAdmin } = useAuth();
 
   useEffect(() => {
     if (user) {
       fetchOrders();
-
+      fetchPaymentLookups();
       // Realtime subscription for instant updates
       const channel = supabase
         .channel('orders-realtime')
@@ -93,6 +95,15 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       return () => { supabase.removeChannel(channel); };
     }
   }, [user, isAdmin]);
+
+  const fetchPaymentLookups = async () => {
+    const [{ data: banks }, { data: cards }] = await Promise.all([
+      supabase.from("bank_settings").select("id, bank_name"),
+      supabase.from("card_types").select("id, name"),
+    ]);
+    if (banks) setBankNames(Object.fromEntries(banks.map(b => [b.id, b.bank_name])));
+    if (cards) setCardTypeNames(Object.fromEntries(cards.map(c => [c.id, c.name])));
+  };
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -473,7 +484,16 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                             : order.payment_method === "cash" ? "Cash"
                             : order.payment_method || "Unknown"}
                         </p>
-                        {order.payment_reference && (
+                        {order.payment_method === "bank_transfer" && order.payment_bank_id && bankNames[order.payment_bank_id] && (
+                          <p className="text-[10px] text-muted-foreground">🏦 {bankNames[order.payment_bank_id]}</p>
+                        )}
+                        {order.payment_method === "card" && order.payment_card_type_id && cardTypeNames[order.payment_card_type_id] && (
+                          <p className="text-[10px] text-muted-foreground">💳 {cardTypeNames[order.payment_card_type_id]}</p>
+                        )}
+                        {order.payment_method === "check" && order.payment_reference && (
+                          <p className="text-[10px] text-muted-foreground font-mono">Check #: {order.payment_reference}</p>
+                        )}
+                        {order.payment_method !== "check" && order.payment_reference && (
                           <p className="text-[10px] text-muted-foreground font-mono">Ref: {order.payment_reference}</p>
                         )}
                       </div>
