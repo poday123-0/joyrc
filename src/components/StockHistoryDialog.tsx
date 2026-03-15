@@ -442,7 +442,7 @@ export const StockHistoryDialog = ({
                 <div
                   key={item.id}
                   className={cn(
-                    "p-3 bg-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors",
+                    "p-2 sm:p-3 bg-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors",
                     isEditing && "border-primary/50 bg-primary/5"
                   )}
                 >
