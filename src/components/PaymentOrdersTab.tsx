@@ -1563,10 +1563,17 @@ const OrderCard = ({
                 day: "numeric",
               })}
             </p>
-            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text} flex-shrink-0 capitalize`}>
-              {["pending", "processing"].includes(order.status) 
-                ? statusConfig.label 
-                : order.status.replace("_", " ")}
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 capitalize ${
+              order.status === "pending" ? "bg-gold/20 text-gold" :
+              order.status === "processing" ? "bg-cyan-light/50 text-teal" :
+              order.status === "on_delivery" ? "bg-blue-500/20 text-blue-500" :
+              order.status === "shipped" ? "bg-mint/30 text-mint" :
+              order.status === "delivered" ? "bg-primary/20 text-primary" :
+              order.status === "cancelled" ? "bg-coral/20 text-coral" :
+              order.status === "returned" ? "bg-gold/20 text-gold" :
+              "bg-muted text-muted-foreground"
+            }`}>
+              {order.status.replace("_", " ")}
             </span>
           </div>
         </div>
