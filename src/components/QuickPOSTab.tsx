@@ -923,7 +923,7 @@ const QuickPOSTab = () => {
         </div>
 
         {/* Cart Section - Mobile-optimized without scroll */}
-        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl">
+        <div className="lg:col-span-1 flex flex-col bg-card border border-border rounded-xl lg:max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
           {/* Cart Header with Delivery Toggle */}
           <div className="p-3 border-b border-border bg-muted/30">
             <div className="flex items-center justify-between mb-2">
