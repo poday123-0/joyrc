@@ -109,7 +109,7 @@ const QuickPOSTab = () => {
       .from("products")
       .select("id, name, price, stock_quantity, image_url, category_id, item_code, cost_price")
       .gt("stock_quantity", 0)
-      .order("name");
+      .order("item_code", { ascending: true, nullsFirst: false });
 
     if (error) {
       toast({ title: "Error", description: "Failed to load products", variant: "destructive" });
