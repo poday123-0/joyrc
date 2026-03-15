@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { DataFilterBar, useDataFilter } from "@/components/DataFilterBar";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { 
   Clock, CheckCircle, XCircle, Receipt, Eye, 
