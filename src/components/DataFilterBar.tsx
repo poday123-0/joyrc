@@ -206,9 +206,9 @@ export const DataFilterBar = ({
               onClick={() => setShowStatusOptions(!showStatusOptions)}
               className={cn(
                 "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                status === "all"
-                  ? "bg-muted/50 text-muted-foreground hover:bg-muted"
-                  : statusOptions.find(o => o.value === status)?.color || "bg-primary text-primary-foreground"
+                status !== "all"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
               )}
             >
               {statusOptions.find(o => o.value === status)?.label || "All Status"}
