@@ -433,7 +433,7 @@ export const StockHistoryDialog = ({
           )}
         </div>
       ) : (
-        <ScrollArea className="flex-1 -mx-4 px-4" style={{ maxHeight: isMobile ? "calc(90vh - 280px)" : "450px", minHeight: "200px" }}>
+        <ScrollArea className="flex-1 -mx-2 px-2 sm:-mx-4 sm:px-4" style={{ maxHeight: isMobile ? "calc(90vh - 280px)" : "450px", minHeight: "200px" }}>
           <div className="space-y-2 pb-4">
             {filteredHistory.map((item) => {
               const isEditing = editingId === item.id;
@@ -442,7 +442,7 @@ export const StockHistoryDialog = ({
                 <div
                   key={item.id}
                   className={cn(
-                    "p-3 bg-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors",
+                    "p-2 sm:p-3 bg-muted/50 rounded-xl border border-border/50 hover:border-border transition-colors",
                     isEditing && "border-primary/50 bg-primary/5"
                   )}
                 >
