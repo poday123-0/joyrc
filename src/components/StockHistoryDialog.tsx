@@ -703,6 +703,7 @@ export const StockHistoryDialog = ({
                             const colorName = colorMatch ? colorMatch[1].trim() : null;
                             const cleanNotes = item.notes
                               .replace(/\[Color:\s*[^\]]+\]\s*/g, "")
+                              .replace(/\s*\([^)]*\)\s*$/, "")
                               .trim();
                             const productId = item.product_id;
                             const colors = productId ? availableColors[productId] : undefined;
