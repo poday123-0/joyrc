@@ -120,6 +120,8 @@ export const DataFilterBar = ({
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState<PeriodFilter>("all");
   const [status, setStatus] = useState("all");
+  const [showPeriodOptions, setShowPeriodOptions] = useState(false);
+  const [showStatusOptions, setShowStatusOptions] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
@@ -175,24 +177,30 @@ export const DataFilterBar = ({
 
       {/* Time Period */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-2">Time Period</p>
         <div className="flex flex-wrap gap-1.5">
-          {periodOptions.map(option => (
+          <button
+            onClick={() => setShowPeriodOptions(!showPeriodOptions)}
+            className={cn(
+              "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+              period === "all"
+                ? "bg-muted/50 text-muted-foreground hover:bg-muted"
+                : "bg-primary text-primary-foreground"
+            )}
+          >
+            {periodOptions.find(o => o.value === period)?.label || "All Time"}
+          </button>
+          {showPeriodOptions && periodOptions.filter(o => o.value !== period).map(option => (
             <button
               key={option.value}
               onClick={() => {
                 setPeriod(option.value);
+                setShowPeriodOptions(false);
                 if (option.value !== "custom") {
                   setCustomDateRange({ from: undefined, to: undefined });
                 }
                 emitChange({ period: option.value, customDateRange: option.value !== "custom" ? { from: undefined, to: undefined } : customDateRange });
               }}
-              className={cn(
-                "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                period === option.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
-              )}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-muted/50 text-muted-foreground hover:bg-muted"
             >
               {option.label}
             </button>
@@ -251,21 +259,27 @@ export const DataFilterBar = ({
       {/* Status Filter */}
       {statusOptions && statusOptions.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">{statusLabel}</p>
           <div className="flex flex-wrap gap-1.5">
-            {statusOptions.map(option => (
+            <button
+              onClick={() => setShowStatusOptions(!showStatusOptions)}
+              className={cn(
+                "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                status === "all"
+                  ? "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  : statusOptions.find(o => o.value === status)?.color || "bg-primary text-primary-foreground"
+              )}
+            >
+              {statusOptions.find(o => o.value === status)?.label || "All Status"}
+            </button>
+            {showStatusOptions && statusOptions.filter(o => o.value !== status).map(option => (
               <button
                 key={option.value}
                 onClick={() => {
                   setStatus(option.value);
+                  setShowStatusOptions(false);
                   emitChange({ status: option.value });
                 }}
-                className={cn(
-                  "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                  status === option.value
-                    ? (option.color || "bg-primary text-primary-foreground")
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                )}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-muted/50 text-muted-foreground hover:bg-muted"
               >
                 {option.label}
               </button>
