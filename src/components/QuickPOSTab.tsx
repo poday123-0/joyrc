@@ -158,9 +158,7 @@ const QuickPOSTab = () => {
   });
 
   const isSearching = !!(searchQuery || itemCodeSearch);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const defaultLimit = isMobile ? 9 : 8;
-  const displayProducts = isSearching ? filteredProducts : filteredProducts.slice(0, defaultLimit);
+  const displayProducts = filteredProducts;
 
   const handleProductClick = (product: Product) => {
     if (product.colors && product.colors.length > 0) {
@@ -868,7 +866,7 @@ const QuickPOSTab = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-hidden p-2 sm:p-3">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-3">
             {displayProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Package className="w-10 h-10 mb-2 opacity-50" />
@@ -919,11 +917,6 @@ const QuickPOSTab = () => {
                   </button>
                 ))}
                 </div>
-                {!isSearching && filteredProducts.length > defaultLimit && (
-                  <p className="text-[10px] text-muted-foreground text-center mt-2">
-                    Showing {defaultLimit} of {filteredProducts.length} — search to find more
-                  </p>
-                )}
               </div>
             )}
           </div>
