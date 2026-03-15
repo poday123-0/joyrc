@@ -1483,6 +1483,7 @@ const OrderCard = ({
   onViewInvoice?: () => void;
   onAssignDelivery?: () => void;
   onUpdateStatus?: (status: string) => void;
+  onReturn?: () => void;
   deliveryStaff?: DeliveryStaff[];
   assignedStaffName?: string;
   confirmedByName?: string;
