@@ -653,6 +653,36 @@ const StockManagementTab = () => {
     
     setDeletingHistory(true);
     try {
+      // Fetch the history entry first to reverse the quantity change
+      const { data: historyEntry, error: fetchError } = await supabase
+        .from("stock_history")
+        .select("*")
+        .eq("id", deleteHistoryId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Reverse the stock quantity on the product
+      const { data: product, error: productFetchError } = await supabase
+        .from("products")
+        .select("stock_quantity")
+        .eq("id", historyEntry.product_id)
+        .single();
+
+      if (productFetchError) throw productFetchError;
+
+      const reversedQty = product.stock_quantity - historyEntry.change_amount;
+      const { error: updateError } = await supabase
+        .from("products")
+        .update({ 
+          stock_quantity: Math.max(0, reversedQty),
+          in_stock: reversedQty > 0
+        })
+        .eq("id", historyEntry.product_id);
+
+      if (updateError) throw updateError;
+
+      // Delete the history entry
       const { error } = await supabase
         .from("stock_history")
         .delete()
@@ -660,13 +690,14 @@ const StockManagementTab = () => {
       
       if (error) throw error;
       
-      toast({ title: "History entry deleted" });
+      toast({ title: "History entry deleted", description: `Stock quantity adjusted by ${historyEntry.change_amount > 0 ? '-' : '+'}${Math.abs(historyEntry.change_amount)} units.` });
       setDeleteHistoryId(null);
       
-      // Refresh history for the current product
+      // Refresh products and history
+      fetchProducts();
       if (deleteHistoryProductId) {
-        const product = products.find(p => p.id === deleteHistoryProductId);
-        fetchStockHistory(deleteHistoryProductId, product ? { name: product.name, item_code: product.item_code || null } : undefined);
+        const prod = products.find(p => p.id === deleteHistoryProductId);
+        fetchStockHistory(deleteHistoryProductId, prod ? { name: prod.name, item_code: prod.item_code || null } : undefined);
       }
     } catch (error: any) {
       toast({
@@ -681,12 +712,27 @@ const StockManagementTab = () => {
 
   const handleEditHistoryItem = async (data: StockHistoryEditData) => {
     try {
+      // Fetch the old entry to calculate qty difference
+      const { data: oldEntry, error: fetchError } = await supabase
+        .from("stock_history")
+        .select("*")
+        .eq("id", data.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const oldChangeAmount = oldEntry.change_amount;
+      const newChangeAmount = data.change_amount;
+      const qtyDiff = newChangeAmount - oldChangeAmount; // difference to apply to product
+
       const unitPrice = data.unit_purchase_price || 0;
       const shipping = data.shipping_cost || 0;
       const other = data.other_expenses || 0;
       const qty = Math.abs(data.change_amount);
       const totalExpense = qty > 0 ? (unitPrice + shipping + other) * qty : 0;
 
+      // Update the history entry
+      const newQty = oldEntry.new_quantity + (newChangeAmount - oldChangeAmount);
       const { error } = await supabase
         .from("stock_history")
         .update({
@@ -696,11 +742,32 @@ const StockManagementTab = () => {
           shipping_cost: data.shipping_cost,
           other_expenses: data.other_expenses,
           change_amount: data.change_amount,
+          new_quantity: newQty,
           total_expense: totalExpense > 0 ? totalExpense : null,
         })
         .eq("id", data.id);
 
       if (error) throw error;
+
+      // Adjust product stock if quantity changed
+      if (qtyDiff !== 0) {
+        const { data: product, error: prodError } = await supabase
+          .from("products")
+          .select("stock_quantity")
+          .eq("id", oldEntry.product_id)
+          .single();
+
+        if (prodError) throw prodError;
+
+        const updatedStock = Math.max(0, product.stock_quantity + qtyDiff);
+        const { error: updateError } = await supabase
+          .from("products")
+          .update({ stock_quantity: updatedStock, in_stock: updatedStock > 0 })
+          .eq("id", oldEntry.product_id);
+
+        if (updateError) throw updateError;
+        fetchProducts();
+      }
 
       toast({ title: "History entry updated" });
 
