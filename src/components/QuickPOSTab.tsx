@@ -1148,7 +1148,7 @@ const QuickPOSTab = () => {
               )}
 
 
-                onClick={completeSale}
+              <button
                 disabled={cart.length === 0 || processing}
                 className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-[0.98] transition-all"
               >
