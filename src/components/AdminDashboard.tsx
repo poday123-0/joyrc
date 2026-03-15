@@ -33,6 +33,11 @@ interface Transaction {
   description: string | null;
   order_id: string | null;
   created_at: string;
+  product_name: string | null;
+  quantity: number | null;
+  unit_purchase_price: number | null;
+  shipping_cost: number | null;
+  other_costs: number | null;
 }
 
 interface DashboardStats {
