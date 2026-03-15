@@ -303,6 +303,11 @@ const BankSettingsTab = () => {
         variant="destructive"
         onConfirm={handleConfirmDelete}
       />
+
+      {/* Card Types Section */}
+      <div className="mt-8 pt-6 border-t border-border">
+        <CardTypesTab />
+      </div>
     </div>
   );
 };
