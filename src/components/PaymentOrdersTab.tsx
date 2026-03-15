@@ -1419,7 +1419,61 @@ const PaymentOrdersTab = () => {
         </div>
       )}
 
-      {/* Invoice Modal */}
+      {/* Return Dialog */}
+      {returnDialogOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setReturnDialogOpen(false);
+            setReturnReason("");
+            setSelectedOrderId(null);
+          }}
+        >
+          <div 
+            className="bg-card rounded-2xl p-6 max-w-md w-full shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-destructive" />
+              Return Products
+            </h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please provide a reason for returning this order. The customer will be notified.
+            </p>
+            
+            <Textarea
+              placeholder="Enter return reason..."
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+
+            <div className="flex gap-2 mt-4">
+              <Button 
+                onClick={handleReturnOrder}
+                disabled={!returnReason.trim()}
+                variant="destructive"
+                className="flex-1 gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Confirm Return
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setReturnDialogOpen(false);
+                  setReturnReason("");
+                  setSelectedOrderId(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {showInvoice && invoiceData && (
         <POSInvoice
           invoice={invoiceData}
