@@ -821,6 +821,7 @@ const StockManagementTab = () => {
           setDeleteHistoryId(historyId);
           setDeleteHistoryProductId(expandedProductId);
         }}
+        onEditHistory={handleEditHistoryItem}
       />
 
       {/* Per-Product History - Inline */}
