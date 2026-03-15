@@ -642,12 +642,28 @@ export const StockHistoryDialog = ({
                             )}
                           </div>
 
-                          {/* Notes */}
-                          {item.notes && (
-                            <p className="text-xs text-muted-foreground italic truncate">
-                              "{item.notes}"
-                            </p>
-                          )}
+                          {/* Notes with color circle */}
+                          {item.notes && (() => {
+                            const colorMatch = item.notes.match(/\[Color:\s*([^\]]+)\]/);
+                            const colorName = colorMatch ? colorMatch[1].trim() : null;
+                            const cleanNotes = item.notes
+                              .replace(/\[Color:\s*[^\]]+\]\s*/g, "")
+                              .trim();
+                            return (
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                {colorName && (
+                                  <span 
+                                    className="w-3.5 h-3.5 rounded-full border border-border/50 flex-shrink-0" 
+                                    style={{ backgroundColor: colorName.toLowerCase() }}
+                                    title={colorName}
+                                  />
+                                )}
+                                {cleanNotes && (
+                                  <span className="italic truncate">"{cleanNotes}"</span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         <div className="flex items-start gap-1 flex-shrink-0">
