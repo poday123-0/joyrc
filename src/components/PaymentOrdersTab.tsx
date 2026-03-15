@@ -1566,7 +1566,10 @@ const OrderCard = ({
               <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h5>
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
-                  <span>{item.product_name} x{item.quantity}</span>
+                  <span>
+                    {item.item_code && <span className="text-muted-foreground">[{item.item_code}] </span>}
+                    {item.product_name} x{item.quantity}
+                  </span>
                   <span className="font-medium">{formatMVR(item.product_price * item.quantity)}</span>
                 </div>
               ))}
