@@ -868,15 +868,19 @@ const QuickPOSTab = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 sm:p-3">
-            {filteredProducts.length === 0 ? (
+          <div className="flex-1 overflow-hidden p-2 sm:p-3">
+            {displayProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Package className="w-10 h-10 mb-2 opacity-50" />
-                <p className="text-sm">No products found</p>
+                <p className="text-sm">{isSearching ? "No products found" : "No products available"}</p>
+                {!isSearching && filteredProducts.length > 0 && (
+                  <p className="text-xs mt-1">Use search to find more products</p>
+                )}
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                {filteredProducts.map(product => (
+              <div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                {displayProducts.map(product => (
                   <button
                     key={product.id}
                     onClick={() => handleProductClick(product)}
