@@ -29,8 +29,10 @@ const BankSettingsTab = () => {
     branch: "",
     swift_code: "",
     is_active: true,
+    logo_url: "",
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bankToDelete, setBankToDelete] = useState<string | null>(null);
 
