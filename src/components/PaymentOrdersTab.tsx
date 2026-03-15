@@ -1683,6 +1683,18 @@ const OrderCard = ({
                     />
                   </div>
                 )}
+                {isSuperAdmin && (
+                  <div>
+                    <Label htmlFor="edit-order-date" className="text-xs">Order Date</Label>
+                    <Input
+                      id="edit-order-date"
+                      type="date"
+                      value={editOrderDate || ""}
+                      onChange={(e) => onEditOrderDateChange?.(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="edit-comment" className="text-xs">Edit Comment (required)</Label>
                   <Input
