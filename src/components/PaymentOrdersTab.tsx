@@ -1645,6 +1645,31 @@ const OrderCard = ({
               ))}
             </div>
 
+            {/* Payment Info */}
+            <div className="p-2.5 bg-muted/30 rounded-lg">
+              <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Payment</h5>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                  {order.payment_method === "bank_transfer" ? "Bank Transfer"
+                    : order.payment_method === "card" ? "Card"
+                    : order.payment_method === "check" ? "Check"
+                    : order.payment_method === "cash" ? "Cash"
+                    : order.payment_method || "Unknown"}
+                </span>
+                {order.payment_method === "bank_transfer" && order.payment_bank_id && bankNames[order.payment_bank_id] && (
+                  <span className="text-xs text-muted-foreground">🏦 {bankNames[order.payment_bank_id]}</span>
+                )}
+                {order.payment_method === "card" && order.payment_card_type_id && cardTypeNames[order.payment_card_type_id] && (
+                  <span className="text-xs text-muted-foreground">💳 {cardTypeNames[order.payment_card_type_id]}</span>
+                )}
+                {order.payment_reference && (
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {order.payment_method === "check" ? `Check #${order.payment_reference}` : `Ref: ${order.payment_reference}`}
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* Contact info */}
             {order.shipping_address && (
               <div>
