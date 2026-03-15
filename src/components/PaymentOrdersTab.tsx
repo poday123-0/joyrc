@@ -1059,7 +1059,7 @@ const PaymentOrdersTab = () => {
             <span className="text-lg font-bold text-primary">ރ</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground font-semibold">Total Revenue (Filtered)</p>
+            <p className="text-xs text-muted-foreground font-semibold">Total Revenue</p>
             <p className="text-lg font-bold text-foreground">{formatMVR(filteredRevenue)}</p>
           </div>
         </div>
