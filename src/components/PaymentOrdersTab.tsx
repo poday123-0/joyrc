@@ -89,6 +89,7 @@ const PaymentOrdersTab = () => {
   const [editComment, setEditComment] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editOrderNumber, setEditOrderNumber] = useState("");
+  const [editOrderDate, setEditOrderDate] = useState("");
   
   // Import state
   const [showImportDialog, setShowImportDialog] = useState(false);
