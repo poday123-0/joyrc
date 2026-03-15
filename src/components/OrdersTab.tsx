@@ -464,7 +464,11 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                       <div>
                         <p className={`text-sm font-medium ${paymentConfig.text}`}>{paymentConfig.label}</p>
                         <p className="text-xs text-muted-foreground capitalize">
-                          {order.payment_method === "bank_transfer" ? "Bank Transfer" : order.payment_method || "Unknown"}
+                          {order.payment_method === "bank_transfer" ? "Bank Transfer" 
+                            : order.payment_method === "card" ? "Card"
+                            : order.payment_method === "check" ? "Check"
+                            : order.payment_method === "cash" ? "Cash"
+                            : order.payment_method || "Unknown"}
                         </p>
                       </div>
                     </div>
