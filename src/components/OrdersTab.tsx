@@ -484,7 +484,16 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                             : order.payment_method === "cash" ? "Cash"
                             : order.payment_method || "Unknown"}
                         </p>
-                        {order.payment_reference && (
+                        {order.payment_method === "bank_transfer" && order.payment_bank_id && bankNames[order.payment_bank_id] && (
+                          <p className="text-[10px] text-muted-foreground">🏦 {bankNames[order.payment_bank_id]}</p>
+                        )}
+                        {order.payment_method === "card" && order.payment_card_type_id && cardTypeNames[order.payment_card_type_id] && (
+                          <p className="text-[10px] text-muted-foreground">💳 {cardTypeNames[order.payment_card_type_id]}</p>
+                        )}
+                        {order.payment_method === "check" && order.payment_reference && (
+                          <p className="text-[10px] text-muted-foreground font-mono">Check #: {order.payment_reference}</p>
+                        )}
+                        {order.payment_method !== "check" && order.payment_reference && (
                           <p className="text-[10px] text-muted-foreground font-mono">Ref: {order.payment_reference}</p>
                         )}
                       </div>
