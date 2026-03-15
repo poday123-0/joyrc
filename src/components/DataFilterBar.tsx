@@ -175,84 +175,33 @@ export const DataFilterBar = ({
         )}
       </div>
 
-      {/* Time Period */}
-      <div>
-        <div className="flex flex-wrap gap-1.5">
-          {periodOptions.map(option => (
-            <button
-              key={option.value}
-              onClick={() => {
-                setPeriod(option.value);
-                if (option.value !== "custom") {
-                  setCustomDateRange({ from: undefined, to: undefined });
-                }
-                emitChange({ period: option.value, customDateRange: option.value !== "custom" ? { from: undefined, to: undefined } : customDateRange });
-              }}
-              className={cn(
-                "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                period === option.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+      {/* Time Period & Status */}
+      <div className="flex flex-wrap gap-1.5 items-center">
+        {periodOptions.map(option => (
+          <button
+            key={option.value}
+            onClick={() => {
+              setPeriod(option.value);
+              if (option.value !== "custom") {
+                setCustomDateRange({ from: undefined, to: undefined });
+              }
+              emitChange({ period: option.value, customDateRange: option.value !== "custom" ? { from: undefined, to: undefined } : customDateRange });
+            }}
+            className={cn(
+              "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+              period === option.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted"
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
 
-        {period === "custom" && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
-                  <CalendarIcon className="w-3.5 h-3.5" />
-                  {customDateRange.from ? format(customDateRange.from, "MMM d, yyyy") : "Start date"}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={customDateRange.from}
-                  onSelect={(date) => {
-                    const newRange = { ...customDateRange, from: date };
-                    setCustomDateRange(newRange);
-                    emitChange({ customDateRange: newRange });
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-            <span className="text-xs text-muted-foreground">to</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
-                  <CalendarIcon className="w-3.5 h-3.5" />
-                  {customDateRange.to ? format(customDateRange.to, "MMM d, yyyy") : "End date"}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={customDateRange.to}
-                  onSelect={(date) => {
-                    const newRange = { ...customDateRange, to: date };
-                    setCustomDateRange(newRange);
-                    emitChange({ customDateRange: newRange });
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        )}
-      </div>
-
-      {/* Status Filter */}
-      {statusOptions && statusOptions.length > 0 && (
-        <div>
-          <div>
+        {/* Status Filter Button */}
+        {statusOptions && statusOptions.length > 0 && (
+          <>
+            <div className="w-px h-5 bg-border mx-0.5" />
             <button
               onClick={() => setShowStatusOptions(!showStatusOptions)}
               className={cn(
@@ -265,24 +214,75 @@ export const DataFilterBar = ({
               {statusOptions.find(o => o.value === status)?.label || "All Status"}
               {showStatusOptions ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />}
             </button>
-            {showStatusOptions && (
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                {statusOptions.filter(o => o.value !== status).map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setStatus(option.value);
-                      setShowStatusOptions(false);
-                      emitChange({ status: option.value });
-                    }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-muted/50 text-muted-foreground hover:bg-muted"
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          </>
+        )}
+      </div>
+
+      {/* Status Options Dropdown */}
+      {statusOptions && statusOptions.length > 0 && showStatusOptions && (
+        <div className="flex flex-wrap gap-1.5">
+          {statusOptions.filter(o => o.value !== status).map(option => (
+            <button
+              key={option.value}
+              onClick={() => {
+                setStatus(option.value);
+                setShowStatusOptions(false);
+                emitChange({ status: option.value });
+              }}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-muted/50 text-muted-foreground hover:bg-muted"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Custom Date Range */}
+      {period === "custom" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
+                <CalendarIcon className="w-3.5 h-3.5" />
+                {customDateRange.from ? format(customDateRange.from, "MMM d, yyyy") : "Start date"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={customDateRange.from}
+                onSelect={(date) => {
+                  const newRange = { ...customDateRange, from: date };
+                  setCustomDateRange(newRange);
+                  emitChange({ customDateRange: newRange });
+                }}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+          <span className="text-xs text-muted-foreground">to</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-xs">
+                <CalendarIcon className="w-3.5 h-3.5" />
+                {customDateRange.to ? format(customDateRange.to, "MMM d, yyyy") : "End date"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={customDateRange.to}
+                onSelect={(date) => {
+                  const newRange = { ...customDateRange, to: date };
+                  setCustomDateRange(newRange);
+                  emitChange({ customDateRange: newRange });
+                }}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       )}
 
