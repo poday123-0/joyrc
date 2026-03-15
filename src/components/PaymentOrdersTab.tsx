@@ -1132,6 +1132,8 @@ const PaymentOrdersTab = () => {
                   onEditNotesChange={setEditNotes}
                   onEditCommentChange={setEditComment}
                   onEditOrderNumberChange={setEditOrderNumber}
+                  editOrderDate={editOrderDate}
+                  onEditOrderDateChange={setEditOrderDate}
                   onViewReceipt={(url) => setViewingReceipt(url)}
                   onViewInvoice={() => {
                     const items = (orderItems[order.id] || []).map(item => ({
