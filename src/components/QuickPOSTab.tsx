@@ -428,6 +428,9 @@ const QuickPOSTab = () => {
           notes: orderNotes,
           shipping_address: isDelivery ? customerDetails.address.trim() : null,
           phone: customerDetails.phone.trim() || null,
+          payment_reference: paymentReference.trim() || null,
+          payment_bank_id: paymentMethod === "bank_transfer" && selectedBankId ? selectedBankId : null,
+          payment_card_type_id: paymentMethod === "card" && selectedCardTypeId ? selectedCardTypeId : null,
         })
         .select()
         .single();
