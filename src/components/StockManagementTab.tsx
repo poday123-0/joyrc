@@ -607,9 +607,17 @@ const StockManagementTab = () => {
 
       if (deleteError) throw deleteError;
 
+      // Delete all Inventory-category transactions
+      const { error: txDeleteError } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("category", "Inventory");
+
+      if (txDeleteError) throw txDeleteError;
+
       toast({
         title: "Stock & History Cleared",
-        description: "All stock quantities reset to 0 and history deleted.",
+        description: "All stock quantities reset to 0, history and inventory transactions deleted.",
       });
 
       setShowClearDialog(false);
