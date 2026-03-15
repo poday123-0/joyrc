@@ -1736,7 +1736,7 @@ const ProductsTab = ({
                 />
                 <input
                   type="text"
-                  placeholder="Item Code / SKU"
+                  placeholder={editingProduct ? "Item Code / SKU" : "Auto-generated (leave blank)"}
                   value={formData.item_code}
                   onChange={(e) => setFormData({ ...formData, item_code: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent font-mono"
