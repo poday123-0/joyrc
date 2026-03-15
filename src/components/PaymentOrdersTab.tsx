@@ -1128,6 +1128,7 @@ const PaymentOrdersTab = () => {
                     }));
                     setInvoiceData({
                       orderId: order.id,
+                      orderNumber: order.order_number || undefined,
                       orderDate: order.created_at,
                       items,
                       total: order.total_amount,
