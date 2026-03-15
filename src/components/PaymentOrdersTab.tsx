@@ -1539,6 +1539,8 @@ const OrderCard = ({
   assignedStaffName,
   confirmedByName,
   customerName,
+  bankNames,
+  cardTypeNames,
   getPaymentStatusConfig,
 }: {
   order: Order;
