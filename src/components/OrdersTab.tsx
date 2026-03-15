@@ -176,22 +176,22 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     const notificationMessages: Record<string, { title: string; message: string; type: string }> = {
       processing: {
         title: "Order Processing 📦",
-        message: `Your order #${orderId.slice(0, 8).toUpperCase()} is now being processed and will be shipped soon.`,
+        message: `Your order ${getOrderNum(order)} is now being processed and will be shipped soon.`,
         type: "info",
       },
       shipped: {
         title: "Order Shipped! 🚚",
-        message: `Great news! Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way to you.`,
+        message: `Great news! Your order ${getOrderNum(order)} has been shipped and is on its way to you.`,
         type: "success",
       },
       delivered: {
         title: "Order Delivered! 🎉",
-        message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered. Enjoy your purchase!`,
+        message: `Your order ${getOrderNum(order)} has been delivered. Enjoy your purchase!`,
         type: "success",
       },
       cancelled: {
         title: "Order Cancelled",
-        message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been cancelled. Contact support if you have questions.`,
+        message: `Your order ${getOrderNum(order)} has been cancelled. Contact support if you have questions.`,
         type: "error",
       },
     };
