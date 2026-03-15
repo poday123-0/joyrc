@@ -522,6 +522,17 @@ export const StockHistoryDialog = ({
                         />
                       </div>
 
+                      {/* Color */}
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Color</label>
+                        <Input
+                          value={editColor}
+                          onChange={(e) => setEditColor(e.target.value)}
+                          placeholder="e.g. Red, Blue..."
+                          className="h-8 text-xs mt-1"
+                        />
+                      </div>
+
                       {/* Cost fields - only for restock */}
                       {item.change_type === "restock" && (
                         <div className="grid grid-cols-3 gap-2">
