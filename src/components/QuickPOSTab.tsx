@@ -100,6 +100,8 @@ const QuickPOSTab = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchBanks();
+    fetchCardTypes();
   }, []);
 
   const fetchProducts = async () => {
