@@ -141,6 +141,7 @@ interface SystemSettings {
   notification_email: string | null;
   notification_sender_name: string | null;
   google_login_enabled: boolean;
+  order_number_prefix: string | null;
   site_title: string | null;
   favicon_url: string | null;
   og_image_url: string | null;
