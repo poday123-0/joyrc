@@ -158,9 +158,7 @@ const QuickPOSTab = () => {
   });
 
   const isSearching = !!(searchQuery || itemCodeSearch);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const defaultLimit = isMobile ? 9 : 8;
-  const displayProducts = isSearching ? filteredProducts : filteredProducts.slice(0, defaultLimit);
+  const displayProducts = filteredProducts;
 
   const handleProductClick = (product: Product) => {
     if (product.colors && product.colors.length > 0) {
