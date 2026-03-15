@@ -1563,14 +1563,11 @@ const OrderCard = ({
                 day: "numeric",
               })}
             </p>
-            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text} flex-shrink-0`}>
-              {statusConfig.label}
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text} flex-shrink-0 capitalize`}>
+              {["pending", "processing"].includes(order.status) 
+                ? statusConfig.label 
+                : order.status.replace("_", " ")}
             </span>
-            {order.status !== "pending" && order.status !== "processing" && (
-              <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-primary/15 text-primary flex-shrink-0 capitalize">
-                {order.status.replace("_", " ")}
-              </span>
-            )}
           </div>
         </div>
         <div className="text-right flex-shrink-0">
