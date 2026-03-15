@@ -2931,6 +2931,7 @@ const SettingsTab = ({
         notification_email: settings.notification_email || "",
         notification_sender_name: settings.notification_sender_name || "RC Joy",
         google_login_enabled: settings.google_login_enabled ?? true,
+        order_number_prefix: settings.order_number_prefix || "RCJOY",
         site_title: settings.site_title || "",
         favicon_url: settings.favicon_url || "",
         og_image_url: settings.og_image_url || "",
