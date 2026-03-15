@@ -1206,6 +1206,8 @@ const PaymentOrdersTab = () => {
                 onEditNotesChange={setEditNotes}
                 onEditCommentChange={setEditComment}
                 onEditOrderNumberChange={setEditOrderNumber}
+                editOrderDate={editOrderDate}
+                onEditOrderDateChange={setEditOrderDate}
                 onViewInvoice={() => {
                   const items = (orderItems[order.id] || []).map(item => ({
                     name: item.product_name,
