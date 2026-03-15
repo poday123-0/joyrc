@@ -44,6 +44,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean | null
+          logo_url: string | null
           swift_code: string | null
           updated_at: string
         }
@@ -55,6 +56,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           swift_code?: string | null
           updated_at?: string
         }
@@ -66,6 +68,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           swift_code?: string | null
           updated_at?: string
         }

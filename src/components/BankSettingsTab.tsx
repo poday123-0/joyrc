@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
-import { Plus, X, Pencil, Trash2, Building2, CheckCircle2 } from "lucide-react";
+import { Plus, X, Pencil, Trash2, Building2, CheckCircle2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -14,6 +14,7 @@ interface BankSetting {
   branch: string | null;
   swift_code: string | null;
   is_active: boolean;
+  logo_url: string | null;
 }
 
 const BankSettingsTab = () => {
@@ -28,8 +29,10 @@ const BankSettingsTab = () => {
     branch: "",
     swift_code: "",
     is_active: true,
+    logo_url: "",
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bankToDelete, setBankToDelete] = useState<string | null>(null);
 
@@ -60,6 +63,7 @@ const BankSettingsTab = () => {
       branch: "",
       swift_code: "",
       is_active: true,
+      logo_url: "",
     });
     setEditingBank(null);
     setShowForm(false);
@@ -74,6 +78,7 @@ const BankSettingsTab = () => {
       branch: bank.branch || "",
       swift_code: bank.swift_code || "",
       is_active: bank.is_active,
+      logo_url: bank.logo_url || "",
     });
     setShowForm(true);
   };
@@ -90,6 +95,7 @@ const BankSettingsTab = () => {
         branch: formData.branch.trim() || null,
         swift_code: formData.swift_code.trim() || null,
         is_active: formData.is_active,
+        logo_url: formData.logo_url.trim() || null,
       };
 
       if (editingBank) {
@@ -225,6 +231,49 @@ const BankSettingsTab = () => {
                 className="px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
+            {/* Bank Logo Upload */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Bank Logo (optional)</label>
+              <div className="flex items-center gap-3">
+                {formData.logo_url && (
+                  <img src={formData.logo_url} alt="Bank logo" className="w-10 h-10 rounded-lg object-contain border border-border" />
+                )}
+                <label className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border cursor-pointer hover:bg-muted/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingLogo}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingLogo(true);
+                      try {
+                        const ext = file.name.split('.').pop();
+                        const fileName = `bank-logos/${Date.now()}.${ext}`;
+                        const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file);
+                        if (uploadError) throw uploadError;
+                        const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                        setFormData(prev => ({ ...prev, logo_url: urlData.publicUrl }));
+                      } catch (err: any) {
+                        toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+                      } finally {
+                        setUploadingLogo(false);
+                      }
+                    }}
+                  />
+                  {uploadingLogo ? (
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span className="text-xs text-muted-foreground">{uploadingLogo ? "Uploading..." : "Upload Logo"}</span>
+                </label>
+                {formData.logo_url && (
+                  <button type="button" onClick={() => setFormData({ ...formData, logo_url: "" })} className="text-xs text-destructive hover:underline">Remove</button>
+                )}
+              </div>
+            </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -250,10 +299,14 @@ const BankSettingsTab = () => {
         {banks.map((bank) => (
           <div key={bank.id} className="glass-card rounded-2xl p-4 shadow-soft">
             <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${
                 bank.is_active ? "bg-mint/20" : "bg-muted"
               }`}>
-                <Building2 className={`w-6 h-6 ${bank.is_active ? "text-mint" : "text-muted-foreground"}`} />
+                {bank.logo_url ? (
+                  <img src={bank.logo_url} alt={bank.bank_name} className="w-10 h-10 rounded-lg object-contain" />
+                ) : (
+                  <Building2 className={`w-6 h-6 ${bank.is_active ? "text-mint" : "text-muted-foreground"}`} />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
