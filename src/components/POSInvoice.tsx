@@ -335,7 +335,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="space-y-0.5 invoice-meta-row">
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Invoice #</p>
-                  <p className="font-bold text-foreground invoice-meta-value">{invoice.orderId.slice(0, 8).toUpperCase()}</p>
+                  <p className="font-bold text-foreground invoice-meta-value">{invoice.orderNumber || invoice.orderId.slice(0, 8).toUpperCase()}</p>
                 </div>
                 <div className="space-y-0.5 text-right invoice-meta-row">
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wide invoice-meta-label">Type</p>

@@ -414,7 +414,7 @@ export const StockHistoryDialog = ({
                         <>
                           <span>•</span>
                           <span className="text-blue-600 dark:text-blue-400 font-medium">
-                            Order #{item.order_id.slice(0, 8).toUpperCase()}
+                            Order {item.notes?.match(/Order (RCJOY\/\S+)/)?.[1] || `#${item.order_id.slice(0, 8).toUpperCase()}`}
                           </span>
                         </>
                       )}
