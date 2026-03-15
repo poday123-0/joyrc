@@ -918,6 +918,12 @@ const QuickPOSTab = () => {
                     </div>
                   </button>
                 ))}
+                </div>
+                {!isSearching && filteredProducts.length > defaultLimit && (
+                  <p className="text-[10px] text-muted-foreground text-center mt-2">
+                    Showing {defaultLimit} of {filteredProducts.length} — search to find more
+                  </p>
+                )}
               </div>
             )}
           </div>
