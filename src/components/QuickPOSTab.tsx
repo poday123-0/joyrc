@@ -357,6 +357,36 @@ const QuickPOSTab = () => {
 
   const completeSale = async () => {
     if (cart.length === 0) return;
+
+    // Validate payment method
+    if (!paymentMethod) {
+      toast({ title: "Payment Required", description: "Please select a payment method", variant: "destructive" });
+      return;
+    }
+
+    // Validate transfer reference
+    if (paymentMethod === "bank_transfer" && !paymentReference.trim()) {
+      toast({ title: "Reference Required", description: "Please enter the transfer reference number", variant: "destructive" });
+      return;
+    }
+
+    // Validate bank selection for transfer
+    if (paymentMethod === "bank_transfer" && !selectedBankId) {
+      toast({ title: "Bank Required", description: "Please select a bank", variant: "destructive" });
+      return;
+    }
+
+    // Validate check number
+    if (paymentMethod === "check" && !paymentReference.trim()) {
+      toast({ title: "Check Number Required", description: "Please enter the check number", variant: "destructive" });
+      return;
+    }
+
+    // Validate card type
+    if (paymentMethod === "card" && !selectedCardTypeId) {
+      toast({ title: "Card Type Required", description: "Please select a card type", variant: "destructive" });
+      return;
+    }
     
     // Validate delivery details if delivery is selected
     if (isDelivery && (!customerDetails.name.trim() || !customerDetails.phone.trim() || !customerDetails.address.trim())) {
