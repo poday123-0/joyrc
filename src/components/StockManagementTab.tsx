@@ -283,6 +283,14 @@ const StockManagementTab = () => {
       );
 
       setStockHistory(historyWithProfiles);
+
+      // Fetch colors for all unique product IDs in history
+      const uniqueProductIds = [...new Set((historyData || []).map(h => h.product_id))];
+      for (const pid of uniqueProductIds) {
+        if (!productColors[pid]) {
+          fetchProductColors(pid);
+        }
+      }
     } catch (error) {
       console.error("Error fetching all stock history:", error);
     }
