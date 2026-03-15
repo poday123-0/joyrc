@@ -105,7 +105,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
       });
       
       const link = document.createElement('a');
-      link.download = `invoice-${invoice.orderId.slice(0, 8).toUpperCase()}.png`;
+      link.download = `invoice-${(invoice.orderNumber || invoice.orderId.slice(0, 8)).toUpperCase()}.png`;
       link.href = dataUrl;
       link.click();
       
