@@ -539,17 +539,6 @@ export const StockHistoryDialog = ({
                           <div>
                             <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Color</label>
                             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                              <button
-                                onClick={() => setEditColor("")}
-                                className={cn(
-                                  "px-2 py-1 rounded-lg text-[10px] font-medium transition-colors border",
-                                  !editColor
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-border/50 bg-muted/50 text-muted-foreground hover:bg-muted"
-                                )}
-                              >
-                                None
-                              </button>
                               {colors.map(color => (
                                 <button
                                   key={color.id}
