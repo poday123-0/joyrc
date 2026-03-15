@@ -2210,7 +2210,7 @@ const ProductsTab = ({
                                 <DndContext
                                   sensors={colorImageSensors}
                                   collisionDetection={closestCenter}
-                                  onDragEnd={(event: DragEndEvent) => {
+                                  onDragEnd={async (event: DragEndEvent) => {
                                     const { active, over } = event;
                                     if (!over || active.id === over.id || !editingProduct) return;
 
@@ -2229,13 +2229,23 @@ const ProductsTab = ({
 
                                     const reordered = arrayMove(allImages, oldIndex, newIndex);
                                     const newFirst = reordered[0];
+                                    const previousFirst = allImages[0];
 
-                                    // If the first image changed, we need to swap main
-                                    if (newFirst.id !== `main-${color.id}`) {
-                                      // An extra image was dragged to first position
+                                    if (newFirst.id !== previousFirst.id) {
+                                      // Main image changed — promote the new first to main
                                       if (newFirst.extraId) {
-                                        handleSetColorMainImage(color.id, newFirst.extraId, newFirst.url);
+                                        await handleSetColorMainImage(color.id, newFirst.extraId, newFirst.url);
                                       }
+                                    }
+
+                                    // Also update sort order of remaining extras
+                                    const newExtras = reordered
+                                      .filter(img => img.id !== newFirst.id || !newFirst.isMain)
+                                      .filter(img => img.extraId)
+                                      .map(img => ({ id: img.extraId!, url: img.url }));
+                                    
+                                    if (newExtras.length > 0) {
+                                      await handleReorderColorImages(color.id, newExtras);
                                     }
                                   }}
                                 >
