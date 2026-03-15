@@ -1373,6 +1373,7 @@ const OrderCard = ({
   isEditing,
   editNotes,
   editComment,
+  editOrderNumber,
   onToggle,
   onConfirm,
   onReject,
@@ -1382,6 +1383,7 @@ const OrderCard = ({
   onCancelEdit,
   onEditNotesChange,
   onEditCommentChange,
+  onEditOrderNumberChange,
   onViewReceipt,
   onViewInvoice,
   onAssignDelivery,
@@ -1400,6 +1402,7 @@ const OrderCard = ({
   isEditing: boolean;
   editNotes: string;
   editComment: string;
+  editOrderNumber?: string;
   onToggle: () => void;
   onConfirm?: () => void;
   onReject?: () => void;
@@ -1409,6 +1412,7 @@ const OrderCard = ({
   onCancelEdit?: () => void;
   onEditNotesChange?: (value: string) => void;
   onEditCommentChange?: (value: string) => void;
+  onEditOrderNumberChange?: (value: string) => void;
   onViewReceipt?: (url: string) => void;
   onViewInvoice?: () => void;
   onAssignDelivery?: () => void;
