@@ -441,6 +441,9 @@ const StockManagementTab = () => {
           .eq("id", productId);
       }
 
+      // Get current user for created_by
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
       // Record stock history with costs
       const historyData: any = {
         product_id: productId,
@@ -449,6 +452,7 @@ const StockManagementTab = () => {
         change_amount: changeAmount,
         change_type: isRestock ? "restock" : "stock_removal",
         notes,
+        created_by: currentUser?.id || null,
       };
 
       // Add cost data if this is a restock with costs
