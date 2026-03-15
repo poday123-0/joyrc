@@ -352,7 +352,32 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
     );
   }
 
-  if (orders.length === 0) {
+  const orderStatusOptions = [
+    { value: "all", label: "All Status" },
+    { value: "pending", label: "Pending", color: "bg-gold/20 text-gold" },
+    { value: "processing", label: "Processing", color: "bg-cyan-light/50 text-teal" },
+    { value: "on_delivery", label: "On Delivery", color: "bg-cyan-light/50 text-teal" },
+    { value: "shipped", label: "Shipped", color: "bg-mint/30 text-primary" },
+    { value: "delivered", label: "Delivered", color: "bg-primary/20 text-primary" },
+    { value: "cancelled", label: "Cancelled", color: "bg-coral/20 text-coral" },
+  ];
+
+  const paymentStatusOpts = [
+    { value: "all", label: "All Payments" },
+    { value: "pending", label: "Awaiting", color: "bg-gold/20 text-gold" },
+    { value: "uploaded", label: "Uploaded", color: "bg-cyan-light/50 text-teal" },
+    { value: "confirmed", label: "Confirmed", color: "bg-primary/20 text-primary" },
+    { value: "rejected", label: "Rejected", color: "bg-coral/20 text-coral" },
+  ];
+
+  const { filters, setFilters, filteredData: filteredOrders } = useDataFilter(
+    orders,
+    (o) => o.created_at,
+    (o) => `${o.id} ${o.shipping_address || ""} ${o.phone || ""} ${o.notes || ""}`,
+    (o) => o.status,
+  );
+
+  if (orders.length === 0 && !loading) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
@@ -367,8 +392,17 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
   }
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {orders.map((order) => {
+    <div className="space-y-4">
+      {isAdmin && (
+        <DataFilterBar
+          searchPlaceholder="Search by order ID, address, phone..."
+          statusOptions={orderStatusOptions}
+          statusLabel="Order Status"
+          onFiltersChange={setFilters}
+        />
+      )}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {filteredOrders.map((order) => {
         const statusConfig = statusColors[order.status] || statusColors.pending;
         const StatusIcon = statusConfig.icon;
         const paymentConfig = paymentStatusColors[order.payment_status || "pending"] || paymentStatusColors.pending;
