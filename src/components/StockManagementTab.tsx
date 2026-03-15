@@ -617,7 +617,7 @@ const StockManagementTab = () => {
 
       toast({
         title: "Stock & History Cleared",
-        description: "All stock quantities reset to 0 and history deleted.",
+        description: "All stock quantities reset to 0, history and inventory transactions deleted.",
       });
 
       setShowClearDialog(false);
