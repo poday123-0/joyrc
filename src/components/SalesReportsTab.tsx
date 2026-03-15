@@ -405,7 +405,7 @@ const SalesReportsTab = () => {
                     {paymentData.map((item, index) => (
                       <div key={item.name} className="flex items-center gap-2 text-xs">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                        <span className="text-muted-foreground">{item.name}: {item.count}</span>
+                        <span className="text-muted-foreground">{item.name}: {item.count} ({formatMVR(item.value)})</span>
                       </div>
                     ))}
                   </div>
