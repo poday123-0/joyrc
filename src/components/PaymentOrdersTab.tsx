@@ -1209,6 +1209,10 @@ const PaymentOrdersTab = () => {
                     setAssignDialogOpen(true);
                   }}
                   onUpdateStatus={(status) => handleUpdateOrderStatus(order.id, status)}
+                  onReturn={() => {
+                    setSelectedOrderId(order.id);
+                    setReturnDialogOpen(true);
+                  }}
                   deliveryStaff={deliveryStaff}
                   assignedStaffName={assignedStaff?.full_name || undefined}
                   confirmedByName={order.confirmed_by ? confirmerProfiles[order.confirmed_by]?.full_name || undefined : undefined}
