@@ -1463,12 +1463,9 @@ const ProductsTab = ({
       .update({ image_url: urlData.publicUrl })
       .eq("id", colorId);
     if (!error) {
-      setProductColors(prev => ({
-        ...prev,
-        [editingProduct.id]: prev[editingProduct.id]?.map(c =>
-          c.id === colorId ? { ...c, image_url: urlData.publicUrl } : c
-        ) || []
-      }));
+      setProductColors(prev => prev.map(c =>
+        c.id === colorId ? { ...c, image_url: urlData.publicUrl } : c
+      ));
       toast({ title: "Main image updated" });
     }
   };
