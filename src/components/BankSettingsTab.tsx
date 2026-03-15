@@ -299,10 +299,14 @@ const BankSettingsTab = () => {
         {banks.map((bank) => (
           <div key={bank.id} className="glass-card rounded-2xl p-4 shadow-soft">
             <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${
                 bank.is_active ? "bg-mint/20" : "bg-muted"
               }`}>
-                <Building2 className={`w-6 h-6 ${bank.is_active ? "text-mint" : "text-muted-foreground"}`} />
+                {bank.logo_url ? (
+                  <img src={bank.logo_url} alt={bank.bank_name} className="w-10 h-10 rounded-lg object-contain" />
+                ) : (
+                  <Building2 className={`w-6 h-6 ${bank.is_active ? "text-mint" : "text-muted-foreground"}`} />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
