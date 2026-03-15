@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, X, Calendar as CalendarIcon } from "lucide-react";
+import { Search, X, Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
