@@ -672,17 +672,17 @@ const PaymentOrdersTab = () => {
       const statusMessages: Record<string, { title: string; message: string; type: string }> = {
         on_delivery: {
           title: "Order Out for Delivery! 🚚",
-          message: `Your order #${orderId.slice(0, 8).toUpperCase()} is now out for delivery.`,
+          message: `Your order ${getOrderNum(order)} is now out for delivery.`,
           type: "success",
         },
         delivered: {
           title: "Order Delivered! 📦",
-          message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been delivered. Enjoy!`,
+          message: `Your order ${getOrderNum(order)} has been delivered. Enjoy!`,
           type: "success",
         },
         shipped: {
           title: "Order Shipped! 🚚",
-          message: `Your order #${orderId.slice(0, 8).toUpperCase()} has been shipped and is on its way.`,
+          message: `Your order ${getOrderNum(order)} has been shipped and is on its way.`,
           type: "success",
         },
       };
