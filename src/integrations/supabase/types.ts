@@ -71,6 +71,36 @@ export type Database = {
         }
         Relationships: []
       }
+      card_types: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -499,8 +529,11 @@ export type Database = {
           id: string
           notes: string | null
           order_number: string | null
+          payment_bank_id: string | null
+          payment_card_type_id: string | null
           payment_confirmed_at: string | null
           payment_method: string | null
+          payment_reference: string | null
           payment_status: string | null
           phone: string | null
           receipt_url: string | null
@@ -518,8 +551,11 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: string | null
+          payment_bank_id?: string | null
+          payment_card_type_id?: string | null
           payment_confirmed_at?: string | null
           payment_method?: string | null
+          payment_reference?: string | null
           payment_status?: string | null
           phone?: string | null
           receipt_url?: string | null
@@ -537,8 +573,11 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: string | null
+          payment_bank_id?: string | null
+          payment_card_type_id?: string | null
           payment_confirmed_at?: string | null
           payment_method?: string | null
+          payment_reference?: string | null
           payment_status?: string | null
           phone?: string | null
           receipt_url?: string | null
@@ -548,7 +587,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_payment_bank_id_fkey"
+            columns: ["payment_bank_id"]
+            isOneToOne: false
+            referencedRelation: "bank_settings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_payment_card_type_id_fkey"
+            columns: ["payment_card_type_id"]
+            isOneToOne: false
+            referencedRelation: "card_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       preorders: {
         Row: {
