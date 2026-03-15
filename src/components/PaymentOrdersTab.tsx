@@ -1046,8 +1046,21 @@ const PaymentOrdersTab = () => {
   const pendingPayments = filteredOrders.filter(o => o.payment_status === "uploaded" || o.payment_status === "pending");
   const otherOrders = filteredOrders.filter(o => o.payment_status !== "uploaded" && o.payment_status !== "pending");
 
+  const filteredRevenue = filteredOrders
+    .filter(o => o.payment_status === "confirmed")
+    .reduce((sum, o) => sum + o.total_amount, 0);
+
   return (
     <div className="space-y-6">
+      {/* Revenue Summary */}
+      <div className="glass-card rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground uppercase font-semibold">Total Revenue (Filtered)</p>
+          <p className="text-2xl font-bold text-primary">{formatMVR(filteredRevenue)}</p>
+        </div>
+        <p className="text-sm text-muted-foreground">{filteredOrders.filter(o => o.payment_status === "confirmed").length} confirmed orders</p>
+      </div>
+
       {/* Filter Bar */}
       <DataFilterBar
         searchPlaceholder="Search by order ID, customer, address, phone..."
