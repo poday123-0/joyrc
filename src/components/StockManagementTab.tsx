@@ -843,6 +843,7 @@ const StockManagementTab = () => {
           setDeleteHistoryId(historyId);
           setDeleteHistoryProductId(expandedProductId);
         }}
+        onEditHistory={handleEditHistoryItem}
       />
 
       {/* Clear History Dialog */}
