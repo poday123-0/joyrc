@@ -95,6 +95,7 @@ const BankSettingsTab = () => {
         branch: formData.branch.trim() || null,
         swift_code: formData.swift_code.trim() || null,
         is_active: formData.is_active,
+        logo_url: formData.logo_url.trim() || null,
       };
 
       if (editingBank) {
