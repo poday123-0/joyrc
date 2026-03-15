@@ -512,6 +512,7 @@ const QuickPOSTab = () => {
       // Store order data for invoice
       setLastOrderData({
         orderId: order.id,
+        orderNumber: order.order_number || undefined,
         orderDate: new Date().toISOString(),
         items: cart.map(item => ({
           name: item.product.name,
