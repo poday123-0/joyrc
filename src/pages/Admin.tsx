@@ -2185,10 +2185,7 @@ const ProductsTab = ({
                                   Drag to reorder — first image becomes main
                                 </p>
                                 <DndContext
-                                  sensors={useSensors(
-                                    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-                                    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-                                  )}
+                                  sensors={sensors}
                                   collisionDetection={closestCenter}
                                   onDragEnd={(event: DragEndEvent) => {
                                     const { active, over } = event;
