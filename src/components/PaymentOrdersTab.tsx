@@ -130,10 +130,24 @@ const PaymentOrdersTab = () => {
     notes?: string;
   } | null>(null);
 
+  // Payment lookup state
+  const [bankNames, setBankNames] = useState<Record<string, string>>({});
+  const [cardTypeNames, setCardTypeNames] = useState<Record<string, string>>({});
+
   useEffect(() => {
     fetchOrders();
     fetchDeliveryStaff();
+    fetchPaymentLookups();
   }, []);
+
+  const fetchPaymentLookups = async () => {
+    const [{ data: banks }, { data: cards }] = await Promise.all([
+      supabase.from("bank_settings").select("id, bank_name"),
+      supabase.from("card_types").select("id, name"),
+    ]);
+    if (banks) setBankNames(Object.fromEntries(banks.map(b => [b.id, b.bank_name])));
+    if (cards) setCardTypeNames(Object.fromEntries(cards.map(c => [c.id, c.name])));
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
