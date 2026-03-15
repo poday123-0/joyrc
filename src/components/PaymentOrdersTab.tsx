@@ -1183,6 +1183,7 @@ const PaymentOrdersTab = () => {
                 isEditing={editingOrderId === order.id}
                 editNotes={editNotes}
                 editComment={editComment}
+                editOrderNumber={editOrderNumber}
                 onToggle={() => handleToggleExpand(order.id)}
                 onDelete={() => {
                   setSelectedOrderId(order.id);
@@ -1197,6 +1198,7 @@ const PaymentOrdersTab = () => {
                 }}
                 onEditNotesChange={setEditNotes}
                 onEditCommentChange={setEditComment}
+                onEditOrderNumberChange={setEditOrderNumber}
                 onViewInvoice={() => {
                   const items = (orderItems[order.id] || []).map(item => ({
                     name: item.product_name,
