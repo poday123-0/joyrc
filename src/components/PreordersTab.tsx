@@ -38,7 +38,6 @@ interface Preorder {
 const PreordersTab = () => {
   const [preorders, setPreorders] = useState<Preorder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
