@@ -199,6 +199,7 @@ const TransactionsTab = () => {
       return {
         ...tx,
         profile: tx.added_by ? { full_name: profileMap.get(tx.added_by) || null } : null,
+        order_number: order?.order_number || null,
         customer_name: order ? (profileMap.get(order.user_id) || null) : null,
         customer_phone: order?.phone || null,
         customer_address: order?.shipping_address || null,
