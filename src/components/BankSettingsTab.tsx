@@ -78,6 +78,7 @@ const BankSettingsTab = () => {
       branch: bank.branch || "",
       swift_code: bank.swift_code || "",
       is_active: bank.is_active,
+      logo_url: bank.logo_url || "",
     });
     setShowForm(true);
   };
