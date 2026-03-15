@@ -120,6 +120,8 @@ export const DataFilterBar = ({
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState<PeriodFilter>("all");
   const [status, setStatus] = useState("all");
+  const [showPeriodOptions, setShowPeriodOptions] = useState(false);
+  const [showStatusOptions, setShowStatusOptions] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
