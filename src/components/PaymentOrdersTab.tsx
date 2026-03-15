@@ -606,7 +606,7 @@ const PaymentOrdersTab = () => {
       await supabase.from("notifications").insert({
         user_id: selectedStaffId,
         title: "New Delivery Assigned 🚚",
-        message: `Order #${selectedOrderId.slice(0, 8).toUpperCase()} has been assigned to you for delivery.`,
+        message: `Order ${getOrderNum(order)} has been assigned to you for delivery.`,
         type: "info",
         link: "/admin",
       });
