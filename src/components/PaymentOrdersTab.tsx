@@ -756,6 +756,9 @@ const PaymentOrdersTab = () => {
       if (editOrderNumber.trim()) {
         updateData.order_number = editOrderNumber.trim();
       }
+      if (editOrderDate) {
+        updateData.created_at = new Date(editOrderDate).toISOString();
+      }
 
       const { error } = await supabase
         .from("orders")
