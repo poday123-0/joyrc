@@ -1525,8 +1525,8 @@ const OrderCard = ({
                     <Input
                       id="edit-order-number"
                       placeholder="e.g. RCJOY/25/03/00001"
-                      value={editOrderNumber}
-                      onChange={(e) => setEditOrderNumber(e.target.value)}
+                      value={editOrderNumber || ""}
+                      onChange={(e) => onEditOrderNumberChange?.(e.target.value)}
                       className="mt-1 font-mono"
                     />
                   </div>
