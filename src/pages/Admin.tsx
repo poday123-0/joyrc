@@ -2165,7 +2165,7 @@ const ProductsTab = ({
                     {/* Existing colors with expandable image management */}
                     <div className="space-y-2 mb-3">
                       {productColors.map((color) => {
-                        const colorImages = galleryImages.filter(img => img.color_id === color.id);
+                        const colorImages = galleryImages.filter(img => img.color_id === color.id).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
                         const isExpanded = expandedColorId === color.id;
                         const imageCount = colorImages.length + (color.image_url ? 1 : 0);
                         
