@@ -81,6 +81,7 @@ const QuickPOSTab = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
     orderId: string;
+    orderNumber?: string;
     orderDate: string;
     items: Array<{ name: string; quantity: number; price: number; color?: string | null }>;
     total: number;
