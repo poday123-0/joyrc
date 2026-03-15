@@ -33,6 +33,11 @@ interface Transaction {
   description: string | null;
   order_id: string | null;
   created_at: string;
+  product_name: string | null;
+  quantity: number | null;
+  unit_purchase_price: number | null;
+  shipping_cost: number | null;
+  other_costs: number | null;
 }
 
 interface DashboardStats {
@@ -1183,6 +1188,18 @@ const AdminDashboard = ({ onTabChange, userPermissions = [], isFullAdmin = false
               
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground text-sm truncate">{tx.category}</p>
+                {tx.product_name && (
+                  <p className="text-xs font-medium text-foreground/80 truncate">
+                    {tx.product_name}{tx.quantity ? ` × ${tx.quantity}` : ''}
+                  </p>
+                )}
+                {(tx.unit_purchase_price || tx.shipping_cost || tx.other_costs) && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                    {tx.unit_purchase_price ? <span>Unit: {formatMVR(tx.unit_purchase_price)}</span> : null}
+                    {tx.shipping_cost ? <span>Ship: {formatMVR(tx.shipping_cost)}</span> : null}
+                    {tx.other_costs ? <span>Other: {formatMVR(tx.other_costs)}</span> : null}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground truncate">
                   {tx.description || new Date(tx.created_at).toLocaleDateString()}
                 </p>
