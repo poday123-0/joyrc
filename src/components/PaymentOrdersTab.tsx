@@ -1708,8 +1708,8 @@ const OrderCard = ({
                   </Button>
                 )}
 
-                {/* Status update buttons */}
-                {onUpdateStatus && (
+                {/* Status update buttons - disabled after delivery */}
+                {onUpdateStatus && order.status !== "delivered" && order.status !== "returned" && (
                   <div className="flex flex-wrap gap-2">
                     {["on_delivery", "shipped", "delivered"].map((status) => (
                       <Button
@@ -1726,6 +1726,33 @@ const OrderCard = ({
                         {status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
                       </Button>
                     ))}
+                  </div>
+                )}
+
+                {/* Delivered state - show return button */}
+                {order.status === "delivered" && onReturn && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="font-medium text-green-600">Delivered</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onReturn}
+                      className="w-full gap-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Return Products
+                    </Button>
+                  </div>
+                )}
+
+                {/* Returned state */}
+                {order.status === "returned" && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <RotateCcw className="w-4 h-4 text-orange-500" />
+                    <span className="font-medium text-orange-600">Returned</span>
                   </div>
                 )}
               </div>
