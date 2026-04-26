@@ -583,7 +583,21 @@ const QuickPOSTab = () => {
         added_by: user.id,
       });
 
-      // Send email notification to customer if they have an account
+      // Notify assigned delivery staff
+      if (isDelivery && selectedDeliveryStaffId) {
+        try {
+          await supabase.from("notifications").insert({
+            user_id: selectedDeliveryStaffId,
+            title: "New Delivery Assigned 🚚",
+            message: `Order ${order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`} has been assigned to you for delivery.`,
+            type: "info",
+            link: "/admin",
+          });
+        } catch (notifError) {
+          console.error("Failed to notify delivery staff:", notifError);
+        }
+      }
+
       if (isDelivery && customerDetails.email.trim() && customerUserId !== user.id) {
         try {
           await supabase.functions.invoke('send-order-notification', {
