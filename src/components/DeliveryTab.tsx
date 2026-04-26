@@ -30,6 +30,23 @@ interface Order {
 const getOrderNum = (order: { order_number?: string | null; id: string }) =>
   order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`;
 
+// Parse POS notes formatted as: "POS Delivery Order | Delivery: 2026-04-26 15:30 | Notes: TEST | Customer: Name"
+const parseOrderNotes = (raw: string | null) => {
+  if (!raw) return { deliveryDateTime: null as string | null, customerNote: null as string | null, customer: null as string | null, other: [] as string[] };
+  const parts = raw.split("|").map(p => p.trim()).filter(Boolean);
+  let deliveryDateTime: string | null = null;
+  let customerNote: string | null = null;
+  let customer: string | null = null;
+  const other: string[] = [];
+  for (const p of parts) {
+    if (/^Delivery:\s*/i.test(p)) deliveryDateTime = p.replace(/^Delivery:\s*/i, "").trim();
+    else if (/^Notes:\s*/i.test(p)) customerNote = p.replace(/^Notes:\s*/i, "").trim();
+    else if (/^Customer:\s*/i.test(p)) customer = p.replace(/^Customer:\s*/i, "").trim();
+    else if (!/^POS Delivery Order$|^Walk-in POS Sale$/i.test(p)) other.push(p);
+  }
+  return { deliveryDateTime, customerNote, customer, other };
+};
+
 interface OrderItem {
   id: string;
   product_name: string;
