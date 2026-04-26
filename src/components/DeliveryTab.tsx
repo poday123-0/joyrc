@@ -64,6 +64,7 @@ const DeliveryTab = () => {
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
+  const [itemsLoading, setItemsLoading] = useState<Record<string, boolean>>({});
   const [customerProfiles, setCustomerProfiles] = useState<Record<string, CustomerProfile>>({});
   const [confirmDeliverDialog, setConfirmDeliverDialog] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -118,14 +119,16 @@ const DeliveryTab = () => {
   const fetchOrderItems = async (orderId: string) => {
     if (orderItems[orderId]) return;
 
+    setItemsLoading((prev) => ({ ...prev, [orderId]: true }));
     const { data, error } = await supabase
       .from("order_items")
       .select("*")
       .eq("order_id", orderId);
 
-    if (!error && data) {
-      setOrderItems((prev) => ({ ...prev, [orderId]: data }));
+    if (!error) {
+      setOrderItems((prev) => ({ ...prev, [orderId]: data || [] }));
     }
+    setItemsLoading((prev) => ({ ...prev, [orderId]: false }));
   };
 
   const handleToggleExpand = (orderId: string) => {
@@ -314,7 +317,9 @@ const DeliveryTab = () => {
                         </div>
                       ))}
                       {items.length === 0 && (
-                        <p className="text-sm text-muted-foreground">Loading items...</p>
+                        <p className="text-sm text-muted-foreground italic">
+                          {itemsLoading[order.id] ? "Loading items..." : "No items found for this order"}
+                        </p>
                       )}
                     </div>
 
