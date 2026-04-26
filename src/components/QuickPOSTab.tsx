@@ -62,6 +62,8 @@ const QuickPOSTab = () => {
   const [isDelivery, setIsDelivery] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
+  const [deliveryStaff, setDeliveryStaff] = useState<Array<{ user_id: string; full_name: string | null }>>([]);
+  const [selectedDeliveryStaffId, setSelectedDeliveryStaffId] = useState<string>("");
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     name: "",
     email: "",
