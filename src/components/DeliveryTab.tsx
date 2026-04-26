@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { 
   Package, Truck, CheckCircle, MapPin, Phone, 
-  ChevronDown, ChevronUp, User, Clock
+  ChevronDown, ChevronUp, User, Clock, Calendar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -29,6 +29,23 @@ interface Order {
 
 const getOrderNum = (order: { order_number?: string | null; id: string }) =>
   order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`;
+
+// Parse POS notes formatted as: "POS Delivery Order | Delivery: 2026-04-26 15:30 | Notes: TEST | Customer: Name"
+const parseOrderNotes = (raw: string | null) => {
+  if (!raw) return { deliveryDateTime: null as string | null, customerNote: null as string | null, customer: null as string | null, other: [] as string[] };
+  const parts = raw.split("|").map(p => p.trim()).filter(Boolean);
+  let deliveryDateTime: string | null = null;
+  let customerNote: string | null = null;
+  let customer: string | null = null;
+  const other: string[] = [];
+  for (const p of parts) {
+    if (/^Delivery:\s*/i.test(p)) deliveryDateTime = p.replace(/^Delivery:\s*/i, "").trim();
+    else if (/^Notes:\s*/i.test(p)) customerNote = p.replace(/^Notes:\s*/i, "").trim();
+    else if (/^Customer:\s*/i.test(p)) customer = p.replace(/^Customer:\s*/i, "").trim();
+    else if (!/^POS Delivery Order$|^Walk-in POS Sale$/i.test(p)) other.push(p);
+  }
+  return { deliveryDateTime, customerNote, customer, other };
+};
 
 interface OrderItem {
   id: string;
@@ -234,6 +251,8 @@ const DeliveryTab = () => {
           const isExpanded = expandedOrder === order.id;
           const items = orderItems[order.id] || [];
           const customer = customerProfiles[order.user_id];
+          const parsed = parseOrderNotes(order.notes);
+          const customerName = customer?.full_name || parsed.customer || "Customer";
 
           return (
             <div key={order.id} className={`glass-card rounded-2xl shadow-soft overflow-hidden ${isExpanded ? 'md:col-span-2 xl:col-span-3' : ''}`}>
@@ -255,8 +274,14 @@ const DeliveryTab = () => {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                     <User className="w-3 h-3" />
-                    <span>{customer?.full_name || "Customer"}</span>
+                    <span>{customerName}</span>
                   </div>
+                  {parsed.deliveryDateTime && (
+                    <div className="flex items-center gap-2 text-xs text-primary mt-0.5 font-medium">
+                      <Calendar className="w-3 h-3" />
+                      <span>{parsed.deliveryDateTime}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-foreground">{formatMVR(order.total_amount)}</p>
@@ -316,8 +341,29 @@ const DeliveryTab = () => {
                       </div>
                     )}
 
-                    {/* Notes */}
-                    {order.notes && (
+                    {/* Scheduled Delivery */}
+                    {parsed.deliveryDateTime && (
+                      <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                        <div className="flex items-start gap-2">
+                          <Calendar className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <div>
+                            <h5 className="text-xs font-semibold text-primary uppercase mb-1">Scheduled Delivery</h5>
+                            <p className="text-sm font-medium">{parsed.deliveryDateTime}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Customer Notes */}
+                    {parsed.customerNote && (
+                      <div>
+                        <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Delivery Notes</h5>
+                        <p className="text-sm whitespace-pre-wrap">{parsed.customerNote}</p>
+                      </div>
+                    )}
+
+                    {/* Other notes (fallback for non-POS orders) */}
+                    {!parsed.deliveryDateTime && !parsed.customerNote && order.notes && (
                       <div>
                         <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Notes</h5>
                         <p className="text-sm whitespace-pre-wrap">{order.notes}</p>
