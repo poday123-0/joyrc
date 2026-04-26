@@ -254,6 +254,7 @@ const QuickPOSTab = () => {
     setCart([]);
     setCustomerDetails({ name: "", email: "", phone: "", address: "", notes: "" });
     setIsDelivery(false);
+    setSelectedDeliveryStaffId("");
     setCustomerSearch("");
     setCustomerResults([]);
     setSelectedCustomerId(null);
