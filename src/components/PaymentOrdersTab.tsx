@@ -199,42 +199,51 @@ const PaymentOrdersTab = () => {
   useRealtimeSubscription(['orders', 'order_items'], fetchOrders, 'rt-payment-orders');
 
   const fetchDeliveryStaff = async () => {
-    // Fetch staff with delivery permission
     const { data: permissions, error: permError } = await supabase
       .from("staff_permissions")
       .select("user_id")
-      .eq("permission_key", "delivery");
-    
-    if (permError || !permissions?.length) {
-      // If no delivery staff, fetch all admins as fallback
-      const { data: adminRoles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .in("role", ["admin", "super_admin"]);
-      
-      if (adminRoles?.length) {
-        const userIds = adminRoles.map(r => r.user_id);
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, full_name")
-          .in("user_id", userIds);
-        
-        if (profiles) {
-          setDeliveryStaff(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
-        }
-      }
+      .eq("permission_key", "tab_deliveries");
+
+    if (permError) {
+      console.error("Error fetching delivery staff permissions:", permError);
+    }
+
+    const staffIds = permissions?.map((permission) => permission.user_id) || [];
+
+    const { data: adminRoles, error: adminError } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["admin", "super_admin"]);
+
+    if (adminError) {
+      console.error("Error fetching admin delivery staff:", adminError);
+    }
+
+    const adminIds = adminRoles?.map((role) => role.user_id) || [];
+    const userIds = Array.from(new Set([...staffIds, ...adminIds]));
+
+    if (userIds.length === 0) {
+      setDeliveryStaff([]);
       return;
     }
-    
-    const userIds = permissions.map(p => p.user_id);
-    const { data: profiles } = await supabase
+
+    const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("user_id, full_name")
       .in("user_id", userIds);
-    
-    if (profiles) {
-      setDeliveryStaff(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+
+    if (profilesError) {
+      console.error("Error fetching delivery staff profiles:", profilesError);
+      setDeliveryStaff([]);
+      return;
     }
+
+    setDeliveryStaff(
+      (profiles || []).map((profile) => ({
+        user_id: profile.user_id,
+        full_name: profile.full_name,
+      })),
+    );
   };
 
   const fetchOrderItems = async (orderId: string) => {
