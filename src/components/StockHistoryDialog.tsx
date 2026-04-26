@@ -357,27 +357,6 @@ export const StockHistoryDialog = ({
           )}
         </div>
 
-        {/* Product Search */}
-        {showProductFilter && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              placeholder="Search by name, item code, or notes..."
-              className="pl-9 h-9 text-sm"
-            />
-            {productSearch && (
-              <button
-                onClick={() => setProductSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        )}
-
         {/* Type Filter */}
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-2">Change Type</p>
@@ -398,6 +377,27 @@ export const StockHistoryDialog = ({
             ))}
           </div>
         </div>
+
+        {/* Product Search */}
+        {showProductFilter && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search by name, item code, or notes..."
+              className="pl-9 h-9 text-sm"
+            />
+            {productSearch && (
+              <button
+                onClick={() => setProductSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Clear Filters */}
         {(periodFilter !== "all" || typeFilter !== "all") && (
