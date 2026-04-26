@@ -104,7 +104,36 @@ const QuickPOSTab = () => {
     fetchProducts();
     fetchBanks();
     fetchCardTypes();
+    fetchDeliveryStaff();
   }, []);
+
+  const fetchDeliveryStaff = async () => {
+    const { data: permissions } = await supabase
+      .from("staff_permissions")
+      .select("user_id")
+      .eq("permission_key", "delivery");
+
+    let userIds: string[] = permissions?.map(p => p.user_id) || [];
+
+    if (userIds.length === 0) {
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "super_admin"]);
+      userIds = adminRoles?.map(r => r.user_id) || [];
+    }
+
+    if (userIds.length === 0) return;
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, full_name")
+      .in("user_id", userIds);
+
+    if (profiles) {
+      setDeliveryStaff(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+    }
+  };
 
   const fetchProducts = async () => {
     const { data: productsData, error } = await supabase
