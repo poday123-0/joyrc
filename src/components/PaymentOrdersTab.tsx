@@ -1824,15 +1824,19 @@ const OrderCard = ({
               !["delivered", "completed", "cancelled", "returned"].includes(order.status) &&
               isAdmin &&
               onAssignDelivery && (
-                <div className="pt-2">
-                  <Button
-                    size="sm"
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
                     onClick={onAssignDelivery}
-                    className="w-full gap-2"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium"
                   >
                     <UserPlus className="w-4 h-4" />
-                    {order.assigned_to ? `Reassign Delivery${assignedStaffName ? ` (Current: ${assignedStaffName})` : ""}` : "Assign to Delivery"}
-                  </Button>
+                    {order.assigned_to ? "Reassign Delivery" : "Assign to Delivery"}
+                  </button>
+                  {order.assigned_to && assignedStaffName && (
+                    <span className="text-xs text-muted-foreground">
+                      Assigned to <span className="font-medium text-foreground">{assignedStaffName}</span>
+                    </span>
+                  )}
                 </div>
               )}
 
