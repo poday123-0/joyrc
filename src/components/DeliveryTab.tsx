@@ -341,8 +341,29 @@ const DeliveryTab = () => {
                       </div>
                     )}
 
-                    {/* Notes */}
-                    {order.notes && (
+                    {/* Scheduled Delivery */}
+                    {parsed.deliveryDateTime && (
+                      <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                        <div className="flex items-start gap-2">
+                          <Calendar className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <div>
+                            <h5 className="text-xs font-semibold text-primary uppercase mb-1">Scheduled Delivery</h5>
+                            <p className="text-sm font-medium">{parsed.deliveryDateTime}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Customer Notes */}
+                    {parsed.customerNote && (
+                      <div>
+                        <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Delivery Notes</h5>
+                        <p className="text-sm whitespace-pre-wrap">{parsed.customerNote}</p>
+                      </div>
+                    )}
+
+                    {/* Other notes (fallback for non-POS orders) */}
+                    {!parsed.deliveryDateTime && !parsed.customerNote && order.notes && (
                       <div>
                         <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Notes</h5>
                         <p className="text-sm whitespace-pre-wrap">{order.notes}</p>
