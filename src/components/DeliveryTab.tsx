@@ -119,14 +119,16 @@ const DeliveryTab = () => {
   const fetchOrderItems = async (orderId: string) => {
     if (orderItems[orderId]) return;
 
+    setItemsLoading((prev) => ({ ...prev, [orderId]: true }));
     const { data, error } = await supabase
       .from("order_items")
       .select("*")
       .eq("order_id", orderId);
 
-    if (!error && data) {
-      setOrderItems((prev) => ({ ...prev, [orderId]: data }));
+    if (!error) {
+      setOrderItems((prev) => ({ ...prev, [orderId]: data || [] }));
     }
+    setItemsLoading((prev) => ({ ...prev, [orderId]: false }));
   };
 
   const handleToggleExpand = (orderId: string) => {
