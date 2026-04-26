@@ -486,7 +486,7 @@ const QuickPOSTab = () => {
         .insert({
           user_id: customerUserId,
           total_amount: totalAmount,
-          status: isDelivery ? "processing" : "completed",
+          status: isDelivery ? (selectedDeliveryStaffId ? "on_delivery" : "processing") : "completed",
           payment_status: "confirmed",
           payment_method: paymentMethod,
           payment_confirmed_at: new Date().toISOString(),
@@ -496,6 +496,8 @@ const QuickPOSTab = () => {
           payment_reference: paymentReference.trim() || null,
           payment_bank_id: paymentMethod === "bank_transfer" && selectedBankId ? selectedBankId : null,
           payment_card_type_id: paymentMethod === "card" && selectedCardTypeId ? selectedCardTypeId : null,
+          assigned_to: isDelivery && selectedDeliveryStaffId ? selectedDeliveryStaffId : null,
+          assigned_at: isDelivery && selectedDeliveryStaffId ? new Date().toISOString() : null,
         })
         .select()
         .single();
