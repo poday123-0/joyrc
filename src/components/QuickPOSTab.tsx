@@ -111,18 +111,17 @@ const QuickPOSTab = () => {
     const { data: permissions } = await supabase
       .from("staff_permissions")
       .select("user_id")
-      .eq("permission_key", "delivery");
+      .eq("permission_key", "tab_deliveries");
 
-    let userIds: string[] = permissions?.map(p => p.user_id) || [];
+    const staffIds: string[] = permissions?.map(p => p.user_id) || [];
 
-    if (userIds.length === 0) {
-      const { data: adminRoles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .in("role", ["admin", "super_admin"]);
-      userIds = adminRoles?.map(r => r.user_id) || [];
-    }
+    const { data: adminRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["admin", "super_admin"]);
+    const adminIds = adminRoles?.map(r => r.user_id) || [];
 
+    const userIds = Array.from(new Set([...staffIds, ...adminIds]));
     if (userIds.length === 0) return;
 
     const { data: profiles } = await supabase
