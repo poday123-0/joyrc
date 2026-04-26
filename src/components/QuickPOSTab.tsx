@@ -1146,6 +1146,22 @@ const QuickPOSTab = () => {
                   className="w-full pl-10 pr-3 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
+              {/* Assign delivery staff */}
+              <div className="relative">
+                <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+                <select
+                  value={selectedDeliveryStaffId}
+                  onChange={(e) => setSelectedDeliveryStaffId(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                >
+                  <option value="">Assign delivery staff (optional)</option>
+                  {deliveryStaff.map((staff) => (
+                    <option key={staff.user_id} value={staff.user_id}>
+                      {staff.full_name || "Unknown Staff"}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
