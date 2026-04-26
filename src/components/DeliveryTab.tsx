@@ -274,8 +274,14 @@ const DeliveryTab = () => {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                     <User className="w-3 h-3" />
-                    <span>{customer?.full_name || "Customer"}</span>
+                    <span>{customerName}</span>
                   </div>
+                  {parsed.deliveryDateTime && (
+                    <div className="flex items-center gap-2 text-xs text-primary mt-0.5 font-medium">
+                      <Calendar className="w-3 h-3" />
+                      <span>{parsed.deliveryDateTime}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-foreground">{formatMVR(order.total_amount)}</p>
