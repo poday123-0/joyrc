@@ -258,37 +258,37 @@ const DeliveryTab = () => {
             <div key={order.id} className={`glass-card rounded-2xl shadow-soft overflow-hidden ${isExpanded ? 'md:col-span-2 xl:col-span-3' : ''}`}>
               <button
                 onClick={() => handleToggleExpand(order.id)}
-                className="w-full p-4 flex items-center gap-3 text-left"
+                className="w-full p-4 flex items-start gap-3 text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <Truck className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-foreground truncate">
                       {getOrderNum(order)}
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary capitalize">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary capitalize whitespace-nowrap">
                       {order.status === "on_delivery" ? "On Delivery" : order.status}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                    <User className="w-3 h-3" />
-                    <span>{customerName}</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 min-w-0">
+                    <User className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{customerName}</span>
                   </div>
                   {parsed.deliveryDateTime && (
-                    <div className="flex items-center gap-2 text-xs text-primary mt-0.5 font-medium">
-                      <Calendar className="w-3 h-3" />
-                      <span>{parsed.deliveryDateTime}</span>
+                    <div className="flex items-center gap-2 text-xs text-primary mt-0.5 font-medium min-w-0">
+                      <Calendar className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">{parsed.deliveryDateTime}</span>
                     </div>
                   )}
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-foreground">{formatMVR(order.total_amount)}</p>
+                <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
+                  <p className="font-bold text-foreground text-sm whitespace-nowrap">{formatMVR(order.total_amount)}</p>
                   {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 text-muted-foreground ml-auto" />
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto" />
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   )}
                 </div>
               </button>
