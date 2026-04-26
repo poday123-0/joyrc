@@ -317,7 +317,9 @@ const DeliveryTab = () => {
                         </div>
                       ))}
                       {items.length === 0 && (
-                        <p className="text-sm text-muted-foreground">Loading items...</p>
+                        <p className="text-sm text-muted-foreground italic">
+                          {itemsLoading[order.id] ? "Loading items..." : "No items found for this order"}
+                        </p>
                       )}
                     </div>
 
