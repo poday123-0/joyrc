@@ -1818,6 +1818,24 @@ const OrderCard = ({
               </div>
             )}
 
+            {/* Assign to delivery (confirmed orders with shipping address, not yet delivered) */}
+            {order.payment_status === "confirmed" &&
+              order.shipping_address &&
+              !["delivered", "completed", "cancelled", "returned"].includes(order.status) &&
+              isAdmin &&
+              onAssignDelivery && (
+                <div className="pt-2">
+                  <Button
+                    size="sm"
+                    onClick={onAssignDelivery}
+                    className="w-full gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    {order.assigned_to ? `Reassign Delivery${assignedStaffName ? ` (Current: ${assignedStaffName})` : ""}` : "Assign to Delivery"}
+                  </Button>
+                </div>
+              )}
+
             {/* Admin actions */}
             {!isEditing && (
               <div className="flex gap-2 pt-2 border-t border-border">
