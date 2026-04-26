@@ -251,6 +251,8 @@ const DeliveryTab = () => {
           const isExpanded = expandedOrder === order.id;
           const items = orderItems[order.id] || [];
           const customer = customerProfiles[order.user_id];
+          const parsed = parseOrderNotes(order.notes);
+          const customerName = customer?.full_name || parsed.customer || "Customer";
 
           return (
             <div key={order.id} className={`glass-card rounded-2xl shadow-soft overflow-hidden ${isExpanded ? 'md:col-span-2 xl:col-span-3' : ''}`}>
