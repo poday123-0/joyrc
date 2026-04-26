@@ -288,29 +288,6 @@ export const StockHistoryDialog = ({
         </div>
       )}
 
-      {/* Product Search - always visible when showProductFilter is true */}
-      {showProductFilter && (
-        <div className="mb-3 p-3 bg-muted/30 rounded-xl border border-border/50">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              placeholder="Search by name, item code, or notes..."
-              className="pl-9 h-9 text-sm"
-            />
-            {productSearch && (
-              <button
-                onClick={() => setProductSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Filters - always visible */}
       <div className="mb-4 p-3 bg-muted/30 rounded-xl border border-border/50 space-y-3">
         {/* Period Filter */}
