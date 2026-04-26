@@ -64,6 +64,7 @@ const DeliveryTab = () => {
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
+  const [itemsLoading, setItemsLoading] = useState<Record<string, boolean>>({});
   const [customerProfiles, setCustomerProfiles] = useState<Record<string, CustomerProfile>>({});
   const [confirmDeliverDialog, setConfirmDeliverDialog] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
