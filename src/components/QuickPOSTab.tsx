@@ -62,6 +62,8 @@ const QuickPOSTab = () => {
   const [isDelivery, setIsDelivery] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
+  const [deliveryStaff, setDeliveryStaff] = useState<Array<{ user_id: string; full_name: string | null }>>([]);
+  const [selectedDeliveryStaffId, setSelectedDeliveryStaffId] = useState<string>("");
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     name: "",
     email: "",
@@ -102,7 +104,36 @@ const QuickPOSTab = () => {
     fetchProducts();
     fetchBanks();
     fetchCardTypes();
+    fetchDeliveryStaff();
   }, []);
+
+  const fetchDeliveryStaff = async () => {
+    const { data: permissions } = await supabase
+      .from("staff_permissions")
+      .select("user_id")
+      .eq("permission_key", "delivery");
+
+    let userIds: string[] = permissions?.map(p => p.user_id) || [];
+
+    if (userIds.length === 0) {
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "super_admin"]);
+      userIds = adminRoles?.map(r => r.user_id) || [];
+    }
+
+    if (userIds.length === 0) return;
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, full_name")
+      .in("user_id", userIds);
+
+    if (profiles) {
+      setDeliveryStaff(profiles.map(p => ({ user_id: p.user_id, full_name: p.full_name })));
+    }
+  };
 
   const fetchProducts = async () => {
     const { data: productsData, error } = await supabase
@@ -223,6 +254,7 @@ const QuickPOSTab = () => {
     setCart([]);
     setCustomerDetails({ name: "", email: "", phone: "", address: "", notes: "" });
     setIsDelivery(false);
+    setSelectedDeliveryStaffId("");
     setCustomerSearch("");
     setCustomerResults([]);
     setSelectedCustomerId(null);
@@ -454,7 +486,7 @@ const QuickPOSTab = () => {
         .insert({
           user_id: customerUserId,
           total_amount: totalAmount,
-          status: isDelivery ? "processing" : "completed",
+          status: isDelivery ? (selectedDeliveryStaffId ? "on_delivery" : "processing") : "completed",
           payment_status: "confirmed",
           payment_method: paymentMethod,
           payment_confirmed_at: new Date().toISOString(),
@@ -464,6 +496,8 @@ const QuickPOSTab = () => {
           payment_reference: paymentReference.trim() || null,
           payment_bank_id: paymentMethod === "bank_transfer" && selectedBankId ? selectedBankId : null,
           payment_card_type_id: paymentMethod === "card" && selectedCardTypeId ? selectedCardTypeId : null,
+          assigned_to: isDelivery && selectedDeliveryStaffId ? selectedDeliveryStaffId : null,
+          assigned_at: isDelivery && selectedDeliveryStaffId ? new Date().toISOString() : null,
         })
         .select()
         .single();
@@ -549,7 +583,21 @@ const QuickPOSTab = () => {
         added_by: user.id,
       });
 
-      // Send email notification to customer if they have an account
+      // Notify assigned delivery staff
+      if (isDelivery && selectedDeliveryStaffId) {
+        try {
+          await supabase.from("notifications").insert({
+            user_id: selectedDeliveryStaffId,
+            title: "New Delivery Assigned 🚚",
+            message: `Order ${order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`} has been assigned to you for delivery.`,
+            type: "info",
+            link: "/admin",
+          });
+        } catch (notifError) {
+          console.error("Failed to notify delivery staff:", notifError);
+        }
+      }
+
       if (isDelivery && customerDetails.email.trim() && customerUserId !== user.id) {
         try {
           await supabase.functions.invoke('send-order-notification', {
@@ -1097,6 +1145,22 @@ const QuickPOSTab = () => {
                   onChange={(e) => setCustomerDetails({ ...customerDetails, notes: e.target.value })}
                   className="w-full pl-10 pr-3 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
+              </div>
+              {/* Assign delivery staff */}
+              <div className="relative">
+                <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+                <select
+                  value={selectedDeliveryStaffId}
+                  onChange={(e) => setSelectedDeliveryStaffId(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                >
+                  <option value="">Assign delivery staff (optional)</option>
+                  {deliveryStaff.map((staff) => (
+                    <option key={staff.user_id} value={staff.user_id}>
+                      {staff.full_name || "Unknown Staff"}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           )}
