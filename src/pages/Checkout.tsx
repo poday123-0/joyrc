@@ -45,12 +45,36 @@ const Checkout = () => {
   const [placing, setPlacing] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(2); // Start at Shipping step
+  const [currentStep, setCurrentStep] = useState(2);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [taxRates, setTaxRates] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchBankSettings();
   }, []);
+
+  // Fetch tax rates for cart products
+  useEffect(() => {
+    const ids = Array.from(new Set(items.map((i) => i.id)));
+    if (ids.length === 0) { setTaxRates({}); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, tax_categories(rate)")
+        .in("id", ids);
+      const map: Record<string, number> = {};
+      (data || []).forEach((p: any) => {
+        map[p.id] = Number(p.tax_categories?.rate || 0);
+      });
+      setTaxRates(map);
+    })();
+  }, [items]);
+
+  const taxAmount = items.reduce(
+    (sum, i) => sum + i.price * i.quantity * ((taxRates[i.id] || 0) / 100),
+    0,
+  );
+  const grandTotal = totalPrice + taxAmount;
 
   // Update step based on form state
   useEffect(() => {
@@ -94,7 +118,9 @@ const Checkout = () => {
 
       const { data: order, error: orderError } = await supabase.from("orders").insert({
         user_id: user.id,
-        total_amount: totalPrice,
+        subtotal: totalPrice,
+        tax_amount: taxAmount,
+        total_amount: grandTotal,
         shipping_address: formData.address.trim(),
         phone: formData.phone.trim(),
         notes: formData.notes.trim() || null,
@@ -106,16 +132,24 @@ const Checkout = () => {
 
       if (orderError) throw orderError;
 
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.id,
-        product_name: item.name,
-        product_price: item.price,
-        quantity: item.quantity,
-        color_id: item.colorId || null,
-        color_name: item.colorName || null,
-        color_hex: item.colorHex || null,
-      }));
+      const orderItems = items.map((item) => {
+        const rate = taxRates[item.id] || 0;
+        const lineSubtotal = item.price * item.quantity;
+        const lineTax = lineSubtotal * (rate / 100);
+        return {
+          order_id: order.id,
+          product_id: item.id,
+          product_name: item.name,
+          product_price: item.price,
+          quantity: item.quantity,
+          color_id: item.colorId || null,
+          color_name: item.colorName || null,
+          color_hex: item.colorHex || null,
+          tax_rate: rate,
+          tax_amount: lineTax,
+          line_total: lineSubtotal + lineTax,
+        };
+      });
 
       await supabase.from("order_items").insert(orderItems);
 
@@ -294,9 +328,21 @@ const Checkout = () => {
                     <span className="font-medium whitespace-nowrap">{formatMVR(item.price * item.quantity)}</span>
                   </div>
                 ))}
-                <div className="border-t border-border pt-2 mt-2 flex justify-between font-semibold text-sm sm:text-base lg:text-lg">
-                  <span>Total</span>
-                  <span className="text-foreground">{formatMVR(totalPrice)}</span>
+                <div className="border-t border-border pt-2 mt-2 space-y-1">
+                  <div className="flex justify-between text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-medium">{formatMVR(totalPrice)}</span>
+                  </div>
+                  {taxAmount > 0 && (
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-muted-foreground">Tax</span>
+                      <span className="font-medium">{formatMVR(taxAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold text-sm sm:text-base lg:text-lg pt-1">
+                    <span>Total</span>
+                    <span className="text-foreground">{formatMVR(grandTotal)}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -308,7 +354,7 @@ const Checkout = () => {
                   <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                   <h2 className="font-semibold text-foreground text-sm sm:text-base lg:text-lg">Bank Transfer</h2>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-3">Transfer {formatMVR(totalPrice)} to:</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-3">Transfer {formatMVR(grandTotal)} to:</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {bankSettings.map((bank) => (
                     <div key={bank.id} className="bg-secondary rounded-xl p-3 sm:p-4">
@@ -405,7 +451,7 @@ const Checkout = () => {
                 ) : (
                   <>
                     <Clock className="w-5 h-5" />
-                    Place Order - {formatMVR(totalPrice)}
+                    Place Order - {formatMVR(grandTotal)}
                   </>
                 )}
               </button>
@@ -421,6 +467,12 @@ const Checkout = () => {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-medium">{formatMVR(totalPrice)}</span>
                 </div>
+                {taxAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tax</span>
+                    <span className="font-medium">{formatMVR(taxAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className="text-accent font-medium">Free</span>
@@ -429,7 +481,7 @@ const Checkout = () => {
               <div className="border-t border-border pt-4">
                 <div className="flex justify-between">
                   <span className="font-semibold text-foreground">Total</span>
-                  <span className="text-2xl font-bold text-foreground">{formatMVR(totalPrice)}</span>
+                  <span className="text-2xl font-bold text-foreground">{formatMVR(grandTotal)}</span>
                 </div>
               </div>
               {!receiptFile && bankSettings.length > 0 && (
@@ -447,7 +499,7 @@ const Checkout = () => {
         <div className="container max-w-md mx-auto">
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <span className="text-xs sm:text-sm text-muted-foreground">Total</span>
-            <span className="text-lg sm:text-2xl font-bold text-foreground">{formatMVR(totalPrice)}</span>
+            <span className="text-lg sm:text-2xl font-bold text-foreground">{formatMVR(grandTotal)}</span>
           </div>
           <button 
             onClick={handlePlaceOrder} 

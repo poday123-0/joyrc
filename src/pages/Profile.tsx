@@ -11,6 +11,7 @@ import ProfileCard from "@/components/profile/ProfileCard";
 import QuickActions from "@/components/profile/QuickActions";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import EditProfileForm from "@/components/profile/EditProfileForm";
+import CustomerReturnsTab from "@/components/profile/CustomerReturnsTab";
 
 interface Profile {
   id: string;
@@ -30,7 +31,7 @@ const Profile = () => {
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "returns" | "messages">("profile");
   const [showSettings, setShowSettings] = useState(false);
   const [messagesKey, setMessagesKey] = useState(0);
 
@@ -209,6 +210,10 @@ const Profile = () => {
                     ) : activeTab === "orders" ? (
                       <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
                         <OrdersTab />
+                      </div>
+                    ) : activeTab === "returns" ? (
+                      <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
+                        <CustomerReturnsTab />
                       </div>
                     ) : activeTab === "messages" ? (
                       <div className="space-y-4 sm:space-y-6">
