@@ -1096,7 +1096,7 @@ const QuickPOSTab = () => {
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Package className="w-10 h-10 mb-2 opacity-50" />
                 <p className="text-sm">{isSearching ? "No products found" : "No products available"}</p>
-                {!isSearching && filteredProducts.length > 0 && (
+                {!isSearching && products.length > 0 && (
                   <p className="text-xs mt-1">Use search to find more products</p>
                 )}
               </div>
