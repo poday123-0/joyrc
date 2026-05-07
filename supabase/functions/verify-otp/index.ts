@@ -82,11 +82,12 @@ serve(async (req) => {
 
     // Find user (try both with and without 960 prefix)
     const localPhone = phone.startsWith("960") ? phone.slice(3) : phone;
-    const { data: profile } = await admin
+    const { data: profiles } = await admin
       .from("profiles")
       .select("user_id")
       .or(`mobile_number.eq.${phone},mobile_number.eq.${localPhone}`)
-      .maybeSingle();
+      .limit(1);
+    const profile = profiles?.[0];
     if (!profile) {
       return new Response(JSON.stringify({ error: "Account not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
