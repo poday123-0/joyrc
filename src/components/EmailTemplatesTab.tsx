@@ -52,6 +52,9 @@ const EmailTemplatesTab = () => {
     setFormData({
       subject: template.subject,
       html_content: template.html_content,
+      sms_content: template.sms_content || "",
+      send_email: template.send_email !== false,
+      send_sms: template.send_sms === true,
     });
     setShowPreview(false);
   };
@@ -65,13 +68,16 @@ const EmailTemplatesTab = () => {
       .update({
         subject: formData.subject,
         html_content: formData.html_content,
+        sms_content: formData.sms_content,
+        send_email: formData.send_email,
+        send_sms: formData.send_sms,
       })
       .eq("id", editingTemplate.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Template Saved", description: "Email template has been updated." });
+      toast({ title: "Template Saved", description: "Notification template has been updated." });
       setEditingTemplate(null);
       fetchTemplates();
     }
