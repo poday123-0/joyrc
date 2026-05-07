@@ -30,7 +30,7 @@ const Profile = () => {
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "messages">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "returns" | "messages">("profile");
   const [showSettings, setShowSettings] = useState(false);
   const [messagesKey, setMessagesKey] = useState(0);
 
