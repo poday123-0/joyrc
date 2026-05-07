@@ -164,7 +164,7 @@ const QuickPOSTab = () => {
   const fetchProducts = async () => {
     const { data: productsData, error } = await supabase
       .from("products")
-      .select("id, name, price, stock_quantity, image_url, category_id, item_code, cost_price")
+      .select("id, name, price, stock_quantity, image_url, category_id, item_code, cost_price, tax_category_id, tax_categories(rate)")
       .gt("stock_quantity", 0)
       .order("item_code", { ascending: true, nullsFirst: false });
 
