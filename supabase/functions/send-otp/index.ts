@@ -70,11 +70,12 @@ serve(async (req) => {
       });
     }
 
-    // Verify the user exists with this mobile
+    // Verify the user exists with this mobile (try both with and without 960 prefix)
+    const localPhone = phone.startsWith("960") ? phone.slice(3) : phone;
     const { data: profile } = await admin
       .from("profiles")
       .select("user_id")
-      .eq("mobile_number", phone)
+      .or(`mobile_number.eq.${phone},mobile_number.eq.${localPhone}`)
       .maybeSingle();
     if (!profile) {
       return new Response(JSON.stringify({ error: "No account found with this mobile number" }), {
