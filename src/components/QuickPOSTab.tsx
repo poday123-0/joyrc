@@ -526,9 +526,14 @@ const QuickPOSTab = () => {
         .from("orders")
         .insert({
           user_id: customerUserId,
+          subtotal,
+          discount_type: discountType,
+          discount_value: discountValue,
+          discount_amount: discountAmount,
+          tax_amount: taxAmount,
           total_amount: totalAmount,
           status: isDelivery ? (selectedDeliveryStaffId ? "on_delivery" : "processing") : "completed",
-          payment_status: "confirmed",
+          payment_status: paymentMethod === "credit" ? "credit" : "confirmed",
           payment_method: paymentMethod,
           payment_confirmed_at: new Date().toISOString(),
           notes: orderNotes,
