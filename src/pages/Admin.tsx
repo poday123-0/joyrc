@@ -2951,6 +2951,8 @@ const SettingsTab = ({
         site_title: settings.site_title || "",
         favicon_url: settings.favicon_url || "",
         og_image_url: settings.og_image_url || "",
+        sms_login_enabled: settings.sms_login_enabled ?? false,
+        sms_sender_id: settings.sms_sender_id || "RCJOY",
       });
       setLastSyncedData(serverData);
     }
