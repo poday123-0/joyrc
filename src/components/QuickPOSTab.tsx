@@ -411,8 +411,22 @@ const QuickPOSTab = () => {
     }
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const discountAmount = discountType === "percent"
+    ? Math.min(subtotal, subtotal * (discountValue / 100))
+    : Math.min(subtotal, discountValue);
+  const afterDiscount = Math.max(0, subtotal - discountAmount);
+  // Apportion discount across items proportionally, then compute tax per item
+  const taxAmount = cart.reduce((sum, item) => {
+    const lineGross = item.product.price * item.quantity;
+    const lineShare = subtotal > 0 ? lineGross / subtotal : 0;
+    const lineDiscount = discountAmount * lineShare;
+    const lineNet = Math.max(0, lineGross - lineDiscount);
+    const rate = Number(item.product.tax_rate || 0);
+    return sum + lineNet * (rate / 100);
+  }, 0);
+  const totalAmount = afterDiscount + taxAmount;
 
   const completeSale = async () => {
     if (cart.length === 0) return;
