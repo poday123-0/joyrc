@@ -662,17 +662,47 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold shadow-soft hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-elevated hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-50"
           >
-            {loading ? "Please wait..." : isLogin ? "Log In" : "Create Account"}
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
           </button>
         </form>
         )}
 
-        <div className="mt-6 text-center">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-            Continue as Guest →
-          </Link>
+          </div>
+
+          {/* Footer actions */}
+          <div className="mt-6 pt-5 border-t border-border/50 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            {isLogin ? (
+              <p className="text-sm text-muted-foreground text-center sm:text-left">
+                New here?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(false)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Create an account
+                </button>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center sm:text-left">
+                Already a member?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(true)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
+            <Link
+              to="/"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
+            >
+              Continue as Guest →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
