@@ -181,8 +181,9 @@ const QuickPOSTab = () => {
       .in("product_id", productIds)
       .order("sort_order");
 
-    const productsWithColors = (productsData || []).map(product => ({
+    const productsWithColors = (productsData || []).map((product: any) => ({
       ...product,
+      tax_rate: Number(product.tax_categories?.rate || 0),
       colors: colorsData?.filter(c => c.product_id === product.id) || []
     }));
 
