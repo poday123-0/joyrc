@@ -269,11 +269,21 @@ const EmailTemplatesTab = () => {
                 <Mail className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="font-medium text-foreground text-sm">{template.name}</h4>
                   {!template.is_active && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                       Disabled
+                    </span>
+                  )}
+                  {template.send_email !== false && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex items-center gap-1">
+                      <Mail className="w-2.5 h-2.5" /> Email
+                    </span>
+                  )}
+                  {template.send_sms === true && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <MessageSquare className="w-2.5 h-2.5" /> SMS
                     </span>
                   )}
                 </div>
