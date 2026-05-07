@@ -109,7 +109,10 @@ const QuickPOSTab = () => {
     orderId: string;
     orderNumber?: string;
     orderDate: string;
-    items: Array<{ name: string; quantity: number; price: number; color?: string | null }>;
+    items: Array<{ name: string; quantity: number; price: number; color?: string | null; tax_rate?: number; tax_amount?: number; discount_amount?: number }>;
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
     total: number;
     customerName?: string;
     customerPhone?: string;
@@ -710,12 +713,25 @@ const QuickPOSTab = () => {
         orderId: order.id,
         orderNumber: order.order_number || undefined,
         orderDate: new Date().toISOString(),
-        items: cart.map(item => ({
-          name: item.product.name,
-          quantity: item.quantity,
-          price: item.product.price,
-          color: item.selectedColor?.color_name || null,
-        })),
+        items: cart.map(item => {
+          const lineGross = item.product.price * item.quantity;
+          const share = subtotal > 0 ? lineGross / subtotal : 0;
+          const lineDiscount = discountAmount * share;
+          const lineNet = Math.max(0, lineGross - lineDiscount);
+          const rate = Number(item.product.tax_rate || 0);
+          return {
+            name: item.product.name,
+            quantity: item.quantity,
+            price: item.product.price,
+            color: item.selectedColor?.color_name || null,
+            tax_rate: rate,
+            tax_amount: lineNet * (rate / 100),
+            discount_amount: lineDiscount,
+          };
+        }),
+        subtotal,
+        discountAmount,
+        taxAmount,
         total: totalAmount,
         customerName: customerDetails.name || undefined,
         customerPhone: customerDetails.phone || undefined,
