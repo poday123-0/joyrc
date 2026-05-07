@@ -550,17 +550,29 @@ const QuickPOSTab = () => {
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        product_name: item.product.name,
-        product_price: item.product.price,
-        quantity: item.quantity,
-        color_id: item.selectedColor?.id || null,
-        color_name: item.selectedColor?.color_name || null,
-        color_hex: item.selectedColor?.color_hex || null,
-      }));
+      // Create order items with tax/discount apportioned
+      const orderItems = cart.map(item => {
+        const lineGross = item.product.price * item.quantity;
+        const share = subtotal > 0 ? lineGross / subtotal : 0;
+        const lineDiscount = discountAmount * share;
+        const lineNet = Math.max(0, lineGross - lineDiscount);
+        const rate = Number(item.product.tax_rate || 0);
+        const lineTax = lineNet * (rate / 100);
+        return {
+          order_id: order.id,
+          product_id: item.product.id,
+          product_name: item.product.name,
+          product_price: item.product.price,
+          quantity: item.quantity,
+          color_id: item.selectedColor?.id || null,
+          color_name: item.selectedColor?.color_name || null,
+          color_hex: item.selectedColor?.color_hex || null,
+          tax_rate: rate,
+          tax_amount: lineTax,
+          discount_amount: lineDiscount,
+          line_total: lineNet + lineTax,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from("order_items")
