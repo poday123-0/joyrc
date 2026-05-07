@@ -14,7 +14,7 @@ interface ReturnRow {
   status: string;
   created_at: string;
   order_number?: string | null;
-  items?: { id: string; product_name: string; color_name: string | null; quantity: number; refund_amount: number }[];
+  items?: { id: string; product_name: string; color_name: string | null; quantity: number; refund_amount: number; restock: boolean }[];
 }
 
 interface CreditAccount {
@@ -67,7 +67,7 @@ const CustomerReturnsTab = () => {
         if (rIds.length > 0) {
           const { data: itemsData } = await supabase
             .from("sales_return_items")
-            .select("id, return_id, product_name, color_name, quantity, refund_amount")
+            .select("id, return_id, product_name, color_name, quantity, refund_amount, restock")
             .in("return_id", rIds);
           (itemsData || []).forEach((it: any) => {
             (itemsByReturn[it.return_id] ||= []).push({
@@ -76,6 +76,7 @@ const CustomerReturnsTab = () => {
               color_name: it.color_name,
               quantity: it.quantity,
               refund_amount: Number(it.refund_amount || 0),
+              restock: !!it.restock,
             });
           });
         }
@@ -243,16 +244,30 @@ const CustomerReturnsTab = () => {
                   </div>
                 </div>
                 {r.reason && (
-                  <p className="text-xs text-muted-foreground mb-2">Reason: {r.reason}</p>
+                  <div className="mb-2 rounded-lg bg-muted/40 px-2.5 py-1.5">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Refund Reason</p>
+                    <p className="text-xs text-foreground">{r.reason}</p>
+                  </div>
                 )}
                 {r.items && r.items.length > 0 && (
-                  <div className="border-t border-border pt-2 space-y-1">
+                  <div className="border-t border-border pt-2 space-y-1.5">
                     {r.items.map((it) => (
-                      <div key={it.id} className="flex justify-between text-xs">
-                        <span className="text-muted-foreground truncate">
-                          {it.product_name}{it.color_name ? ` · ${it.color_name}` : ""} × {it.quantity}
-                        </span>
-                        <span className="font-medium text-foreground">{formatMVR(it.refund_amount)}</span>
+                      <div key={it.id} className="flex justify-between items-center text-xs gap-2">
+                        <div className="min-w-0 flex-1 flex items-center gap-1.5 flex-wrap">
+                          <span className="text-muted-foreground truncate">
+                            {it.product_name}{it.color_name ? ` · ${it.color_name}` : ""} × {it.quantity}
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                              it.restock
+                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                : "bg-coral/15 text-coral"
+                            }`}
+                          >
+                            {it.restock ? "Restocked" : "Not Restocked"}
+                          </span>
+                        </div>
+                        <span className="font-medium text-foreground flex-shrink-0">{formatMVR(it.refund_amount)}</span>
                       </div>
                     ))}
                   </div>
