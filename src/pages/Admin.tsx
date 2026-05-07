@@ -3277,6 +3277,19 @@ const SettingsTab = ({
                   This email will appear as the sender for order notifications. Must be a verified domain in Resend.
                 </p>
               </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Notification Phone (Admin SMS)</label>
+                <input
+                  type="tel"
+                  value={formData.notification_phone || ""}
+                  onChange={(e) => setFormData({ ...formData, notification_phone: e.target.value })}
+                  placeholder="9607XXXXXX"
+                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Receives admin SMS alerts (e.g., new orders) when SMS is enabled in templates.
+                </p>
+              </div>
           </div>
         </div>
 
