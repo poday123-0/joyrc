@@ -818,6 +818,9 @@ const Admin = () => {
             {activeTab === "stock" && hasTabPermission("stock") && <StockManagementTab />}
             {activeTab === "transactions" && hasTabPermission("transactions") && <TransactionsTab />}
             {activeTab === "loans" && hasTabPermission("loans") && <LoansTab />}
+            {activeTab === "credit" && hasTabPermission("credit") && <CustomerCreditTab />}
+            {activeTab === "returns" && hasTabPermission("returns") && <SalesReturnsTab />}
+            {activeTab === "tax" && hasTabPermission("tax") && <TaxCategoriesTab />}
             {activeTab === "featured" && hasTabPermission("featured") && <FeaturedProductsTab />}
             {activeTab === "videos" && hasTabPermission("videos") && <VideoShowcasesTab />}
             {activeTab === "categories" && hasTabPermission("categories") && (
