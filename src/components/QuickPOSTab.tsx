@@ -1261,21 +1261,53 @@ const QuickPOSTab = () => {
           {/* Fixed Footer - Total & Action */}
           {cart.length > 0 && (
             <div className="p-3 border-t border-border bg-card/80 backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-muted-foreground">Total</span>
-                <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
+              {/* Totals breakdown */}
+              <div className="space-y-1 mb-2 text-xs">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Subtotal</span><span>{formatMVR(subtotal)}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex items-center justify-between text-destructive">
+                    <span>Discount{discountType === "percent" ? ` (${discountValue}%)` : ""}</span>
+                    <span>-{formatMVR(discountAmount)}</span>
+                  </div>
+                )}
+                {taxAmount > 0 && (
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Tax</span><span>+{formatMVR(taxAmount)}</span>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-4 gap-1.5 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <button type="button" onClick={() => setShowDiscountPanel(s => !s)} className="text-xs text-primary underline-offset-2 hover:underline">
+                  {showDiscountPanel ? "Hide discount" : "Add discount"}
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
+                </div>
+              </div>
+              {showDiscountPanel && (
+                <div className="flex gap-2 mb-3 p-2 rounded-lg bg-muted/40">
+                  <select value={discountType} onChange={e => setDiscountType(e.target.value as any)} className="text-xs bg-background border border-border rounded px-2">
+                    <option value="fixed">MVR</option>
+                    <option value="percent">%</option>
+                  </select>
+                  <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
+                </div>
+              )}
+              <div className="grid grid-cols-5 gap-1.5 mb-3">
                 {[
                   { value: "cash", label: "Cash", icon: Banknote },
                   { value: "bank_transfer", label: "Transfer", icon: Building2 },
                   { value: "card", label: "Card", icon: CreditCard },
                   { value: "check", label: "Check", icon: FileCheck },
+                  { value: "credit", label: "Credit", icon: Wallet },
                 ].map(({ value, label, icon: Icon }) => (
                   <button
                     key={value}
                     type="button"
-                    onClick={() => { setPaymentMethod(value); setPaymentReference(""); setSelectedBankId(""); setSelectedCardTypeId(""); }}
+                    onClick={() => { setPaymentMethod(value); setPaymentReference(""); setSelectedBankId(""); setSelectedCardTypeId(""); setSelectedCreditAccountId(""); }}
                     className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-medium transition-all min-w-0 ${
                       paymentMethod === value
                         ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
@@ -1287,6 +1319,20 @@ const QuickPOSTab = () => {
                   </button>
                 ))}
               </div>
+
+              {paymentMethod === "credit" && (
+                <div className="mb-3 space-y-2">
+                  <select value={selectedCreditAccountId} onChange={e => setSelectedCreditAccountId(e.target.value)} className="w-full h-9 px-3 text-xs bg-background border border-border rounded-lg">
+                    <option value="">Select customer credit account...</option>
+                    {creditAccounts.map(a => (
+                      <option key={a.id} value={a.id}>
+                        {a.customer_name}{a.customer_phone ? ` (${a.customer_phone})` : ""} — Owes {formatMVR(Number(a.owed_balance))}, Prepaid {formatMVR(Number(a.prepaid_balance))}
+                      </option>
+                    ))}
+                  </select>
+                  {creditAccounts.length === 0 && <p className="text-[11px] text-muted-foreground italic">No credit accounts. Create one in the Customer Credit tab first.</p>}
+                </div>
+              )}
 
               {/* Conditional Payment Details */}
               {paymentMethod === "bank_transfer" && (
