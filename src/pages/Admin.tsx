@@ -187,7 +187,7 @@ const defaultTabs: TabItem[] = [
   { id: "loans", label: "Loans", icon: Wallet, category: "finance" },
   { id: "credit", label: "Customer Credit", icon: Wallet, category: "finance" },
   { id: "returns", label: "Sales Returns", icon: RotateCcw, category: "sales" },
-  { id: "tax", label: "Tax Categories", icon: Percent, category: "finance" },
+  
   { id: "reports", label: "Reports", icon: BarChart3, category: "finance" },
   { id: "bank", label: "Bank", icon: Building2, category: "finance" },
   { id: "messages", label: "Messages", icon: MessageSquare, category: "communication" },
@@ -823,7 +823,7 @@ const Admin = () => {
             {activeTab === "loans" && hasTabPermission("loans") && <LoansTab />}
             {activeTab === "credit" && hasTabPermission("credit") && <CustomerCreditTab />}
             {activeTab === "returns" && hasTabPermission("returns") && <SalesReturnsTab />}
-            {activeTab === "tax" && hasTabPermission("tax") && <TaxCategoriesTab />}
+            
             {activeTab === "featured" && hasTabPermission("featured") && <FeaturedProductsTab />}
             {activeTab === "videos" && hasTabPermission("videos") && <VideoShowcasesTab />}
             {activeTab === "categories" && hasTabPermission("categories") && (
@@ -3291,7 +3291,12 @@ const SettingsTab = ({
             </div>
           </div>
 
-          {/* Google Login Toggle */}
+          {/* Tax Categories */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Tax Categories</h3>
+            <TaxCategoriesTab />
+          </div>
+
           <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between">
               <div className="flex-1">
