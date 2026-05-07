@@ -328,9 +328,21 @@ const Checkout = () => {
                     <span className="font-medium whitespace-nowrap">{formatMVR(item.price * item.quantity)}</span>
                   </div>
                 ))}
-                <div className="border-t border-border pt-2 mt-2 flex justify-between font-semibold text-sm sm:text-base lg:text-lg">
-                  <span>Total</span>
-                  <span className="text-foreground">{formatMVR(totalPrice)}</span>
+                <div className="border-t border-border pt-2 mt-2 space-y-1">
+                  <div className="flex justify-between text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-medium">{formatMVR(totalPrice)}</span>
+                  </div>
+                  {taxAmount > 0 && (
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-muted-foreground">Tax</span>
+                      <span className="font-medium">{formatMVR(taxAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold text-sm sm:text-base lg:text-lg pt-1">
+                    <span>Total</span>
+                    <span className="text-foreground">{formatMVR(grandTotal)}</span>
+                  </div>
                 </div>
               </div>
             </div>
