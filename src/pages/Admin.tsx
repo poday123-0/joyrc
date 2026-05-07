@@ -52,6 +52,7 @@ import HomeContentTab from "@/components/HomeContentTab";
 import StorageManagementTab from "@/components/StorageManagementTab";
 import EmailTemplatesTab from "@/components/EmailTemplatesTab";
 import MarketingEmailsTab from "@/components/MarketingEmailsTab";
+import MarketingSmsTab from "@/components/MarketingSmsTab";
 import FooterSettingsTab from "@/components/FooterSettingsTab";
 import SystemUsersTab from "@/components/SystemUsersTab";
 import StockManagementTab from "@/components/StockManagementTab";
