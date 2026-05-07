@@ -27,6 +27,8 @@ interface Product {
   image_url: string | null;
   category_id: string | null;
   item_code: string | null;
+  tax_category_id?: string | null;
+  tax_rate?: number;
   colors?: ProductColor[];
 }
 
@@ -34,6 +36,14 @@ interface CartItem {
   product: Product;
   quantity: number;
   selectedColor?: ProductColor | null;
+}
+
+interface CreditAccount {
+  id: string;
+  customer_name: string;
+  customer_phone: string | null;
+  prepaid_balance: number;
+  owed_balance: number;
 }
 
 interface CustomerDetails {
