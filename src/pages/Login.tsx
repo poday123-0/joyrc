@@ -440,7 +440,90 @@ const Login = () => {
           </>
         )}
 
-        {/* Form */}
+        {/* Login mode toggle (Password / SMS OTP) */}
+        {isLogin && smsLoginEnabled && (
+          <div className="flex glass-card rounded-full p-1 shadow-soft mb-4">
+            <button
+              type="button"
+              onClick={() => { setLoginMode("password"); setOtpSent(false); setOtp(""); }}
+              className={`flex-1 py-2 text-sm rounded-full font-medium transition-all ${
+                loginMode === "password" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              Email / Password
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginMode("sms")}
+              className={`flex-1 py-2 text-sm rounded-full font-medium transition-all ${
+                loginMode === "sms" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              Mobile + OTP
+            </button>
+          </div>
+        )}
+
+        {/* SMS OTP form */}
+        {isLogin && smsLoginEnabled && loginMode === "sms" ? (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-muted-foreground">Mobile Number</label>
+              <div className="mt-1 relative">
+                <input
+                  type="tel"
+                  value={smsPhone}
+                  onChange={(e) => setSmsPhone(e.target.value)}
+                  placeholder="Your registered mobile number"
+                  disabled={otpSent}
+                  className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-60"
+                />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            {otpSent && (
+              <div>
+                <label className="text-sm text-muted-foreground">4-digit Code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  className="w-full mt-1 px-4 py-3 rounded-xl border border-border bg-card text-center text-2xl tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <div className="mt-2 flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={() => { setOtpSent(false); setOtp(""); }}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Change number
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={loading || otpCooldown > 0}
+                    className="text-xs text-primary font-medium disabled:opacity-50"
+                  >
+                    {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend code"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={otpSent ? handleVerifyOtp : handleSendOtp}
+              disabled={loading}
+              className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold shadow-soft hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {loading ? "Please wait..." : otpSent ? "Verify & Sign In" : "Send Code"}
+            </button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <>
