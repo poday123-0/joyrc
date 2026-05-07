@@ -14,7 +14,7 @@ interface ReturnRow {
   status: string;
   created_at: string;
   order_number?: string | null;
-  items?: { id: string; product_name: string; color_name: string | null; quantity: number; refund_amount: number }[];
+  items?: { id: string; product_name: string; color_name: string | null; quantity: number; refund_amount: number; restock: boolean }[];
 }
 
 interface CreditAccount {
