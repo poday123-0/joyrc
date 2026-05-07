@@ -143,6 +143,7 @@ interface SystemSettings {
   hero_title: string;
   hero_subtitle: string;
   notification_email: string | null;
+  notification_phone?: string | null;
   notification_sender_name: string | null;
   google_login_enabled: boolean;
   order_number_prefix: string | null;
