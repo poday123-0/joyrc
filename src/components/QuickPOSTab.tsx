@@ -1315,13 +1315,13 @@ const QuickPOSTab = () => {
                   <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
                 </div>
               )}
-              <div className="grid grid-cols-5 gap-1.5 mb-3">
+              <div className={`grid ${canUseCredit ? "grid-cols-5" : "grid-cols-4"} gap-1.5 mb-3`}>
                 {[
                   { value: "cash", label: "Cash", icon: Banknote },
                   { value: "bank_transfer", label: "Transfer", icon: Building2 },
                   { value: "card", label: "Card", icon: CreditCard },
                   { value: "check", label: "Check", icon: FileCheck },
-                  { value: "credit", label: "Credit", icon: Wallet },
+                  ...(canUseCredit ? [{ value: "credit", label: "Credit", icon: Wallet }] : []),
                 ].map(({ value, label, icon: Icon }) => (
                   <button
                     key={value}
