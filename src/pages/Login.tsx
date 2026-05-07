@@ -20,20 +20,27 @@ const Login = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [googleLoginEnabled, setGoogleLoginEnabled] = useState(true);
-  
+  const [smsLoginEnabled, setSmsLoginEnabled] = useState(false);
+  const [loginMode, setLoginMode] = useState<"password" | "sms">("password");
+  const [smsPhone, setSmsPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const fetchSettings = useCallback(async () => {
     const { data } = await supabase
       .from("system_settings")
-      .select("logo_url, google_login_enabled")
+      .select("logo_url, google_login_enabled, sms_login_enabled, sms_api_key_set")
       .limit(1)
       .maybeSingle();
-    
+
     if (data) {
       if (data.logo_url) setLogoUrl(data.logo_url);
       setGoogleLoginEnabled(data.google_login_enabled ?? true);
+      setSmsLoginEnabled(Boolean(data.sms_login_enabled && data.sms_api_key_set));
     }
   }, []);
 
