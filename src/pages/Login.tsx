@@ -20,20 +20,27 @@ const Login = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [googleLoginEnabled, setGoogleLoginEnabled] = useState(true);
-  
+  const [smsLoginEnabled, setSmsLoginEnabled] = useState(false);
+  const [loginMode, setLoginMode] = useState<"password" | "sms">("password");
+  const [smsPhone, setSmsPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const fetchSettings = useCallback(async () => {
     const { data } = await supabase
       .from("system_settings")
-      .select("logo_url, google_login_enabled")
+      .select("logo_url, google_login_enabled, sms_login_enabled, sms_api_key_set")
       .limit(1)
       .maybeSingle();
-    
+
     if (data) {
       if (data.logo_url) setLogoUrl(data.logo_url);
       setGoogleLoginEnabled(data.google_login_enabled ?? true);
+      setSmsLoginEnabled(Boolean(data.sms_login_enabled && data.sms_api_key_set));
     }
   }, []);
 
@@ -122,6 +129,63 @@ const Login = () => {
       toast({ title: "Reset Email Sent", description: "Check your email for the password reset link." });
     }
     setLoading(false);
+  };
+
+  // Cooldown ticker
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const t = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpCooldown]);
+
+  const handleSendOtp = async () => {
+    if (!smsPhone || smsPhone.replace(/\D/g, "").length < 7) {
+      toast({ title: "Enter mobile number", description: "Please enter a valid mobile number.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-otp", {
+        body: { mobile_number: smsPhone },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setOtpSent(true);
+      setOtpCooldown(30);
+      toast({ title: "Code sent", description: "Check your phone for the 4-digit code." });
+    } catch (e: any) {
+      toast({ title: "Could not send code", description: e.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!/^\d{4}$/.test(otp)) {
+      toast({ title: "Enter the 4-digit code", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-otp", {
+        body: { mobile_number: smsPhone, code: otp },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      const { error: vErr } = await supabase.auth.verifyOtp({
+        type: "magiclink",
+        token_hash: data.token_hash,
+      });
+      if (vErr) throw vErr;
+
+      toast({ title: "Welcome back!", description: "Signed in successfully." });
+      navigate("/home", { replace: true });
+    } catch (e: any) {
+      toast({ title: "Verification failed", description: e.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -376,7 +440,90 @@ const Login = () => {
           </>
         )}
 
-        {/* Form */}
+        {/* Login mode toggle (Password / SMS OTP) */}
+        {isLogin && smsLoginEnabled && (
+          <div className="flex glass-card rounded-full p-1 shadow-soft mb-4">
+            <button
+              type="button"
+              onClick={() => { setLoginMode("password"); setOtpSent(false); setOtp(""); }}
+              className={`flex-1 py-2 text-sm rounded-full font-medium transition-all ${
+                loginMode === "password" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              Email / Password
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginMode("sms")}
+              className={`flex-1 py-2 text-sm rounded-full font-medium transition-all ${
+                loginMode === "sms" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              Mobile + OTP
+            </button>
+          </div>
+        )}
+
+        {/* SMS OTP form */}
+        {isLogin && smsLoginEnabled && loginMode === "sms" ? (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-muted-foreground">Mobile Number</label>
+              <div className="mt-1 relative">
+                <input
+                  type="tel"
+                  value={smsPhone}
+                  onChange={(e) => setSmsPhone(e.target.value)}
+                  placeholder="Your registered mobile number"
+                  disabled={otpSent}
+                  className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-60"
+                />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+
+            {otpSent && (
+              <div>
+                <label className="text-sm text-muted-foreground">4-digit Code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  className="w-full mt-1 px-4 py-3 rounded-xl border border-border bg-card text-center text-2xl tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <div className="mt-2 flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={() => { setOtpSent(false); setOtp(""); }}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Change number
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={loading || otpCooldown > 0}
+                    className="text-xs text-primary font-medium disabled:opacity-50"
+                  >
+                    {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend code"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={otpSent ? handleVerifyOtp : handleSendOtp}
+              disabled={loading}
+              className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold shadow-soft hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {loading ? "Please wait..." : otpSent ? "Verify & Sign In" : "Send Code"}
+            </button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <>
@@ -524,6 +671,7 @@ const Login = () => {
             {loading ? "Please wait..." : isLogin ? "Log In" : "Create Account"}
           </button>
         </form>
+        )}
 
         <div className="mt-6 text-center">
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
