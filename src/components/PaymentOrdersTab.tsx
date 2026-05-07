@@ -57,6 +57,7 @@ interface DeliveryStaff {
 
 interface OrderItem {
   id: string;
+  order_id: string;
   product_name: string;
   product_price: number;
   quantity: number;
@@ -1265,6 +1266,7 @@ const PaymentOrdersTab = () => {
                   order={order}
                   isExpanded={expandedOrder === order.id}
                   items={orderItems[order.id] || []}
+                  itemsLoaded={Object.prototype.hasOwnProperty.call(orderItems, order.id)}
                   isSuperAdmin={isSuperAdmin}
                   isAdmin={isAdmin}
                   isEditing={editingOrderId === order.id}
@@ -1297,25 +1299,9 @@ const PaymentOrdersTab = () => {
                   editOrderDate={editOrderDate}
                   onEditOrderDateChange={setEditOrderDate}
                   onViewReceipt={(url) => setViewingReceipt(url)}
-                  onViewInvoice={() => {
-                    const items = (orderItems[order.id] || []).map(item => ({
-                      name: item.product_name,
-                      quantity: item.quantity,
-                      price: item.product_price,
-                      color: item.color_name
-                    }));
-                    setInvoiceData({
-                      orderId: order.id,
-                      orderNumber: order.order_number || undefined,
-                      orderDate: order.created_at,
-                      items,
-                      total: order.total_amount,
-                      customerName: customerProfiles[order.user_id]?.full_name || undefined,
-                      customerPhone: order.phone || undefined,
-                      customerAddress: order.shipping_address || undefined,
-                      isDelivery: !!order.shipping_address,
-                      notes: order.notes || undefined
-                    });
+                  onViewInvoice={async () => {
+                    const invoice = await buildInvoiceData(order);
+                    setInvoiceData(invoice);
                     setShowInvoice(true);
                   }}
                   onAssignDelivery={() => {
@@ -1353,6 +1339,7 @@ const PaymentOrdersTab = () => {
                 order={order}
                 isExpanded={expandedOrder === order.id}
                 items={orderItems[order.id] || []}
+                itemsLoaded={Object.prototype.hasOwnProperty.call(orderItems, order.id)}
                 isSuperAdmin={isSuperAdmin}
                 isAdmin={isAdmin}
                 isEditing={editingOrderId === order.id}
@@ -1376,25 +1363,9 @@ const PaymentOrdersTab = () => {
                 onEditOrderNumberChange={setEditOrderNumber}
                 editOrderDate={editOrderDate}
                 onEditOrderDateChange={setEditOrderDate}
-                onViewInvoice={() => {
-                  const items = (orderItems[order.id] || []).map(item => ({
-                    name: item.product_name,
-                    quantity: item.quantity,
-                    price: item.product_price,
-                    color: item.color_name
-                  }));
-                  setInvoiceData({
-                    orderId: order.id,
-                    orderNumber: order.order_number || undefined,
-                    orderDate: order.created_at,
-                    items,
-                    total: order.total_amount,
-                    customerName: customerProfiles[order.user_id]?.full_name || undefined,
-                    customerPhone: order.phone || undefined,
-                    customerAddress: order.shipping_address || undefined,
-                    isDelivery: !!order.shipping_address,
-                    notes: order.notes || undefined
-                  });
+                onViewInvoice={async () => {
+                  const invoice = await buildInvoiceData(order);
+                  setInvoiceData(invoice);
                   setShowInvoice(true);
                 }}
                 onAssignDelivery={() => {
