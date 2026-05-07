@@ -1191,6 +1191,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_credentials: {
+        Row: {
+          api_key: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          api_key: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          api_key?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       staff_permissions: {
         Row: {
           created_at: string
