@@ -11,6 +11,7 @@ import ProfileCard from "@/components/profile/ProfileCard";
 import QuickActions from "@/components/profile/QuickActions";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import EditProfileForm from "@/components/profile/EditProfileForm";
+import CustomerReturnsTab from "@/components/profile/CustomerReturnsTab";
 
 interface Profile {
   id: string;
