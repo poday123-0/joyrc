@@ -67,7 +67,7 @@ const CustomerReturnsTab = () => {
         if (rIds.length > 0) {
           const { data: itemsData } = await supabase
             .from("sales_return_items")
-            .select("id, return_id, product_name, color_name, quantity, refund_amount")
+            .select("id, return_id, product_name, color_name, quantity, refund_amount, restock")
             .in("return_id", rIds);
           (itemsData || []).forEach((it: any) => {
             (itemsByReturn[it.return_id] ||= []).push({
@@ -76,6 +76,7 @@ const CustomerReturnsTab = () => {
               color_name: it.color_name,
               quantity: it.quantity,
               refund_amount: Number(it.refund_amount || 0),
+              restock: !!it.restock,
             });
           });
         }
