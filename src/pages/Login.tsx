@@ -565,13 +565,26 @@ const Login = () => {
                 <input
                   type="text"
                   value={emailOrMobile}
-                  onChange={(e) => setEmailOrMobile(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setEmailOrMobile(v);
+                    // Auto-switch to OTP mode when a mobile number is entered
+                    if (smsLoginEnabled && !v.includes("@") && v.replace(/\D/g, "").length >= 7) {
+                      setSmsPhone(v);
+                      setLoginMode("sms");
+                    }
+                  }}
                   placeholder="your@email.com or mobile number"
                   className="w-full px-4 py-3 pl-10 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-accent"
                   required
                 />
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
+              {smsLoginEnabled && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Tip: enter your mobile number to sign in with an OTP code instead of a password.
+                </p>
+              )}
             </div>
           ) : (
             <div>
