@@ -58,6 +58,7 @@ import SystemUsersTab from "@/components/SystemUsersTab";
 import StockManagementTab from "@/components/StockManagementTab";
 import SalesReportsTab from "@/components/SalesReportsTab";
 import TransactionsTab from "@/components/TransactionsTab";
+import AccountsTab from "@/components/AccountsTab";
 import PreordersTab from "@/components/PreordersTab";
 import DeliveryTab from "@/components/DeliveryTab";
 import QuickPOSTab from "@/components/QuickPOSTab";
