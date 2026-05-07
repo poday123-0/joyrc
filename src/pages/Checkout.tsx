@@ -45,12 +45,36 @@ const Checkout = () => {
   const [placing, setPlacing] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(2); // Start at Shipping step
+  const [currentStep, setCurrentStep] = useState(2);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [taxRates, setTaxRates] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchBankSettings();
   }, []);
+
+  // Fetch tax rates for cart products
+  useEffect(() => {
+    const ids = Array.from(new Set(items.map((i) => i.id)));
+    if (ids.length === 0) { setTaxRates({}); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, tax_categories(rate)")
+        .in("id", ids);
+      const map: Record<string, number> = {};
+      (data || []).forEach((p: any) => {
+        map[p.id] = Number(p.tax_categories?.rate || 0);
+      });
+      setTaxRates(map);
+    })();
+  }, [items]);
+
+  const taxAmount = items.reduce(
+    (sum, i) => sum + i.price * i.quantity * ((taxRates[i.id] || 0) / 100),
+    0,
+  );
+  const grandTotal = totalPrice + taxAmount;
 
   // Update step based on form state
   useEffect(() => {
