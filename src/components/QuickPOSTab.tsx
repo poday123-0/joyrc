@@ -109,7 +109,10 @@ const QuickPOSTab = () => {
     orderId: string;
     orderNumber?: string;
     orderDate: string;
-    items: Array<{ name: string; quantity: number; price: number; color?: string | null }>;
+    items: Array<{ name: string; quantity: number; price: number; color?: string | null; tax_rate?: number; tax_amount?: number; discount_amount?: number }>;
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
     total: number;
     customerName?: string;
     customerPhone?: string;
