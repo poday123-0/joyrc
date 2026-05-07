@@ -46,6 +46,7 @@ const PERMISSION_AREAS = [
   { key: "tab_marketing-sms", label: "Marketing SMS", description: "Send marketing SMS" },
   
   // Financial (Admin only usually)
+  { key: "tab_accounts", label: "Accounts", description: "View accounting overview (P&L, balances)" },
   { key: "tab_transactions", label: "Transactions", description: "View financial transactions" },
   { key: "tab_reports", label: "Reports", description: "View sales reports and analytics" },
   { key: "tab_bank", label: "Bank Settings", description: "Manage bank account details" },
