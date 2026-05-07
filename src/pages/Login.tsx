@@ -131,7 +131,63 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleGoogleLogin = async () => {
+  // Cooldown ticker
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const t = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpCooldown]);
+
+  const handleSendOtp = async () => {
+    if (!smsPhone || smsPhone.replace(/\D/g, "").length < 7) {
+      toast({ title: "Enter mobile number", description: "Please enter a valid mobile number.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-otp", {
+        body: { mobile_number: smsPhone },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setOtpSent(true);
+      setOtpCooldown(30);
+      toast({ title: "Code sent", description: "Check your phone for the 4-digit code." });
+    } catch (e: any) {
+      toast({ title: "Could not send code", description: e.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!/^\d{4}$/.test(otp)) {
+      toast({ title: "Enter the 4-digit code", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-otp", {
+        body: { mobile_number: smsPhone, code: otp },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      const { error: vErr } = await supabase.auth.verifyOtp({
+        type: "magiclink",
+        token_hash: data.token_hash,
+      });
+      if (vErr) throw vErr;
+
+      toast({ title: "Welcome back!", description: "Signed in successfully." });
+      navigate("/home", { replace: true });
+    } catch (e: any) {
+      toast({ title: "Verification failed", description: e.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
     setGoogleLoading(true);
     try {
       const currentOrigin = window.location.origin;
