@@ -48,11 +48,14 @@ serve(async (req) => {
       );
     }
 
-    // Look up the profile by mobile number
+    // Look up the profile by mobile number (try with and without 960 prefix)
+    const digits = String(mobile_number).replace(/\D/g, "");
+    const withCc = digits.startsWith("960") ? digits : `960${digits}`;
+    const local = digits.startsWith("960") ? digits.slice(3) : digits;
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("user_id")
-      .eq("mobile_number", mobile_number)
+      .or(`mobile_number.eq.${mobile_number},mobile_number.eq.${withCc},mobile_number.eq.${local},mobile_number.eq.${digits}`)
       .maybeSingle();
 
     if (profileError) {
