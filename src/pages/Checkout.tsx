@@ -118,7 +118,9 @@ const Checkout = () => {
 
       const { data: order, error: orderError } = await supabase.from("orders").insert({
         user_id: user.id,
-        total_amount: totalPrice,
+        subtotal: totalPrice,
+        tax_amount: taxAmount,
+        total_amount: grandTotal,
         shipping_address: formData.address.trim(),
         phone: formData.phone.trim(),
         notes: formData.notes.trim() || null,
@@ -130,16 +132,24 @@ const Checkout = () => {
 
       if (orderError) throw orderError;
 
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.id,
-        product_name: item.name,
-        product_price: item.price,
-        quantity: item.quantity,
-        color_id: item.colorId || null,
-        color_name: item.colorName || null,
-        color_hex: item.colorHex || null,
-      }));
+      const orderItems = items.map((item) => {
+        const rate = taxRates[item.id] || 0;
+        const lineSubtotal = item.price * item.quantity;
+        const lineTax = lineSubtotal * (rate / 100);
+        return {
+          order_id: order.id,
+          product_id: item.id,
+          product_name: item.name,
+          product_price: item.price,
+          quantity: item.quantity,
+          color_id: item.colorId || null,
+          color_name: item.colorName || null,
+          color_hex: item.colorHex || null,
+          tax_rate: rate,
+          tax_amount: lineTax,
+          line_total: lineSubtotal + lineTax,
+        };
+      });
 
       await supabase.from("order_items").insert(orderItems);
 
