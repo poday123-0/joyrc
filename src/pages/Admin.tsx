@@ -187,7 +187,7 @@ const defaultTabs: TabItem[] = [
   { id: "loans", label: "Loans", icon: Wallet, category: "finance" },
   { id: "credit", label: "Customer Credit", icon: Wallet, category: "finance" },
   { id: "returns", label: "Sales Returns", icon: RotateCcw, category: "sales" },
-  { id: "tax", label: "Tax Categories", icon: Percent, category: "finance" },
+  
   { id: "reports", label: "Reports", icon: BarChart3, category: "finance" },
   { id: "bank", label: "Bank", icon: Building2, category: "finance" },
   { id: "messages", label: "Messages", icon: MessageSquare, category: "communication" },
