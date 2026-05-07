@@ -143,6 +143,7 @@ interface SystemSettings {
   hero_title: string;
   hero_subtitle: string;
   notification_email: string | null;
+  notification_phone?: string | null;
   notification_sender_name: string | null;
   google_login_enabled: boolean;
   order_number_prefix: string | null;
@@ -2902,6 +2903,7 @@ const SettingsTab = ({
     hero_title: settings.hero_title,
     hero_subtitle: settings.hero_subtitle,
     notification_email: settings.notification_email || "",
+    notification_phone: settings.notification_phone || "",
     notification_sender_name: settings.notification_sender_name || "RC Joy",
     google_login_enabled: settings.google_login_enabled ?? true,
     order_number_prefix: settings.order_number_prefix || "RCJOY",
@@ -2948,6 +2950,7 @@ const SettingsTab = ({
         hero_title: settings.hero_title,
         hero_subtitle: settings.hero_subtitle,
         notification_email: settings.notification_email || "",
+        notification_phone: settings.notification_phone || "",
         notification_sender_name: settings.notification_sender_name || "RC Joy",
         google_login_enabled: settings.google_login_enabled ?? true,
         order_number_prefix: settings.order_number_prefix || "RCJOY",
@@ -3069,6 +3072,7 @@ const SettingsTab = ({
       hero_title: formData.hero_title.trim(),
       hero_subtitle: formData.hero_subtitle.trim(),
       notification_email: formData.notification_email.trim() || null,
+      notification_phone: formData.notification_phone?.trim() || null,
       notification_sender_name: formData.notification_sender_name.trim() || "RC Joy",
       google_login_enabled: formData.google_login_enabled,
       order_number_prefix: formData.order_number_prefix?.trim() || "RCJOY",
@@ -3271,6 +3275,19 @@ const SettingsTab = ({
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   This email will appear as the sender for order notifications. Must be a verified domain in Resend.
+                </p>
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Notification Phone (Admin SMS)</label>
+                <input
+                  type="tel"
+                  value={formData.notification_phone || ""}
+                  onChange={(e) => setFormData({ ...formData, notification_phone: e.target.value })}
+                  placeholder="9607XXXXXX"
+                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Receives admin SMS alerts (e.g., new orders) when SMS is enabled in templates.
                 </p>
               </div>
           </div>

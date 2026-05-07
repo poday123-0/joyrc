@@ -290,6 +290,9 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          send_email: boolean
+          send_sms: boolean
+          sms_content: string
           subject: string
           template_key: string
           updated_at: string
@@ -302,6 +305,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          send_email?: boolean
+          send_sms?: boolean
+          sms_content?: string
           subject: string
           template_key: string
           updated_at?: string
@@ -314,6 +320,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          send_email?: boolean
+          send_sms?: boolean
+          sms_content?: string
           subject?: string
           template_key?: string
           updated_at?: string
@@ -1395,6 +1404,7 @@ export type Database = {
           id: string
           logo_url: string | null
           notification_email: string | null
+          notification_phone: string | null
           notification_sender_name: string | null
           og_image_url: string | null
           order_number_prefix: string | null
@@ -1439,6 +1449,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notification_email?: string | null
+          notification_phone?: string | null
           notification_sender_name?: string | null
           og_image_url?: string | null
           order_number_prefix?: string | null
@@ -1483,6 +1494,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notification_email?: string | null
+          notification_phone?: string | null
           notification_sender_name?: string | null
           og_image_url?: string | null
           order_number_prefix?: string | null
