@@ -3384,7 +3384,88 @@ const SettingsTab = ({
             )}
           </div>
 
-          {/* Website Info Section */}
+          {/* SMS Login (Message Owl) */}
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex-1 pr-3">
+                <h4 className="font-medium text-foreground">SMS Login (Message Owl)</h4>
+                <p className="text-xs text-muted-foreground">
+                  Allow login with mobile + 4-digit OTP. Requires Message Owl API key.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, sms_login_enabled: !formData.sms_login_enabled })}
+                disabled={!settings.sms_api_key_set && !formData.sms_login_enabled}
+                className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
+                  formData.sms_login_enabled ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                    formData.sms_login_enabled ? "left-7" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Sender ID</label>
+                <input
+                  type="text"
+                  value={formData.sms_sender_id}
+                  onChange={(e) => setFormData({ ...formData, sms_sender_id: e.target.value })}
+                  placeholder="RCJOY"
+                  maxLength={11}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Up to 11 chars, shown as the SMS sender.</p>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">
+                  Message Owl API Key {settings.sms_api_key_set && <span className="text-emerald-600">• configured</span>}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={smsApiKey}
+                    onChange={(e) => setSmsApiKey(e.target.value)}
+                    placeholder={settings.sms_api_key_set ? "•••••••••• (enter new key to replace)" : "Paste API key"}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <button
+                    type="button"
+                    disabled={!smsApiKey || savingSmsKey}
+                    onClick={async () => {
+                      setSavingSmsKey(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("save-sms-api-key", {
+                          body: { api_key: smsApiKey },
+                        });
+                        if (error || data?.error) throw new Error(error?.message || data?.error);
+                        setSmsApiKey("");
+                        toast({ title: "API Key Saved", description: "Message Owl key stored securely." });
+                        onRefresh();
+                      } catch (e: any) {
+                        toast({ title: "Failed", description: e.message, variant: "destructive" });
+                      } finally {
+                        setSavingSmsKey(false);
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50"
+                  >
+                    {savingSmsKey ? "Saving..." : "Save"}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Get your API key from <span className="font-medium text-foreground">app.messageowl.com</span>.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="pt-4 border-t border-border">
             <h4 className="font-medium text-foreground mb-3">Website Info (SEO)</h4>
             <p className="text-xs text-muted-foreground mb-4">Configure your site's title, favicon, and social share image</p>
