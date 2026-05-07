@@ -161,43 +161,89 @@ const EmailTemplatesTab = () => {
           </div>
 
           <div className="space-y-3">
-            <div>
-              <label className="text-xs font-medium text-foreground block mb-1">Subject Line</label>
-              <input
-                type="text"
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
-                placeholder="Email subject..."
-              />
+            {/* Channel Toggles */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, send_email: !formData.send_email })}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm transition-colors ${formData.send_email ? "bg-primary/10 border-primary/40 text-primary" : "bg-muted/40 border-border text-muted-foreground"}`}
+              >
+                <Mail className="w-4 h-4" />
+                <span className="font-medium">Send Email</span>
+                <span className="ml-auto text-[10px]">{formData.send_email ? "ON" : "OFF"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, send_sms: !formData.send_sms })}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm transition-colors ${formData.send_sms ? "bg-primary/10 border-primary/40 text-primary" : "bg-muted/40 border-border text-muted-foreground"}`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span className="font-medium">Send SMS</span>
+                <span className="ml-auto text-[10px]">{formData.send_sms ? "ON" : "OFF"}</span>
+              </button>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-foreground">HTML Content</label>
-                <button
-                  onClick={() => setShowPreview(!showPreview)}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
-                >
-                  {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  {showPreview ? "Edit" : "Preview"}
-                </button>
-              </div>
-              
-              {showPreview ? (
-                <div
-                  className="w-full p-4 rounded-xl border border-border bg-background min-h-[200px] prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
-                />
-              ) : (
+            {formData.send_email && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-foreground block mb-1">Email Subject</label>
+                  <input
+                    type="text"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
+                    placeholder="Email subject..."
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-medium text-foreground">Email HTML Content</label>
+                    <button
+                      onClick={() => setShowPreview(!showPreview)}
+                      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
+                    >
+                      {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {showPreview ? "Edit" : "Preview"}
+                    </button>
+                  </div>
+                  
+                  {showPreview ? (
+                    <div
+                      className="w-full p-4 rounded-xl border border-border bg-background min-h-[200px] prose prose-sm max-w-none dark:prose-invert"
+                      dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
+                    />
+                  ) : (
+                    <textarea
+                      value={formData.html_content}
+                      onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
+                      className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-48"
+                      placeholder="<h1>Email content...</h1>"
+                    />
+                  )}
+                </div>
+              </>
+            )}
+
+            {formData.send_sms && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-foreground flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5" /> SMS Message
+                  </label>
+                  <span className="text-[10px] text-muted-foreground">
+                    {formData.sms_content.length} chars · {Math.max(1, Math.ceil(formData.sms_content.length / 160))} segment(s)
+                  </span>
+                </div>
                 <textarea
-                  value={formData.html_content}
-                  onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
-                  className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm font-mono resize-none h-48"
-                  placeholder="<h1>Email content...</h1>"
+                  value={formData.sms_content}
+                  onChange={(e) => setFormData({ ...formData, sms_content: e.target.value.slice(0, 480) })}
+                  className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm resize-none h-24"
+                  placeholder="Hi {{customer_name}}, your order #{{order_id}}..."
                 />
-              )}
-            </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Use the same {`{{variable}}`} placeholders as the email.</p>
+              </div>
+            )}
 
             <button
               onClick={handleSave}
