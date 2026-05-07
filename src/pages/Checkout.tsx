@@ -354,7 +354,7 @@ const Checkout = () => {
                   <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                   <h2 className="font-semibold text-foreground text-sm sm:text-base lg:text-lg">Bank Transfer</h2>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-3">Transfer {formatMVR(totalPrice)} to:</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-3">Transfer {formatMVR(grandTotal)} to:</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {bankSettings.map((bank) => (
                     <div key={bank.id} className="bg-secondary rounded-xl p-3 sm:p-4">
