@@ -671,6 +671,7 @@ const Login = () => {
             {loading ? "Please wait..." : isLogin ? "Log In" : "Create Account"}
           </button>
         </form>
+        )}
 
         <div className="mt-6 text-center">
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
