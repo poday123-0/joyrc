@@ -188,6 +188,7 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
       const currentOrigin = window.location.origin;
