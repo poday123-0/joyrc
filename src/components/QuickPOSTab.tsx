@@ -63,8 +63,8 @@ interface ExistingCustomer {
 }
 
 const QuickPOSTab = () => {
-  const { isAdmin, isSuperAdmin } = useAuth();
-  const canUseCredit = isAdmin || isSuperAdmin;
+  const { isAdmin, isSuperAdmin, isStaff } = useAuth();
+  const canUseCredit = isSuperAdmin || (isAdmin && !isStaff);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
