@@ -1580,6 +1580,7 @@ const OrderCard = ({
   order,
   isExpanded,
   items,
+  itemsLoaded,
   isSuperAdmin,
   isAdmin,
   isEditing,
@@ -1614,6 +1615,7 @@ const OrderCard = ({
   order: Order;
   isExpanded: boolean;
   items: OrderItem[];
+  itemsLoaded: boolean;
   isSuperAdmin: boolean;
   isAdmin: boolean;
   isEditing: boolean;
@@ -1702,9 +1704,8 @@ const OrderCard = ({
             {/* Order items */}
             <div>
               <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h5>
-              {items.length === 0 && (
-                <p className="text-xs text-muted-foreground">Loading items...</p>
-              )}
+              {!itemsLoaded && <p className="text-xs text-muted-foreground">Loading items...</p>}
+              {itemsLoaded && items.length === 0 && <p className="text-xs text-muted-foreground">No items found for this order.</p>}
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm py-0.5">
                   <span>
