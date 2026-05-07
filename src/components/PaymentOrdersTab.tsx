@@ -57,12 +57,18 @@ interface DeliveryStaff {
 
 interface OrderItem {
   id: string;
+  order_id: string;
   product_name: string;
   product_price: number;
   quantity: number;
   color_name?: string | null;
+  color_hex?: string | null;
   product_id: string;
   item_code?: string | null;
+  tax_rate?: number | null;
+  tax_amount?: number | null;
+  discount_amount?: number | null;
+  line_total?: number | null;
 }
 
 interface ImportOrder {
@@ -121,7 +127,18 @@ const PaymentOrdersTab = () => {
     orderId: string;
     orderNumber?: string;
     orderDate: string;
-    items: { name: string; quantity: number; price: number; color?: string | null }[];
+    items: {
+      name: string;
+      quantity: number;
+      price: number;
+      color?: string | null;
+      tax_rate?: number;
+      tax_amount?: number;
+      discount_amount?: number;
+    }[];
+    subtotal?: number;
+    discountAmount?: number;
+    taxAmount?: number;
     total: number;
     customerName?: string;
     customerPhone?: string;
@@ -133,6 +150,12 @@ const PaymentOrdersTab = () => {
   // Payment lookup state
   const [bankNames, setBankNames] = useState<Record<string, string>>({});
   const [cardTypeNames, setCardTypeNames] = useState<Record<string, string>>({});
+
+  const normalizeOrderItems = (items: any[] = []): OrderItem[] =>
+    items.map((item: any) => ({
+      ...item,
+      item_code: item.products?.item_code || null,
+    }));
 
   useEffect(() => {
     fetchOrders();
@@ -158,6 +181,25 @@ const PaymentOrdersTab = () => {
 
     if (!error && data) {
       setOrders(data);
+
+      const orderIds = data.map((order) => order.id);
+      if (orderIds.length > 0) {
+        const { data: prefetchedItems } = await supabase
+          .from("order_items")
+          .select("*, products:product_id(item_code)")
+          .in("order_id", orderIds);
+
+        if (prefetchedItems) {
+          const grouped: Record<string, OrderItem[]> = {};
+          normalizeOrderItems(prefetchedItems).forEach((item) => {
+            if (!grouped[item.order_id]) grouped[item.order_id] = [];
+            grouped[item.order_id].push(item);
+          });
+          setOrderItems(grouped);
+        }
+      } else {
+        setOrderItems({});
+      }
       
       // Fetch customer profiles for all orders
       const userIds = [...new Set(data.map(o => o.user_id))];
@@ -255,12 +297,55 @@ const PaymentOrdersTab = () => {
       .eq("order_id", orderId);
 
     if (!error && data) {
-      const mapped = data.map((item: any) => ({
-        ...item,
-        item_code: item.products?.item_code || null,
-      }));
+      const mapped = normalizeOrderItems(data);
       setOrderItems((prev) => ({ ...prev, [orderId]: mapped }));
     }
+  };
+
+  const ensureOrderItems = async (orderId: string) => {
+    if (orderItems[orderId]) return orderItems[orderId];
+
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("*, products:product_id(item_code)")
+      .eq("order_id", orderId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return [] as OrderItem[];
+    }
+
+    const mapped = normalizeOrderItems(data || []);
+    setOrderItems((prev) => ({ ...prev, [orderId]: mapped }));
+    return mapped;
+  };
+
+  const buildInvoiceData = async (order: Order) => {
+    const items = await ensureOrderItems(order.id);
+
+    return {
+      orderId: order.id,
+      orderNumber: order.order_number || undefined,
+      orderDate: order.created_at,
+      items: items.map((item) => ({
+        name: item.product_name,
+        quantity: item.quantity,
+        price: item.product_price,
+        color: item.color_name,
+        tax_rate: Number(item.tax_rate || 0),
+        tax_amount: Number(item.tax_amount || 0),
+        discount_amount: Number(item.discount_amount || 0),
+      })),
+      subtotal: items.reduce((sum, item) => sum + Number(item.product_price || 0) * Number(item.quantity || 0), 0),
+      discountAmount: items.reduce((sum, item) => sum + Number(item.discount_amount || 0), 0),
+      taxAmount: items.reduce((sum, item) => sum + Number(item.tax_amount || 0), 0),
+      total: order.total_amount,
+      customerName: customerProfiles[order.user_id]?.full_name || undefined,
+      customerPhone: order.phone || undefined,
+      customerAddress: order.shipping_address || undefined,
+      isDelivery: !!order.shipping_address,
+      notes: order.notes || undefined,
+    };
   };
 
   const handleToggleExpand = (orderId: string) => {
@@ -1181,6 +1266,7 @@ const PaymentOrdersTab = () => {
                   order={order}
                   isExpanded={expandedOrder === order.id}
                   items={orderItems[order.id] || []}
+                  itemsLoaded={Object.prototype.hasOwnProperty.call(orderItems, order.id)}
                   isSuperAdmin={isSuperAdmin}
                   isAdmin={isAdmin}
                   isEditing={editingOrderId === order.id}
@@ -1213,25 +1299,9 @@ const PaymentOrdersTab = () => {
                   editOrderDate={editOrderDate}
                   onEditOrderDateChange={setEditOrderDate}
                   onViewReceipt={(url) => setViewingReceipt(url)}
-                  onViewInvoice={() => {
-                    const items = (orderItems[order.id] || []).map(item => ({
-                      name: item.product_name,
-                      quantity: item.quantity,
-                      price: item.product_price,
-                      color: item.color_name
-                    }));
-                    setInvoiceData({
-                      orderId: order.id,
-                      orderNumber: order.order_number || undefined,
-                      orderDate: order.created_at,
-                      items,
-                      total: order.total_amount,
-                      customerName: customerProfiles[order.user_id]?.full_name || undefined,
-                      customerPhone: order.phone || undefined,
-                      customerAddress: order.shipping_address || undefined,
-                      isDelivery: !!order.shipping_address,
-                      notes: order.notes || undefined
-                    });
+                  onViewInvoice={async () => {
+                    const invoice = await buildInvoiceData(order);
+                    setInvoiceData(invoice);
                     setShowInvoice(true);
                   }}
                   onAssignDelivery={() => {
@@ -1269,6 +1339,7 @@ const PaymentOrdersTab = () => {
                 order={order}
                 isExpanded={expandedOrder === order.id}
                 items={orderItems[order.id] || []}
+                itemsLoaded={Object.prototype.hasOwnProperty.call(orderItems, order.id)}
                 isSuperAdmin={isSuperAdmin}
                 isAdmin={isAdmin}
                 isEditing={editingOrderId === order.id}
@@ -1292,25 +1363,9 @@ const PaymentOrdersTab = () => {
                 onEditOrderNumberChange={setEditOrderNumber}
                 editOrderDate={editOrderDate}
                 onEditOrderDateChange={setEditOrderDate}
-                onViewInvoice={() => {
-                  const items = (orderItems[order.id] || []).map(item => ({
-                    name: item.product_name,
-                    quantity: item.quantity,
-                    price: item.product_price,
-                    color: item.color_name
-                  }));
-                  setInvoiceData({
-                    orderId: order.id,
-                    orderNumber: order.order_number || undefined,
-                    orderDate: order.created_at,
-                    items,
-                    total: order.total_amount,
-                    customerName: customerProfiles[order.user_id]?.full_name || undefined,
-                    customerPhone: order.phone || undefined,
-                    customerAddress: order.shipping_address || undefined,
-                    isDelivery: !!order.shipping_address,
-                    notes: order.notes || undefined
-                  });
+                onViewInvoice={async () => {
+                  const invoice = await buildInvoiceData(order);
+                  setInvoiceData(invoice);
                   setShowInvoice(true);
                 }}
                 onAssignDelivery={() => {
@@ -1525,6 +1580,7 @@ const OrderCard = ({
   order,
   isExpanded,
   items,
+  itemsLoaded,
   isSuperAdmin,
   isAdmin,
   isEditing,
@@ -1559,6 +1615,7 @@ const OrderCard = ({
   order: Order;
   isExpanded: boolean;
   items: OrderItem[];
+  itemsLoaded: boolean;
   isSuperAdmin: boolean;
   isAdmin: boolean;
   isEditing: boolean;
@@ -1647,9 +1704,8 @@ const OrderCard = ({
             {/* Order items */}
             <div>
               <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Items</h5>
-              {items.length === 0 && (
-                <p className="text-xs text-muted-foreground">Loading items...</p>
-              )}
+              {!itemsLoaded && <p className="text-xs text-muted-foreground">Loading items...</p>}
+              {itemsLoaded && items.length === 0 && <p className="text-xs text-muted-foreground">No items found for this order.</p>}
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm py-0.5">
                   <span>
