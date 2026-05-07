@@ -623,7 +623,7 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
                         </div>
                       ))}
                       {items.length === 0 && (
-                        <p className="text-sm text-muted-foreground">Loading items...</p>
+                        <p className="text-sm text-muted-foreground">No items found for this order.</p>
                       )}
                     </div>
                   </div>
