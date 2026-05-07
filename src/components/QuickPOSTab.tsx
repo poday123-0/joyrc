@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt, Calendar, Clock, Banknote, CreditCard, Building2, FileCheck } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt, Calendar, Clock, Banknote, CreditCard, Building2, FileCheck, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
@@ -27,6 +27,8 @@ interface Product {
   image_url: string | null;
   category_id: string | null;
   item_code: string | null;
+  tax_category_id?: string | null;
+  tax_rate?: number;
   colors?: ProductColor[];
 }
 
@@ -34,6 +36,14 @@ interface CartItem {
   product: Product;
   quantity: number;
   selectedColor?: ProductColor | null;
+}
+
+interface CreditAccount {
+  id: string;
+  customer_name: string;
+  customer_phone: string | null;
+  prepaid_balance: number;
+  owed_balance: number;
 }
 
 interface CustomerDetails {
@@ -86,6 +96,14 @@ const QuickPOSTab = () => {
   const [selectedCardTypeId, setSelectedCardTypeId] = useState<string>("");
   const [banks, setBanks] = useState<Array<{ id: string; bank_name: string; logo_url: string | null }>>([]);
   const [cardTypes, setCardTypes] = useState<Array<{ id: string; name: string }>>([]);
+
+  // === New: discount + credit ===
+  const [discountType, setDiscountType] = useState<"fixed" | "percent">("fixed");
+  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [showDiscountPanel, setShowDiscountPanel] = useState(false);
+  const [creditAccounts, setCreditAccounts] = useState<CreditAccount[]>([]);
+  const [selectedCreditAccountId, setSelectedCreditAccountId] = useState<string>("");
+
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
     orderId: string;
@@ -105,7 +123,16 @@ const QuickPOSTab = () => {
     fetchBanks();
     fetchCardTypes();
     fetchDeliveryStaff();
+    fetchCreditAccounts();
   }, []);
+
+  const fetchCreditAccounts = async () => {
+    const { data } = await supabase
+      .from("customer_credit_accounts")
+      .select("id, customer_name, customer_phone, prepaid_balance, owed_balance")
+      .order("customer_name");
+    if (data) setCreditAccounts(data as any);
+  };
 
   const fetchDeliveryStaff = async () => {
     const { data: permissions } = await supabase
@@ -137,7 +164,7 @@ const QuickPOSTab = () => {
   const fetchProducts = async () => {
     const { data: productsData, error } = await supabase
       .from("products")
-      .select("id, name, price, stock_quantity, image_url, category_id, item_code, cost_price")
+      .select("id, name, price, stock_quantity, image_url, category_id, item_code, cost_price, tax_category_id, tax_categories(rate)")
       .gt("stock_quantity", 0)
       .order("item_code", { ascending: true, nullsFirst: false });
 
@@ -154,8 +181,9 @@ const QuickPOSTab = () => {
       .in("product_id", productIds)
       .order("sort_order");
 
-    const productsWithColors = (productsData || []).map(product => ({
+    const productsWithColors = (productsData || []).map((product: any) => ({
       ...product,
+      tax_rate: Number(product.tax_categories?.rate || 0),
       colors: colorsData?.filter(c => c.product_id === product.id) || []
     }));
 
@@ -383,8 +411,22 @@ const QuickPOSTab = () => {
     }
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const discountAmount = discountType === "percent"
+    ? Math.min(subtotal, subtotal * (discountValue / 100))
+    : Math.min(subtotal, discountValue);
+  const afterDiscount = Math.max(0, subtotal - discountAmount);
+  // Apportion discount across items proportionally, then compute tax per item
+  const taxAmount = cart.reduce((sum, item) => {
+    const lineGross = item.product.price * item.quantity;
+    const lineShare = subtotal > 0 ? lineGross / subtotal : 0;
+    const lineDiscount = discountAmount * lineShare;
+    const lineNet = Math.max(0, lineGross - lineDiscount);
+    const rate = Number(item.product.tax_rate || 0);
+    return sum + lineNet * (rate / 100);
+  }, 0);
+  const totalAmount = afterDiscount + taxAmount;
 
   const completeSale = async () => {
     if (cart.length === 0) return;
@@ -416,6 +458,12 @@ const QuickPOSTab = () => {
     // Validate card type
     if (paymentMethod === "card" && !selectedCardTypeId) {
       toast({ title: "Card Type Required", description: "Please select a card type", variant: "destructive" });
+      return;
+    }
+
+    // Validate credit account
+    if (paymentMethod === "credit" && !selectedCreditAccountId) {
+      toast({ title: "Credit account required", description: "Please select a customer credit account", variant: "destructive" });
       return;
     }
     
@@ -484,9 +532,14 @@ const QuickPOSTab = () => {
         .from("orders")
         .insert({
           user_id: customerUserId,
+          subtotal,
+          discount_type: discountType,
+          discount_value: discountValue,
+          discount_amount: discountAmount,
+          tax_amount: taxAmount,
           total_amount: totalAmount,
           status: isDelivery ? (selectedDeliveryStaffId ? "on_delivery" : "processing") : "completed",
-          payment_status: "confirmed",
+          payment_status: paymentMethod === "credit" ? "credit" : "confirmed",
           payment_method: paymentMethod,
           payment_confirmed_at: new Date().toISOString(),
           notes: orderNotes,
@@ -503,17 +556,29 @@ const QuickPOSTab = () => {
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        product_name: item.product.name,
-        product_price: item.product.price,
-        quantity: item.quantity,
-        color_id: item.selectedColor?.id || null,
-        color_name: item.selectedColor?.color_name || null,
-        color_hex: item.selectedColor?.color_hex || null,
-      }));
+      // Create order items with tax/discount apportioned
+      const orderItems = cart.map(item => {
+        const lineGross = item.product.price * item.quantity;
+        const share = subtotal > 0 ? lineGross / subtotal : 0;
+        const lineDiscount = discountAmount * share;
+        const lineNet = Math.max(0, lineGross - lineDiscount);
+        const rate = Number(item.product.tax_rate || 0);
+        const lineTax = lineNet * (rate / 100);
+        return {
+          order_id: order.id,
+          product_id: item.product.id,
+          product_name: item.product.name,
+          product_price: item.product.price,
+          quantity: item.quantity,
+          color_id: item.selectedColor?.id || null,
+          color_name: item.selectedColor?.color_name || null,
+          color_hex: item.selectedColor?.color_hex || null,
+          tax_rate: rate,
+          tax_amount: lineTax,
+          discount_amount: lineDiscount,
+          line_total: lineNet + lineTax,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from("order_items")
@@ -572,15 +637,44 @@ const QuickPOSTab = () => {
         });
       }
 
-      // Create income transaction
-      await supabase.from("transactions").insert({
-        type: "income",
-        category: "Product Sales",
-        amount: totalAmount,
-        description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order ${order.order_number || order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
-        order_id: order.id,
-        added_by: user.id,
-      });
+      // Create income transaction (skip for credit sales — booked when repaid)
+      if (paymentMethod !== "credit") {
+        await supabase.from("transactions").insert({
+          type: "income",
+          category: "Product Sales",
+          amount: totalAmount,
+          description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order ${order.order_number || order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
+          order_id: order.id,
+          added_by: user.id,
+        });
+      }
+
+      // Handle customer credit payment
+      if (paymentMethod === "credit" && selectedCreditAccountId) {
+        const acc = creditAccounts.find(a => a.id === selectedCreditAccountId);
+        if (acc) {
+          const usePrepaid = Math.min(Number(acc.prepaid_balance), totalAmount);
+          const onCredit = totalAmount - usePrepaid;
+          if (usePrepaid > 0) {
+            await supabase.from("customer_credit_transactions").insert({
+              account_id: acc.id, type: "spend_prepaid", amount: usePrepaid,
+              order_id: order.id, created_by: user.id,
+              notes: `POS sale - Order ${order.order_number || order.id.slice(0, 8)}`,
+            });
+          }
+          if (onCredit > 0) {
+            await supabase.from("customer_credit_transactions").insert({
+              account_id: acc.id, type: "sale_on_credit", amount: onCredit,
+              order_id: order.id, created_by: user.id,
+              notes: `POS sale on credit - Order ${order.order_number || order.id.slice(0, 8)}`,
+            });
+          }
+          await supabase.from("customer_credit_accounts").update({
+            prepaid_balance: Number(acc.prepaid_balance) - usePrepaid,
+            owed_balance: Number(acc.owed_balance) + onCredit,
+          }).eq("id", acc.id);
+        }
+      }
 
       // Notify assigned delivery staff
       if (isDelivery && selectedDeliveryStaffId) {
@@ -1167,21 +1261,53 @@ const QuickPOSTab = () => {
           {/* Fixed Footer - Total & Action */}
           {cart.length > 0 && (
             <div className="p-3 border-t border-border bg-card/80 backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-muted-foreground">Total</span>
-                <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
+              {/* Totals breakdown */}
+              <div className="space-y-1 mb-2 text-xs">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Subtotal</span><span>{formatMVR(subtotal)}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex items-center justify-between text-destructive">
+                    <span>Discount{discountType === "percent" ? ` (${discountValue}%)` : ""}</span>
+                    <span>-{formatMVR(discountAmount)}</span>
+                  </div>
+                )}
+                {taxAmount > 0 && (
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Tax</span><span>+{formatMVR(taxAmount)}</span>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-4 gap-1.5 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <button type="button" onClick={() => setShowDiscountPanel(s => !s)} className="text-xs text-primary underline-offset-2 hover:underline">
+                  {showDiscountPanel ? "Hide discount" : "Add discount"}
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-lg font-bold text-foreground">{formatMVR(totalAmount)}</span>
+                </div>
+              </div>
+              {showDiscountPanel && (
+                <div className="flex gap-2 mb-3 p-2 rounded-lg bg-muted/40">
+                  <select value={discountType} onChange={e => setDiscountType(e.target.value as any)} className="text-xs bg-background border border-border rounded px-2">
+                    <option value="fixed">MVR</option>
+                    <option value="percent">%</option>
+                  </select>
+                  <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
+                </div>
+              )}
+              <div className="grid grid-cols-5 gap-1.5 mb-3">
                 {[
                   { value: "cash", label: "Cash", icon: Banknote },
                   { value: "bank_transfer", label: "Transfer", icon: Building2 },
                   { value: "card", label: "Card", icon: CreditCard },
                   { value: "check", label: "Check", icon: FileCheck },
+                  { value: "credit", label: "Credit", icon: Wallet },
                 ].map(({ value, label, icon: Icon }) => (
                   <button
                     key={value}
                     type="button"
-                    onClick={() => { setPaymentMethod(value); setPaymentReference(""); setSelectedBankId(""); setSelectedCardTypeId(""); }}
+                    onClick={() => { setPaymentMethod(value); setPaymentReference(""); setSelectedBankId(""); setSelectedCardTypeId(""); setSelectedCreditAccountId(""); }}
                     className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-xl text-[11px] font-medium transition-all min-w-0 ${
                       paymentMethod === value
                         ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/30"
@@ -1193,6 +1319,20 @@ const QuickPOSTab = () => {
                   </button>
                 ))}
               </div>
+
+              {paymentMethod === "credit" && (
+                <div className="mb-3 space-y-2">
+                  <select value={selectedCreditAccountId} onChange={e => setSelectedCreditAccountId(e.target.value)} className="w-full h-9 px-3 text-xs bg-background border border-border rounded-lg">
+                    <option value="">Select customer credit account...</option>
+                    {creditAccounts.map(a => (
+                      <option key={a.id} value={a.id}>
+                        {a.customer_name}{a.customer_phone ? ` (${a.customer_phone})` : ""} — Owes {formatMVR(Number(a.owed_balance))}, Prepaid {formatMVR(Number(a.prepaid_balance))}
+                      </option>
+                    ))}
+                  </select>
+                  {creditAccounts.length === 0 && <p className="text-[11px] text-muted-foreground italic">No credit accounts. Create one in the Customer Credit tab first.</p>}
+                </div>
+              )}
 
               {/* Conditional Payment Details */}
               {paymentMethod === "bank_transfer" && (

@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff, Sun, Moon, ChevronDown, Wallet
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff, Sun, Moon, ChevronDown, Wallet, Percent
 } from "lucide-react";
 import {
   DndContext,
@@ -61,6 +61,9 @@ import PreordersTab from "@/components/PreordersTab";
 import DeliveryTab from "@/components/DeliveryTab";
 import QuickPOSTab from "@/components/QuickPOSTab";
 import LoansTab from "@/components/LoansTab";
+import TaxCategoriesTab from "@/components/TaxCategoriesTab";
+import CustomerCreditTab from "@/components/CustomerCreditTab";
+import SalesReturnsTab from "@/components/SalesReturnsTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
@@ -154,7 +157,7 @@ interface TabItem {
   category?: string;
 }
 
-type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "loans" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "loans" | "credit" | "returns" | "tax" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
 
 const TAB_CATEGORIES = [
   { key: "main", label: "" },
@@ -179,6 +182,9 @@ const defaultTabs: TabItem[] = [
   { id: "deliveries", label: "Deliveries", icon: Truck, category: "sales" },
   { id: "transactions", label: "Transactions", icon: CreditCard, category: "finance" },
   { id: "loans", label: "Loans", icon: Wallet, category: "finance" },
+  { id: "credit", label: "Customer Credit", icon: Wallet, category: "finance" },
+  { id: "returns", label: "Sales Returns", icon: RotateCcw, category: "sales" },
+  { id: "tax", label: "Tax Categories", icon: Percent, category: "finance" },
   { id: "reports", label: "Reports", icon: BarChart3, category: "finance" },
   { id: "bank", label: "Bank", icon: Building2, category: "finance" },
   { id: "messages", label: "Messages", icon: MessageSquare, category: "communication" },
@@ -200,7 +206,7 @@ const iconMap: Record<string, any> = {
   LayoutDashboard, Banknote, Package, PackageSearch, CreditCard, Star, Video,
   Grid3X3, ShoppingCart, BarChart3, MessageSquare, Building2,
   HelpCircle, Users, UserCog, User, ImageIcon, FolderOpen,
-  HardDrive, Mail, Send, Settings, Bell, Truck, Wallet,
+  HardDrive, Mail, Send, Settings, Bell, Truck, Wallet, Percent, RotateCcw,
 };
 
 // Sortable menu item component
@@ -812,6 +818,9 @@ const Admin = () => {
             {activeTab === "stock" && hasTabPermission("stock") && <StockManagementTab />}
             {activeTab === "transactions" && hasTabPermission("transactions") && <TransactionsTab />}
             {activeTab === "loans" && hasTabPermission("loans") && <LoansTab />}
+            {activeTab === "credit" && hasTabPermission("credit") && <CustomerCreditTab />}
+            {activeTab === "returns" && hasTabPermission("returns") && <SalesReturnsTab />}
+            {activeTab === "tax" && hasTabPermission("tax") && <TaxCategoriesTab />}
             {activeTab === "featured" && hasTabPermission("featured") && <FeaturedProductsTab />}
             {activeTab === "videos" && hasTabPermission("videos") && <VideoShowcasesTab />}
             {activeTab === "categories" && hasTabPermission("categories") && (
