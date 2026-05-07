@@ -1076,8 +1076,39 @@ const QuickPOSTab = () => {
                   placeholder="Search product..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-sm"
+                  className="pl-9 h-9 text-sm pr-9"
                 />
+                {searchingProducts && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                {isSearching && searchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-30 max-h-72 overflow-y-auto">
+                    {searchResults.slice(0, 20).map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => { handleProductClick(p); setSearchQuery(""); setItemCodeSearch(""); }}
+                        className="w-full px-3 py-2 text-left hover:bg-muted flex items-center gap-2 border-b border-border last:border-0"
+                      >
+                        <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {p.image_url ? (
+                            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                          <p className="text-[11px] text-muted-foreground font-mono truncate">
+                            {p.item_code ? `#${p.item_code} · ` : ""}Stock: {p.stock_quantity}
+                          </p>
+                        </div>
+                        <p className="text-xs font-semibold text-primary flex-shrink-0">{formatMVR(p.price)}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="relative w-32 sm:w-36">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">#</span>
