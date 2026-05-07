@@ -3291,7 +3291,12 @@ const SettingsTab = ({
             </div>
           </div>
 
-          {/* Google Login Toggle */}
+          {/* Tax Categories */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Tax Categories</h3>
+            <TaxCategoriesTab />
+          </div>
+
           <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between">
               <div className="flex-1">
