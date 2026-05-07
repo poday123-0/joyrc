@@ -148,6 +148,9 @@ interface SystemSettings {
   site_title: string | null;
   favicon_url: string | null;
   og_image_url: string | null;
+  sms_login_enabled?: boolean;
+  sms_sender_id?: string | null;
+  sms_api_key_set?: boolean;
 }
 
 interface TabItem {
