@@ -211,6 +211,10 @@ const Profile = () => {
                       <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
                         <OrdersTab />
                       </div>
+                    ) : activeTab === "returns" ? (
+                      <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
+                        <CustomerReturnsTab />
+                      </div>
                     ) : activeTab === "messages" ? (
                       <div className="space-y-4 sm:space-y-6">
                         <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 shadow-lg">
