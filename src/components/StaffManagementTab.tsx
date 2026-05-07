@@ -48,6 +48,10 @@ const PERMISSION_AREAS = [
   { key: "tab_transactions", label: "Transactions", description: "View financial transactions" },
   { key: "tab_reports", label: "Reports", description: "View sales reports and analytics" },
   { key: "tab_bank", label: "Bank Settings", description: "Manage bank account details" },
+  { key: "tab_loans", label: "Loans", description: "Manage borrowed funds and repayments" },
+  { key: "tab_credit", label: "Customer Credit", description: "Manage prepaid balances and credit owed" },
+  { key: "tab_returns", label: "Sales Returns", description: "Process refunds and returns" },
+  { key: "tab_tax", label: "Tax Categories", description: "Define tax rates for products" },
   
   // User Management
   { key: "tab_users", label: "Users", description: "View and manage customer accounts" },
