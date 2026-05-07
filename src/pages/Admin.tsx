@@ -850,8 +850,7 @@ const Admin = () => {
             {activeTab === "home-content" && hasTabPermission("home-content") && <HomeContentTab />}
             {activeTab === "storage" && hasTabPermission("storage") && <StorageManagementTab />}
             {activeTab === "email-templates" && hasTabPermission("email-templates") && <EmailTemplatesTab />}
-            {activeTab === "marketing" && hasTabPermission("marketing") && <MarketingEmailsTab />}
-            {activeTab === "marketing-sms" && hasTabPermission("marketing-sms") && <MarketingSmsTab />}
+            {activeTab === "marketing" && hasTabPermission("marketing") && <MarketingTab />}
             {activeTab === "footer" && hasTabPermission("footer") && <FooterSettingsTab />}
             {activeTab === "settings" && hasTabPermission("settings") && settings && (
               <SettingsTab 
