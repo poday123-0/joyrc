@@ -4,7 +4,7 @@ import {
   ChevronLeft, Package, Grid3X3, Settings, Plus, Pencil, Trash2, 
   Save, X, ListPlus, Image, Upload, CheckCircle2, LayoutDashboard,
   Building2, CreditCard, RotateCcw, MessageSquare, HelpCircle, Users, Menu, ImageIcon, Star, Video, User, FolderOpen, HardDrive, Mail, Send,
-  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff, Sun, Moon, ChevronDown, Wallet, Percent
+  Zap, Battery, Gauge, Radio, Box, Clock, Ruler, Scale, Thermometer, Wifi, Camera, UserCog, PackageSearch, BarChart3, GripVertical, ShoppingCart, Bell, Search, Truck, Banknote, Hash, ExternalLink, Eye, EyeOff, Sun, Moon, ChevronDown, Wallet, Percent, BookOpen
 } from "lucide-react";
 import {
   DndContext,
@@ -58,6 +58,7 @@ import SystemUsersTab from "@/components/SystemUsersTab";
 import StockManagementTab from "@/components/StockManagementTab";
 import SalesReportsTab from "@/components/SalesReportsTab";
 import TransactionsTab from "@/components/TransactionsTab";
+import AccountsTab from "@/components/AccountsTab";
 import PreordersTab from "@/components/PreordersTab";
 import DeliveryTab from "@/components/DeliveryTab";
 import QuickPOSTab from "@/components/QuickPOSTab";
@@ -162,7 +163,7 @@ interface TabItem {
   category?: string;
 }
 
-type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "loans" | "credit" | "returns" | "tax" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "marketing-sms" | "footer" | "settings";
+type Tab = "dashboard" | "pos" | "products" | "stock" | "accounts" | "transactions" | "loans" | "credit" | "returns" | "tax" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "marketing-sms" | "footer" | "settings";
 
 const TAB_CATEGORIES = [
   { key: "main", label: "" },
@@ -185,6 +186,7 @@ const defaultTabs: TabItem[] = [
   { id: "orders", label: "Orders", icon: ShoppingCart, category: "sales" },
   { id: "preorders", label: "Pre-orders", icon: Bell, category: "sales" },
   { id: "deliveries", label: "Deliveries", icon: Truck, category: "sales" },
+  { id: "accounts", label: "Accounts", icon: BookOpen, category: "finance" },
   { id: "transactions", label: "Transactions", icon: CreditCard, category: "finance" },
   { id: "loans", label: "Loans", icon: Wallet, category: "finance" },
   { id: "credit", label: "Customer Credit", icon: Wallet, category: "finance" },
@@ -822,6 +824,7 @@ const Admin = () => {
               />
             )}
             {activeTab === "stock" && hasTabPermission("stock") && <StockManagementTab />}
+            {activeTab === "accounts" && hasTabPermission("accounts") && <AccountsTab />}
             {activeTab === "transactions" && hasTabPermission("transactions") && <TransactionsTab />}
             {activeTab === "loans" && hasTabPermission("loans") && <LoansTab />}
             {activeTab === "credit" && hasTabPermission("credit") && <CustomerCreditTab />}
