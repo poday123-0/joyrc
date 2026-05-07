@@ -186,6 +186,7 @@ const defaultTabs: TabItem[] = [
   { id: "orders", label: "Orders", icon: ShoppingCart, category: "sales" },
   { id: "preorders", label: "Pre-orders", icon: Bell, category: "sales" },
   { id: "deliveries", label: "Deliveries", icon: Truck, category: "sales" },
+  { id: "accounts", label: "Accounts", icon: BookOpen, category: "finance" },
   { id: "transactions", label: "Transactions", icon: CreditCard, category: "finance" },
   { id: "loans", label: "Loans", icon: Wallet, category: "finance" },
   { id: "credit", label: "Customer Credit", icon: Wallet, category: "finance" },
