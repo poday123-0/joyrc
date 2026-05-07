@@ -19,16 +19,12 @@ interface SearchOverlayProps {
 
 const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   const [query, setQuery] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      // Fetch all products when overlay opens
-      fetchProducts();
-      // Focus input after animation
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
       setQuery("");
@@ -36,37 +32,35 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
     }
   }, [isOpen]);
 
+  // Live DB search as user types
   useEffect(() => {
-    if (query.trim() === "") {
+    const q = query.trim();
+    if (q === "") {
       setFilteredProducts([]);
+      setLoading(false);
       return;
     }
 
-    const filtered = products.filter((product) =>
-      product.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setFilteredProducts(filtered);
-  }, [query, products]);
-
-  const fetchProducts = async () => {
+    let cancelled = false;
     setLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select(`
-        id,
-        name,
-        price,
-        image_url,
-        category:categories(name)
-      `)
-      .eq("in_stock", true)
-      .limit(100);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("products")
+        .select(`id, name, price, image_url, category:categories(name)`)
+        .eq("in_stock", true)
+        .ilike("name", `%${q}%`)
+        .limit(50);
 
-    if (data) {
-      setProducts(data as unknown as Product[]);
-    }
-    setLoading(false);
-  };
+      if (cancelled) return;
+      setFilteredProducts((data as unknown as Product[]) || []);
+      setLoading(false);
+    }, 150);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
 
   const handleProductClick = () => {
     onClose();

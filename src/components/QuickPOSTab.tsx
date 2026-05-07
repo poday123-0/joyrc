@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import POSInvoice from "./POSInvoice";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProductColor {
   id: string;
@@ -62,6 +63,8 @@ interface ExistingCustomer {
 }
 
 const QuickPOSTab = () => {
+  const { isAdmin, isSuperAdmin, isStaff } = useAuth();
+  const canUseCredit = isSuperAdmin || (isAdmin && !isStaff);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -204,22 +207,57 @@ const QuickPOSTab = () => {
     if (data) setCardTypes(data);
   };
 
-  const filteredProducts = products.filter(p => {
-    const matchesName = searchQuery ? p.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-    const matchesItemCode = itemCodeSearch ? (p.item_code && p.item_code.toLowerCase().includes(itemCodeSearch.toLowerCase())) : true;
-    
-    // If both searches are empty, show all
-    if (!searchQuery && !itemCodeSearch) return true;
-    // If only name search, filter by name
-    if (searchQuery && !itemCodeSearch) return matchesName;
-    // If only item code search, filter by item code
-    if (!searchQuery && itemCodeSearch) return matchesItemCode;
-    // If both, product must match both
-    return matchesName && matchesItemCode;
-  });
+  // Live DB-backed search results (matches main site product search behavior)
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
+  const [searchingProducts, setSearchingProducts] = useState(false);
 
   const isSearching = !!(searchQuery || itemCodeSearch);
-  const displayProducts = filteredProducts;
+
+  useEffect(() => {
+    if (!isSearching) {
+      setSearchResults(null);
+      setSearchingProducts(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSearchingProducts(true);
+    const timer = setTimeout(async () => {
+      let q = supabase
+        .from("products")
+        .select("id, name, price, stock_quantity, image_url, category_id, item_code, cost_price, tax_category_id, tax_categories(rate)")
+        .gt("stock_quantity", 0);
+
+      if (searchQuery) q = q.ilike("name", `%${searchQuery}%`);
+      if (itemCodeSearch) q = q.ilike("item_code", `%${itemCodeSearch}%`);
+
+      const { data: productsData } = await q.order("item_code", { ascending: true, nullsFirst: false }).limit(50);
+      if (cancelled) return;
+
+      const productIds = productsData?.map((p: any) => p.id) || [];
+      let colorsData: any[] = [];
+      if (productIds.length) {
+        const { data } = await supabase
+          .from("product_colors")
+          .select("*, stock_quantity")
+          .in("product_id", productIds)
+          .order("sort_order");
+        colorsData = data || [];
+      }
+
+      if (cancelled) return;
+      setSearchResults((productsData || []).map((product: any) => ({
+        ...product,
+        tax_rate: Number(product.tax_categories?.rate || 0),
+        colors: colorsData.filter(c => c.product_id === product.id),
+      })));
+      setSearchingProducts(false);
+    }, 150);
+
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [searchQuery, itemCodeSearch, isSearching]);
+
+  const displayProducts = isSearching ? (searchResults || []) : products;
 
   const handleProductClick = (product: Product) => {
     if (product.colors && product.colors.length > 0) {
@@ -1058,7 +1096,7 @@ const QuickPOSTab = () => {
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <Package className="w-10 h-10 mb-2 opacity-50" />
                 <p className="text-sm">{isSearching ? "No products found" : "No products available"}</p>
-                {!isSearching && filteredProducts.length > 0 && (
+                {!isSearching && products.length > 0 && (
                   <p className="text-xs mt-1">Use search to find more products</p>
                 )}
               </div>
@@ -1312,13 +1350,13 @@ const QuickPOSTab = () => {
                   <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
                 </div>
               )}
-              <div className="grid grid-cols-5 gap-1.5 mb-3">
+              <div className={`grid ${canUseCredit ? "grid-cols-5" : "grid-cols-4"} gap-1.5 mb-3`}>
                 {[
                   { value: "cash", label: "Cash", icon: Banknote },
                   { value: "bank_transfer", label: "Transfer", icon: Building2 },
                   { value: "card", label: "Card", icon: CreditCard },
                   { value: "check", label: "Check", icon: FileCheck },
-                  { value: "credit", label: "Credit", icon: Wallet },
+                  ...(canUseCredit ? [{ value: "credit", label: "Credit", icon: Wallet }] : []),
                 ].map(({ value, label, icon: Icon }) => (
                   <button
                     key={value}
