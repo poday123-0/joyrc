@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import POSInvoice from "./POSInvoice";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProductColor {
   id: string;
