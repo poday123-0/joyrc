@@ -460,6 +460,12 @@ const QuickPOSTab = () => {
       toast({ title: "Card Type Required", description: "Please select a card type", variant: "destructive" });
       return;
     }
+
+    // Validate credit account
+    if (paymentMethod === "credit" && !selectedCreditAccountId) {
+      toast({ title: "Credit account required", description: "Please select a customer credit account", variant: "destructive" });
+      return;
+    }
     
     // Validate delivery details if delivery is selected
     if (isDelivery && (!customerDetails.name.trim() || !customerDetails.phone.trim() || !customerDetails.address.trim())) {
