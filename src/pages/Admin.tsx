@@ -824,6 +824,7 @@ const Admin = () => {
               />
             )}
             {activeTab === "stock" && hasTabPermission("stock") && <StockManagementTab />}
+            {activeTab === "accounts" && hasTabPermission("accounts") && <AccountsTab />}
             {activeTab === "transactions" && hasTabPermission("transactions") && <TransactionsTab />}
             {activeTab === "loans" && hasTabPermission("loans") && <LoansTab />}
             {activeTab === "credit" && hasTabPermission("credit") && <CustomerCreditTab />}
