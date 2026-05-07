@@ -3072,6 +3072,8 @@ const SettingsTab = ({
       site_title: formData.site_title.trim() || null,
       favicon_url: formData.favicon_url || null,
       og_image_url: formData.og_image_url || null,
+      sms_login_enabled: formData.sms_login_enabled,
+      sms_sender_id: formData.sms_sender_id?.trim() || "RCJOY",
     };
 
     try {
