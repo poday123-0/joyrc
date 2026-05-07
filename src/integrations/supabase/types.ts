@@ -290,6 +290,9 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          send_email: boolean
+          send_sms: boolean
+          sms_content: string
           subject: string
           template_key: string
           updated_at: string
@@ -302,6 +305,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          send_email?: boolean
+          send_sms?: boolean
+          sms_content?: string
           subject: string
           template_key: string
           updated_at?: string
@@ -314,6 +320,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          send_email?: boolean
+          send_sms?: boolean
+          sms_content?: string
           subject?: string
           template_key?: string
           updated_at?: string
