@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 function normalizePhone(input: string): string {
-  return input.replace(/[^\d+]/g, "");
+  const digits = input.replace(/\D/g, "");
+  return digits.startsWith("960") ? digits : `960${digits}`;
 }
 
 async function sha256(text: string): Promise<string> {
