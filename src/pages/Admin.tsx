@@ -203,7 +203,7 @@ const iconMap: Record<string, any> = {
   LayoutDashboard, Banknote, Package, PackageSearch, CreditCard, Star, Video,
   Grid3X3, ShoppingCart, BarChart3, MessageSquare, Building2,
   HelpCircle, Users, UserCog, User, ImageIcon, FolderOpen,
-  HardDrive, Mail, Send, Settings, Bell, Truck, Wallet,
+  HardDrive, Mail, Send, Settings, Bell, Truck, Wallet, Percent, RotateCcw,
 };
 
 // Sortable menu item component
