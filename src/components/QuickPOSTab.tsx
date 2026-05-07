@@ -123,7 +123,16 @@ const QuickPOSTab = () => {
     fetchBanks();
     fetchCardTypes();
     fetchDeliveryStaff();
+    fetchCreditAccounts();
   }, []);
+
+  const fetchCreditAccounts = async () => {
+    const { data } = await supabase
+      .from("customer_credit_accounts")
+      .select("id, customer_name, customer_phone, prepaid_balance, owed_balance")
+      .order("customer_name");
+    if (data) setCreditAccounts(data as any);
+  };
 
   const fetchDeliveryStaff = async () => {
     const { data: permissions } = await supabase
