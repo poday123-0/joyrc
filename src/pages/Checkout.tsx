@@ -467,6 +467,12 @@ const Checkout = () => {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-medium">{formatMVR(totalPrice)}</span>
                 </div>
+                {taxAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tax</span>
+                    <span className="font-medium">{formatMVR(taxAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className="text-accent font-medium">Free</span>
@@ -475,7 +481,7 @@ const Checkout = () => {
               <div className="border-t border-border pt-4">
                 <div className="flex justify-between">
                   <span className="font-semibold text-foreground">Total</span>
-                  <span className="text-2xl font-bold text-foreground">{formatMVR(totalPrice)}</span>
+                  <span className="text-2xl font-bold text-foreground">{formatMVR(grandTotal)}</span>
                 </div>
               </div>
               {!receiptFile && bankSettings.length > 0 && (
