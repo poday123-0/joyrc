@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
-import { Pencil, Save, X, Mail, Eye, EyeOff, Info } from "lucide-react";
+import { Pencil, Save, X, Mail, Eye, EyeOff, Info, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -13,13 +13,16 @@ interface EmailTemplate {
   description: string | null;
   variables: string[];
   is_active: boolean;
+  send_email: boolean;
+  send_sms: boolean;
+  sms_content: string;
 }
 
 const EmailTemplatesTab = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
-  const [formData, setFormData] = useState({ subject: "", html_content: "" });
+  const [formData, setFormData] = useState({ subject: "", html_content: "", sms_content: "", send_email: true, send_sms: false });
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
