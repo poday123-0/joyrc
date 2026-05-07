@@ -793,6 +793,36 @@ export type Database = {
           },
         ]
       }
+      otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed: boolean
+          created_at: string
+          expires_at: string
+          id: string
+          mobile_number: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed?: boolean
+          created_at?: string
+          expires_at: string
+          id?: string
+          mobile_number: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          mobile_number?: string
+        }
+        Relationships: []
+      }
       preorders: {
         Row: {
           created_at: string
@@ -1327,6 +1357,9 @@ export type Database = {
           secondary_color: string | null
           site_name: string
           site_title: string | null
+          sms_api_key_set: boolean | null
+          sms_login_enabled: boolean | null
+          sms_sender_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1368,6 +1401,9 @@ export type Database = {
           secondary_color?: string | null
           site_name?: string
           site_title?: string | null
+          sms_api_key_set?: boolean | null
+          sms_login_enabled?: boolean | null
+          sms_sender_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1409,6 +1445,9 @@ export type Database = {
           secondary_color?: string | null
           site_name?: string
           site_title?: string | null
+          sms_api_key_set?: boolean | null
+          sms_login_enabled?: boolean | null
+          sms_sender_id?: string | null
           updated_at?: string
         }
         Relationships: []
