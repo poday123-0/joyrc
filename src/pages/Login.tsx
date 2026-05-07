@@ -348,57 +348,40 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-md mx-auto px-4 pt-8 pb-8">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Decorative gradient blobs */}
+      <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 w-80 h-80 rounded-full bg-primary/20 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-40 -right-32 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
+
+      <div className="relative container max-w-md sm:max-w-lg mx-auto px-4 sm:px-6 pt-6 pb-10 min-h-screen flex flex-col">
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="mb-4 inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-fit"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="text-sm font-medium">Back</span>
         </button>
 
-        {/* Header with system logo */}
-        <div className="glass-card rounded-3xl p-8 text-center shadow-soft">
-          <div className="w-20 h-20 mx-auto mb-4 overflow-hidden flex items-center justify-center">
-            <img 
-              src={logoUrl || rcJoyLogo} 
-              alt="Logo" 
-              className="w-full h-full object-contain"
-            />
+        <div className="glass-card rounded-3xl p-6 sm:p-8 shadow-elevated flex-1 flex flex-col">
+          {/* Header with system logo */}
+          <div className="text-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-2xl overflow-hidden flex items-center justify-center bg-background/40 ring-1 ring-border/40">
+              <img 
+                src={logoUrl || rcJoyLogo} 
+                alt="Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+              {isLogin ? "Welcome Back" : "Create Account"}
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1.5">
+              {isLogin ? "Sign in to continue shopping" : "Join the RC Joy family today"}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {isLogin ? "Welcome Back!" : "Create Account"}
-          </h1>
-          <p className="text-muted-foreground text-sm mt-2">
-            {isLogin ? "Sign in to continue" : "Join us today"}
-          </p>
-        </div>
 
-        {/* Toggle buttons */}
-        <div className="flex mt-6 glass-card rounded-full p-1 shadow-soft">
-          <button
-            onClick={() => setIsLogin(true)}
-            className={`flex-1 py-3 rounded-full font-medium transition-all ${
-              isLogin
-                ? "bg-primary text-primary-foreground shadow-soft"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Log In
-          </button>
-          <button
-            onClick={() => setIsLogin(false)}
-            className={`flex-1 py-3 rounded-full font-medium transition-all ${
-              !isLogin
-                ? "bg-primary text-primary-foreground shadow-soft"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
+          <div className="mt-6 sm:mt-7 space-y-5">
 
         {/* Google Login Button */}
         {googleLoginEnabled && (
@@ -406,7 +389,7 @@ const Login = () => {
             <button 
               onClick={handleGoogleLogin}
               disabled={googleLoading}
-              className="w-full mt-6 py-3.5 rounded-2xl glass-card border border-border flex items-center justify-center gap-3 hover:bg-white/80 transition-colors disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-card border border-border flex items-center justify-center gap-3 hover:bg-accent/10 transition-colors disabled:opacity-50 shadow-soft"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -679,17 +662,47 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-full bg-primary text-primary-foreground font-semibold shadow-soft hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-elevated hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-50"
           >
-            {loading ? "Please wait..." : isLogin ? "Log In" : "Create Account"}
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
           </button>
         </form>
         )}
 
-        <div className="mt-6 text-center">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-            Continue as Guest →
-          </Link>
+          </div>
+
+          {/* Footer actions */}
+          <div className="mt-6 pt-5 border-t border-border/50 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            {isLogin ? (
+              <p className="text-sm text-muted-foreground text-center sm:text-left">
+                New here?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(false)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Create an account
+                </button>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center sm:text-left">
+                Already a member?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(true)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
+            <Link
+              to="/"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
+            >
+              Continue as Guest →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
