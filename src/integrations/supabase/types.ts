@@ -553,6 +553,30 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_sms: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sent_by: string
+          sent_to_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sent_by: string
+          sent_to_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sent_by?: string
+          sent_to_count?: number | null
+        }
+        Relationships: []
+      }
       message_replies: {
         Row: {
           created_at: string | null
