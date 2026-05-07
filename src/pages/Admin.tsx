@@ -161,7 +161,7 @@ interface TabItem {
   category?: string;
 }
 
-type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "loans" | "credit" | "returns" | "tax" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "loans" | "credit" | "returns" | "tax" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "marketing-sms" | "footer" | "settings";
 
 const TAB_CATEGORIES = [
   { key: "main", label: "" },
