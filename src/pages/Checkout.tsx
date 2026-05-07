@@ -451,7 +451,7 @@ const Checkout = () => {
                 ) : (
                   <>
                     <Clock className="w-5 h-5" />
-                    Place Order - {formatMVR(totalPrice)}
+                    Place Order - {formatMVR(grandTotal)}
                   </>
                 )}
               </button>
