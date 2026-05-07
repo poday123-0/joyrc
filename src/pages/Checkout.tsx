@@ -499,7 +499,7 @@ const Checkout = () => {
         <div className="container max-w-md mx-auto">
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <span className="text-xs sm:text-sm text-muted-foreground">Total</span>
-            <span className="text-lg sm:text-2xl font-bold text-foreground">{formatMVR(totalPrice)}</span>
+            <span className="text-lg sm:text-2xl font-bold text-foreground">{formatMVR(grandTotal)}</span>
           </div>
           <button 
             onClick={handlePlaceOrder} 
