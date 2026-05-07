@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt, Calendar, Clock, Banknote, CreditCard, Building2, FileCheck } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Check, Package, X, Palette, User, MapPin, Phone, FileText, Truck, Mail, UserSearch, UserPlus, Receipt, Calendar, Clock, Banknote, CreditCard, Building2, FileCheck, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatMVR } from "@/lib/currency";
