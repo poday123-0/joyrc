@@ -16,20 +16,21 @@ async function sha256(text: string): Promise<string> {
 }
 
 async function sendMessageOwlSms(apiKey: string, sender: string, to: string, message: string) {
-  // Message Owl SMS API
-  const res = await fetch("https://rest-api.messageowl.com/v1/messages", {
+  // Message Owl REST SMS API
+  const res = await fetch("https://rest.msgowl.com/messages", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
+      "Authorization": `AccessKey ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      sender,
-      recipients: [to],
-      message,
+      recipients: to,
+      sender_id: sender,
+      body: message,
     }),
   });
   const text = await res.text();
+  console.log("MsgOwl response:", res.status, text);
   if (!res.ok) {
     throw new Error(`Message Owl error [${res.status}]: ${text}`);
   }
