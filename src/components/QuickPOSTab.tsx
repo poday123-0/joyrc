@@ -96,6 +96,14 @@ const QuickPOSTab = () => {
   const [selectedCardTypeId, setSelectedCardTypeId] = useState<string>("");
   const [banks, setBanks] = useState<Array<{ id: string; bank_name: string; logo_url: string | null }>>([]);
   const [cardTypes, setCardTypes] = useState<Array<{ id: string; name: string }>>([]);
+
+  // === New: discount + credit ===
+  const [discountType, setDiscountType] = useState<"fixed" | "percent">("fixed");
+  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [showDiscountPanel, setShowDiscountPanel] = useState(false);
+  const [creditAccounts, setCreditAccounts] = useState<CreditAccount[]>([]);
+  const [selectedCreditAccountId, setSelectedCreditAccountId] = useState<string>("");
+
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastOrderData, setLastOrderData] = useState<{
     orderId: string;
