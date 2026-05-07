@@ -631,15 +631,44 @@ const QuickPOSTab = () => {
         });
       }
 
-      // Create income transaction
-      await supabase.from("transactions").insert({
-        type: "income",
-        category: "Product Sales",
-        amount: totalAmount,
-        description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order ${order.order_number || order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
-        order_id: order.id,
-        added_by: user.id,
-      });
+      // Create income transaction (skip for credit sales — booked when repaid)
+      if (paymentMethod !== "credit") {
+        await supabase.from("transactions").insert({
+          type: "income",
+          category: "Product Sales",
+          amount: totalAmount,
+          description: `POS ${isDelivery ? 'Delivery' : 'Sale'} - ${totalItems} item(s) - Order ${order.order_number || order.id.slice(0, 8)}${customerDetails.name ? ` - ${customerDetails.name}` : ''}`,
+          order_id: order.id,
+          added_by: user.id,
+        });
+      }
+
+      // Handle customer credit payment
+      if (paymentMethod === "credit" && selectedCreditAccountId) {
+        const acc = creditAccounts.find(a => a.id === selectedCreditAccountId);
+        if (acc) {
+          const usePrepaid = Math.min(Number(acc.prepaid_balance), totalAmount);
+          const onCredit = totalAmount - usePrepaid;
+          if (usePrepaid > 0) {
+            await supabase.from("customer_credit_transactions").insert({
+              account_id: acc.id, type: "spend_prepaid", amount: usePrepaid,
+              order_id: order.id, created_by: user.id,
+              notes: `POS sale - Order ${order.order_number || order.id.slice(0, 8)}`,
+            });
+          }
+          if (onCredit > 0) {
+            await supabase.from("customer_credit_transactions").insert({
+              account_id: acc.id, type: "sale_on_credit", amount: onCredit,
+              order_id: order.id, created_by: user.id,
+              notes: `POS sale on credit - Order ${order.order_number || order.id.slice(0, 8)}`,
+            });
+          }
+          await supabase.from("customer_credit_accounts").update({
+            prepaid_balance: Number(acc.prepaid_balance) - usePrepaid,
+            owed_balance: Number(acc.owed_balance) + onCredit,
+          }).eq("id", acc.id);
+        }
+      }
 
       // Notify assigned delivery staff
       if (isDelivery && selectedDeliveryStaffId) {
