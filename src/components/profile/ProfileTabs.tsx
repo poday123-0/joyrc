@@ -1,6 +1,6 @@
-import { User, Package, MessageSquare } from "lucide-react";
+import { User, Package, MessageSquare, RotateCcw } from "lucide-react";
 
-type TabType = "profile" | "orders" | "messages";
+type TabType = "profile" | "orders" | "returns" | "messages";
 
 interface ProfileTabsProps {
   activeTab: TabType;
@@ -21,6 +21,7 @@ const ProfileTabs = ({ activeTab, onTabChange, isAdmin }: ProfileTabsProps) => {
   const tabs = [
     { id: "profile" as const, icon: User, label: "Profile" },
     { id: "orders" as const, icon: Package, label: "Orders" },
+    { id: "returns" as const, icon: RotateCcw, label: "Returns & Credit" },
     { id: "messages" as const, icon: MessageSquare, label: "Messages" },
   ];
 
