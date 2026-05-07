@@ -127,7 +127,24 @@ const OrdersTab = ({ isAdmin = false }: OrdersTabProps) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       setOrders(data || []);
-      
+
+      // Prefetch ALL order items up-front so expanding an order shows items instantly
+      const orderIds = (data || []).map(o => o.id);
+      if (orderIds.length > 0) {
+        const { data: allItems } = await supabase
+          .from("order_items")
+          .select("*")
+          .in("order_id", orderIds);
+        if (allItems) {
+          const grouped: Record<string, OrderItem[]> = {};
+          allItems.forEach((it: any) => {
+            if (!grouped[it.order_id]) grouped[it.order_id] = [];
+            grouped[it.order_id].push(it);
+          });
+          setOrderItems(grouped);
+        }
+      }
+
       // Fetch staff profiles for assigned orders
       const assignedStaffIds = [...new Set(data?.filter(o => o.assigned_to).map(o => o.assigned_to) || [])];
       if (assignedStaffIds.length > 0) {
