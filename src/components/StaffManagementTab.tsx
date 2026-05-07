@@ -43,6 +43,7 @@ const PERMISSION_AREAS = [
   { key: "tab_messages", label: "Messages", description: "View and respond to contact messages" },
   { key: "tab_email-templates", label: "Email Templates", description: "Manage email templates" },
   { key: "tab_marketing", label: "Marketing Emails", description: "Send marketing campaigns" },
+  { key: "tab_marketing-sms", label: "Marketing SMS", description: "Send marketing SMS" },
   
   // Financial (Admin only usually)
   { key: "tab_transactions", label: "Transactions", description: "View financial transactions" },

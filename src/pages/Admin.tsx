@@ -52,6 +52,7 @@ import HomeContentTab from "@/components/HomeContentTab";
 import StorageManagementTab from "@/components/StorageManagementTab";
 import EmailTemplatesTab from "@/components/EmailTemplatesTab";
 import MarketingEmailsTab from "@/components/MarketingEmailsTab";
+import MarketingSmsTab from "@/components/MarketingSmsTab";
 import FooterSettingsTab from "@/components/FooterSettingsTab";
 import SystemUsersTab from "@/components/SystemUsersTab";
 import StockManagementTab from "@/components/StockManagementTab";
@@ -160,7 +161,7 @@ interface TabItem {
   category?: string;
 }
 
-type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "loans" | "credit" | "returns" | "tax" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "footer" | "settings";
+type Tab = "dashboard" | "pos" | "products" | "stock" | "transactions" | "loans" | "credit" | "returns" | "tax" | "featured" | "videos" | "categories" | "orders" | "preorders" | "deliveries" | "reports" | "bank" | "messages" | "support" | "admins" | "users" | "hero" | "home-content" | "storage" | "email-templates" | "marketing" | "marketing-sms" | "footer" | "settings";
 
 const TAB_CATEGORIES = [
   { key: "main", label: "" },
@@ -191,7 +192,8 @@ const defaultTabs: TabItem[] = [
   { id: "reports", label: "Reports", icon: BarChart3, category: "finance" },
   { id: "bank", label: "Bank", icon: Building2, category: "finance" },
   { id: "messages", label: "Messages", icon: MessageSquare, category: "communication" },
-  { id: "marketing", label: "Marketing", icon: Send, category: "communication" },
+  { id: "marketing", label: "Email Marketing", icon: Send, category: "communication" },
+  { id: "marketing-sms", label: "SMS Marketing", icon: MessageSquare, category: "communication" },
   { id: "email-templates", label: "Templates", icon: Mail, category: "communication" },
   { id: "hero", label: "Hero", icon: ImageIcon, category: "content" },
   { id: "home-content", label: "Home", icon: FolderOpen, category: "content" },
@@ -846,6 +848,7 @@ const Admin = () => {
             {activeTab === "storage" && hasTabPermission("storage") && <StorageManagementTab />}
             {activeTab === "email-templates" && hasTabPermission("email-templates") && <EmailTemplatesTab />}
             {activeTab === "marketing" && hasTabPermission("marketing") && <MarketingEmailsTab />}
+            {activeTab === "marketing-sms" && hasTabPermission("marketing-sms") && <MarketingSmsTab />}
             {activeTab === "footer" && hasTabPermission("footer") && <FooterSettingsTab />}
             {activeTab === "settings" && hasTabPermission("settings") && settings && (
               <SettingsTab 
