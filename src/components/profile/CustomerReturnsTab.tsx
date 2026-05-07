@@ -120,6 +120,35 @@ const CustomerReturnsTab = () => {
 
   const totalOwed = accounts.reduce((s, a) => s + Number(a.owed_balance || 0), 0);
   const totalPrepaid = accounts.reduce((s, a) => s + Number(a.prepaid_balance || 0), 0);
+  const availableBalance = totalPrepaid - totalOwed;
+
+  // Build chronological history with running available balance (prepaid - owed)
+  const txEffect = (type: string, amt: number) => {
+    switch (type) {
+      case "topup": return { prepaid: amt, owed: 0, sign: 1, label: "Top-up" };
+      case "spend_prepaid": return { prepaid: -amt, owed: 0, sign: -1, label: "Used Prepaid" };
+      case "sale_on_credit": return { prepaid: 0, owed: amt, sign: -1, label: "Sale on Credit" };
+      case "repayment": return { prepaid: 0, owed: -amt, sign: 1, label: "Repayment" };
+      default: return { prepaid: 0, owed: 0, sign: 0, label: type.replace(/_/g, " ") };
+    }
+  };
+
+  const ascending = [...txs].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+  let runPrepaid = 0;
+  let runOwed = 0;
+  const withRunning = ascending.map((t) => {
+    const eff = txEffect(t.type, Number(t.amount));
+    runPrepaid += eff.prepaid;
+    runOwed += eff.owed;
+    return {
+      ...t,
+      delta: eff.prepaid - eff.owed, // change to available balance
+      label: eff.label,
+      runningAvailable: runPrepaid - runOwed,
+    };
+  }).reverse(); // newest first for display
 
   return (
     <div className="space-y-6">
@@ -133,29 +162,51 @@ const CustomerReturnsTab = () => {
           <p className="text-sm text-muted-foreground">No credit account on file.</p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="rounded-2xl p-4 bg-emerald-500/10 border border-emerald-500/20">
-                <p className="text-xs text-muted-foreground">Prepaid Balance</p>
-                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatMVR(totalPrepaid)}</p>
+                <p className="text-xs text-muted-foreground">Prepaid</p>
+                <p className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatMVR(totalPrepaid)}</p>
               </div>
               <div className="rounded-2xl p-4 bg-coral/10 border border-coral/20">
                 <p className="text-xs text-muted-foreground">You Owe</p>
-                <p className="text-xl font-bold text-coral">{formatMVR(totalOwed)}</p>
+                <p className="text-lg sm:text-xl font-bold text-coral">{formatMVR(totalOwed)}</p>
+              </div>
+              <div className={`rounded-2xl p-4 border ${availableBalance >= 0 ? "bg-primary/10 border-primary/20" : "bg-coral/10 border-coral/20"}`}>
+                <p className="text-xs text-muted-foreground">Available</p>
+                <p className={`text-lg sm:text-xl font-bold ${availableBalance >= 0 ? "text-primary" : "text-coral"}`}>
+                  {formatMVR(availableBalance)}
+                </p>
               </div>
             </div>
-            {txs.length > 0 && (
+            {withRunning.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs uppercase text-muted-foreground tracking-wide">Recent Activity</p>
-                {txs.slice(0, 10).map((t) => (
-                  <div key={t.id} className="flex justify-between items-center bg-muted/30 rounded-xl px-3 py-2 text-sm">
-                    <div>
-                      <p className="font-medium capitalize text-foreground">{t.type.replace(/_/g, " ")}</p>
-                      {t.notes && <p className="text-xs text-muted-foreground">{t.notes}</p>}
-                      <p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleDateString()}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs uppercase text-muted-foreground tracking-wide">Transaction History</p>
+                  <p className="text-xs text-muted-foreground">Running Balance</p>
+                </div>
+                {withRunning.map((t) => {
+                  const positive = t.delta > 0;
+                  const negative = t.delta < 0;
+                  return (
+                    <div key={t.id} className="flex justify-between items-center bg-muted/30 rounded-xl px-3 py-2 text-sm gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground">{t.label}</p>
+                        {t.notes && <p className="text-xs text-muted-foreground truncate">{t.notes}</p>}
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(t.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className={`font-semibold ${positive ? "text-emerald-600 dark:text-emerald-400" : negative ? "text-coral" : "text-foreground"}`}>
+                          {positive ? "+" : negative ? "−" : ""}{formatMVR(Math.abs(t.delta))}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Bal: {formatMVR(t.runningAvailable)}
+                        </p>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">{formatMVR(Number(t.amount))}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
