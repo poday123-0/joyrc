@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 function normalizePhone(input: string): string {
-  return input.replace(/[^\d+]/g, "");
+  const digits = input.replace(/\D/g, "");
+  return digits.startsWith("960") ? digits : `960${digits}`;
 }
 
 async function sha256(text: string): Promise<string> {
@@ -16,20 +17,21 @@ async function sha256(text: string): Promise<string> {
 }
 
 async function sendMessageOwlSms(apiKey: string, sender: string, to: string, message: string) {
-  // Message Owl SMS API
-  const res = await fetch("https://rest-api.messageowl.com/v1/messages", {
+  // Message Owl REST SMS API
+  const res = await fetch("https://rest.msgowl.com/messages", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
+      "Authorization": `AccessKey ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      sender,
-      recipients: [to],
-      message,
+      recipients: to,
+      sender_id: sender,
+      body: message,
     }),
   });
   const text = await res.text();
+  console.log("MsgOwl response:", res.status, text);
   if (!res.ok) {
     throw new Error(`Message Owl error [${res.status}]: ${text}`);
   }
@@ -68,11 +70,12 @@ serve(async (req) => {
       });
     }
 
-    // Verify the user exists with this mobile
+    // Verify the user exists with this mobile (try both with and without 960 prefix)
+    const localPhone = phone.startsWith("960") ? phone.slice(3) : phone;
     const { data: profile } = await admin
       .from("profiles")
       .select("user_id")
-      .eq("mobile_number", phone)
+      .or(`mobile_number.eq.${phone},mobile_number.eq.${localPhone}`)
       .maybeSingle();
     if (!profile) {
       return new Response(JSON.stringify({ error: "No account found with this mobile number" }), {

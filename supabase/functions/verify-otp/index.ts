@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 function normalizePhone(input: string): string {
-  return input.replace(/[^\d+]/g, "");
+  const digits = input.replace(/\D/g, "");
+  return digits.startsWith("960") ? digits : `960${digits}`;
 }
 
 async function sha256(text: string): Promise<string> {
@@ -79,11 +80,12 @@ serve(async (req) => {
     // Mark consumed
     await admin.from("otp_codes").update({ consumed: true }).eq("id", otp.id);
 
-    // Find user
+    // Find user (try both with and without 960 prefix)
+    const localPhone = phone.startsWith("960") ? phone.slice(3) : phone;
     const { data: profile } = await admin
       .from("profiles")
       .select("user_id")
-      .eq("mobile_number", phone)
+      .or(`mobile_number.eq.${phone},mobile_number.eq.${localPhone}`)
       .maybeSingle();
     if (!profile) {
       return new Response(JSON.stringify({ error: "Account not found" }), {
