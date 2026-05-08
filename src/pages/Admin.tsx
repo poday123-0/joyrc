@@ -153,6 +153,8 @@ interface SystemSettings {
   sms_login_enabled?: boolean;
   sms_sender_id?: string | null;
   sms_api_key_set?: boolean;
+  pos_staff_max_discount_percent?: number | null;
+  pos_staff_max_discount_amount?: number | null;
 }
 
 interface TabItem {
