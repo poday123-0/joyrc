@@ -230,23 +230,27 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
   // ================= A4 INVOICE =================
   const renderA4 = () => (
     <div ref={invoiceRef} className="bg-white text-slate-900 mx-auto p-8" style={{ width: 780, minHeight: 1000 }}>
-      {/* Header */}
-      <div className="flex justify-between items-start pb-6 border-b-2 border-slate-300">
-        <div className="flex items-center gap-4">
-          {settings?.logo_url && <img src={settings.logo_url} alt="Logo" className="w-20 h-20 object-contain" />}
-          <div>
-            <h1 className="text-2xl font-bold">{companyName}</h1>
-            {settings?.footer_address && <p className="text-xs text-slate-600 mt-1">{settings.footer_address}</p>}
-            {settings?.footer_phone && <p className="text-xs text-slate-600">Tel: {settings.footer_phone}</p>}
-            {settings?.footer_email && <p className="text-xs text-slate-600">{settings.footer_email}</p>}
-          </div>
+      {/* Header — centered logo + company, meta below */}
+      <div className="flex flex-col items-center text-center pb-6 border-b-2 border-slate-300">
+        {settings?.logo_url && (
+          <img src={settings.logo_url} alt="Logo" className="object-contain mb-3" style={{ width: 80, height: 80 }} />
+        )}
+        <h1 className="text-2xl font-bold">{companyName}</h1>
+        {settings?.footer_address && <p className="text-xs text-slate-600 mt-1">{settings.footer_address}</p>}
+        <div className="text-xs text-slate-600 flex flex-wrap justify-center gap-x-3">
+          {settings?.footer_phone && <span>Tel: {settings.footer_phone}</span>}
+          {settings?.footer_email && <span>{settings.footer_email}</span>}
         </div>
-        <div className="text-right">
-          <h2 className="text-3xl font-bold tracking-wide">INVOICE</h2>
-          <p className="text-sm text-slate-600 mt-2"><span className="font-semibold">No:</span> {invoice.orderNumber || invoice.orderId.slice(0, 8).toUpperCase()}</p>
-          <p className="text-sm text-slate-600"><span className="font-semibold">Date:</span> {new Date(invoice.orderDate).toLocaleDateString()}</p>
-          <p className="text-sm text-slate-600"><span className="font-semibold">Time:</span> {new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-          <p className="text-sm text-slate-600"><span className="font-semibold">Type:</span> {invoice.isDelivery ? "Delivery" : "Walk-in"}</p>
+        <div className="mt-4 w-full flex flex-wrap justify-between text-sm text-slate-700">
+          <div className="text-left">
+            <h2 className="text-xl font-bold tracking-wide">INVOICE</h2>
+            <p className="text-xs text-slate-600"><span className="font-semibold">No:</span> {invoice.orderNumber || invoice.orderId.slice(0, 8).toUpperCase()}</p>
+          </div>
+          <div className="text-right text-xs text-slate-600">
+            <p><span className="font-semibold">Date:</span> {new Date(invoice.orderDate).toLocaleDateString()}</p>
+            <p><span className="font-semibold">Time:</span> {new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p><span className="font-semibold">Type:</span> {invoice.isDelivery ? "Delivery" : "Walk-in"}</p>
+          </div>
         </div>
       </div>
 
