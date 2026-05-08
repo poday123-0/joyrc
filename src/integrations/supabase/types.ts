@@ -1408,6 +1408,8 @@ export type Database = {
           notification_sender_name: string | null
           og_image_url: string | null
           order_number_prefix: string | null
+          pos_staff_max_discount_amount: number
+          pos_staff_max_discount_percent: number
           primary_color: string | null
           secondary_color: string | null
           site_name: string
@@ -1453,6 +1455,8 @@ export type Database = {
           notification_sender_name?: string | null
           og_image_url?: string | null
           order_number_prefix?: string | null
+          pos_staff_max_discount_amount?: number
+          pos_staff_max_discount_percent?: number
           primary_color?: string | null
           secondary_color?: string | null
           site_name?: string
@@ -1498,6 +1502,8 @@ export type Database = {
           notification_sender_name?: string | null
           og_image_url?: string | null
           order_number_prefix?: string | null
+          pos_staff_max_discount_amount?: number
+          pos_staff_max_discount_percent?: number
           primary_color?: string | null
           secondary_color?: string | null
           site_name?: string
