@@ -396,7 +396,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
 
       <div className="border-t-2 border-dashed border-border/60 pt-4 mb-4">
         <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">Subtotal</span><span className="font-medium">{formatMVR(computedSubtotal)}</span></div>
-        {hasDiscount && <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">Discount</span><span className="font-medium">-{formatMVR(computedDiscount)}</span></div>}
+        {hasDiscount && <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">{discountLabel}</span><span className="font-medium">-{formatMVR(computedDiscount)}</span></div>}
         {hasTax && <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">Tax</span><span className="font-medium">{formatMVR(computedTax)}</span></div>}
         <div className="flex justify-between text-xs mb-3"><span className="text-muted-foreground">Items</span><span className="font-medium">{invoice.items.reduce((s, i) => s + i.quantity, 0)}</span></div>
         <div className="flex justify-between items-center pt-3 border-t-2 border-border">
