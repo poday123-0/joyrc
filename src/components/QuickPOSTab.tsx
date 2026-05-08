@@ -65,6 +65,9 @@ interface ExistingCustomer {
 const QuickPOSTab = () => {
   const { isAdmin, isSuperAdmin, isStaff } = useAuth();
   const canUseCredit = isSuperAdmin || (isAdmin && !isStaff);
+  const isDiscountRestricted = !(isSuperAdmin || (isAdmin && !isStaff));
+  const [maxDiscountPercent, setMaxDiscountPercent] = useState<number>(0);
+  const [maxDiscountAmount, setMaxDiscountAmount] = useState<number>(0);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
