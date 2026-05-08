@@ -118,6 +118,8 @@ const QuickPOSTab = () => {
     items: Array<{ name: string; quantity: number; price: number; color?: string | null; tax_rate?: number; tax_amount?: number; discount_amount?: number }>;
     subtotal: number;
     discountAmount: number;
+    discountType?: "fixed" | "percent";
+    discountValue?: number;
     taxAmount: number;
     total: number;
     customerName?: string;
