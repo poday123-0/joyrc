@@ -793,6 +793,8 @@ const QuickPOSTab = () => {
         }),
         subtotal,
         discountAmount,
+        discountType,
+        discountValue,
         taxAmount,
         total: totalAmount,
         customerName: customerDetails.name || undefined,
