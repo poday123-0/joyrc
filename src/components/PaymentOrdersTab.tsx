@@ -45,6 +45,11 @@ interface Order {
   payment_reference: string | null;
   payment_bank_id: string | null;
   payment_card_type_id: string | null;
+  discount_type?: string | null;
+  discount_value?: number | null;
+  discount_amount?: number | null;
+  tax_amount?: number | null;
+  subtotal?: number | null;
 }
 
 const getOrderNum = (order: { order_number?: string | null; id: string }) =>
