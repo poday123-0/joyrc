@@ -303,7 +303,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
       <div className="flex justify-end mt-6">
         <div className="w-72 space-y-1.5">
           <div className="flex justify-between text-sm"><span className="text-slate-600">Subtotal</span><span>{formatMVR(computedSubtotal)}</span></div>
-          {hasDiscount && <div className="flex justify-between text-sm"><span className="text-slate-600">Discount</span><span>-{formatMVR(computedDiscount)}</span></div>}
+          {hasDiscount && <div className="flex justify-between text-sm"><span className="text-slate-600">{discountLabel}</span><span>-{formatMVR(computedDiscount)}</span></div>}
           {hasTax && <div className="flex justify-between text-sm"><span className="text-slate-600">Tax</span><span>{formatMVR(computedTax)}</span></div>}
           <div className="flex justify-between pt-2 mt-2 border-t-2 border-slate-300 text-lg font-bold">
             <span>TOTAL</span><span>{formatMVR(invoice.total)}</span>
