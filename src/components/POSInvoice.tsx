@@ -96,6 +96,9 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
   const computedTax = invoice.taxAmount ?? invoice.items.reduce((s, i) => s + Number(i.tax_amount || 0), 0);
   const hasTax = computedTax > 0 || invoice.items.some((i) => (i.tax_rate || 0) > 0);
   const hasDiscount = computedDiscount > 0;
+  const discountLabel = hasDiscount
+    ? `Discount${invoice.discountType === "percent" && invoice.discountValue ? ` (${invoice.discountValue}%)` : invoice.discountType === "fixed" && invoice.discountValue ? ` (MVR ${invoice.discountValue})` : ""}`
+    : "Discount";
 
   const handleDownloadPng = async () => {
     if (!invoiceRef.current) return;
