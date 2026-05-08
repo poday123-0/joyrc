@@ -208,6 +208,8 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: ${bodyMaxWidth}; margin: 0 auto; color: #111; }
+            img { max-width: 100%; height: auto; }
+            img[alt="Logo"] { width: ${mode === "a4" ? "80px" : "64px"} !important; height: ${mode === "a4" ? "80px" : "64px"} !important; object-fit: contain; display: block; margin: 0 auto 12px; }
             table { width: 100%; border-collapse: collapse; }
             th, td { padding: 8px 6px; font-size: 12px; text-align: left; border-bottom: 1px solid #eee; }
             th { background: #f5f5f5; text-transform: uppercase; font-size: 10px; color: #555; }
