@@ -65,6 +65,9 @@ interface ExistingCustomer {
 const QuickPOSTab = () => {
   const { isAdmin, isSuperAdmin, isStaff } = useAuth();
   const canUseCredit = isSuperAdmin || (isAdmin && !isStaff);
+  const isDiscountRestricted = !(isSuperAdmin || (isAdmin && !isStaff));
+  const [maxDiscountPercent, setMaxDiscountPercent] = useState<number>(0);
+  const [maxDiscountAmount, setMaxDiscountAmount] = useState<number>(0);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -130,6 +133,16 @@ const QuickPOSTab = () => {
     fetchCardTypes();
     fetchDeliveryStaff();
     fetchCreditAccounts();
+    (async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("pos_staff_max_discount_percent, pos_staff_max_discount_amount")
+        .single();
+      if (data) {
+        setMaxDiscountPercent(Number(data.pos_staff_max_discount_percent || 0));
+        setMaxDiscountAmount(Number(data.pos_staff_max_discount_amount || 0));
+      }
+    })();
   }, []);
 
   const fetchCreditAccounts = async () => {
@@ -454,9 +467,18 @@ const QuickPOSTab = () => {
 
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const discountAmount = discountType === "percent"
+  const requestedDiscount = discountType === "percent"
     ? Math.min(subtotal, subtotal * (discountValue / 100))
     : Math.min(subtotal, discountValue);
+  // Apply admin-defined caps for staff (non-admins)
+  const cappedByPercent = isDiscountRestricted && maxDiscountPercent > 0
+    ? subtotal * (maxDiscountPercent / 100)
+    : Infinity;
+  const cappedByAmount = isDiscountRestricted && maxDiscountAmount > 0
+    ? maxDiscountAmount
+    : Infinity;
+  const discountAmount = Math.min(requestedDiscount, cappedByPercent, cappedByAmount);
+  const discountWasCapped = isDiscountRestricted && requestedDiscount > discountAmount + 0.001;
   const afterDiscount = Math.max(0, subtotal - discountAmount);
   // Apportion discount across items proportionally, then compute tax per item
   const taxAmount = cart.reduce((sum, item) => {
@@ -1373,12 +1395,22 @@ const QuickPOSTab = () => {
                 </div>
               </div>
               {showDiscountPanel && (
-                <div className="flex gap-2 mb-3 p-2 rounded-lg bg-muted/40">
-                  <select value={discountType} onChange={e => setDiscountType(e.target.value as any)} className="text-xs bg-background border border-border rounded px-2">
-                    <option value="fixed">MVR</option>
-                    <option value="percent">%</option>
-                  </select>
-                  <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
+                <div className="mb-3 p-2 rounded-lg bg-muted/40 space-y-1.5">
+                  <div className="flex gap-2">
+                    <select value={discountType} onChange={e => setDiscountType(e.target.value as any)} className="text-xs bg-background border border-border rounded px-2">
+                      <option value="fixed">MVR</option>
+                      <option value="percent">%</option>
+                    </select>
+                    <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
+                  </div>
+                  {isDiscountRestricted && (maxDiscountPercent > 0 || maxDiscountAmount > 0) && (
+                    <p className={`text-[10px] ${discountWasCapped ? "text-destructive" : "text-muted-foreground"}`}>
+                      Max allowed: {maxDiscountPercent > 0 ? `${maxDiscountPercent}%` : ""}
+                      {maxDiscountPercent > 0 && maxDiscountAmount > 0 ? " or " : ""}
+                      {maxDiscountAmount > 0 ? formatMVR(maxDiscountAmount) : ""}
+                      {discountWasCapped ? " — capped" : ""}
+                    </p>
+                  )}
                 </div>
               )}
               <div className={`grid ${canUseCredit ? "grid-cols-5" : "grid-cols-4"} gap-1.5 mb-3`}>

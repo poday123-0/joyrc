@@ -153,6 +153,8 @@ interface SystemSettings {
   sms_login_enabled?: boolean;
   sms_sender_id?: string | null;
   sms_api_key_set?: boolean;
+  pos_staff_max_discount_percent?: number | null;
+  pos_staff_max_discount_amount?: number | null;
 }
 
 interface TabItem {
@@ -2912,6 +2914,8 @@ const SettingsTab = ({
     og_image_url: settings.og_image_url || "",
     sms_login_enabled: settings.sms_login_enabled ?? false,
     sms_sender_id: settings.sms_sender_id || "RCJOY",
+    pos_staff_max_discount_percent: settings.pos_staff_max_discount_percent ?? 0,
+    pos_staff_max_discount_amount: settings.pos_staff_max_discount_amount ?? 0,
   });
   const [smsApiKey, setSmsApiKey] = useState("");
   const [savingSmsKey, setSavingSmsKey] = useState(false);
@@ -2959,6 +2963,8 @@ const SettingsTab = ({
         og_image_url: settings.og_image_url || "",
         sms_login_enabled: settings.sms_login_enabled ?? false,
         sms_sender_id: settings.sms_sender_id || "RCJOY",
+        pos_staff_max_discount_percent: settings.pos_staff_max_discount_percent ?? 0,
+        pos_staff_max_discount_amount: settings.pos_staff_max_discount_amount ?? 0,
       });
       setLastSyncedData(serverData);
     }
@@ -3081,6 +3087,8 @@ const SettingsTab = ({
       og_image_url: formData.og_image_url || null,
       sms_login_enabled: formData.sms_login_enabled,
       sms_sender_id: formData.sms_sender_id?.trim() || "RCJOY",
+      pos_staff_max_discount_percent: Math.max(0, Math.min(100, Number(formData.pos_staff_max_discount_percent) || 0)),
+      pos_staff_max_discount_amount: Math.max(0, Number(formData.pos_staff_max_discount_amount) || 0),
     };
 
     try {
@@ -3308,6 +3316,39 @@ const SettingsTab = ({
               <p className="text-xs text-muted-foreground mt-1">
                 Orders will be numbered as <span className="font-mono font-medium text-foreground">{formData.order_number_prefix || "RCJOY"}/YY/MM/00001</span>
               </p>
+            </div>
+          </div>
+
+          {/* POS Staff Discount Limits */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-1">POS Staff Discount Limits</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Caps the discount staff (POS users) can apply on a sale. Set <span className="font-mono">0</span> to disable a cap. Admins and Super Admins are not limited.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Max Discount %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={formData.pos_staff_max_discount_percent ?? 0}
+                  onChange={(e) => setFormData({ ...formData, pos_staff_max_discount_percent: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Max Discount (MVR)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.pos_staff_max_discount_amount ?? 0}
+                  onChange={(e) => setFormData({ ...formData, pos_staff_max_discount_amount: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
             </div>
           </div>
 
