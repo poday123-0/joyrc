@@ -1395,12 +1395,22 @@ const QuickPOSTab = () => {
                 </div>
               </div>
               {showDiscountPanel && (
-                <div className="flex gap-2 mb-3 p-2 rounded-lg bg-muted/40">
-                  <select value={discountType} onChange={e => setDiscountType(e.target.value as any)} className="text-xs bg-background border border-border rounded px-2">
-                    <option value="fixed">MVR</option>
-                    <option value="percent">%</option>
-                  </select>
-                  <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
+                <div className="mb-3 p-2 rounded-lg bg-muted/40 space-y-1.5">
+                  <div className="flex gap-2">
+                    <select value={discountType} onChange={e => setDiscountType(e.target.value as any)} className="text-xs bg-background border border-border rounded px-2">
+                      <option value="fixed">MVR</option>
+                      <option value="percent">%</option>
+                    </select>
+                    <Input type="number" min="0" step="0.01" value={discountValue || ""} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} className="h-8 text-xs flex-1" placeholder="Discount" />
+                  </div>
+                  {isDiscountRestricted && (maxDiscountPercent > 0 || maxDiscountAmount > 0) && (
+                    <p className={`text-[10px] ${discountWasCapped ? "text-destructive" : "text-muted-foreground"}`}>
+                      Max allowed: {maxDiscountPercent > 0 ? `${maxDiscountPercent}%` : ""}
+                      {maxDiscountPercent > 0 && maxDiscountAmount > 0 ? " or " : ""}
+                      {maxDiscountAmount > 0 ? formatMVR(maxDiscountAmount) : ""}
+                      {discountWasCapped ? " — capped" : ""}
+                    </p>
+                  )}
                 </div>
               )}
               <div className={`grid ${canUseCredit ? "grid-cols-5" : "grid-cols-4"} gap-1.5 mb-3`}>
