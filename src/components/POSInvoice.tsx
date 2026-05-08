@@ -29,6 +29,8 @@ interface InvoiceData {
   items: InvoiceItem[];
   subtotal?: number;
   discountAmount?: number;
+  discountType?: "fixed" | "percent";
+  discountValue?: number;
   taxAmount?: number;
   total: number;
   customerName?: string;
