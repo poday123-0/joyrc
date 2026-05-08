@@ -3087,6 +3087,8 @@ const SettingsTab = ({
       og_image_url: formData.og_image_url || null,
       sms_login_enabled: formData.sms_login_enabled,
       sms_sender_id: formData.sms_sender_id?.trim() || "RCJOY",
+      pos_staff_max_discount_percent: Math.max(0, Math.min(100, Number(formData.pos_staff_max_discount_percent) || 0)),
+      pos_staff_max_discount_amount: Math.max(0, Number(formData.pos_staff_max_discount_amount) || 0),
     };
 
     try {
