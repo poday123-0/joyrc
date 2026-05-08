@@ -3319,6 +3319,39 @@ const SettingsTab = ({
             </div>
           </div>
 
+          {/* POS Staff Discount Limits */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-1">POS Staff Discount Limits</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Caps the discount staff (POS users) can apply on a sale. Set <span className="font-mono">0</span> to disable a cap. Admins and Super Admins are not limited.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Max Discount %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={formData.pos_staff_max_discount_percent ?? 0}
+                  onChange={(e) => setFormData({ ...formData, pos_staff_max_discount_percent: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Max Discount (MVR)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.pos_staff_max_discount_amount ?? 0}
+                  onChange={(e) => setFormData({ ...formData, pos_staff_max_discount_amount: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Tax Categories */}
           <div className="pt-4 border-t border-border">
             <h3 className="text-sm font-semibold text-foreground mb-3">Tax Categories</h3>
