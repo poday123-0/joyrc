@@ -133,6 +133,16 @@ const QuickPOSTab = () => {
     fetchCardTypes();
     fetchDeliveryStaff();
     fetchCreditAccounts();
+    (async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("pos_staff_max_discount_percent, pos_staff_max_discount_amount")
+        .single();
+      if (data) {
+        setMaxDiscountPercent(Number(data.pos_staff_max_discount_percent || 0));
+        setMaxDiscountAmount(Number(data.pos_staff_max_discount_amount || 0));
+      }
+    })();
   }, []);
 
   const fetchCreditAccounts = async () => {
