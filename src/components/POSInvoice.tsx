@@ -159,7 +159,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     });
     lines.push(divider);
     lines.push(`Subtotal: ${formatMVR(computedSubtotal)}`);
-    if (hasDiscount) lines.push(`Discount: -${formatMVR(computedDiscount)}`);
+    if (hasDiscount) lines.push(`${discountLabel}: -${formatMVR(computedDiscount)}`);
     if (hasTax) lines.push(`Tax: ${formatMVR(computedTax)}`);
     lines.push(`💰 *TOTAL: ${formatMVR(invoice.total)}*`);
     lines.push(divider);
