@@ -29,6 +29,8 @@ interface InvoiceData {
   items: InvoiceItem[];
   subtotal?: number;
   discountAmount?: number;
+  discountType?: "fixed" | "percent";
+  discountValue?: number;
   taxAmount?: number;
   total: number;
   customerName?: string;
@@ -94,6 +96,9 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
   const computedTax = invoice.taxAmount ?? invoice.items.reduce((s, i) => s + Number(i.tax_amount || 0), 0);
   const hasTax = computedTax > 0 || invoice.items.some((i) => (i.tax_rate || 0) > 0);
   const hasDiscount = computedDiscount > 0;
+  const discountLabel = hasDiscount
+    ? `Discount${invoice.discountType === "percent" && invoice.discountValue ? ` (${invoice.discountValue}%)` : invoice.discountType === "fixed" && invoice.discountValue ? ` (MVR ${invoice.discountValue})` : ""}`
+    : "Discount";
 
   const handleDownloadPng = async () => {
     if (!invoiceRef.current) return;
@@ -154,7 +159,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
     });
     lines.push(divider);
     lines.push(`Subtotal: ${formatMVR(computedSubtotal)}`);
-    if (hasDiscount) lines.push(`Discount: -${formatMVR(computedDiscount)}`);
+    if (hasDiscount) lines.push(`${discountLabel}: -${formatMVR(computedDiscount)}`);
     if (hasTax) lines.push(`Tax: ${formatMVR(computedTax)}`);
     lines.push(`💰 *TOTAL: ${formatMVR(invoice.total)}*`);
     lines.push(divider);
@@ -203,6 +208,8 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: ${bodyMaxWidth}; margin: 0 auto; color: #111; }
+            img { max-width: 100%; height: auto; }
+            img[alt="Logo"] { width: ${mode === "a4" ? "80px" : "64px"} !important; height: ${mode === "a4" ? "80px" : "64px"} !important; object-fit: contain; display: block; margin: 0 auto 12px; }
             table { width: 100%; border-collapse: collapse; }
             th, td { padding: 8px 6px; font-size: 12px; text-align: left; border-bottom: 1px solid #eee; }
             th { background: #f5f5f5; text-transform: uppercase; font-size: 10px; color: #555; }
@@ -225,23 +232,27 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
   // ================= A4 INVOICE =================
   const renderA4 = () => (
     <div ref={invoiceRef} className="bg-white text-slate-900 mx-auto p-8" style={{ width: 780, minHeight: 1000 }}>
-      {/* Header */}
-      <div className="flex justify-between items-start pb-6 border-b-2 border-slate-300">
-        <div className="flex items-center gap-4">
-          {settings?.logo_url && <img src={settings.logo_url} alt="Logo" className="w-20 h-20 object-contain" />}
-          <div>
-            <h1 className="text-2xl font-bold">{companyName}</h1>
-            {settings?.footer_address && <p className="text-xs text-slate-600 mt-1">{settings.footer_address}</p>}
-            {settings?.footer_phone && <p className="text-xs text-slate-600">Tel: {settings.footer_phone}</p>}
-            {settings?.footer_email && <p className="text-xs text-slate-600">{settings.footer_email}</p>}
-          </div>
+      {/* Header — centered logo + company, meta below */}
+      <div className="flex flex-col items-center text-center pb-6 border-b-2 border-slate-300">
+        {settings?.logo_url && (
+          <img src={settings.logo_url} alt="Logo" className="object-contain mb-3" style={{ width: 80, height: 80 }} />
+        )}
+        <h1 className="text-2xl font-bold">{companyName}</h1>
+        {settings?.footer_address && <p className="text-xs text-slate-600 mt-1">{settings.footer_address}</p>}
+        <div className="text-xs text-slate-600 flex flex-wrap justify-center gap-x-3">
+          {settings?.footer_phone && <span>Tel: {settings.footer_phone}</span>}
+          {settings?.footer_email && <span>{settings.footer_email}</span>}
         </div>
-        <div className="text-right">
-          <h2 className="text-3xl font-bold tracking-wide">INVOICE</h2>
-          <p className="text-sm text-slate-600 mt-2"><span className="font-semibold">No:</span> {invoice.orderNumber || invoice.orderId.slice(0, 8).toUpperCase()}</p>
-          <p className="text-sm text-slate-600"><span className="font-semibold">Date:</span> {new Date(invoice.orderDate).toLocaleDateString()}</p>
-          <p className="text-sm text-slate-600"><span className="font-semibold">Time:</span> {new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-          <p className="text-sm text-slate-600"><span className="font-semibold">Type:</span> {invoice.isDelivery ? "Delivery" : "Walk-in"}</p>
+        <div className="mt-4 w-full flex flex-wrap justify-between text-sm text-slate-700">
+          <div className="text-left">
+            <h2 className="text-xl font-bold tracking-wide">INVOICE</h2>
+            <p className="text-xs text-slate-600"><span className="font-semibold">No:</span> {invoice.orderNumber || invoice.orderId.slice(0, 8).toUpperCase()}</p>
+          </div>
+          <div className="text-right text-xs text-slate-600">
+            <p><span className="font-semibold">Date:</span> {new Date(invoice.orderDate).toLocaleDateString()}</p>
+            <p><span className="font-semibold">Time:</span> {new Date(invoice.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p><span className="font-semibold">Type:</span> {invoice.isDelivery ? "Delivery" : "Walk-in"}</p>
+          </div>
         </div>
       </div>
 
@@ -292,7 +303,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
       <div className="flex justify-end mt-6">
         <div className="w-72 space-y-1.5">
           <div className="flex justify-between text-sm"><span className="text-slate-600">Subtotal</span><span>{formatMVR(computedSubtotal)}</span></div>
-          {hasDiscount && <div className="flex justify-between text-sm"><span className="text-slate-600">Discount</span><span>-{formatMVR(computedDiscount)}</span></div>}
+          {hasDiscount && <div className="flex justify-between text-sm"><span className="text-slate-600">{discountLabel}</span><span>-{formatMVR(computedDiscount)}</span></div>}
           {hasTax && <div className="flex justify-between text-sm"><span className="text-slate-600">Tax</span><span>{formatMVR(computedTax)}</span></div>}
           <div className="flex justify-between pt-2 mt-2 border-t-2 border-slate-300 text-lg font-bold">
             <span>TOTAL</span><span>{formatMVR(invoice.total)}</span>
@@ -385,7 +396,7 @@ const POSInvoice = ({ invoice, onClose }: POSInvoiceProps) => {
 
       <div className="border-t-2 border-dashed border-border/60 pt-4 mb-4">
         <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">Subtotal</span><span className="font-medium">{formatMVR(computedSubtotal)}</span></div>
-        {hasDiscount && <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">Discount</span><span className="font-medium">-{formatMVR(computedDiscount)}</span></div>}
+        {hasDiscount && <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">{discountLabel}</span><span className="font-medium">-{formatMVR(computedDiscount)}</span></div>}
         {hasTax && <div className="flex justify-between text-xs mb-2"><span className="text-muted-foreground">Tax</span><span className="font-medium">{formatMVR(computedTax)}</span></div>}
         <div className="flex justify-between text-xs mb-3"><span className="text-muted-foreground">Items</span><span className="font-medium">{invoice.items.reduce((s, i) => s + i.quantity, 0)}</span></div>
         <div className="flex justify-between items-center pt-3 border-t-2 border-border">

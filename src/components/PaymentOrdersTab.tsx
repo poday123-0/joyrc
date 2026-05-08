@@ -45,6 +45,11 @@ interface Order {
   payment_reference: string | null;
   payment_bank_id: string | null;
   payment_card_type_id: string | null;
+  discount_type?: string | null;
+  discount_value?: number | null;
+  discount_amount?: number | null;
+  tax_amount?: number | null;
+  subtotal?: number | null;
 }
 
 const getOrderNum = (order: { order_number?: string | null; id: string }) =>
@@ -322,6 +327,9 @@ const PaymentOrdersTab = () => {
 
   const buildInvoiceData = async (order: Order) => {
     const items = await ensureOrderItems(order.id);
+    const itemsSubtotal = items.reduce((sum, item) => sum + Number(item.product_price || 0) * Number(item.quantity || 0), 0);
+    const itemsDiscount = items.reduce((sum, item) => sum + Number(item.discount_amount || 0), 0);
+    const itemsTax = items.reduce((sum, item) => sum + Number(item.tax_amount || 0), 0);
 
     return {
       orderId: order.id,
@@ -336,9 +344,11 @@ const PaymentOrdersTab = () => {
         tax_amount: Number(item.tax_amount || 0),
         discount_amount: Number(item.discount_amount || 0),
       })),
-      subtotal: items.reduce((sum, item) => sum + Number(item.product_price || 0) * Number(item.quantity || 0), 0),
-      discountAmount: items.reduce((sum, item) => sum + Number(item.discount_amount || 0), 0),
-      taxAmount: items.reduce((sum, item) => sum + Number(item.tax_amount || 0), 0),
+      subtotal: Number(order.subtotal || 0) > 0 ? Number(order.subtotal) : itemsSubtotal,
+      discountAmount: Number(order.discount_amount || 0) > 0 ? Number(order.discount_amount) : itemsDiscount,
+      taxAmount: Number(order.tax_amount || 0) > 0 ? Number(order.tax_amount) : itemsTax,
+      discountType: (order.discount_type as "fixed" | "percent") || undefined,
+      discountValue: order.discount_value != null ? Number(order.discount_value) : undefined,
       total: order.total_amount,
       customerName: customerProfiles[order.user_id]?.full_name || undefined,
       customerPhone: order.phone || undefined,
