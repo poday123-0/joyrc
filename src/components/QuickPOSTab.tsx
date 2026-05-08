@@ -467,9 +467,18 @@ const QuickPOSTab = () => {
 
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const discountAmount = discountType === "percent"
+  const requestedDiscount = discountType === "percent"
     ? Math.min(subtotal, subtotal * (discountValue / 100))
     : Math.min(subtotal, discountValue);
+  // Apply admin-defined caps for staff (non-admins)
+  const cappedByPercent = isDiscountRestricted && maxDiscountPercent > 0
+    ? subtotal * (maxDiscountPercent / 100)
+    : Infinity;
+  const cappedByAmount = isDiscountRestricted && maxDiscountAmount > 0
+    ? maxDiscountAmount
+    : Infinity;
+  const discountAmount = Math.min(requestedDiscount, cappedByPercent, cappedByAmount);
+  const discountWasCapped = isDiscountRestricted && requestedDiscount > discountAmount + 0.001;
   const afterDiscount = Math.max(0, subtotal - discountAmount);
   // Apportion discount across items proportionally, then compute tax per item
   const taxAmount = cart.reduce((sum, item) => {
